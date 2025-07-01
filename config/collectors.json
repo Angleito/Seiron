@@ -1,0 +1,196 @@
+{
+  "chain": {
+    "batchSize": 100,
+    "maxRetries": 3,
+    "retryDelay": 1000,
+    "exponentialBackoff": true,
+    "blockRange": 1000,
+    "startBlock": "latest",
+    "confirmations": 3,
+    "eventFilters": [
+      "PortfolioRebalance",
+      "LiquidityEvent",
+      "SwapExecuted",
+      "OrderPlaced",
+      "OrderCancelled",
+      "Transfer",
+      "Approval"
+    ],
+    "contractAddresses": {
+      "whitelist": [],
+      "blacklist": []
+    },
+    "gasTracking": {
+      "enabled": true,
+      "threshold": 1000000
+    },
+    "mempool": {
+      "enabled": false,
+      "maxTxs": 1000
+    }
+  },
+  "market": {
+    "updateInterval": 60000,
+    "priceFeeds": [
+      {
+        "name": "chainlink",
+        "priority": 1,
+        "endpoint": "https://api.chainlinklabs.com",
+        "timeout": 5000
+      },
+      {
+        "name": "pyth",
+        "priority": 2,
+        "endpoint": "https://hermes.pyth.network",
+        "timeout": 5000
+      },
+      {
+        "name": "sei-oracle",
+        "priority": 3,
+        "endpoint": "native",
+        "timeout": 3000
+      },
+      {
+        "name": "coingecko",
+        "priority": 4,
+        "endpoint": "https://api.coingecko.com/api/v3",
+        "timeout": 10000
+      }
+    ],
+    "assets": [
+      {
+        "symbol": "SEI",
+        "coingeckoId": "sei-network",
+        "pythId": "0x53614f1cb0c031d4af66c04cb9c756234adad0e1cee85303795091499a4084eb",
+        "decimals": 6
+      },
+      {
+        "symbol": "ETH",
+        "coingeckoId": "ethereum",
+        "pythId": "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
+        "decimals": 18
+      },
+      {
+        "symbol": "BTC",
+        "coingeckoId": "bitcoin",
+        "pythId": "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43",
+        "decimals": 8
+      },
+      {
+        "symbol": "USDC",
+        "coingeckoId": "usd-coin",
+        "pythId": "0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a",
+        "decimals": 6
+      },
+      {
+        "symbol": "ATOM",
+        "coingeckoId": "cosmos",
+        "pythId": "0xb00b60f88b03a6a625a8d1c048c3f66653edf217439983d037e7222c4e612819",
+        "decimals": 6
+      }
+    ],
+    "timeframes": ["1m", "5m", "15m", "1h", "4h", "1d", "7d"],
+    "rateLimits": {
+      "coingecko": {
+        "requestsPerMinute": 10,
+        "requestsPerHour": 100
+      },
+      "chainlink": {
+        "requestsPerSecond": 5
+      },
+      "pyth": {
+        "requestsPerSecond": 10
+      }
+    },
+    "caching": {
+      "enabled": true,
+      "ttl": 30000,
+      "maxSize": 1000
+    }
+  },
+  "defi": {
+    "protocols": [
+      {
+        "name": "astroport",
+        "type": "dex",
+        "factoryAddress": "sei1466nf3zuxpya8q9emxukd7vftaf6h4psr0a07stwfkw0mt2n56wq83akzz",
+        "enabled": true,
+        "priority": 1
+      },
+      {
+        "name": "white-whale",
+        "type": "dex",
+        "factoryAddress": "sei1xxx",
+        "enabled": true,
+        "priority": 2
+      },
+      {
+        "name": "eris",
+        "type": "liquid-staking",
+        "contractAddress": "sei1yyy",
+        "enabled": true,
+        "priority": 3
+      },
+      {
+        "name": "kujira",
+        "type": "trading",
+        "contractAddress": "sei1zzz",
+        "enabled": false,
+        "priority": 4
+      }
+    ],
+    "refreshInterval": 300000,
+    "liquidityThreshold": 10000,
+    "volumeThreshold": 1000,
+    "metrics": {
+      "tvl": true,
+      "volume24h": true,
+      "fees": true,
+      "apr": true,
+      "utilization": true
+    },
+    "pools": {
+      "minLiquidity": 1000,
+      "maxPools": 100,
+      "trackInactive": false
+    }
+  },
+  "analytics": {
+    "enabled": true,
+    "batchInterval": 60000,
+    "aggregationPeriods": ["1h", "6h", "24h", "7d", "30d"],
+    "metrics": [
+      "transaction_count",
+      "unique_addresses",
+      "gas_usage",
+      "dex_volume",
+      "liquidity_changes",
+      "price_volatility"
+    ],
+    "storage": {
+      "type": "timeseries",
+      "retention": "30d",
+      "compression": true
+    }
+  },
+  "monitoring": {
+    "healthCheck": {
+      "enabled": true,
+      "interval": 30000,
+      "endpoints": ["rpc", "rest", "websocket"]
+    },
+    "alerts": {
+      "enabled": true,
+      "thresholds": {
+        "blockDelay": 5000,
+        "rpcLatency": 2000,
+        "errorRate": 0.05
+      }
+    },
+    "logging": {
+      "level": "info",
+      "format": "json",
+      "outputs": ["console", "file"]
+    }
+  }
+}

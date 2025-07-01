@@ -1,0 +1,165 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Sei Network Configuration Schema",
+  "type": "object",
+  "required": ["networks", "defaults", "contracts"],
+  "properties": {
+    "networks": {
+      "type": "object",
+      "required": ["mainnet", "testnet", "devnet"],
+      "properties": {
+        "mainnet": { "$ref": "#/definitions/NetworkConfig" },
+        "testnet": { "$ref": "#/definitions/NetworkConfig" },
+        "devnet": { "$ref": "#/definitions/NetworkConfig" }
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "required": ["network", "timeout", "retries", "backoff"],
+      "properties": {
+        "network": {
+          "type": "string",
+          "enum": ["mainnet", "testnet", "devnet"]
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 300000
+        },
+        "retries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "backoff": {
+          "type": "string",
+          "enum": ["linear", "exponential", "fixed"]
+        }
+      }
+    },
+    "contracts": {
+      "type": "object",
+      "patternProperties": {
+        "^(mainnet|testnet|devnet)$": {
+          "type": "object",
+          "required": ["dexFactory", "multicall", "priceOracle"],
+          "properties": {
+            "dexFactory": {
+              "type": "string",
+              "pattern": "^sei[0-9a-z]{58}$"
+            },
+            "multicall": {
+              "type": "string",
+              "pattern": "^sei[0-9a-z]{58}$"
+            },
+            "priceOracle": {
+              "type": "string",
+              "pattern": "^sei[0-9a-z]{58}$"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "NetworkConfig": {
+      "type": "object",
+      "required": [
+        "chainId",
+        "name",
+        "rpcUrl",
+        "cosmosRpcUrl",
+        "restUrl",
+        "explorerUrl",
+        "blockTime",
+        "gasPrice",
+        "currency",
+        "features",
+        "endpoints"
+      ],
+      "properties": {
+        "chainId": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rpcUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "cosmosRpcUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "restUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "explorerUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "blockTime": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 10000
+        },
+        "gasPrice": {
+          "type": "string",
+          "pattern": "^[0-9]+(\\.[0-9]+)?usei$"
+        },
+        "currency": {
+          "type": "object",
+          "required": ["coinDenom", "coinMinimalDenom", "coinDecimals"],
+          "properties": {
+            "coinDenom": {
+              "type": "string",
+              "minLength": 1
+            },
+            "coinMinimalDenom": {
+              "type": "string",
+              "minLength": 1
+            },
+            "coinDecimals": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 18
+            }
+          }
+        },
+        "features": {
+          "type": "object",
+          "required": ["evm", "cosmwasm", "ibc"],
+          "properties": {
+            "evm": {
+              "type": "boolean"
+            },
+            "cosmwasm": {
+              "type": "boolean"
+            },
+            "ibc": {
+              "type": "boolean"
+            }
+          }
+        },
+        "endpoints": {
+          "type": "object",
+          "required": ["websocket", "grpc"],
+          "properties": {
+            "websocket": {
+              "type": "string",
+              "format": "uri"
+            },
+            "grpc": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9.-]+:[0-9]+$"
+            }
+          }
+        }
+      }
+    }
+  }
+}

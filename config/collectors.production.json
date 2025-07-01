@@ -1,0 +1,167 @@
+{
+  "chain": {
+    "batchSize": 50,
+    "maxRetries": 5,
+    "retryDelay": 2000,
+    "exponentialBackoff": true,
+    "blockRange": 500,
+    "startBlock": "latest",
+    "confirmations": 6,
+    "eventFilters": [
+      "PortfolioRebalance",
+      "LiquidityEvent",
+      "SwapExecuted",
+      "OrderPlaced",
+      "OrderCancelled"
+    ],
+    "contractAddresses": {
+      "whitelist": [],
+      "blacklist": []
+    },
+    "gasTracking": {
+      "enabled": true,
+      "threshold": 500000
+    },
+    "mempool": {
+      "enabled": false,
+      "maxTxs": 500
+    }
+  },
+  "market": {
+    "updateInterval": 30000,
+    "priceFeeds": [
+      {
+        "name": "chainlink",
+        "priority": 1,
+        "endpoint": "https://api.chainlinklabs.com",
+        "timeout": 3000
+      },
+      {
+        "name": "pyth",
+        "priority": 2,
+        "endpoint": "https://hermes.pyth.network",
+        "timeout": 3000
+      },
+      {
+        "name": "sei-oracle",
+        "priority": 3,
+        "endpoint": "native",
+        "timeout": 2000
+      }
+    ],
+    "assets": [
+      {
+        "symbol": "SEI",
+        "coingeckoId": "sei-network",
+        "pythId": "0x53614f1cb0c031d4af66c04cb9c756234adad0e1cee85303795091499a4084eb",
+        "decimals": 6
+      },
+      {
+        "symbol": "ETH",
+        "coingeckoId": "ethereum",
+        "pythId": "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
+        "decimals": 18
+      },
+      {
+        "symbol": "BTC",
+        "coingeckoId": "bitcoin",
+        "pythId": "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43",
+        "decimals": 8
+      },
+      {
+        "symbol": "USDC",
+        "coingeckoId": "usd-coin",
+        "pythId": "0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a",
+        "decimals": 6
+      }
+    ],
+    "timeframes": ["5m", "15m", "1h", "4h", "1d"],
+    "rateLimits": {
+      "coingecko": {
+        "requestsPerMinute": 5,
+        "requestsPerHour": 50
+      },
+      "chainlink": {
+        "requestsPerSecond": 3
+      },
+      "pyth": {
+        "requestsPerSecond": 5
+      }
+    },
+    "caching": {
+      "enabled": true,
+      "ttl": 15000,
+      "maxSize": 500
+    }
+  },
+  "defi": {
+    "protocols": [
+      {
+        "name": "astroport",
+        "type": "dex",
+        "factoryAddress": "sei1466nf3zuxpya8q9emxukd7vftaf6h4psr0a07stwfkw0mt2n56wq83akzz",
+        "enabled": true,
+        "priority": 1
+      },
+      {
+        "name": "white-whale",
+        "type": "dex",
+        "factoryAddress": "sei1xxx",
+        "enabled": true,
+        "priority": 2
+      }
+    ],
+    "refreshInterval": 120000,
+    "liquidityThreshold": 50000,
+    "volumeThreshold": 5000,
+    "metrics": {
+      "tvl": true,
+      "volume24h": true,
+      "fees": true,
+      "apr": true,
+      "utilization": true
+    },
+    "pools": {
+      "minLiquidity": 10000,
+      "maxPools": 50,
+      "trackInactive": false
+    }
+  },
+  "analytics": {
+    "enabled": true,
+    "batchInterval": 30000,
+    "aggregationPeriods": ["1h", "6h", "24h", "7d"],
+    "metrics": [
+      "transaction_count",
+      "unique_addresses",
+      "gas_usage",
+      "dex_volume",
+      "liquidity_changes"
+    ],
+    "storage": {
+      "type": "timeseries",
+      "retention": "30d",
+      "compression": true
+    }
+  },
+  "monitoring": {
+    "healthCheck": {
+      "enabled": true,
+      "interval": 15000,
+      "endpoints": ["rpc", "rest", "websocket"]
+    },
+    "alerts": {
+      "enabled": true,
+      "thresholds": {
+        "blockDelay": 3000,
+        "rpcLatency": 1000,
+        "errorRate": 0.02
+      }
+    },
+    "logging": {
+      "level": "error",
+      "format": "json",
+      "outputs": ["file"]
+    }
+  }
+}

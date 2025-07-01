@@ -1,0 +1,280 @@
+{
+  "price": {
+    "indicators": {
+      "rsi": {
+        "period": 14,
+        "overbought": 70,
+        "oversold": 30,
+        "enabled": true
+      },
+      "macd": {
+        "fast": 12,
+        "slow": 26,
+        "signal": 9,
+        "enabled": true
+      },
+      "bollingerBands": {
+        "period": 20,
+        "stdDev": 2,
+        "enabled": true
+      },
+      "ema": {
+        "periods": [12, 26, 50, 200],
+        "enabled": true
+      },
+      "sma": {
+        "periods": [20, 50, 100, 200],
+        "enabled": true
+      },
+      "stochastic": {
+        "kPeriod": 14,
+        "dPeriod": 3,
+        "enabled": true
+      },
+      "atr": {
+        "period": 14,
+        "enabled": true
+      },
+      "williamsr": {
+        "period": 14,
+        "enabled": true
+      }
+    },
+    "metrics": [
+      "returns",
+      "log_returns",
+      "volatility",
+      "sharpe_ratio",
+      "max_drawdown",
+      "var_95",
+      "var_99",
+      "skewness",
+      "kurtosis",
+      "correlation"
+    ],
+    "timeframes": ["1m", "5m", "15m", "1h", "4h", "1d"],
+    "normalization": {
+      "method": "z-score",
+      "lookback": 252,
+      "enabled": true
+    },
+    "outlierDetection": {
+      "method": "iqr",
+      "threshold": 1.5,
+      "enabled": true
+    }
+  },
+  "volume": {
+    "metrics": [
+      "volume_24h",
+      "volume_change",
+      "volume_ratio",
+      "volume_profile",
+      "vwap",
+      "volume_weighted_return",
+      "money_flow_index",
+      "accumulation_distribution",
+      "on_balance_volume"
+    ],
+    "aggregations": [
+      "sum",
+      "mean",
+      "median",
+      "weighted_average",
+      "percentile_95",
+      "percentile_5"
+    ],
+    "timeframes": ["1h", "4h", "24h", "7d", "30d"],
+    "thresholds": {
+      "highVolume": 1000000,
+      "lowVolume": 1000,
+      "volumeSpike": 3.0
+    }
+  },
+  "onchain": {
+    "metrics": [
+      "gas_used",
+      "gas_price",
+      "tx_count",
+      "tx_success_rate",
+      "active_addresses",
+      "new_addresses",
+      "contract_calls",
+      "token_transfers",
+      "unique_senders",
+      "unique_receivers",
+      "block_utilization",
+      "network_fee_revenue"
+    ],
+    "timeframes": ["1h", "24h", "7d", "30d"],
+    "aggregations": {
+      "gas_used": ["sum", "mean", "max"],
+      "tx_count": ["sum", "mean"],
+      "active_addresses": ["count", "unique"],
+      "gas_price": ["mean", "median", "percentile_95"]
+    },
+    "ratios": [
+      "success_rate",
+      "contract_call_ratio",
+      "transfer_ratio",
+      "unique_address_ratio"
+    ]
+  },
+  "defi": {
+    "metrics": [
+      "tvl",
+      "tvl_change",
+      "volume_24h",
+      "fees_24h",
+      "apr",
+      "apy",
+      "utilization_rate",
+      "liquidity_ratio",
+      "impermanent_loss",
+      "yield_farming_returns"
+    ],
+    "protocols": {
+      "dex": [
+        "swap_volume",
+        "liquidity_depth",
+        "price_impact",
+        "slippage",
+        "pool_concentration"
+      ],
+      "lending": [
+        "borrow_rate",
+        "supply_rate",
+        "utilization",
+        "liquidation_threshold",
+        "health_factor"
+      ],
+      "staking": [
+        "staking_ratio",
+        "validator_count",
+        "delegation_ratio",
+        "slash_events"
+      ]
+    },
+    "timeframes": ["1h", "24h", "7d", "30d"],
+    "correlations": {
+      "enabled": true,
+      "pairs": [
+        ["tvl", "volume"],
+        ["apr", "utilization"],
+        ["fees", "volume"]
+      ]
+    }
+  },
+  "market": {
+    "microstructure": {
+      "bid_ask_spread",
+      "market_depth",
+      "order_book_imbalance",
+      "trade_size_distribution",
+      "price_impact_curve"
+    },
+    "sentiment": {
+      "fear_greed_index",
+      "funding_rates",
+      "options_put_call_ratio",
+      "social_sentiment",
+      "whale_activity"
+    },
+    "crossAsset": {
+      "correlations": {
+        "enabled": true,
+        "assets": ["SEI", "ETH", "BTC", "ATOM"],
+        "timeframes": ["1h", "24h", "7d"]
+      },
+      "cointegration": {
+        "enabled": true,
+        "lookback": 90
+      }
+    }
+  },
+  "portfolio": {
+    "riskMetrics": [
+      "portfolio_value",
+      "pnl",
+      "unrealized_pnl",
+      "portfolio_beta",
+      "portfolio_alpha",
+      "information_ratio",
+      "sortino_ratio",
+      "calmar_ratio",
+      "max_drawdown_duration"
+    ],
+    "allocation": {
+      "weights": true,
+      "concentration": true,
+      "diversification_ratio": true,
+      "effective_assets": true
+    },
+    "rebalancing": {
+      "frequency": "daily",
+      "threshold": 0.05,
+      "methods": ["equal_weight", "risk_parity", "momentum", "mean_reversion"]
+    }
+  },
+  "features": {
+    "engineering": {
+      "lag_features": {
+        "enabled": true,
+        "lags": [1, 2, 3, 5, 10, 20]
+      },
+      "rolling_features": {
+        "enabled": true,
+        "windows": [7, 14, 30, 60, 90],
+        "functions": ["mean", "std", "min", "max", "skew", "kurt"]
+      },
+      "interaction_features": {
+        "enabled": true,
+        "max_degree": 2
+      },
+      "polynomial_features": {
+        "enabled": false,
+        "degree": 2
+      }
+    },
+    "selection": {
+      "method": "mutual_info",
+      "k_best": 50,
+      "variance_threshold": 0.01,
+      "correlation_threshold": 0.95
+    },
+    "scaling": {
+      "method": "robust",
+      "feature_range": [-1, 1],
+      "quantile_range": [25, 75]
+    }
+  },
+  "validation": {
+    "splits": {
+      "train": 0.7,
+      "validation": 0.15,
+      "test": 0.15
+    },
+    "method": "time_series_split",
+    "n_splits": 5,
+    "gap": 0,
+    "embargo": "1d"
+  },
+  "monitoring": {
+    "drift_detection": {
+      "enabled": true,
+      "method": "ks_test",
+      "threshold": 0.05,
+      "window": 1000
+    },
+    "feature_importance": {
+      "enabled": true,
+      "method": "permutation",
+      "n_repeats": 10
+    },
+    "correlation_monitoring": {
+      "enabled": true,
+      "threshold": 0.9,
+      "window": 100
+    }
+  }
+}

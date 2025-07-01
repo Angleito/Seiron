@@ -1,0 +1,57 @@
+{
+  "name": "@sei-data-collection/config",
+  "version": "1.0.0",
+  "description": "Type-safe configuration system for Sei data collection and portfolio optimization pipeline",
+  "main": "utils/index.js",
+  "types": "types/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "validate": "node -e \"require('./utils').validateConfigs()\"",
+    "test": "jest",
+    "lint": "eslint **/*.ts",
+    "format": "prettier --write **/*.{ts,json}",
+    "schema:validate": "ajv validate -s schemas/*.json -d *.json"
+  },
+  "keywords": [
+    "configuration",
+    "sei",
+    "blockchain",
+    "defi",
+    "typescript",
+    "validation",
+    "schema"
+  ],
+  "author": "Sei Data Collection Team",
+  "license": "MIT",
+  "dependencies": {
+    "ajv": "^8.12.0",
+    "ajv-formats": "^2.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.45.0",
+    "jest": "^29.6.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.1.0"
+  },
+  "files": [
+    "*.json",
+    "types/",
+    "schemas/",
+    "utils/",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sei-network/data-collection-config"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

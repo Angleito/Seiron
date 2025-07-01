@@ -1,0 +1,220 @@
+{
+  "training": {
+    "baseModel": "gpt-4",
+    "maxTokens": 4096,
+    "temperature": 0.1,
+    "topP": 0.9,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "trainingExamples": 10000,
+    "validationSplit": 0.2,
+    "testSplit": 0.1,
+    "randomSeed": 42,
+    "dataAugmentation": {
+      "enabled": true,
+      "techniques": ["paraphrase", "synonym_replacement", "noise_injection"],
+      "augmentationRatio": 0.2
+    }
+  },
+  "fineTuning": {
+    "learningRate": 0.0001,
+    "learningRateSchedule": "cosine",
+    "warmupSteps": 100,
+    "batchSize": 32,
+    "gradientAccumulationSteps": 1,
+    "epochs": 3,
+    "maxSteps": null,
+    "suffix": "sei-portfolio",
+    "validationFrequency": 100,
+    "saveStrategy": "steps",
+    "saveSteps": 500,
+    "earlyStoppingPatience": 3,
+    "weightDecay": 0.01,
+    "adamEpsilon": 1e-8,
+    "gradientClipping": 1.0
+  },
+  "models": {
+    "portfolioOptimization": {
+      "modelId": "ft:gpt-4:sei-portfolio-opt",
+      "description": "Optimizes portfolio allocation based on market data and risk parameters",
+      "maxTokens": 2048,
+      "temperature": 0.1,
+      "systemPrompt": "You are an expert portfolio optimizer for DeFi protocols on Sei Network. Analyze market data and provide optimal allocation strategies."
+    },
+    "riskAssessment": {
+      "modelId": "ft:gpt-4:sei-risk-assess",
+      "description": "Assesses portfolio risk given current market conditions",
+      "maxTokens": 2048,
+      "temperature": 0.05,
+      "systemPrompt": "You are a risk assessment specialist for cryptocurrency portfolios. Evaluate risk metrics and provide detailed risk analysis."
+    },
+    "marketAnalysis": {
+      "modelId": "ft:gpt-4:sei-market-analysis",
+      "description": "Provides comprehensive market analysis and trading insights",
+      "maxTokens": 3072,
+      "temperature": 0.2,
+      "systemPrompt": "You are a market analyst specializing in Sei Network and DeFi protocols. Provide detailed market analysis and trading recommendations."
+    },
+    "liquidityOptimization": {
+      "modelId": "ft:gpt-4:sei-liquidity-opt",
+      "description": "Optimizes liquidity provision strategies across DEXes",
+      "maxTokens": 2048,
+      "temperature": 0.1,
+      "systemPrompt": "You are a liquidity optimization expert for DEX protocols. Analyze liquidity pools and provide optimal LP strategies."
+    }
+  },
+  "prompts": {
+    "portfolioOptimization": {
+      "system": "Optimize portfolio allocation based on market data",
+      "template": "Given the following market data: {market_data}, current portfolio: {portfolio}, risk tolerance: {risk_tolerance}, and investment horizon: {time_horizon}, provide an optimal allocation strategy with reasoning.",
+      "examples": [
+        {
+          "input": "Market data showing high volatility in SEI, stable USDC, rising ETH",
+          "output": "Recommend reducing SEI exposure by 20%, maintaining USDC at 30%, increasing ETH to 35%"
+        }
+      ]
+    },
+    "riskAssessment": {
+      "system": "Assess portfolio risk given current market conditions",
+      "template": "Analyze the risk profile of this portfolio: {portfolio} given market conditions: {market_conditions}. Consider volatility, correlation, and concentration risks.",
+      "examples": [
+        {
+          "input": "Portfolio: 60% SEI, 30% ETH, 10% USDC in high volatility market",
+          "output": "High risk due to crypto concentration and market volatility. VaR: 15%, max drawdown risk: 45%"
+        }
+      ]
+    },
+    "marketAnalysis": {
+      "system": "Provide comprehensive market analysis and trading insights",
+      "template": "Analyze current market conditions for Sei Network: {sei_metrics}, broader crypto market: {crypto_metrics}, and DeFi sector: {defi_metrics}. Provide trading insights.",
+      "examples": [
+        {
+          "input": "SEI price up 15%, volume spike 200%, TVL increasing across protocols",
+          "output": "Bullish momentum with strong fundamentals. Expect continued uptrend with resistance at $0.85"
+        }
+      ]
+    },
+    "liquidityOptimization": {
+      "system": "Optimize liquidity provision strategies across DEXes",
+      "template": "Given these liquidity pools: {pools}, current APYs: {apys}, and impermanent loss risks: {il_risks}, recommend optimal LP strategy for capital: {capital}.",
+      "examples": [
+        {
+          "input": "SEI/USDC pool 25% APY, SEI/ETH pool 35% APY, high IL risk on SEI/ETH",
+          "output": "Allocate 70% to SEI/USDC for stability, 30% to SEI/ETH for yield. Use concentrated liquidity ranges."
+        }
+      ]
+    }
+  },
+  "dataPreparation": {
+    "tokenization": {
+      "model": "tiktoken",
+      "encoding": "cl100k_base",
+      "maxSequenceLength": 4096,
+      "truncationStrategy": "tail"
+    },
+    "formatting": {
+      "inputFormat": "json",
+      "outputFormat": "json",
+      "includeMetadata": true,
+      "timestampFormat": "iso8601"
+    },
+    "validation": {
+      "schemaValidation": true,
+      "dataQualityChecks": true,
+      "duplicateDetection": true,
+      "outlierDetection": true
+    }
+  },
+  "evaluation": {
+    "metrics": [
+      "accuracy",
+      "precision",
+      "recall",
+      "f1_score",
+      "bleu_score",
+      "rouge_score",
+      "perplexity",
+      "loss"
+    ],
+    "benchmarks": {
+      "portfolioOptimization": {
+        "sharpeRatio": "> 1.5",
+        "maxDrawdown": "< 0.2",
+        "volatility": "< 0.3"
+      },
+      "riskAssessment": {
+        "accuracy": "> 0.85",
+        "precision": "> 0.8",
+        "recall": "> 0.8"
+      }
+    },
+    "backtesting": {
+      "enabled": true,
+      "timeframe": "1y",
+      "frequency": "daily",
+      "metrics": ["returns", "sharpe", "sortino", "max_drawdown", "calmar"]
+    }
+  },
+  "deployment": {
+    "environment": "production",
+    "scalingConfig": {
+      "minInstances": 1,
+      "maxInstances": 10,
+      "targetUtilization": 0.7
+    },
+    "monitoring": {
+      "enabled": true,
+      "logLevel": "info",
+      "metricsCollection": true,
+      "alerting": {
+        "errorRate": "> 0.05",
+        "latency": "> 2000ms",
+        "tokenUsage": "> 1000000/day"
+      }
+    },
+    "rateLimiting": {
+      "requestsPerMinute": 60,
+      "tokensPerMinute": 40000,
+      "requestsPerDay": 10000
+    }
+  },
+  "security": {
+    "apiKeyRotation": {
+      "enabled": true,
+      "frequency": "30d"
+    },
+    "dataEncryption": {
+      "atRest": true,
+      "inTransit": true,
+      "algorithm": "AES-256"
+    },
+    "accessControl": {
+      "rbac": true,
+      "apiKeyRequired": true,
+      "ipWhitelist": []
+    },
+    "auditLogging": {
+      "enabled": true,
+      "includeRequestBody": false,
+      "retention": "90d"
+    }
+  },
+  "costs": {
+    "budgetLimits": {
+      "training": 1000,
+      "inference": 500,
+      "storage": 100
+    },
+    "currency": "USD",
+    "alertThresholds": {
+      "daily": 50,
+      "weekly": 300,
+      "monthly": 1000
+    },
+    "optimization": {
+      "caching": true,
+      "batchRequests": true,
+      "modelSelection": "cost_optimized"
+    }
+  }
+}

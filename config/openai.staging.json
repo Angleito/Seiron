@@ -1,0 +1,179 @@
+{
+  "training": {
+    "baseModel": "gpt-3.5-turbo",
+    "maxTokens": 2048,
+    "temperature": 0.2,
+    "topP": 0.9,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "trainingExamples": 1000,
+    "validationSplit": 0.25,
+    "testSplit": 0.15,
+    "randomSeed": 42,
+    "dataAugmentation": {
+      "enabled": false,
+      "techniques": ["paraphrase"],
+      "augmentationRatio": 0.1
+    }
+  },
+  "fineTuning": {
+    "learningRate": 0.001,
+    "learningRateSchedule": "linear",
+    "warmupSteps": 50,
+    "batchSize": 16,
+    "gradientAccumulationSteps": 1,
+    "epochs": 2,
+    "maxSteps": null,
+    "suffix": "sei-staging",
+    "validationFrequency": 50,
+    "saveStrategy": "steps",
+    "saveSteps": 250,
+    "earlyStoppingPatience": 2,
+    "weightDecay": 0.01,
+    "adamEpsilon": 1e-8,
+    "gradientClipping": 1.0
+  },
+  "models": {
+    "portfolioOptimization": {
+      "modelId": "ft:gpt-3.5-turbo:sei-portfolio-staging",
+      "description": "Staging portfolio optimizer for testing",
+      "maxTokens": 1024,
+      "temperature": 0.2,
+      "systemPrompt": "You are a portfolio optimizer for testing on Sei Network staging environment."
+    },
+    "riskAssessment": {
+      "modelId": "ft:gpt-3.5-turbo:sei-risk-staging",
+      "description": "Staging risk assessment for testing",
+      "maxTokens": 1024,
+      "temperature": 0.1,
+      "systemPrompt": "You are a risk assessment specialist for testing cryptocurrency portfolios."
+    }
+  },
+  "prompts": {
+    "portfolioOptimization": {
+      "system": "Optimize portfolio allocation for staging testing",
+      "template": "Given test market data: {market_data}, provide allocation strategy.",
+      "examples": [
+        {
+          "input": "Test market data with moderate volatility",
+          "output": "Balanced allocation for testing: 40% SEI, 30% ETH, 20% USDC, 10% BTC"
+        }
+      ]
+    },
+    "riskAssessment": {
+      "system": "Assess portfolio risk for staging environment",
+      "template": "Analyze test portfolio: {portfolio} for risk assessment validation.",
+      "examples": [
+        {
+          "input": "Test portfolio with mixed assets",
+          "output": "Medium risk profile with diversification benefits"
+        }
+      ]
+    }
+  },
+  "dataPreparation": {
+    "tokenization": {
+      "model": "tiktoken",
+      "encoding": "cl100k_base",
+      "maxSequenceLength": 2048,
+      "truncationStrategy": "tail"
+    },
+    "formatting": {
+      "inputFormat": "json",
+      "outputFormat": "json",
+      "includeMetadata": true,
+      "timestampFormat": "iso8601"
+    },
+    "validation": {
+      "schemaValidation": true,
+      "dataQualityChecks": true,
+      "duplicateDetection": true,
+      "outlierDetection": false
+    }
+  },
+  "evaluation": {
+    "metrics": [
+      "accuracy",
+      "precision",
+      "recall",
+      "f1_score",
+      "loss"
+    ],
+    "benchmarks": {
+      "portfolioOptimization": {
+        "sharpeRatio": "> 1.0",
+        "maxDrawdown": "< 0.3"
+      },
+      "riskAssessment": {
+        "accuracy": "> 0.75"
+      }
+    },
+    "backtesting": {
+      "enabled": true,
+      "timeframe": "3m",
+      "frequency": "daily",
+      "metrics": ["returns", "sharpe", "max_drawdown"]
+    }
+  },
+  "deployment": {
+    "environment": "staging",
+    "scalingConfig": {
+      "minInstances": 1,
+      "maxInstances": 3,
+      "targetUtilization": 0.8
+    },
+    "monitoring": {
+      "enabled": true,
+      "logLevel": "info",
+      "metricsCollection": true,
+      "alerting": {
+        "errorRate": "> 0.1",
+        "latency": "> 5000ms"
+      }
+    },
+    "rateLimiting": {
+      "requestsPerMinute": 30,
+      "tokensPerMinute": 20000,
+      "requestsPerDay": 5000
+    }
+  },
+  "security": {
+    "apiKeyRotation": {
+      "enabled": false,
+      "frequency": "7d"
+    },
+    "dataEncryption": {
+      "atRest": false,
+      "inTransit": true,
+      "algorithm": "AES-256"
+    },
+    "accessControl": {
+      "rbac": false,
+      "apiKeyRequired": true,
+      "ipWhitelist": []
+    },
+    "auditLogging": {
+      "enabled": true,
+      "includeRequestBody": true,
+      "retention": "30d"
+    }
+  },
+  "costs": {
+    "budgetLimits": {
+      "training": 100,
+      "inference": 50,
+      "storage": 10
+    },
+    "currency": "USD",
+    "alertThresholds": {
+      "daily": 10,
+      "weekly": 50,
+      "monthly": 150
+    },
+    "optimization": {
+      "caching": true,
+      "batchRequests": true,
+      "modelSelection": "cost_optimized"
+    }
+  }
+}

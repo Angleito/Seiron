@@ -1,0 +1,81 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+solc_version = "0.8.19"
+optimizer = true
+optimizer_runs = 1000000
+via_ir = true
+bytecode_hash = "none"
+cbor_metadata = false
+sparse_mode = true
+
+# Sei-specific optimizations
+evm_version = "london"
+gas_limit = 30000000
+gas_price = 1000000000  # 1 gwei
+
+# Test configuration
+test = "test"
+cache_path = "cache"
+broadcast = "broadcast"
+libs = ["lib"]
+
+# Formatter configuration
+[fmt]
+line_length = 100
+tab_width = 4
+bracket_spacing = true
+int_types = "long"
+
+# Documentation configuration
+[doc]
+out = "docs"
+title = "Sei Data Logger"
+repository = "https://github.com/your-repo/sei-data-logger"
+
+# Remappings for dependencies
+remappings = [
+    "forge-std/=lib/forge-std/src/",
+    "@openzeppelin/=lib/openzeppelin-contracts/",
+    "solmate/=lib/solmate/src/"
+]
+
+# RPC endpoints
+[rpc_endpoints]
+sei_mainnet = "https://evm-rpc.sei-apis.com"
+sei_testnet = "https://evm-rpc-testnet.sei-apis.com"
+localhost = "http://localhost:8545"
+
+# Etherscan configuration for verification
+[etherscan]
+sei_mainnet = { key = "${SEI_ETHERSCAN_API_KEY}", url = "https://seitrace.com/api" }
+sei_testnet = { key = "${SEI_ETHERSCAN_API_KEY}", url = "https://seitrace.com/api" }
+
+# Invariant testing configuration
+[invariant]
+runs = 1000
+depth = 100
+fail_on_revert = true
+call_override = false
+dictionary_weight = 80
+include_storage = true
+include_push_bytes = true
+
+# Fuzz testing configuration
+[fuzz]
+runs = 10000
+max_test_rejects = 65536
+seed = '0x1'
+dictionary_weight = 40
+include_storage = true
+include_push_bytes = true
+
+# Gas reporting
+[gas_reports]
+exclude = ["test/**/*"]
+
+# CI configuration
+[ci]
+fuzz_runs = 5000
+invariant_runs = 100

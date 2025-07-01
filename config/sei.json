@@ -1,0 +1,99 @@
+{
+  "networks": {
+    "mainnet": {
+      "chainId": 1329,
+      "name": "pacific-1",
+      "rpcUrl": "https://evm-rpc.sei-apis.com",
+      "cosmosRpcUrl": "https://rpc.pacific-1.sei.io",
+      "restUrl": "https://rest.pacific-1.sei.io",
+      "explorerUrl": "https://seitrace.com",
+      "blockTime": 400,
+      "gasPrice": "0.01usei",
+      "currency": {
+        "coinDenom": "SEI",
+        "coinMinimalDenom": "usei",
+        "coinDecimals": 6
+      },
+      "features": {
+        "evm": true,
+        "cosmwasm": true,
+        "ibc": true
+      },
+      "endpoints": {
+        "websocket": "wss://evm-ws.sei-apis.com",
+        "grpc": "grpc.pacific-1.sei.io:443"
+      }
+    },
+    "testnet": {
+      "chainId": 713715,
+      "name": "atlantic-2",
+      "rpcUrl": "https://evm-rpc-testnet.sei-apis.com",
+      "cosmosRpcUrl": "https://rpc.atlantic-2.sei.io",
+      "restUrl": "https://rest.atlantic-2.sei.io",
+      "explorerUrl": "https://seitrace.com/?chain=atlantic-2",
+      "blockTime": 400,
+      "gasPrice": "0.01usei",
+      "currency": {
+        "coinDenom": "SEI",
+        "coinMinimalDenom": "usei",
+        "coinDecimals": 6
+      },
+      "features": {
+        "evm": true,
+        "cosmwasm": true,
+        "ibc": true
+      },
+      "endpoints": {
+        "websocket": "wss://evm-ws-testnet.sei-apis.com",
+        "grpc": "grpc.atlantic-2.sei.io:443"
+      }
+    },
+    "devnet": {
+      "chainId": 328,
+      "name": "sei-devnet-4",
+      "rpcUrl": "https://evm-rpc-arctic-1.sei-apis.com",
+      "cosmosRpcUrl": "https://rpc.arctic-1.sei.io",
+      "restUrl": "https://rest.arctic-1.sei.io",
+      "explorerUrl": "https://seitrace.com/?chain=arctic-1",
+      "blockTime": 400,
+      "gasPrice": "0.01usei",
+      "currency": {
+        "coinDenom": "SEI",
+        "coinMinimalDenom": "usei",
+        "coinDecimals": 6
+      },
+      "features": {
+        "evm": true,
+        "cosmwasm": true,
+        "ibc": true
+      },
+      "endpoints": {
+        "websocket": "wss://evm-ws-arctic-1.sei-apis.com",
+        "grpc": "grpc.arctic-1.sei.io:443"
+      }
+    }
+  },
+  "defaults": {
+    "network": "mainnet",
+    "timeout": 30000,
+    "retries": 3,
+    "backoff": "exponential"
+  },
+  "contracts": {
+    "mainnet": {
+      "dexFactory": "sei1466nf3zuxpya8q9emxukd7vftaf6h4psr0a07stwfkw0mt2n56wq83akzz",
+      "multicall": "sei1hrpna9v7vs3stzyd4z3xf00676kf78zpe2u5ksvljswn2vnjp3ys4odrxs",
+      "priceOracle": "sei1dkdtu7r7aph6t5h8t5yq49uy3l5n7zj9q5nj2jw5fkqzs7jz5q7sxm8w9x"
+    },
+    "testnet": {
+      "dexFactory": "sei14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9sh9m79m",
+      "multicall": "sei1x2fgaaqecvk8kwuqkjqcj27juze2kyk5n8n7gxm5t5ktm4l2z9xs6w6w8k",
+      "priceOracle": "sei1test2oracle3example4address5here6for7testing8purposes9only0"
+    },
+    "devnet": {
+      "dexFactory": "sei1devnet1factory2example3address4here5for6development7purposes8only9",
+      "multicall": "sei1devnet1multicall2example3address4here5for6development7purposes8",
+      "priceOracle": "sei1devnet1oracle2example3address4here5for6development7purposes8only9"
+    }
+  }
+}

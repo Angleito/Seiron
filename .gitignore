@@ -1,0 +1,159 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Build outputs
+dist/
+build/
+out/
+.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+.nyc_output
+
+# ESLint cache
+.eslintcache
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# Logs
+logs
+*.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Foundry / Solidity
+cache/
+artifacts/
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+contracts/lib/
+
+# Private keys and sensitive data
+*.key
+*.pem
+wallet.json
+keystore/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# AI Models and datasets (except .gitkeep)
+datasets/raw/*
+!datasets/raw/.gitkeep
+datasets/processed/*
+!datasets/processed/.gitkeep
+datasets/ai-features/*
+!datasets/ai-features/.gitkeep
+models/
+*.model
+*.pkl
+*.joblib
+
+# Testing
+.jest/
+test-results/
+junit.xml
+
+# Documentation
+docs/build/
+
+# Local development
+.local/
+.temp/
+
+# Package managers
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# TypeScript
+*.tsbuildinfo
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Monitoring and metrics
+.prometheus/
+metrics/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Kubernetes
+*.kubeconfig
+
+# Terraform
+*.tfstate
+*.tfstate.backup
+.terraform/
+
+# Analytics and tracking
+.analytics/

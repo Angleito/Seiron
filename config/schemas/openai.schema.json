@@ -1,0 +1,552 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OpenAI Configuration Schema",
+  "type": "object",
+  "required": ["training", "fineTuning", "models", "prompts"],
+  "properties": {
+    "training": {
+      "type": "object",
+      "required": [
+        "baseModel",
+        "maxTokens",
+        "temperature",
+        "trainingExamples",
+        "validationSplit"
+      ],
+      "properties": {
+        "baseModel": {
+          "type": "string",
+          "enum": ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o"]
+        },
+        "maxTokens": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8192
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "topP": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "frequencyPenalty": {
+          "type": "number",
+          "minimum": -2,
+          "maximum": 2
+        },
+        "presencePenalty": {
+          "type": "number",
+          "minimum": -2,
+          "maximum": 2
+        },
+        "trainingExamples": {
+          "type": "integer",
+          "minimum": 100
+        },
+        "validationSplit": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 0.5
+        },
+        "testSplit": {
+          "type": "number",
+          "minimum": 0.05,
+          "maximum": 0.3
+        },
+        "randomSeed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "dataAugmentation": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "techniques": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["paraphrase", "synonym_replacement", "noise_injection", "back_translation"]
+              }
+            },
+            "augmentationRatio": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        }
+      }
+    },
+    "fineTuning": {
+      "type": "object",
+      "required": ["learningRate", "batchSize", "epochs", "suffix"],
+      "properties": {
+        "learningRate": {
+          "type": "number",
+          "minimum": 0.0001,
+          "maximum": 0.1
+        },
+        "learningRateSchedule": {
+          "type": "string",
+          "enum": ["constant", "linear", "cosine", "polynomial"]
+        },
+        "warmupSteps": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "batchSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 256
+        },
+        "gradientAccumulationSteps": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "epochs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50
+        },
+        "maxSteps": {
+          "type": ["integer", "null"],
+          "minimum": 1
+        },
+        "suffix": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9-_]{1,40}$"
+        },
+        "validationFrequency": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "saveStrategy": {
+          "type": "string",
+          "enum": ["steps", "epoch", "no"]
+        },
+        "saveSteps": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "earlyStoppingPatience": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "weightDecay": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "adamEpsilon": {
+          "type": "number",
+          "minimum": 1e-12,
+          "maximum": 1e-3
+        },
+        "gradientClipping": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 10
+        }
+      }
+    },
+    "models": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z][a-zA-Z0-9_]*$": {
+          "$ref": "#/definitions/ModelConfig"
+        }
+      },
+      "minProperties": 1
+    },
+    "prompts": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z][a-zA-Z0-9_]*$": {
+          "$ref": "#/definitions/PromptConfig"
+        }
+      },
+      "minProperties": 1
+    },
+    "dataPreparation": {
+      "type": "object",
+      "properties": {
+        "tokenization": {
+          "type": "object",
+          "properties": {
+            "model": {
+              "type": "string",
+              "enum": ["tiktoken", "sentencepiece", "bpe"]
+            },
+            "encoding": {
+              "type": "string",
+              "enum": ["cl100k_base", "p50k_base", "r50k_base"]
+            },
+            "maxSequenceLength": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 8192
+            },
+            "truncationStrategy": {
+              "type": "string",
+              "enum": ["head", "tail", "middle"]
+            }
+          }
+        },
+        "formatting": {
+          "type": "object",
+          "properties": {
+            "inputFormat": {
+              "type": "string",
+              "enum": ["json", "csv", "txt", "parquet"]
+            },
+            "outputFormat": {
+              "type": "string",
+              "enum": ["json", "csv", "txt", "parquet"]
+            },
+            "includeMetadata": {
+              "type": "boolean"
+            },
+            "timestampFormat": {
+              "type": "string",
+              "enum": ["iso8601", "unix", "custom"]
+            }
+          }
+        },
+        "validation": {
+          "type": "object",
+          "properties": {
+            "schemaValidation": {
+              "type": "boolean"
+            },
+            "dataQualityChecks": {
+              "type": "boolean"
+            },
+            "duplicateDetection": {
+              "type": "boolean"
+            },
+            "outlierDetection": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "evaluation": {
+      "type": "object",
+      "properties": {
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "accuracy",
+              "precision",
+              "recall",
+              "f1_score",
+              "bleu_score",
+              "rouge_score",
+              "perplexity",
+              "loss"
+            ]
+          }
+        },
+        "benchmarks": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z][a-zA-Z0-9_]*$": {
+              "type": "object",
+              "patternProperties": {
+                "^[a-zA-Z][a-zA-Z0-9_]*$": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "backtesting": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "timeframe": {
+              "type": "string",
+              "pattern": "^[0-9]+(d|w|m|y)$"
+            },
+            "frequency": {
+              "type": "string",
+              "enum": ["daily", "weekly", "monthly"]
+            },
+            "metrics": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "deployment": {
+      "type": "object",
+      "properties": {
+        "environment": {
+          "type": "string",
+          "enum": ["development", "staging", "production"]
+        },
+        "scalingConfig": {
+          "type": "object",
+          "properties": {
+            "minInstances": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxInstances": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "targetUtilization": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 1
+            }
+          }
+        },
+        "monitoring": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "logLevel": {
+              "type": "string",
+              "enum": ["debug", "info", "warn", "error"]
+            },
+            "metricsCollection": {
+              "type": "boolean"
+            },
+            "alerting": {
+              "type": "object",
+              "patternProperties": {
+                "^[a-zA-Z][a-zA-Z0-9_]*$": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "rateLimiting": {
+          "type": "object",
+          "properties": {
+            "requestsPerMinute": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "tokensPerMinute": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "requestsPerDay": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    },
+    "security": {
+      "type": "object",
+      "properties": {
+        "apiKeyRotation": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "frequency": {
+              "type": "string",
+              "pattern": "^[0-9]+(d|w|m)$"
+            }
+          }
+        },
+        "dataEncryption": {
+          "type": "object",
+          "properties": {
+            "atRest": {
+              "type": "boolean"
+            },
+            "inTransit": {
+              "type": "boolean"
+            },
+            "algorithm": {
+              "type": "string",
+              "enum": ["AES-256", "AES-128", "ChaCha20"]
+            }
+          }
+        },
+        "accessControl": {
+          "type": "object",
+          "properties": {
+            "rbac": {
+              "type": "boolean"
+            },
+            "apiKeyRequired": {
+              "type": "boolean"
+            },
+            "ipWhitelist": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "ipv4"
+              }
+            }
+          }
+        },
+        "auditLogging": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "includeRequestBody": {
+              "type": "boolean"
+            },
+            "retention": {
+              "type": "string",
+              "pattern": "^[0-9]+(d|w|m|y)$"
+            }
+          }
+        }
+      }
+    },
+    "costs": {
+      "type": "object",
+      "properties": {
+        "budgetLimits": {
+          "type": "object",
+          "properties": {
+            "training": {
+              "type": "number",
+              "minimum": 0
+            },
+            "inference": {
+              "type": "number",
+              "minimum": 0
+            },
+            "storage": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "currency": {
+          "type": "string",
+          "enum": ["USD", "EUR", "GBP", "JPY"]
+        },
+        "alertThresholds": {
+          "type": "object",
+          "properties": {
+            "daily": {
+              "type": "number",
+              "minimum": 0
+            },
+            "weekly": {
+              "type": "number",
+              "minimum": 0
+            },
+            "monthly": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "optimization": {
+          "type": "object",
+          "properties": {
+            "caching": {
+              "type": "boolean"
+            },
+            "batchRequests": {
+              "type": "boolean"
+            },
+            "modelSelection": {
+              "type": "string",
+              "enum": ["performance_optimized", "cost_optimized", "balanced"]
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "ModelConfig": {
+      "type": "object",
+      "required": ["modelId", "description", "maxTokens", "temperature", "systemPrompt"],
+      "properties": {
+        "modelId": {
+          "type": "string",
+          "pattern": "^ft:gpt-[34](-turbo)?:[a-zA-Z0-9-_]+$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 500
+        },
+        "maxTokens": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8192
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "systemPrompt": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 2000
+        }
+      }
+    },
+    "PromptConfig": {
+      "type": "object",
+      "required": ["system", "template"],
+      "properties": {
+        "system": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 500
+        },
+        "template": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 2000
+        },
+        "examples": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["input", "output"],
+            "properties": {
+              "input": {
+                "type": "string",
+                "minLength": 1
+              },
+              "output": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

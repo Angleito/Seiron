@@ -1,0 +1,536 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Features Configuration Schema",
+  "type": "object",
+  "required": ["price", "volume", "onchain", "defi", "features", "validation"],
+  "properties": {
+    "price": {
+      "type": "object",
+      "required": ["indicators", "metrics", "timeframes"],
+      "properties": {
+        "indicators": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z][a-zA-Z0-9_]*$": {
+              "$ref": "#/definitions/Indicator"
+            }
+          }
+        },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "returns",
+              "log_returns",
+              "volatility",
+              "sharpe_ratio",
+              "max_drawdown",
+              "var_95",
+              "var_99",
+              "skewness",
+              "kurtosis",
+              "correlation"
+            ]
+          }
+        },
+        "timeframes": {
+          "$ref": "#/definitions/TimeFrames"
+        },
+        "normalization": {
+          "type": "object",
+          "properties": {
+            "method": {
+              "type": "string",
+              "enum": ["z-score", "min-max", "robust", "quantile"]
+            },
+            "lookback": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "enabled": {
+              "type": "boolean"
+            }
+          }
+        },
+        "outlierDetection": {
+          "type": "object",
+          "properties": {
+            "method": {
+              "type": "string",
+              "enum": ["iqr", "z-score", "isolation-forest", "lof"]
+            },
+            "threshold": {
+              "type": "number",
+              "minimum": 0
+            },
+            "enabled": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "volume": {
+      "type": "object",
+      "required": ["metrics", "aggregations", "timeframes"],
+      "properties": {
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "aggregations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["sum", "mean", "median", "weighted_average", "percentile_95", "percentile_5"]
+          }
+        },
+        "timeframes": {
+          "$ref": "#/definitions/TimeFrames"
+        },
+        "thresholds": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z][a-zA-Z0-9_]*$": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "onchain": {
+      "type": "object",
+      "required": ["metrics", "timeframes"],
+      "properties": {
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "timeframes": {
+          "$ref": "#/definitions/TimeFrames"
+        },
+        "aggregations": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z][a-zA-Z0-9_]*$": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["sum", "mean", "max", "min", "count", "unique"]
+              }
+            }
+          }
+        },
+        "ratios": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "defi": {
+      "type": "object",
+      "required": ["metrics", "protocols", "timeframes"],
+      "properties": {
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "protocols": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z][a-zA-Z0-9_]*$": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "timeframes": {
+          "$ref": "#/definitions/TimeFrames"
+        },
+        "correlations": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "pairs": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 2,
+                "maxItems": 2
+              }
+            }
+          }
+        }
+      }
+    },
+    "market": {
+      "type": "object",
+      "properties": {
+        "microstructure": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sentiment": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "crossAsset": {
+          "type": "object",
+          "properties": {
+            "correlations": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "assets": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "timeframes": {
+                  "$ref": "#/definitions/TimeFrames"
+                }
+              }
+            },
+            "cointegration": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "lookback": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "portfolio": {
+      "type": "object",
+      "required": ["riskMetrics", "allocation", "rebalancing"],
+      "properties": {
+        "riskMetrics": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allocation": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z][a-zA-Z0-9_]*$": {
+              "type": "boolean"
+            }
+          }
+        },
+        "rebalancing": {
+          "type": "object",
+          "properties": {
+            "frequency": {
+              "type": "string",
+              "enum": ["hourly", "daily", "weekly", "monthly"]
+            },
+            "threshold": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "methods": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["equal_weight", "risk_parity", "momentum", "mean_reversion"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "features": {
+      "type": "object",
+      "required": ["engineering", "selection", "scaling"],
+      "properties": {
+        "engineering": {
+          "type": "object",
+          "properties": {
+            "lag_features": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "lags": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
+              }
+            },
+            "rolling_features": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "windows": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 2
+                  }
+                },
+                "functions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": ["mean", "std", "min", "max", "skew", "kurt", "median", "quantile"]
+                  }
+                }
+              }
+            },
+            "interaction_features": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "max_degree": {
+                  "type": "integer",
+                  "minimum": 2,
+                  "maximum": 5
+                }
+              }
+            },
+            "polynomial_features": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "degree": {
+                  "type": "integer",
+                  "minimum": 2,
+                  "maximum": 5
+                }
+              }
+            }
+          }
+        },
+        "selection": {
+          "type": "object",
+          "properties": {
+            "method": {
+              "type": "string",
+              "enum": ["mutual_info", "f_score", "chi2", "rfe", "lasso"]
+            },
+            "k_best": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "variance_threshold": {
+              "type": "number",
+              "minimum": 0
+            },
+            "correlation_threshold": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        },
+        "scaling": {
+          "type": "object",
+          "properties": {
+            "method": {
+              "type": "string",
+              "enum": ["standard", "robust", "min-max", "quantile", "power"]
+            },
+            "feature_range": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "quantile_range": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "required": ["splits", "method"],
+      "properties": {
+        "splits": {
+          "type": "object",
+          "properties": {
+            "train": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "validation": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "test": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        },
+        "method": {
+          "type": "string",
+          "enum": ["time_series_split", "k_fold", "stratified_k_fold", "group_k_fold"]
+        },
+        "n_splits": {
+          "type": "integer",
+          "minimum": 2
+        },
+        "gap": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "embargo": {
+          "type": "string",
+          "pattern": "^[0-9]+(m|h|d)$"
+        }
+      }
+    },
+    "monitoring": {
+      "type": "object",
+      "properties": {
+        "drift_detection": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "method": {
+              "type": "string",
+              "enum": ["ks_test", "chi2_test", "psi", "wasserstein"]
+            },
+            "threshold": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "window": {
+              "type": "integer",
+              "minimum": 100
+            }
+          }
+        },
+        "feature_importance": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "method": {
+              "type": "string",
+              "enum": ["permutation", "shap", "lime", "eli5"]
+            },
+            "n_repeats": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "correlation_monitoring": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "threshold": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "window": {
+              "type": "integer",
+              "minimum": 10
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "TimeFrames": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["1m", "5m", "15m", "1h", "4h", "1d", "7d", "30d"]
+      }
+    },
+    "Indicator": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "string"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "array"
+          }
+        ]
+      }
+    }
+  }
+}

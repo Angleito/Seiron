@@ -1,0 +1,393 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Data Collectors Configuration Schema",
+  "type": "object",
+  "required": ["chain", "market", "defi", "analytics", "monitoring"],
+  "properties": {
+    "chain": {
+      "type": "object",
+      "required": [
+        "batchSize",
+        "maxRetries",
+        "retryDelay",
+        "blockRange",
+        "eventFilters"
+      ],
+      "properties": {
+        "batchSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "maxRetries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "retryDelay": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 60000
+        },
+        "exponentialBackoff": {
+          "type": "boolean"
+        },
+        "blockRange": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "startBlock": {
+          "type": "string",
+          "pattern": "^(latest|[0-9]+)$"
+        },
+        "confirmations": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "eventFilters": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "contractAddresses": {
+          "type": "object",
+          "properties": {
+            "whitelist": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^(0x[0-9a-fA-F]{40}|sei[0-9a-z]{58})$"
+              }
+            },
+            "blacklist": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^(0x[0-9a-fA-F]{40}|sei[0-9a-z]{58})$"
+              }
+            }
+          }
+        },
+        "gasTracking": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "threshold": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "mempool": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "maxTxs": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            }
+          }
+        }
+      }
+    },
+    "market": {
+      "type": "object",
+      "required": ["updateInterval", "priceFeeds", "assets", "timeframes"],
+      "properties": {
+        "updateInterval": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 3600000
+        },
+        "priceFeeds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PriceFeed"
+          },
+          "minItems": 1
+        },
+        "assets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Asset"
+          },
+          "minItems": 1
+        },
+        "timeframes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["1m", "5m", "15m", "1h", "4h", "1d", "7d", "30d"]
+          },
+          "minItems": 1
+        },
+        "rateLimits": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "type": "object",
+              "properties": {
+                "requestsPerMinute": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "requestsPerHour": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "requestsPerSecond": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "minProperties": 1
+            }
+          }
+        },
+        "caching": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "ttl": {
+              "type": "integer",
+              "minimum": 1000
+            },
+            "maxSize": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    },
+    "defi": {
+      "type": "object",
+      "required": ["protocols", "refreshInterval", "liquidityThreshold"],
+      "properties": {
+        "protocols": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Protocol"
+          }
+        },
+        "refreshInterval": {
+          "type": "integer",
+          "minimum": 30000
+        },
+        "liquidityThreshold": {
+          "type": "number",
+          "minimum": 0
+        },
+        "volumeThreshold": {
+          "type": "number",
+          "minimum": 0
+        },
+        "metrics": {
+          "type": "object",
+          "properties": {
+            "tvl": {
+              "type": "boolean"
+            },
+            "volume24h": {
+              "type": "boolean"
+            },
+            "fees": {
+              "type": "boolean"
+            },
+            "apr": {
+              "type": "boolean"
+            },
+            "utilization": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "analytics": {
+      "type": "object",
+      "required": ["enabled", "batchInterval", "aggregationPeriods", "metrics"],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "batchInterval": {
+          "type": "integer",
+          "minimum": 10000
+        },
+        "aggregationPeriods": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9]+(m|h|d)$"
+          }
+        },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "monitoring": {
+      "type": "object",
+      "required": ["healthCheck", "alerts", "logging"],
+      "properties": {
+        "healthCheck": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "interval": {
+              "type": "integer",
+              "minimum": 1000
+            },
+            "endpoints": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "alerts": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "thresholds": {
+              "type": "object",
+              "properties": {
+                "blockDelay": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "rpcLatency": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "errorRate": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              }
+            }
+          }
+        },
+        "logging": {
+          "type": "object",
+          "properties": {
+            "level": {
+              "type": "string",
+              "enum": ["debug", "info", "warn", "error"]
+            },
+            "format": {
+              "type": "string",
+              "enum": ["json", "text"]
+            },
+            "outputs": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["console", "file", "syslog"]
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "PriceFeed": {
+      "type": "object",
+      "required": ["name", "priority", "endpoint", "timeout"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "endpoint": {
+          "type": "string",
+          "minLength": 1
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 60000
+        }
+      }
+    },
+    "Asset": {
+      "type": "object",
+      "required": ["symbol", "decimals"],
+      "properties": {
+        "symbol": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 10
+        },
+        "coingeckoId": {
+          "type": "string"
+        },
+        "pythId": {
+          "type": "string",
+          "pattern": "^0x[0-9a-fA-F]{64}$"
+        },
+        "decimals": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18
+        }
+      }
+    },
+    "Protocol": {
+      "type": "object",
+      "required": ["name", "type", "enabled", "priority"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "enum": ["dex", "lending", "staking", "liquid-staking", "trading"]
+        },
+        "factoryAddress": {
+          "type": "string",
+          "pattern": "^(0x[0-9a-fA-F]{40}|sei[0-9a-z]{58})$"
+        },
+        "contractAddress": {
+          "type": "string",
+          "pattern": "^(0x[0-9a-fA-F]{40}|sei[0-9a-z]{58})$"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}
