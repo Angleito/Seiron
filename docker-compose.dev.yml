@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # Redis for L2 cache
+  redis:
+    image: redis:7-alpine
+    container_name: ai-portfolio-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --save 60 1 --loglevel warning
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # API Server (development mode)
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: ai-portfolio-api
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - API_PORT=3001
+      - REDIS_URL=redis://redis:6379
+      - SEI_RPC_URL=${SEI_RPC_URL:-https://evm-rpc.sei-apis.com}
+      - WALLET_ADDRESS=${WALLET_ADDRESS}
+      - PRIVATE_KEY=${PRIVATE_KEY}
+      - DEBUG=ai-portfolio:*
+    volumes:
+      - ./src:/app/src
+      - ./cache:/app/cache
+      - ./logs:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: ["npm", "run", "api:dev"]
+
+  # Frontend (development mode)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: ai-portfolio-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      - NEXT_PUBLIC_WS_URL=ws://localhost:3001
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+
+networks:
+  default:
+    name: ai-portfolio-network

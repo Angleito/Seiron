@@ -1,0 +1,22 @@
+# Development Dockerfile for Frontend
+FROM node:20-alpine
+
+RUN apk add --no-cache tini
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Set environment
+ENV NODE_ENV=development
+
+EXPOSE 3000
+
+# Use tini for proper signal handling
+ENTRYPOINT ["/sbin/tini", "--"]
+
+CMD ["npm", "run", "dev"]

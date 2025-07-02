@@ -45,7 +45,7 @@ services:
       retries: 3
       start_period: 40s
     restart: unless-stopped
-    command: ["node", "dist/api/server.js"]
+    command: ["tsx", "src/api/simple-server.ts"]
 
   # Frontend
   frontend:

@@ -1,0 +1,29 @@
+# Development Dockerfile for API
+FROM node:20-alpine
+
+RUN apk add --no-cache tini
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies including dev
+RUN npm install
+
+# Install tsx globally
+RUN npm install -g tsx
+
+# Copy tsconfig
+COPY tsconfig.json ./
+
+# Set environment
+ENV NODE_ENV=development
+
+EXPOSE 3001
+
+# Use tini as entrypoint
+ENTRYPOINT ["/sbin/tini", "--"]
+
+# Default command
+CMD ["npm", "run", "api:dev"]
