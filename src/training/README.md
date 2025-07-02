@@ -1,15 +1,15 @@
-# OpenAI Training Integration for Portfolio Management AI
+# AI Model Training System
 
-A comprehensive training system that integrates OpenAI's fine-tuning capabilities with Sei blockchain data for cryptocurrency portfolio optimization.
+This module handles the training and improvement of AI models used by the Sei Portfolio Manager. It collects data from DeFi protocols, user interactions, and market conditions to continuously improve the AI's decision-making capabilities.
 
 ## 🚀 Features
 
-- **Data Formatting**: Converts Sei blockchain data into OpenAI-compatible training formats
-- **Prompt Engineering**: Optimized prompts for financial decision making and portfolio management
-- **Fine-tuning Pipeline**: Complete model training lifecycle management
-- **Model Evaluation**: Comprehensive performance metrics and backtesting
-- **Deployment Management**: Production-ready model deployment and monitoring
-- **Real-time Monitoring**: Performance tracking and drift detection
+- **Protocol Data Collection**: Gathers data from Yei Finance and DragonSwap
+- **User Interaction Learning**: Learns from chat conversations and user preferences
+- **Strategy Optimization**: Improves lending and liquidity strategies based on outcomes
+- **Risk Model Training**: Enhances risk assessment from historical data
+- **Performance Tracking**: Monitors and learns from portfolio performance
+- **Continuous Learning**: Updates models based on new market conditions
 
 ## 📋 Requirements
 
@@ -31,61 +31,72 @@ export OPENAI_ORGANIZATION="your-org-id" # Optional
 
 ## 🔧 Quick Start
 
-### 1. Initialize Training Pipeline
+### 1. Initialize Training System
 
 ```typescript
-import { createTrainingPipeline } from './src/training';
+import { TrainingSystem } from './src/training';
 
-const config = {
-  apiKey: process.env.OPENAI_API_KEY!,
-  organization: process.env.OPENAI_ORGANIZATION,
-  defaultModel: 'gpt-3.5-turbo',
-  maxTokens: 1024,
-  temperature: 0.7
-};
+const training = new TrainingSystem({
+  dataSource: 'sei-mainnet',
+  protocols: ['yei-finance', 'dragonswap'],
+  modelType: 'portfolio-optimizer',
+  updateFrequency: '24h'
+});
 
-const training = createTrainingPipeline(config);
+// Start data collection
+await training.startDataCollection();
 ```
 
-### 2. Prepare Training Data
+### 2. Collect Training Data
 
 ```typescript
-import { BlockchainData, PortfolioData } from './src/training/types';
+// Collect DeFi protocol data
+const defiData = await training.collectProtocolData({
+  protocols: ['yei-finance', 'dragonswap'],
+  period: '30d',
+  metrics: ['apy', 'tvl', 'volume', 'fees']
+});
 
-// Your Sei blockchain data
-const seiData: BlockchainData[] = [
-  // ... blockchain data from your collectors
-];
+// Collect user interaction data
+const interactionData = await training.collectUserInteractions({
+  includeChat: true,
+  includeTransactions: true,
+  anonymize: true
+});
 
-// Portfolio performance data
-const portfolioData: PortfolioData[] = [
-  // ... historical portfolio data
-];
-
-// Format data for training
-const trainingExamples = training.dataFormatter.formatForOpenAI(seiData);
-const portfolioPairs = training.dataFormatter.createPromptCompletionPairs(portfolioData);
+// Collect performance data
+const performanceData = await training.collectPerformanceMetrics({
+  strategies: ['lending', 'liquidity'],
+  period: '90d'
+});
 ```
 
-### 3. Create Fine-tuning Pipeline
+### 3. Train AI Models
 
 ```typescript
-const pipelineId = await training.fineTuningManager.createFineTuningPipeline(
-  'Portfolio-AI-v1',
-  {
-    seiData,
-    portfolioData
-  },
-  {
-    baseModel: 'gpt-3.5-turbo',
-    epochs: 4,
-    batchSize: 4,
-    learningRate: 0.0001,
-    modelName: 'sei-portfolio-optimizer'
-  }
-);
+// Train lending optimization model
+const lendingModel = await training.trainModel({
+  type: 'lending-optimizer',
+  data: defiData.lending,
+  objectives: ['maximize-apy', 'minimize-risk'],
+  validationSplit: 0.2
+});
 
-console.log(`Training pipeline created: ${pipelineId}`);
+// Train liquidity management model
+const liquidityModel = await training.trainModel({
+  type: 'liquidity-optimizer',
+  data: defiData.liquidity,
+  objectives: ['maximize-fees', 'minimize-il'],
+  validationSplit: 0.2
+});
+
+// Train chat response model
+const chatModel = await training.trainModel({
+  type: 'chat-assistant',
+  data: interactionData,
+  style: 'helpful-concise',
+  language: 'multi'
+});
 ```
 
 ### 4. Monitor Training Progress
@@ -142,28 +153,21 @@ const deploymentId = await training.deploymentManager.deployModel(
 console.log(`Model deployed: ${deploymentId}`);
 ```
 
-### 7. Generate Portfolio Recommendations
+### 7. Use Trained Models in Production
 
 ```typescript
-const marketData = await getCurrentMarketData(); // Your market data source
-const currentPortfolio = await getCurrentPortfolio(); // Your portfolio data
+// The trained models are automatically integrated into the portfolio manager
+const portfolioManager = new AIPortfolioManager({
+  network: 'sei-mainnet',
+  wallet: wallet,
+  aiModel: 'balanced-defi', // Uses your trained models
+  language: 'en'
+});
 
-const recommendations = await training.deploymentManager.generateRecommendations(
-  deploymentId,
-  marketData,
-  currentPortfolio,
-  {
-    includeReasoning: true,
-    riskLevel: 5,
-    timeHorizon: 30
-  }
-);
-
-if (recommendations.success) {
-  console.log('Portfolio Recommendations:', recommendations.data);
-} else {
-  console.error('Recommendation failed:', recommendations.error);
-}
+// Models improve recommendations based on training
+const chat = await portfolioManager.startChat();
+const response = await chat.send("What's the best lending strategy right now?");
+// AI uses trained models to provide optimized recommendations
 ```
 
 ## 📊 Model Performance Monitoring

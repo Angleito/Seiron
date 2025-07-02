@@ -1,7 +1,7 @@
 {
-  "name": "redteam-portfolio-ai",
+  "name": "sei-portfolio-ai",
   "version": "1.0.0",
-  "description": "Comprehensive OpenAI training integration for cryptocurrency portfolio management using Sei blockchain data",
+  "description": "AI-powered conversational portfolio manager for Sei Network with integrated lending and liquidity management",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -34,17 +34,18 @@
     "export:cloud": "tsx scripts/export.ts cloud"
   },
   "keywords": [
-    "openai",
-    "cryptocurrency",
-    "portfolio-management",
-    "sei-blockchain",
-    "machine-learning",
-    "fine-tuning",
-    "ai-trading",
+    "sei-network",
     "defi",
-    "blockchain-analytics"
+    "portfolio-management",
+    "ai-chat",
+    "lending",
+    "liquidity-management",
+    "yei-finance",
+    "dragonswap",
+    "conversational-ai",
+    "yield-optimization"
   ],
-  "author": "RedTeam AI Development",
+  "author": "Sei Portfolio AI Team",
   "license": "MIT",
   "dependencies": {
     "openai": "^4.20.0",
@@ -94,12 +95,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/redteam/portfolio-ai.git"
+    "url": "https://github.com/sei-network/portfolio-ai.git"
   },
   "bugs": {
-    "url": "https://github.com/redteam/portfolio-ai/issues"
+    "url": "https://github.com/sei-network/portfolio-ai/issues"
   },
-  "homepage": "https://github.com/redteam/portfolio-ai#readme",
+  "homepage": "https://github.com/sei-network/portfolio-ai#readme",
   "directories": {
     "lib": "src",
     "test": "test",

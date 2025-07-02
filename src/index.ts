@@ -1,36 +1,34 @@
-// Sei AI Portfolio Data Collection - Main Entry Point
+// Sei AI Portfolio Manager - Main Entry Point
 
-// Re-export collectors
+// Core portfolio management modules
+export * from './chat/ChatInterface';
+export * from './ai/AIDecisionEngine';
+export * from './portfolio/PortfolioManager';
+export * from './lending/LendingManager';
+export * from './liquidity/LiquidityManager';
+
+// Data collection for training (kept for model improvement)
 export * from './collectors/chain';
-export * from './collectors/market';
 export * from './collectors/defi';
 export * from './collectors/oracle';
 
-// Re-export transformers
-export * from './transformers/normalize';
-export * from './transformers/aggregate';
-export * from './transformers/features';
-export * from './transformers/validate';
-
-// Re-export storage
-export * from './storage/writer';
-export * from './storage/reader';
-export * from './storage/schema';
-
-// Re-export training
+// AI model training utilities
 export * from './training/prepare';
 export * from './training/openai';
 
-// Re-export utilities
+// Utilities
 export * from './utils/math';
 export * from './utils/time';
 export * from './utils/sei';
 
-// Re-export types
+// Types
 export * from './types';
 
-// Configuration loader
+// Configuration
 export { loadConfiguration } from './config';
+
+// Main portfolio manager class
+export { AIPortfolioManager } from './AIPortfolioManager';
 
 // Version
 export const VERSION = '1.0.0';

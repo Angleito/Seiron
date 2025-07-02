@@ -1,20 +1,34 @@
-# Sei Blockchain Data Logging System
+# Sei Blockchain Data Logging & Portfolio Management System
 
-A minimal, efficient Solidity contract system optimized for Sei blockchain's 400ms block times and parallel execution. Designed specifically for AI training data collection through comprehensive event emission.
+A comprehensive smart contract system optimized for Sei blockchain's 400ms block times and parallel execution. Combines AI training data collection through event emission with automated portfolio management capabilities.
 
 ## 📋 Overview
 
-This system consists of smart contracts that serve as data logging mechanisms for portfolio events, market data, user behavior, and oracle price feeds. The contracts are optimized for minimal storage and maximum event emission to facilitate off-chain data collection for AI model training.
+This system consists of smart contracts that serve dual purposes:
+1. **Data Collection**: Logging mechanisms for portfolio events, market data, user behavior, and oracle price feeds
+2. **Portfolio Management**: AI-driven portfolio management with lending integration and automated rebalancing
+
+The contracts are optimized for minimal storage and maximum event emission to facilitate off-chain data collection for AI model training, while providing secure on-chain portfolio management.
 
 ## 🏗️ Architecture
 
 ### Core Contracts
 
+#### Data Collection Layer
 1. **DataLogger.sol** - Main contract for logging portfolio events and data
 2. **OracleAggregator.sol** - Specialized contract for oracle price aggregation
-3. **IDataLogger.sol** - Interface defining core logging functionality
-4. **IOracle.sol** - Interface for oracle interactions
-5. **IDataTypes.sol** - Common data structures and types
+
+#### Portfolio Management Layer
+3. **PortfolioVault.sol** - Main vault for holding user funds with AI executor integration
+4. **LendingAdapter.sol** - Unified interface for Yei Finance and Aave V3 lending protocols
+5. **AIExecutor.sol** - Executes AI-approved operations with signature verification
+
+#### Interfaces
+6. **IDataLogger.sol** - Interface defining core logging functionality
+7. **IOracle.sol** - Interface for oracle interactions
+8. **IDataTypes.sol** - Common data structures and types
+9. **IPortfolioManager.sol** - Main interface for portfolio management
+10. **IAIAgent.sol** - Interface for AI agent interactions
 
 ### Design Principles
 
@@ -44,6 +58,35 @@ This system consists of smart contracts that serve as data logging mechanisms fo
 - **Batch Price Updates**: Process multiple asset prices efficiently
 - **Authorization Management**: Control which oracles can update prices
 - **Emergency Price Updates**: Manual intervention capability
+
+### PortfolioVault Contract
+
+- **Multi-Asset Support**: Manage portfolios with multiple tokens
+- **Share-Based System**: Fair value distribution among users
+- **AI Integration**: Automated rebalancing based on AI decisions
+- **Access Control**: Secure fund management with role-based permissions
+- **Emergency Withdrawal**: User protection with emergency exit functionality
+- **Slippage Protection**: Configurable maximum slippage for trades
+- **DEX Integration**: Support for multiple decentralized exchanges
+
+### LendingAdapter Contract
+
+- **Protocol Abstraction**: Unified interface for multiple lending protocols
+- **Yei Finance Integration**: Native support for Sei's lending protocol
+- **Aave V3 Support**: Integration with established DeFi infrastructure
+- **Position Tracking**: Monitor lending positions across protocols
+- **Approval Management**: Automated token approval handling
+- **Emergency Controls**: Protocol-level emergency withdrawal support
+
+### AIExecutor Contract
+
+- **Signature Verification**: Cryptographic validation of AI decisions
+- **Rate Limiting**: Protection against excessive operations
+- **Operation History**: Complete audit trail of executed operations
+- **Nonce Management**: Replay attack prevention
+- **EIP-712 Compliance**: Structured data signing standard
+- **Flexible Operations**: Support for rebalancing, trading, and lending
+- **User Whitelisting**: Bypass rate limits for trusted users
 
 ## 📊 Events & Data Collection
 
@@ -126,6 +169,9 @@ After deployment, the script will output contract addresses:
 === DEPLOYED CONTRACTS ===
 DataLogger: 0x...
 OracleAggregator: 0x...
+PortfolioVault: 0x...
+LendingAdapter: 0x...
+AIExecutor: 0x...
 ```
 
 ## 🧪 Testing
@@ -166,8 +212,14 @@ DataLogger dataLogger = new DataLogger(owner, initialLoggers);
 // Deploy OracleAggregator
 OracleAggregator oracleAgg = new OracleAggregator(owner, address(dataLogger));
 
-// Authorize OracleAggregator to log data
+// Deploy Portfolio Management contracts
+PortfolioVault vault = new PortfolioVault(owner, aiSigner, baseCurrency, address(oracleAgg));
+LendingAdapter adapter = new LendingAdapter(owner, address(vault));
+AIExecutor executor = new AIExecutor(owner, aiSigner, address(vault), address(adapter));
+
+// Configure contracts
 dataLogger.setLoggerAuthorization(address(oracleAgg), true);
+vault.setAIAgent(address(executor));
 ```
 
 ### Log Portfolio Actions
@@ -236,6 +288,68 @@ dataLogger.logUserBehavior(
 );
 ```
 
+### Portfolio Management Operations
+
+```solidity
+// Deposit funds into portfolio
+IERC20(asset).approve(address(vault), amount);
+uint256 shares = vault.deposit(asset, amount);
+
+// AI-driven rebalance
+IPortfolioManager.AssetAllocation[] memory allocations = new IPortfolioManager.AssetAllocation[](2);
+allocations[0] = IPortfolioManager.AssetAllocation({
+    asset: address(usdc),
+    targetWeight: 6000, // 60%
+    currentWeight: 0,
+    balance: 0
+});
+allocations[1] = IPortfolioManager.AssetAllocation({
+    asset: address(weth),
+    targetWeight: 4000, // 40%
+    currentWeight: 0,
+    balance: 0
+});
+
+// Execute through AIExecutor with signature
+AIExecutor.Operation memory op = AIExecutor.Operation({
+    nonce: executor.nonces(user),
+    user: user,
+    opType: AIExecutor.OperationType.REBALANCE,
+    data: abi.encode(allocations, aiSignature),
+    deadline: block.timestamp + 3600,
+    gasLimit: 500000
+});
+
+executor.executeOperation(op, aiSignature);
+
+// Withdraw funds
+uint256 withdrawn = vault.withdraw(asset, shares);
+```
+
+### Lending Operations
+
+```solidity
+// Deposit to lending protocol
+adapter.deposit(
+    1, // Aave V3
+    address(usdc),
+    10000e6,
+    user
+);
+
+// Borrow against collateral
+adapter.borrow(
+    1, // Aave V3
+    address(dai),
+    5000e18,
+    2, // Variable rate
+    user
+);
+
+// Check position
+LendingAdapter.LendingPosition memory position = adapter.getPosition(user, 1, address(usdc));
+```
+
 ## 🔧 Configuration
 
 ### Authorization Management
@@ -280,6 +394,11 @@ oracleAgg.emergencyPriceUpdate(asset, emergencyPrice, confidence);
 - **Batch Portfolio Actions (10x)**: ~300,000 gas (30k per action)
 - **Oracle Price Update**: ~45,000 gas
 - **Batch Oracle Updates (10x)**: ~250,000 gas (25k per update)
+- **Portfolio Deposit**: ~80,000 gas
+- **Portfolio Withdrawal**: ~75,000 gas
+- **AI-Driven Rebalance**: ~150,000-300,000 gas (depends on trades)
+- **Lending Deposit**: ~120,000 gas
+- **Lending Borrow**: ~140,000 gas
 
 ## 🔒 Security Features
 
@@ -353,15 +472,24 @@ For support and questions:
 - ✅ Oracle aggregation
 - ✅ Gas optimization for Sei
 - ✅ Comprehensive testing
+- ✅ Portfolio vault implementation
+- ✅ AI executor with signature verification
+- ✅ Lending protocol integration
 
 ### Phase 2 (Planned)
 - 🔄 Advanced analytics events
 - 🔄 Cross-chain bridge logging
 - 🔄 MEV detection events
 - 🔄 Governance proposal logging
+- 🔄 Multi-strategy portfolio management
+- 🔄 Advanced risk management features
+- 🔄 Yield farming integration
 
 ### Phase 3 (Future)
 - ⏳ ML model integration
 - ⏳ Predictive analytics
 - ⏳ Real-time alerting system
 - ⏳ Advanced visualization tools
+- ⏳ Decentralized AI decision making
+- ⏳ Cross-chain portfolio management
+- ⏳ Social trading features

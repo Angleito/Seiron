@@ -4,10 +4,13 @@ pragma solidity ^0.8.19;
 import "forge-std/Script.sol";
 import "../src/DataLogger.sol";
 import "../src/OracleAggregator.sol";
+import "../src/PortfolioVault.sol";
+import "../src/LendingAdapter.sol";
+import "../src/AIExecutor.sol";
 
 /**
  * @title Deploy
- * @dev Deployment script for Sei blockchain data logging system
+ * @dev Deployment script for Sei blockchain data logging and portfolio management system
  * @notice Optimized deployment for Sei's fast block times and parallel execution
  */
 contract Deploy is Script {
@@ -27,6 +30,9 @@ contract Deploy is Script {
 
     DataLogger public dataLogger;
     OracleAggregator public oracleAggregator;
+    PortfolioVault public portfolioVault;
+    LendingAdapter public lendingAdapter;
+    AIExecutor public aiExecutor;
 
     /*//////////////////////////////////////////////////////////////
                             DEPLOYMENT FUNCTIONS
@@ -78,6 +84,35 @@ contract Deploy is Script {
         console.log("Deploying OracleAggregator...");
         oracleAggregator = new OracleAggregator(deployer, address(dataLogger));
         console.log("OracleAggregator deployed at:", address(oracleAggregator));
+
+        // Use mock addresses for base currency and AI signer (for testing)
+        address baseCurrency = _createMockAsset("USDC");
+        address aiSigner = vm.envOr("AI_SIGNER", deployer);
+
+        // Deploy PortfolioVault
+        console.log("Deploying PortfolioVault...");
+        portfolioVault = new PortfolioVault(
+            deployer,
+            aiSigner,
+            baseCurrency,
+            address(oracleAggregator)
+        );
+        console.log("PortfolioVault deployed at:", address(portfolioVault));
+
+        // Deploy LendingAdapter
+        console.log("Deploying LendingAdapter...");
+        lendingAdapter = new LendingAdapter(deployer, address(portfolioVault));
+        console.log("LendingAdapter deployed at:", address(lendingAdapter));
+
+        // Deploy AIExecutor
+        console.log("Deploying AIExecutor...");
+        aiExecutor = new AIExecutor(
+            deployer,
+            aiSigner,
+            address(portfolioVault),
+            address(lendingAdapter)
+        );
+        console.log("AIExecutor deployed at:", address(aiExecutor));
     }
 
     /**
@@ -94,6 +129,23 @@ contract Deploy is Script {
         require(oracleAggregator.owner() != address(0), "OracleAggregator owner not set");
         require(address(oracleAggregator.dataLogger()) == address(dataLogger), "OracleAggregator dataLogger not linked");
 
+        // Verify PortfolioVault
+        require(address(portfolioVault) != address(0), "PortfolioVault deployment failed");
+        require(portfolioVault.owner() != address(0), "PortfolioVault owner not set");
+        require(portfolioVault.aiExecutor() != address(0), "PortfolioVault AI executor not set");
+        require(portfolioVault.totalShares() == 0, "PortfolioVault should start with 0 shares");
+
+        // Verify LendingAdapter
+        require(address(lendingAdapter) != address(0), "LendingAdapter deployment failed");
+        require(lendingAdapter.owner() != address(0), "LendingAdapter owner not set");
+        require(lendingAdapter.portfolioVault() == address(portfolioVault), "LendingAdapter vault not linked");
+
+        // Verify AIExecutor
+        require(address(aiExecutor) != address(0), "AIExecutor deployment failed");
+        require(aiExecutor.owner() != address(0), "AIExecutor owner not set");
+        require(aiExecutor.portfolioVault() == address(portfolioVault), "AIExecutor vault not linked");
+        require(aiExecutor.lendingAdapter() == address(lendingAdapter), "AIExecutor adapter not linked");
+
         console.log("✅ All contracts deployed and verified successfully");
     }
 
@@ -106,6 +158,17 @@ contract Deploy is Script {
         // Authorize OracleAggregator to log data
         dataLogger.setLoggerAuthorization(address(oracleAggregator), true);
         console.log("✅ OracleAggregator authorized as logger");
+
+        // Set AIExecutor as the AI agent in PortfolioVault
+        portfolioVault.setAIAgent(address(aiExecutor));
+        console.log("✅ AIExecutor set as AI agent for PortfolioVault");
+
+        // Add some default supported assets
+        address seiToken = _createMockAsset("SEI");
+        address wethToken = _createMockAsset("WETH");
+        portfolioVault.addSupportedAsset(seiToken);
+        portfolioVault.addSupportedAsset(wethToken);
+        console.log("✅ Added SEI and WETH as supported assets");
 
         // Setup sample oracle for testing (if on testnet)
         if (block.chainid == SEI_TESTNET_CHAIN_ID) {
@@ -127,9 +190,23 @@ contract Deploy is Script {
         oracleAggregator.setOracleAuthorization(msg.sender, seiToken, true);
         oracleAggregator.setOracleAuthorization(msg.sender, usdcToken, true);
 
+        // Add mock lending protocols
+        address mockAavePool = _createMockAsset("AAVE_POOL");
+        address mockYeiPool = _createMockAsset("YEI_POOL");
+        
+        lendingAdapter.addProtocol(1, mockAavePool, address(0), "Aave V3");
+        lendingAdapter.addProtocol(2, mockYeiPool, address(0), "Yei Finance");
+
+        // Add mock DEX routers
+        address mockDragonswap = _createMockAsset("DRAGONSWAP");
+        portfolioVault.setAllowedDEX(mockDragonswap, true);
+
         console.log("✅ Testnet configuration complete");
         console.log("Sample SEI token:", seiToken);
         console.log("Sample USDC token:", usdcToken);
+        console.log("Mock Aave pool:", mockAavePool);
+        console.log("Mock Yei pool:", mockYeiPool);
+        console.log("Mock DEX router:", mockDragonswap);
     }
 
     /**
@@ -156,12 +233,20 @@ contract Deploy is Script {
         console.log("\n=== DEPLOYED CONTRACTS ===");
         console.log("DataLogger:", address(dataLogger));
         console.log("OracleAggregator:", address(oracleAggregator));
+        console.log("PortfolioVault:", address(portfolioVault));
+        console.log("LendingAdapter:", address(lendingAdapter));
+        console.log("AIExecutor:", address(aiExecutor));
         
         console.log("\n=== CONTRACT INFO ===");
         console.log("DataLogger Owner:", dataLogger.owner());
         console.log("DataLogger Authorized Loggers: 2 (owner + OracleAggregator)");
         console.log("OracleAggregator Owner:", oracleAggregator.owner());
         console.log("OracleAggregator DataLogger:", address(oracleAggregator.dataLogger()));
+        console.log("PortfolioVault Owner:", portfolioVault.owner());
+        console.log("PortfolioVault AI Executor:", portfolioVault.aiExecutor());
+        console.log("LendingAdapter Owner:", lendingAdapter.owner());
+        console.log("AIExecutor Owner:", aiExecutor.owner());
+        console.log("AIExecutor AI Signer:", aiExecutor.aiSigner());
         
         console.log("\n=== OPTIMIZATION NOTES ===");
         console.log("✅ Contracts optimized for Sei's 400ms block times");
@@ -174,6 +259,10 @@ contract Deploy is Script {
         console.log("2. Authorize additional loggers using setLoggerAuthorization()");
         console.log("3. Begin logging portfolio actions and market data");
         console.log("4. Monitor events for AI training data collection");
+        console.log("5. Fund the PortfolioVault with initial assets");
+        console.log("6. Configure AI agent signatures for automated operations");
+        console.log("7. Set up lending protocol integrations");
+        console.log("8. Configure DEX routers for trading");
     }
 
     /**

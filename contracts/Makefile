@@ -31,6 +31,8 @@ help: ## Display this help message
 install: ## Install dependencies
 	@echo "$(BLUE)Installing Foundry dependencies...$(RESET)"
 	forge install foundry-rs/forge-std --no-commit
+	forge install OpenZeppelin/openzeppelin-contracts --no-commit
+	forge install transmissions11/solmate --no-commit
 	@echo "$(GREEN)Dependencies installed successfully!$(RESET)"
 
 update: ## Update dependencies
