@@ -111,7 +111,7 @@ const SeiroonLogo: React.FC<SeiroonLogoProps> = ({
         </h1>
         
         <p className={`text-sei-gray-400 ${size === 'sm' ? 'text-xs' : size === 'md' ? 'text-sm' : size === 'lg' ? 'text-base' : 'text-lg'} font-medium tracking-wide transition-all duration-300 ${isHovered ? 'text-gold-400' : ''}`}>
-          AI Portfolio Manager
+          The Wish-Granting Dragon
         </p>
       </div>
       

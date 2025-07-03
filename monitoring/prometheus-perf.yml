@@ -1,0 +1,217 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+  external_labels:
+    environment: 'performance'
+    project: 'sei-agent-kit'
+
+rule_files:
+  - "alerts.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Sei Agent Kit Application
+  - job_name: 'sei-agent-app'
+    static_configs:
+      - targets: ['sei-agent-app:8081']
+    metrics_path: '/metrics'
+    scrape_interval: 2s
+    scrape_timeout: 1s
+    honor_labels: true
+    params:
+      collect[]:
+        - 'sei_response_time'
+        - 'sei_throughput'
+        - 'sei_error_rate'
+        - 'sei_memory_usage'
+        - 'sei_protocol_metrics'
+        - 'sei_block_time_compliance'
+
+  # Load Generator Metrics
+  - job_name: 'load-generator'
+    static_configs:
+      - targets: ['load-generator:9090']
+    metrics_path: '/metrics'
+    scrape_interval: 1s
+    scrape_timeout: 500ms
+
+  # Protocol Simulators
+  - job_name: 'protocol-simulators'
+    static_configs:
+      - targets: 
+        - 'protocol-simulator:8082'  # Symphony
+        - 'protocol-simulator:8083'  # DragonSwap
+        - 'protocol-simulator:8084'  # Yei Finance
+    metrics_path: '/metrics'
+    scrape_interval: 2s
+
+  # System Metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 5s
+
+  # Container Metrics
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 5s
+
+  # Redis Performance
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  # PostgreSQL Performance
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Network Simulator
+  - job_name: 'network-simulator'
+    static_configs:
+      - targets: ['network-simulator:8474']
+    metrics_path: '/metrics'
+    scrape_interval: 2s
+
+  # Memory Profiler
+  - job_name: 'memory-profiler'
+    static_configs:
+      - targets: ['memory-profiler:9091']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Elasticsearch
+  - job_name: 'elasticsearch'
+    static_configs:
+      - targets: ['elasticsearch:9200']
+    metrics_path: '/_prometheus/metrics'
+    scrape_interval: 15s
+
+  # Custom Performance Metrics
+  - job_name: 'sei-performance-metrics'
+    static_configs:
+      - targets: ['sei-agent-app:8081']
+    metrics_path: '/metrics/performance'
+    scrape_interval: 1s
+    params:
+      module: ['sei_performance']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: sei-agent-app:8081
+
+  # Protocol-Specific Metrics
+  - job_name: 'protocol-performance'
+    static_configs:
+      - targets: ['sei-agent-app:8081']
+    metrics_path: '/metrics/protocols'
+    scrape_interval: 2s
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'sei_protocol_(.*)'
+        target_label: protocol
+        replacement: '${1}'
+
+  # Memory and GC Metrics
+  - job_name: 'memory-metrics'
+    static_configs:
+      - targets: ['sei-agent-app:8081']
+    metrics_path: '/metrics/memory'
+    scrape_interval: 5s
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'nodejs_(.*)'
+        target_label: nodejs_metric
+        replacement: '${1}'
+
+  # WebSocket Connection Metrics
+  - job_name: 'websocket-metrics'
+    static_configs:
+      - targets: ['sei-agent-app:8081']
+    metrics_path: '/metrics/websockets'
+    scrape_interval: 5s
+
+  # Jaeger Tracing Metrics
+  - job_name: 'jaeger'
+    static_configs:
+      - targets: ['jaeger:14269']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+# Performance-specific recording rules
+recording_rules:
+  - name: sei_performance_rules
+    interval: 5s
+    rules:
+      # Response time percentiles
+      - record: sei:response_time:p50
+        expr: histogram_quantile(0.50, rate(sei_response_time_bucket[1m]))
+      
+      - record: sei:response_time:p95
+        expr: histogram_quantile(0.95, rate(sei_response_time_bucket[1m]))
+      
+      - record: sei:response_time:p99
+        expr: histogram_quantile(0.99, rate(sei_response_time_bucket[1m]))
+
+      # Throughput calculations
+      - record: sei:throughput:rate_1m
+        expr: rate(sei_requests_total[1m])
+      
+      - record: sei:throughput:rate_5m
+        expr: rate(sei_requests_total[5m])
+
+      # Error rates
+      - record: sei:error_rate:rate_1m
+        expr: rate(sei_errors_total[1m]) / rate(sei_requests_total[1m])
+
+      # Block time compliance
+      - record: sei:block_time_compliance:rate_1m
+        expr: rate(sei_operations_completed_within_block_time_total[1m]) / rate(sei_operations_total[1m])
+
+      # Protocol performance
+      - record: sei:protocol_performance:symphony:avg_response_time
+        expr: avg(sei_protocol_response_time{protocol="symphony"})
+      
+      - record: sei:protocol_performance:dragonswap:avg_response_time
+        expr: avg(sei_protocol_response_time{protocol="dragonswap"})
+      
+      - record: sei:protocol_performance:yeifinance:avg_response_time
+        expr: avg(sei_protocol_response_time{protocol="yeifinance"})
+
+      # Memory efficiency
+      - record: sei:memory:usage_percentage
+        expr: (nodejs_heap_used_bytes / nodejs_heap_total_bytes) * 100
+      
+      - record: sei:memory:gc_frequency
+        expr: rate(nodejs_gc_duration_seconds_count[1m])
+
+      # Cache performance
+      - record: sei:cache:hit_rate
+        expr: rate(sei_cache_hits_total[1m]) / (rate(sei_cache_hits_total[1m]) + rate(sei_cache_misses_total[1m]))
+
+      # Network performance
+      - record: sei:network:active_connections
+        expr: sei_active_connections_total
+      
+      - record: sei:network:connection_rate
+        expr: rate(sei_connections_total[1m])
+
+      # Resource utilization
+      - record: sei:cpu:usage_percentage
+        expr: (1 - rate(node_cpu_seconds_total{mode="idle"}[1m])) * 100
+      
+      - record: sei:memory:system_usage_percentage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100

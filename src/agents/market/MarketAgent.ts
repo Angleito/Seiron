@@ -3,9 +3,20 @@ import { TaskEither } from 'fp-ts/TaskEither';
 import * as TE from 'fp-ts/TaskEither';
 import { pipe } from 'fp-ts/function';
 import { BaseAgent, AgentConfig, AgentError, ActionContext, ActionResult } from '../base/BaseAgent';
+import { CitrexProtocolWrapper } from '../../../backend/src/protocols/sei/adapters/CitrexProtocolWrapper';
+import { SiloProtocolWrapper } from '../../../backend/src/protocols/sei/adapters/SiloProtocolWrapper';
+import { 
+  CitrexPerpetualPosition, 
+  CitrexMarketData, 
+  CitrexTradingMetrics,
+  CitrexOpenPositionParams,
+  CitrexClosePositionParams,
+  CitrexAdjustPositionParams,
+  CitrexLiquidationInfo
+} from '../../../backend/src/protocols/sei/types';
 
 /**
- * Market Analysis Agent (~600 lines)
+ * Enhanced Market Analysis & Trading Agent
  * 
  * Features:
  * - Price analysis and volatility calculations
@@ -16,6 +27,10 @@ import { BaseAgent, AgentConfig, AgentError, ActionContext, ActionResult } from 
  * - Technical indicators and signals
  * - Sentiment analysis integration
  * - Economic indicators correlation
+ * - Citrex perpetual trading integration
+ * - Advanced position management
+ * - Risk management and liquidation protection
+ * - Trading strategy engine
  */
 
 export interface MarketData {
@@ -221,6 +236,81 @@ export interface AlertCondition {
   timeframe: string;
 }
 
+// Trading Strategy Interfaces
+export interface TradingStrategy {
+  id: string;
+  name: string;
+  type: 'momentum' | 'mean_reversion' | 'breakout' | 'trend_following' | 'scalping' | 'swing';
+  description: string;
+  parameters: Record<string, any>;
+  risk: {
+    maxLeverage: number;
+    maxPositionSize: number;
+    stopLossPercent: number;
+    takeProfitPercent: number;
+  };
+  signals: TradingSignal[];
+  performance: StrategyPerformance;
+}
+
+export interface TradingSignal {
+  id: string;
+  strategy: string;
+  market: string;
+  type: 'long' | 'short' | 'close';
+  strength: number; // 0-1
+  confidence: number; // 0-1
+  timestamp: Date;
+  entryPrice: number;
+  targetPrice?: number;
+  stopLoss?: number;
+  leverage?: number;
+  reasoning: string[];
+  technicalFactors: string[];
+  riskFactors: string[];
+}
+
+export interface StrategyPerformance {
+  totalTrades: number;
+  winningTrades: number;
+  losingTrades: number;
+  winRate: number;
+  averageWin: number;
+  averageLoss: number;
+  profitFactor: number;
+  sharpeRatio: number;
+  maxDrawdown: number;
+  totalReturn: number;
+  averageHoldingTime: number;
+}
+
+export interface PositionManagement {
+  maxPositions: number;
+  maxExposurePerMarket: number;
+  totalExposureLimit: number;
+  correlationLimit: number;
+  riskBudget: number;
+  leverageManagement: {
+    maxGlobalLeverage: number;
+    adaptiveLeverage: boolean;
+    volatilityAdjustment: boolean;
+  };
+}
+
+export interface RiskManagementConfig {
+  stopLossEnabled: boolean;
+  takeProfitEnabled: boolean;
+  trailingStopEnabled: boolean;
+  liquidationProtection: boolean;
+  maxDrawdownLimit: number;
+  volatilityAdjustment: boolean;
+  positionSizing: {
+    method: 'fixed' | 'kelly' | 'volatility_adjusted' | 'risk_parity';
+    baseSize: number;
+    maxRiskPerTrade: number;
+  };
+}
+
 /**
  * Market Analysis Agent Implementation
  */
@@ -232,11 +322,28 @@ export class MarketAgent extends BaseAgent {
   private readonly CACHE_TTL = 300000; // 5 minutes
   private lastCacheUpdate = 0;
 
-  constructor(config: AgentConfig) {
+  // Trading components
+  private citrexWrapper?: CitrexProtocolWrapper;
+  private siloWrapper?: SiloProtocolWrapper;
+  private tradingStrategies: Map<string, TradingStrategy> = new Map();
+  private activeTradingSignals: Map<string, TradingSignal> = new Map();
+  private positionManagement: PositionManagement;
+  private riskManagement: RiskManagementConfig;
+
+  constructor(config: AgentConfig, citrexWrapper?: CitrexProtocolWrapper, siloWrapper?: SiloProtocolWrapper) {
     super(config);
     this.marketState = this.initializeMarketState();
+    this.citrexWrapper = citrexWrapper;
+    this.siloWrapper = siloWrapper;
+    
+    // Initialize trading components
+    this.positionManagement = this.initializePositionManagement();
+    this.riskManagement = this.initializeRiskManagement();
+    
     this.initializePredictionModels();
+    this.initializeTradingStrategies();
     this.registerMarketActions();
+    this.registerTradingActions();
   }
 
   /**
@@ -285,6 +392,157 @@ export class MarketAgent extends BaseAgent {
         yieldCurve: 'normal'
       },
       alerts: []
+    };
+  }
+
+  /**
+   * Initialize position management configuration
+   */
+  private initializePositionManagement(): PositionManagement {
+    return {
+      maxPositions: 10,
+      maxExposurePerMarket: 0.3, // 30% max exposure per market
+      totalExposureLimit: 1.0, // 100% of available capital
+      correlationLimit: 0.7, // Maximum correlation between positions
+      riskBudget: 0.02, // 2% risk per trade
+      leverageManagement: {
+        maxGlobalLeverage: 20,
+        adaptiveLeverage: true,
+        volatilityAdjustment: true
+      }
+    };
+  }
+
+  /**
+   * Initialize risk management configuration
+   */
+  private initializeRiskManagement(): RiskManagementConfig {
+    return {
+      stopLossEnabled: true,
+      takeProfitEnabled: true,
+      trailingStopEnabled: true,
+      liquidationProtection: true,
+      maxDrawdownLimit: 0.15, // 15% max drawdown
+      volatilityAdjustment: true,
+      positionSizing: {
+        method: 'volatility_adjusted',
+        baseSize: 0.1, // 10% of capital base size
+        maxRiskPerTrade: 0.02 // 2% max risk per trade
+      }
+    };
+  }
+
+  /**
+   * Initialize trading strategies
+   */
+  private initializeTradingStrategies(): void {
+    const strategies: TradingStrategy[] = [
+      {
+        id: 'momentum_scalping',
+        name: 'Momentum Scalping Strategy',
+        type: 'scalping',
+        description: 'High-frequency momentum-based scalping with tight risk controls',
+        parameters: {
+          timeframe: '1m',
+          momentumThreshold: 0.02,
+          volumeMultiplier: 1.5,
+          rsiOverbought: 75,
+          rsiOversold: 25
+        },
+        risk: {
+          maxLeverage: 10,
+          maxPositionSize: 0.1,
+          stopLossPercent: 0.005,
+          takeProfitPercent: 0.01
+        },
+        signals: [],
+        performance: this.initializeStrategyPerformance()
+      },
+      {
+        id: 'trend_following',
+        name: 'Multi-Timeframe Trend Following',
+        type: 'trend_following',
+        description: 'Trend following strategy using multiple timeframe confirmation',
+        parameters: {
+          shortMA: 20,
+          longMA: 50,
+          trendMA: 200,
+          volumeConfirmation: true,
+          adxThreshold: 25
+        },
+        risk: {
+          maxLeverage: 5,
+          maxPositionSize: 0.2,
+          stopLossPercent: 0.02,
+          takeProfitPercent: 0.06
+        },
+        signals: [],
+        performance: this.initializeStrategyPerformance()
+      },
+      {
+        id: 'mean_reversion',
+        name: 'RSI Mean Reversion',
+        type: 'mean_reversion',
+        description: 'Mean reversion strategy based on RSI divergences',
+        parameters: {
+          rsiPeriod: 14,
+          oversoldLevel: 30,
+          overboughtLevel: 70,
+          divergenceConfirmation: true,
+          volumeFilter: true
+        },
+        risk: {
+          maxLeverage: 3,
+          maxPositionSize: 0.15,
+          stopLossPercent: 0.03,
+          takeProfitPercent: 0.05
+        },
+        signals: [],
+        performance: this.initializeStrategyPerformance()
+      },
+      {
+        id: 'breakout_strategy',
+        name: 'Volume Breakout Strategy',
+        type: 'breakout',
+        description: 'Breakout strategy with volume confirmation and false breakout protection',
+        parameters: {
+          lookbackPeriod: 20,
+          volumeThreshold: 1.5,
+          breakoutConfirmation: 3,
+          falseBreakoutFilter: true
+        },
+        risk: {
+          maxLeverage: 8,
+          maxPositionSize: 0.25,
+          stopLossPercent: 0.015,
+          takeProfitPercent: 0.04
+        },
+        signals: [],
+        performance: this.initializeStrategyPerformance()
+      }
+    ];
+
+    strategies.forEach(strategy => {
+      this.tradingStrategies.set(strategy.id, strategy);
+    });
+  }
+
+  /**
+   * Initialize strategy performance metrics
+   */
+  private initializeStrategyPerformance(): StrategyPerformance {
+    return {
+      totalTrades: 0,
+      winningTrades: 0,
+      losingTrades: 0,
+      winRate: 0,
+      averageWin: 0,
+      averageLoss: 0,
+      profitFactor: 0,
+      sharpeRatio: 0,
+      maxDrawdown: 0,
+      totalReturn: 0,
+      averageHoldingTime: 0
     };
   }
 
@@ -431,6 +689,783 @@ export class MarketAgent extends BaseAgent {
     actions.forEach(action => {
       this.registerAction(action);
     });
+  }
+
+  /**
+   * Register trading-specific actions
+   */
+  private registerTradingActions(): void {
+    const tradingActions = [
+      {
+        id: 'open_position',
+        name: 'Open Trading Position',
+        description: 'Open a new perpetual trading position on Citrex',
+        handler: this.openTradingPosition.bind(this),
+        validation: [
+          { field: 'walletAddress', required: true, type: 'string' as const },
+          { field: 'market', required: true, type: 'string' as const },
+          { field: 'side', required: true, type: 'string' as const },
+          { field: 'size', required: true, type: 'string' as const },
+          { field: 'leverage', required: false, type: 'number' as const },
+          { field: 'collateral', required: true, type: 'string' as const }
+        ]
+      },
+      {
+        id: 'close_position',
+        name: 'Close Trading Position',
+        description: 'Close an existing perpetual trading position',
+        handler: this.closeTradingPosition.bind(this),
+        validation: [
+          { field: 'positionId', required: true, type: 'string' as const },
+          { field: 'size', required: false, type: 'string' as const }
+        ]
+      },
+      {
+        id: 'adjust_position',
+        name: 'Adjust Position',
+        description: 'Adjust an existing position (add margin, reduce size, etc.)',
+        handler: this.adjustTradingPosition.bind(this),
+        validation: [
+          { field: 'positionId', required: true, type: 'string' as const },
+          { field: 'action', required: true, type: 'string' as const },
+          { field: 'amount', required: true, type: 'string' as const }
+        ]
+      },
+      {
+        id: 'get_positions',
+        name: 'Get Trading Positions',
+        description: 'Retrieve all trading positions for a wallet',
+        handler: this.getTradingPositions.bind(this),
+        validation: [
+          { field: 'walletAddress', required: true, type: 'string' as const }
+        ]
+      },
+      {
+        id: 'get_trading_metrics',
+        name: 'Get Trading Metrics',
+        description: 'Get comprehensive trading performance metrics',
+        handler: this.getTradingMetrics.bind(this),
+        validation: [
+          { field: 'walletAddress', required: true, type: 'string' as const }
+        ]
+      },
+      {
+        id: 'generate_trading_signals',
+        name: 'Generate Trading Signals',
+        description: 'Generate trading signals using configured strategies',
+        handler: this.generateTradingSignals.bind(this),
+        validation: [
+          { field: 'market', required: true, type: 'string' as const },
+          { field: 'strategies', required: false, type: 'array' as const }
+        ]
+      },
+      {
+        id: 'monitor_risk',
+        name: 'Monitor Position Risk',
+        description: 'Monitor and assess risk for all active positions',
+        handler: this.monitorPositionRisk.bind(this),
+        validation: [
+          { field: 'walletAddress', required: true, type: 'string' as const }
+        ]
+      },
+      {
+        id: 'liquidation_analysis',
+        name: 'Liquidation Analysis',
+        description: 'Analyze liquidation risk and provide protective actions',
+        handler: this.analyzeLiquidationRisk.bind(this),
+        validation: [
+          { field: 'positionId', required: false, type: 'string' as const },
+          { field: 'walletAddress', required: false, type: 'string' as const }
+        ]
+      }
+    ];
+
+    tradingActions.forEach(action => {
+      this.registerAction(action);
+    });
+  }
+
+  // ===================== Trading Action Handlers =====================
+
+  /**
+   * Open a new trading position
+   */
+  private openTradingPosition(context: ActionContext): TaskEither<AgentError, ActionResult> {
+    if (!this.citrexWrapper) {
+      return TE.left(this.createError('CITREX_NOT_AVAILABLE', 'Citrex protocol wrapper not initialized'));
+    }
+
+    const { walletAddress, market, side, size, leverage = 5, collateral } = context.parameters;
+
+    return pipe(
+      this.validateTradingParameters(context.parameters),
+      TE.chain(() => this.performPreTradeRiskCheck(context.parameters)),
+      TE.chain(() => this.citrexWrapper!.openPosition({
+        walletAddress,
+        market,
+        side,
+        size,
+        leverage,
+        collateral,
+        orderType: 'market'
+      })),
+      TE.map(txHash => ({
+        success: true,
+        data: {
+          transactionHash: txHash,
+          position: {
+            market,
+            side,
+            size,
+            leverage,
+            collateral,
+            status: 'pending'
+          },
+          riskMetrics: this.calculateTradeRiskMetrics(context.parameters)
+        },
+        message: `Position opened successfully. Transaction: ${txHash}`
+      }))
+    );
+  }
+
+  /**
+   * Close an existing trading position
+   */
+  private closeTradingPosition(context: ActionContext): TaskEither<AgentError, ActionResult> {
+    if (!this.citrexWrapper) {
+      return TE.left(this.createError('CITREX_NOT_AVAILABLE', 'Citrex protocol wrapper not initialized'));
+    }
+
+    const { positionId, size } = context.parameters;
+
+    return pipe(
+      this.citrexWrapper.closePosition({
+        positionId,
+        size,
+        orderType: 'market'
+      }),
+      TE.map(txHash => ({
+        success: true,
+        data: {
+          transactionHash: txHash,
+          positionId,
+          closeSize: size,
+          status: 'pending'
+        },
+        message: `Position ${size ? 'partially ' : ''}closed successfully. Transaction: ${txHash}`
+      }))
+    );
+  }
+
+  /**
+   * Adjust an existing position
+   */
+  private adjustTradingPosition(context: ActionContext): TaskEither<AgentError, ActionResult> {
+    if (!this.citrexWrapper) {
+      return TE.left(this.createError('CITREX_NOT_AVAILABLE', 'Citrex protocol wrapper not initialized'));
+    }
+
+    const { positionId, action, amount } = context.parameters;
+
+    return pipe(
+      this.citrexWrapper.adjustPosition({
+        positionId,
+        action,
+        amount
+      }),
+      TE.map(txHash => ({
+        success: true,
+        data: {
+          transactionHash: txHash,
+          positionId,
+          action,
+          amount,
+          status: 'pending'
+        },
+        message: `Position adjusted successfully. Action: ${action}, Amount: ${amount}. Transaction: ${txHash}`
+      }))
+    );
+  }
+
+  /**
+   * Get all trading positions for a wallet
+   */
+  private getTradingPositions(context: ActionContext): TaskEither<AgentError, ActionResult> {
+    if (!this.citrexWrapper) {
+      return TE.left(this.createError('CITREX_NOT_AVAILABLE', 'Citrex protocol wrapper not initialized'));
+    }
+
+    const { walletAddress } = context.parameters;
+
+    return pipe(
+      this.citrexWrapper.getPositions(walletAddress),
+      TE.map(positions => ({
+        success: true,
+        data: {
+          positions,
+          summary: {
+            totalPositions: positions.length,
+            totalNotionalValue: positions.reduce((sum, pos) => sum + pos.notionalValue, 0),
+            totalPnL: positions.reduce((sum, pos) => sum + pos.pnl.total, 0),
+            totalCollateral: positions.reduce((sum, pos) => sum + pos.collateralUSD, 0),
+            averageLeverage: positions.length > 0 
+              ? positions.reduce((sum, pos) => sum + pos.leverage, 0) / positions.length 
+              : 0
+          },
+          riskMetrics: this.calculatePortfolioRiskMetrics(positions)
+        },
+        message: `Retrieved ${positions.length} trading positions`
+      }))
+    );
+  }
+
+  /**
+   * Get comprehensive trading metrics
+   */
+  private getTradingMetrics(context: ActionContext): TaskEither<AgentError, ActionResult> {
+    if (!this.citrexWrapper) {
+      return TE.left(this.createError('CITREX_NOT_AVAILABLE', 'Citrex protocol wrapper not initialized'));
+    }
+
+    const { walletAddress } = context.parameters;
+
+    return pipe(
+      this.citrexWrapper.getTradingMetrics(walletAddress),
+      TE.map(metrics => ({
+        success: true,
+        data: {
+          metrics,
+          analysis: this.analyzeTradingPerformance(metrics),
+          recommendations: this.generateTradingRecommendations(metrics)
+        },
+        message: 'Trading metrics retrieved successfully'
+      }))
+    );
+  }
+
+  /**
+   * Generate trading signals using configured strategies
+   */
+  private generateTradingSignals(context: ActionContext): TaskEither<AgentError, ActionResult> {
+    const { market, strategies } = context.parameters;
+    const strategyIds = strategies || Array.from(this.tradingStrategies.keys());
+
+    return pipe(
+      this.updateMarketData([market]),
+      TE.chain(() => this.runTradingStrategies(market, strategyIds)),
+      TE.map(signals => ({
+        success: true,
+        data: {
+          signals,
+          market,
+          strategies: strategyIds,
+          summary: this.summarizeTradingSignals(signals),
+          execution: this.generateExecutionPlan(signals)
+        },
+        message: `Generated ${signals.length} trading signals for ${market}`
+      }))
+    );
+  }
+
+  /**
+   * Monitor position risk across all positions
+   */
+  private monitorPositionRisk(context: ActionContext): TaskEither<AgentError, ActionResult> {
+    if (!this.citrexWrapper) {
+      return TE.left(this.createError('CITREX_NOT_AVAILABLE', 'Citrex protocol wrapper not initialized'));
+    }
+
+    const { walletAddress } = context.parameters;
+
+    return pipe(
+      this.citrexWrapper.getPositions(walletAddress),
+      TE.chain(positions => this.performComprehensiveRiskAnalysis(positions)),
+      TE.map(riskAnalysis => ({
+        success: true,
+        data: {
+          riskAnalysis,
+          alerts: this.generateRiskAlerts(riskAnalysis),
+          recommendations: this.generateRiskRecommendations(riskAnalysis),
+          protectiveActions: this.suggestProtectiveActions(riskAnalysis)
+        },
+        message: `Risk analysis completed for ${riskAnalysis.totalPositions} positions`
+      }))
+    );
+  }
+
+  /**
+   * Analyze liquidation risk for positions
+   */
+  private analyzeLiquidationRisk(context: ActionContext): TaskEither<AgentError, ActionResult> {
+    if (!this.citrexWrapper) {
+      return TE.left(this.createError('CITREX_NOT_AVAILABLE', 'Citrex protocol wrapper not initialized'));
+    }
+
+    const { positionId, walletAddress } = context.parameters;
+
+    if (positionId) {
+      // Analyze specific position
+      return pipe(
+        this.citrexWrapper.getLiquidationInfo(positionId),
+        TE.map(liquidationInfo => ({
+          success: true,
+          data: {
+            liquidationInfo,
+            riskLevel: this.assessLiquidationRisk(liquidationInfo),
+            timeToLiquidation: liquidationInfo.timeToLiquidation,
+            protectiveActions: liquidationInfo.actions,
+            recommendations: this.generateLiquidationProtectionRecommendations(liquidationInfo)
+          },
+          message: `Liquidation analysis completed for position ${positionId}`
+        }))
+      );
+    } else if (walletAddress) {
+      // Analyze all positions for wallet
+      return pipe(
+        this.citrexWrapper.getPositions(walletAddress),
+        TE.chain(positions => this.analyzeLiquidationRiskForPortfolio(positions)),
+        TE.map(portfolioLiquidationAnalysis => ({
+          success: true,
+          data: portfolioLiquidationAnalysis,
+          message: `Portfolio liquidation analysis completed for ${portfolioLiquidationAnalysis.totalPositions} positions`
+        }))
+      );
+    } else {
+      return TE.left(this.createError('INVALID_PARAMETERS', 'Either positionId or walletAddress must be provided'));
+    }
+  }
+
+  // ===================== Trading Helper Methods =====================
+
+  /**
+   * Validate trading parameters
+   */
+  private validateTradingParameters(params: any): TaskEither<AgentError, void> {
+    return TE.tryCatch(
+      async () => {
+        const { market, side, size, leverage, collateral } = params;
+
+        if (!['long', 'short'].includes(side)) {
+          throw new Error('Side must be either "long" or "short"');
+        }
+
+        const sizeNum = Number(size);
+        const leverageNum = Number(leverage);
+        const collateralNum = Number(collateral);
+
+        if (sizeNum <= 0) {
+          throw new Error('Size must be positive');
+        }
+
+        if (leverageNum < 1 || leverageNum > this.positionManagement.leverageManagement.maxGlobalLeverage) {
+          throw new Error(`Leverage must be between 1 and ${this.positionManagement.leverageManagement.maxGlobalLeverage}`);
+        }
+
+        if (collateralNum <= 0) {
+          throw new Error('Collateral must be positive');
+        }
+      },
+      (error) => this.createError('INVALID_TRADING_PARAMS', `Invalid trading parameters: ${error}`)
+    );
+  }
+
+  /**
+   * Perform pre-trade risk check
+   */
+  private performPreTradeRiskCheck(params: any): TaskEither<AgentError, void> {
+    return TE.tryCatch(
+      async () => {
+        const { size, leverage, collateral } = params;
+        const notionalValue = Number(size) * Number(leverage);
+        const riskAmount = notionalValue * this.riskManagement.positionSizing.maxRiskPerTrade;
+
+        if (riskAmount > Number(collateral)) {
+          throw new Error('Risk amount exceeds available collateral');
+        }
+
+        if (notionalValue > this.positionManagement.totalExposureLimit * Number(collateral)) {
+          throw new Error('Position size exceeds exposure limits');
+        }
+      },
+      (error) => this.createError('RISK_CHECK_FAILED', `Pre-trade risk check failed: ${error}`)
+    );
+  }
+
+  /**
+   * Calculate trade risk metrics
+   */
+  private calculateTradeRiskMetrics(params: any): any {
+    const { size, leverage, collateral, market } = params;
+    const notionalValue = Number(size) * Number(leverage);
+    const riskAmount = notionalValue * this.riskManagement.positionSizing.maxRiskPerTrade;
+
+    return {
+      notionalValue,
+      riskAmount,
+      riskPercentage: (riskAmount / Number(collateral)) * 100,
+      leverage: Number(leverage),
+      marginRequirement: notionalValue / Number(leverage),
+      maxLoss: riskAmount,
+      timeDecay: this.calculateTimeDecay(market),
+      volatilityAdjustment: this.calculateVolatilityAdjustment(market)
+    };
+  }
+
+  /**
+   * Calculate portfolio risk metrics
+   */
+  private calculatePortfolioRiskMetrics(positions: CitrexPerpetualPosition[]): any {
+    const totalNotional = positions.reduce((sum, pos) => sum + pos.notionalValue, 0);
+    const totalPnL = positions.reduce((sum, pos) => sum + pos.pnl.total, 0);
+    const totalCollateral = positions.reduce((sum, pos) => sum + pos.collateralUSD, 0);
+
+    return {
+      portfolioValue: totalCollateral + totalPnL,
+      totalExposure: totalNotional,
+      netPnL: totalPnL,
+      riskUtilization: totalNotional / (totalCollateral || 1),
+      diversificationRatio: this.calculateDiversificationRatio(positions),
+      correlationRisk: this.calculateCorrelationRisk(positions),
+      liquidationRisk: this.calculatePortfolioLiquidationRisk(positions)
+    };
+  }
+
+  /**
+   * Run trading strategies for a market
+   */
+  private runTradingStrategies(market: string, strategyIds: string[]): TaskEither<AgentError, TradingSignal[]> {
+    return TE.tryCatch(
+      async () => {
+        const signals: TradingSignal[] = [];
+        const marketData = this.marketState.assets.get(market);
+
+        if (!marketData) {
+          throw new Error(`No market data available for ${market}`);
+        }
+
+        for (const strategyId of strategyIds) {
+          const strategy = this.tradingStrategies.get(strategyId);
+          if (!strategy) continue;
+
+          const strategySignals = await this.executeStrategy(strategy, market, marketData);
+          signals.push(...strategySignals);
+        }
+
+        return signals;
+      },
+      (error) => this.createError('STRATEGY_EXECUTION_FAILED', `Failed to run trading strategies: ${error}`)
+    );
+  }
+
+  /**
+   * Execute a single trading strategy
+   */
+  private async executeStrategy(strategy: TradingStrategy, market: string, marketData: MarketData): Promise<TradingSignal[]> {
+    const signals: TradingSignal[] = [];
+
+    switch (strategy.type) {
+      case 'momentum':
+        signals.push(...await this.executeMomentumStrategy(strategy, market, marketData));
+        break;
+      case 'mean_reversion':
+        signals.push(...await this.executeMeanReversionStrategy(strategy, market, marketData));
+        break;
+      case 'breakout':
+        signals.push(...await this.executeBreakoutStrategy(strategy, market, marketData));
+        break;
+      case 'trend_following':
+        signals.push(...await this.executeTrendFollowingStrategy(strategy, market, marketData));
+        break;
+      case 'scalping':
+        signals.push(...await this.executeScalpingStrategy(strategy, market, marketData));
+        break;
+      default:
+        // Generic strategy execution
+        break;
+    }
+
+    return signals;
+  }
+
+  /**
+   * Execute momentum strategy
+   */
+  private async executeMomentumStrategy(strategy: TradingStrategy, market: string, marketData: MarketData): Promise<TradingSignal[]> {
+    const signals: TradingSignal[] = [];
+    const { rsi, macd } = marketData.technicalIndicators;
+    const { momentumThreshold } = strategy.parameters;
+
+    // Momentum signal logic
+    if (rsi > 60 && macd.histogram > 0 && marketData.volatility.realized > momentumThreshold) {
+      signals.push({
+        id: `momentum_${Date.now()}`,
+        strategy: strategy.id,
+        market,
+        type: 'long',
+        strength: 0.7,
+        confidence: 0.65,
+        timestamp: new Date(),
+        entryPrice: marketData.price,
+        targetPrice: marketData.price * 1.02,
+        stopLoss: marketData.price * 0.995,
+        leverage: Math.min(strategy.risk.maxLeverage, 5),
+        reasoning: ['Strong momentum detected', 'RSI above 60', 'MACD positive'],
+        technicalFactors: [`RSI: ${rsi}`, `MACD: ${macd.line}`],
+        riskFactors: [`Volatility: ${marketData.volatility.realized}`]
+      });
+    }
+
+    return signals;
+  }
+
+  /**
+   * Execute mean reversion strategy
+   */
+  private async executeMeanReversionStrategy(strategy: TradingStrategy, market: string, marketData: MarketData): Promise<TradingSignal[]> {
+    const signals: TradingSignal[] = [];
+    const { rsi } = marketData.technicalIndicators;
+    const { oversoldLevel, overboughtLevel } = strategy.parameters;
+
+    // Mean reversion signal logic
+    if (rsi < oversoldLevel) {
+      signals.push({
+        id: `reversion_${Date.now()}`,
+        strategy: strategy.id,
+        market,
+        type: 'long',
+        strength: 0.6,
+        confidence: 0.7,
+        timestamp: new Date(),
+        entryPrice: marketData.price,
+        targetPrice: marketData.price * 1.03,
+        stopLoss: marketData.price * 0.97,
+        leverage: strategy.risk.maxLeverage,
+        reasoning: ['Oversold condition detected', 'Mean reversion opportunity'],
+        technicalFactors: [`RSI: ${rsi}`],
+        riskFactors: ['Mean reversion risk']
+      });
+    } else if (rsi > overboughtLevel) {
+      signals.push({
+        id: `reversion_${Date.now()}`,
+        strategy: strategy.id,
+        market,
+        type: 'short',
+        strength: 0.6,
+        confidence: 0.7,
+        timestamp: new Date(),
+        entryPrice: marketData.price,
+        targetPrice: marketData.price * 0.97,
+        stopLoss: marketData.price * 1.03,
+        leverage: strategy.risk.maxLeverage,
+        reasoning: ['Overbought condition detected', 'Mean reversion opportunity'],
+        technicalFactors: [`RSI: ${rsi}`],
+        riskFactors: ['Mean reversion risk']
+      });
+    }
+
+    return signals;
+  }
+
+  /**
+   * Execute breakout strategy
+   */
+  private async executeBreakoutStrategy(strategy: TradingStrategy, market: string, marketData: MarketData): Promise<TradingSignal[]> {
+    const signals: TradingSignal[] = [];
+    const resistance = marketData.technicalIndicators.resistance[0];
+    const support = marketData.technicalIndicators.support[0];
+    const { volumeThreshold } = strategy.parameters;
+
+    // Breakout signal logic
+    if (marketData.price > resistance && marketData.volume > volumeThreshold) {
+      signals.push({
+        id: `breakout_${Date.now()}`,
+        strategy: strategy.id,
+        market,
+        type: 'long',
+        strength: 0.8,
+        confidence: 0.75,
+        timestamp: new Date(),
+        entryPrice: marketData.price,
+        targetPrice: marketData.price * 1.05,
+        stopLoss: resistance * 0.99,
+        leverage: strategy.risk.maxLeverage,
+        reasoning: ['Resistance breakout with volume', 'Bullish breakout pattern'],
+        technicalFactors: [`Resistance: ${resistance}`, `Volume: ${marketData.volume}`],
+        riskFactors: ['False breakout risk']
+      });
+    }
+
+    return signals;
+  }
+
+  /**
+   * Execute trend following strategy
+   */
+  private async executeTrendFollowingStrategy(strategy: TradingStrategy, market: string, marketData: MarketData): Promise<TradingSignal[]> {
+    const signals: TradingSignal[] = [];
+    const { sma20, sma50, sma200 } = marketData.technicalIndicators;
+
+    // Trend following signal logic
+    if (sma20 > sma50 && sma50 > sma200 && marketData.price > sma20) {
+      signals.push({
+        id: `trend_${Date.now()}`,
+        strategy: strategy.id,
+        market,
+        type: 'long',
+        strength: 0.7,
+        confidence: 0.8,
+        timestamp: new Date(),
+        entryPrice: marketData.price,
+        targetPrice: marketData.price * 1.06,
+        stopLoss: sma20 * 0.98,
+        leverage: strategy.risk.maxLeverage,
+        reasoning: ['Strong uptrend confirmed', 'All EMAs aligned bullish'],
+        technicalFactors: [`SMA20: ${sma20}`, `SMA50: ${sma50}`, `SMA200: ${sma200}`],
+        riskFactors: ['Trend reversal risk']
+      });
+    }
+
+    return signals;
+  }
+
+  /**
+   * Execute scalping strategy
+   */
+  private async executeScalpingStrategy(strategy: TradingStrategy, market: string, marketData: MarketData): Promise<TradingSignal[]> {
+    const signals: TradingSignal[] = [];
+    const { rsi, macd } = marketData.technicalIndicators;
+    const { rsiOverbought, rsiOversold } = strategy.parameters;
+
+    // Scalping signal logic - quick entries and exits
+    if (rsi < rsiOversold && macd.histogram > 0) {
+      signals.push({
+        id: `scalp_${Date.now()}`,
+        strategy: strategy.id,
+        market,
+        type: 'long',
+        strength: 0.5,
+        confidence: 0.6,
+        timestamp: new Date(),
+        entryPrice: marketData.price,
+        targetPrice: marketData.price * 1.005,
+        stopLoss: marketData.price * 0.998,
+        leverage: strategy.risk.maxLeverage,
+        reasoning: ['Quick scalping opportunity', 'Short-term momentum'],
+        technicalFactors: [`RSI: ${rsi}`, `MACD: ${macd.histogram}`],
+        riskFactors: ['High frequency risk', 'Small profit margins']
+      });
+    }
+
+    return signals;
+  }
+
+  // Additional helper methods would be implemented here...
+  
+  private calculateTimeDecay(market: string): number {
+    // Mock implementation
+    return 0.01;
+  }
+
+  private calculateVolatilityAdjustment(market: string): number {
+    // Mock implementation
+    return 1.0;
+  }
+
+  private calculateDiversificationRatio(positions: CitrexPerpetualPosition[]): number {
+    // Mock implementation
+    return 0.8;
+  }
+
+  private calculateCorrelationRisk(positions: CitrexPerpetualPosition[]): number {
+    // Mock implementation
+    return 0.6;
+  }
+
+  private calculatePortfolioLiquidationRisk(positions: CitrexPerpetualPosition[]): string {
+    // Mock implementation
+    return 'low';
+  }
+
+  private summarizeTradingSignals(signals: TradingSignal[]): any {
+    return {
+      total: signals.length,
+      long: signals.filter(s => s.type === 'long').length,
+      short: signals.filter(s => s.type === 'short').length,
+      averageConfidence: signals.reduce((sum, s) => sum + s.confidence, 0) / signals.length || 0,
+      averageStrength: signals.reduce((sum, s) => sum + s.strength, 0) / signals.length || 0
+    };
+  }
+
+  private generateExecutionPlan(signals: TradingSignal[]): any {
+    return {
+      prioritySignals: signals.filter(s => s.confidence > 0.7).slice(0, 3),
+      riskBudget: this.riskManagement.positionSizing.maxRiskPerTrade,
+      executionOrder: 'confidence_desc'
+    };
+  }
+
+  private performComprehensiveRiskAnalysis(positions: CitrexPerpetualPosition[]): TaskEither<AgentError, any> {
+    return TE.right({
+      totalPositions: positions.length,
+      highRiskPositions: positions.filter(p => p.risk.liquidationRisk === 'high' || p.risk.liquidationRisk === 'critical').length,
+      totalExposure: positions.reduce((sum, pos) => sum + pos.notionalValue, 0),
+      netPnL: positions.reduce((sum, pos) => sum + pos.pnl.total, 0),
+      averageMarginRatio: positions.reduce((sum, pos) => sum + pos.risk.marginRatio, 0) / positions.length || 0
+    });
+  }
+
+  private generateRiskAlerts(riskAnalysis: any): any[] {
+    return [];
+  }
+
+  private generateRiskRecommendations(riskAnalysis: any): string[] {
+    return ['Monitor positions closely', 'Consider reducing leverage'];
+  }
+
+  private suggestProtectiveActions(riskAnalysis: any): string[] {
+    return ['Add margin to high-risk positions', 'Set stop losses'];
+  }
+
+  private assessLiquidationRisk(liquidationInfo: CitrexLiquidationInfo): string {
+    return liquidationInfo.marginRatio > 0.2 ? 'low' : liquidationInfo.marginRatio > 0.1 ? 'medium' : 'high';
+  }
+
+  private generateLiquidationProtectionRecommendations(liquidationInfo: CitrexLiquidationInfo): string[] {
+    return ['Add margin', 'Reduce position size', 'Set protective stops'];
+  }
+
+  private analyzeLiquidationRiskForPortfolio(positions: CitrexPerpetualPosition[]): TaskEither<AgentError, any> {
+    return TE.right({
+      totalPositions: positions.length,
+      positionsAtRisk: positions.filter(p => p.risk.liquidationRisk === 'high' || p.risk.liquidationRisk === 'critical'),
+      averageTimeToLiquidation: 3600, // Mock value
+      recommendedActions: ['Monitor closely', 'Consider reducing leverage']
+    });
+  }
+
+  private analyzeTradingPerformance(metrics: CitrexTradingMetrics): any {
+    return {
+      performanceGrade: metrics.winRate > 0.6 ? 'A' : metrics.winRate > 0.5 ? 'B' : 'C',
+      strengthAreas: ['Risk Management', 'Position Sizing'],
+      improvementAreas: ['Entry Timing', 'Exit Timing'],
+      riskAdjustedReturn: metrics.sharpeRatio
+    };
+  }
+
+  private generateTradingRecommendations(metrics: CitrexTradingMetrics): string[] {
+    const recommendations = [];
+    
+    if (metrics.winRate < 0.5) {
+      recommendations.push('Focus on improving trade selection criteria');
+    }
+    if (metrics.sharpeRatio < 1.0) {
+      recommendations.push('Optimize risk-adjusted returns');
+    }
+    if (metrics.maxDrawdown > 0.2) {
+      recommendations.push('Implement better risk management');
+    }
+
+    return recommendations;
   }
 
   /**

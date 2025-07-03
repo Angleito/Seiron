@@ -23,16 +23,16 @@ export function PortfolioSidebar() {
   ]
 
   return (
-    <div className="h-full bg-gray-50 p-6 overflow-y-auto">
+    <div className="h-full bg-gradient-to-b from-sei-gray-50 to-sei-gray-100 p-6 overflow-y-auto">
       {/* Portfolio Summary */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Portfolio Summary</h2>
-        <div className="bg-white rounded-lg p-4 shadow-sm">
+        <h2 className="text-lg font-semibold text-dragon-red-700 mb-4">Dragon's Treasure Vault</h2>
+        <div className="bg-white rounded-lg p-4 shadow-dragon border border-dragon-red-200">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">Total Value</span>
-            <DollarSign className="h-4 w-4 text-gray-400" />
+            <span className="text-sm text-sei-gray-600">Total Power Level</span>
+            <DollarSign className="h-4 w-4 text-dragon-red-400" />
           </div>
-          <p className="text-2xl font-bold text-gray-900">
+          <p className="text-2xl font-bold text-dragon-red-700">
             ${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
           <div className={cn(
@@ -53,16 +53,16 @@ export function PortfolioSidebar() {
 
       {/* Assets */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Assets</h3>
+        <h3 className="text-lg font-semibold text-dragon-red-700 mb-4">Mystical Treasures</h3>
         <div className="space-y-3">
           {assets.map((asset) => (
-            <div key={asset.symbol} className="bg-white rounded-lg p-4 shadow-sm">
+            <div key={asset.symbol} className="bg-white rounded-lg p-4 shadow-dragon border border-dragon-red-100">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center">
-                  <Coins className="h-5 w-5 text-gray-400 mr-2" />
+                  <Coins className="h-5 w-5 text-gold-500 mr-2" />
                   <div>
-                    <p className="font-medium text-gray-900">{asset.symbol}</p>
-                    <p className="text-xs text-gray-500">{asset.name}</p>
+                    <p className="font-medium text-dragon-red-700">{asset.symbol}</p>
+                    <p className="text-xs text-sei-gray-500">{asset.name}</p>
                   </div>
                 </div>
                 <div className={cn(
@@ -74,14 +74,14 @@ export function PortfolioSidebar() {
               </div>
               <div className="flex justify-between items-end">
                 <div>
-                  <p className="text-xs text-gray-500">Balance</p>
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-xs text-sei-gray-500">Balance</p>
+                  <p className="text-sm font-medium text-dragon-red-700">
                     {asset.balance.toLocaleString('en-US', { maximumFractionDigits: 4 })}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-gray-500">Value</p>
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-xs text-sei-gray-500">Value</p>
+                  <p className="text-sm font-medium text-dragon-red-700">
                     ${asset.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
@@ -93,23 +93,23 @@ export function PortfolioSidebar() {
 
       {/* Quick Stats */}
       <div className="mt-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
+        <h3 className="text-lg font-semibold text-dragon-red-700 mb-4">Dragon's Wisdom</h3>
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white rounded-lg p-3 shadow-sm">
-            <p className="text-xs text-gray-500">24h Volume</p>
-            <p className="text-sm font-semibold text-gray-900">$12,543</p>
+          <div className="bg-white rounded-lg p-3 shadow-dragon border border-dragon-red-100">
+            <p className="text-xs text-sei-gray-500">Daily Manifestations</p>
+            <p className="text-sm font-semibold text-dragon-red-700">$12,543</p>
           </div>
-          <div className="bg-white rounded-lg p-3 shadow-sm">
-            <p className="text-xs text-gray-500">Total Trades</p>
-            <p className="text-sm font-semibold text-gray-900">47</p>
+          <div className="bg-white rounded-lg p-3 shadow-dragon border border-dragon-red-100">
+            <p className="text-xs text-sei-gray-500">Wishes Granted</p>
+            <p className="text-sm font-semibold text-dragon-red-700">47</p>
           </div>
-          <div className="bg-white rounded-lg p-3 shadow-sm">
-            <p className="text-xs text-gray-500">Win Rate</p>
-            <p className="text-sm font-semibold text-gray-900">68%</p>
+          <div className="bg-white rounded-lg p-3 shadow-dragon border border-dragon-red-100">
+            <p className="text-xs text-sei-gray-500">Dragon's Precision</p>
+            <p className="text-sm font-semibold text-dragon-red-700">68%</p>
           </div>
-          <div className="bg-white rounded-lg p-3 shadow-sm">
-            <p className="text-xs text-gray-500">Active Since</p>
-            <p className="text-sm font-semibold text-gray-900">30d</p>
+          <div className="bg-white rounded-lg p-3 shadow-dragon border border-dragon-red-100">
+            <p className="text-xs text-sei-gray-500">Dragon Bond</p>
+            <p className="text-sm font-semibold text-dragon-red-700">30d</p>
           </div>
         </div>
       </div>

@@ -53,6 +53,7 @@ export interface AgentMessage {
     confidence?: number
     taskId?: string
     executionTime?: number
+    error?: boolean
   }
 }
 

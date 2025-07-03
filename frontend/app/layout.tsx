@@ -15,8 +15,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "AI Portfolio Manager",
-  description: "Intelligent crypto portfolio management powered by AI",
+  title: "Seiron - The Wish-Granting Dragon",
+  description: "Harness the mystical power of the eternal dragon for DeFi magic and crypto wish fulfillment",
 };
 
 export default function RootLayout({

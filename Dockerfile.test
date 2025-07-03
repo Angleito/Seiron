@@ -1,0 +1,52 @@
+FROM node:18-alpine
+
+# Install system dependencies
+RUN apk add --no-cache \
+    git \
+    python3 \
+    make \
+    g++ \
+    curl \
+    bash
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY tsconfig.json ./
+COPY jest.config.js ./
+
+# Install dependencies
+RUN npm ci --only=production && npm cache clean --force
+
+# Install development dependencies for testing
+RUN npm install --only=dev
+
+# Copy source code
+COPY src/ ./src/
+COPY test/ ./test/
+COPY backend/ ./backend/
+
+# Copy test configuration
+COPY test/fixtures/ ./test/fixtures/
+COPY test/mocks/ ./test/mocks/
+
+# Build the application
+RUN npm run build
+
+# Create directories for test results
+RUN mkdir -p /app/test-results /app/coverage /app/logs /app/performance-results
+
+# Set environment variables
+ENV NODE_ENV=test
+ENV CI=true
+ENV JEST_JUNIT_OUTPUT_DIR=/app/test-results
+ENV JEST_JUNIT_OUTPUT_NAME=test-results.xml
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
+
+# Default command
+CMD ["npm", "run", "test:integration:docker"]

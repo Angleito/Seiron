@@ -1,14 +1,14 @@
-# AI Portfolio Manager Frontend
+# Seiron - The Wish-Granting Dragon Frontend
 
-A Next.js 14 frontend application for an AI-powered crypto portfolio manager built on Sei Network.
+A Next.js 14 frontend application for summoning Seiron, the mystical dragon of DeFi wish fulfillment on Sei Network.
 
 ## Features
 
-- **Chat Interface**: Natural language interaction with AI portfolio manager
-- **Wallet Integration**: Support for MetaMask and Keplr wallets
-- **Portfolio Dashboard**: Real-time portfolio tracking and analytics
-- **Modern UI**: Clean, minimal design with TailwindCSS
-- **Web3 Ready**: Built with wagmi and viem for blockchain interactions
+- **Dragon Summoning Interface**: Speak your wishes to Seiron in plain language
+- **Sacred Altar Integration**: Connect your mystical vault (MetaMask/Keplr wallets)
+- **Dragon's Treasure Vault**: Real-time treasure tracking and mystical insights
+- **Dragon-Themed UI**: Mystical design with dragon-inspired elements using TailwindCSS
+- **Dragon Magic Ready**: Built with wagmi and viem for blockchain manifestations
 
 ## Tech Stack
 
@@ -71,22 +71,22 @@ frontend/
 
 ## Key Components
 
-### Chat Interface (`/components/chat/chat-interface.tsx`)
-- Real-time messaging UI
-- Message history
-- Input field with send functionality
-- Loading states
+### Dragon Summoning Interface (`/components/chat/chat-interface.tsx`)
+- Real-time dragon communication UI
+- Wish fulfillment history
+- Mystical wish input field with summoning functionality
+- Dragon conjuring states
 
-### Portfolio Sidebar (`/components/portfolio/portfolio-sidebar.tsx`)
-- Portfolio value summary
-- Asset list with balances
-- 24h change indicators
-- Quick stats
+### Dragon's Treasure Vault (`/components/portfolio/portfolio-sidebar.tsx`)
+- Treasure vault power level summary
+- Mystical treasures list with balances
+- Dragon's favor indicators
+- Dragon's wisdom stats
 
-### Wallet Connection (`/components/wallet/wallet-connect.tsx`)
-- RainbowKit integration
-- Multi-wallet support
-- Chain switching
+### Sacred Altar Connection (`/components/wallet/wallet-connect.tsx`)
+- RainbowKit integration for mystical connections
+- Multi-vault support for various treasures
+- Realm switching between different dragon domains
 
 ## Customization
 
@@ -118,6 +118,6 @@ npm run build
 
 ## Notes
 
-- The chat interface currently uses placeholder responses
-- Portfolio data is mocked - connect to your backend for real data
-- Ensure your backend CORS settings allow requests from your frontend domain
+- The dragon summoning interface connects to the mystical orchestrator
+- Treasure vault data connects to the dragon's wisdom backend
+- Ensure your dragon realm CORS settings allow mystical communications from your summoning circle

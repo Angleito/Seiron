@@ -3,6 +3,9 @@ import { TaskEither } from 'fp-ts/TaskEither';
 import * as TE from 'fp-ts/TaskEither';
 import { pipe } from 'fp-ts/function';
 import { BaseAgent, AgentConfig, AgentError, ActionContext, ActionResult } from '../base/BaseAgent';
+import { TakaraProtocolWrapper, createTakaraProtocolWrapper, TakaraRiskAssessment } from '../../protocols/sei/adapters/TakaraProtocolWrapper';
+import { YeiFinanceAdapter } from '../../lending/YeiFinanceAdapter';
+import { ethers } from 'ethers';
 
 /**
  * Comprehensive Lending Agent (~800 lines)
@@ -26,6 +29,38 @@ export interface LendingStrategy {
   rebalanceThreshold: number;
   protocols: string[];
   conditions: StrategyCondition[];
+}
+
+export interface ProtocolAdapter {
+  id: string;
+  name: string;
+  adapter: TakaraProtocolWrapper | YeiFinanceAdapter;
+  priority: number;
+  isActive: boolean;
+}
+
+export interface MultiProtocolOpportunity {
+  bestProtocol: string;
+  alternatives: ProtocolOpportunity[];
+  comparison: ProtocolComparison;
+  recommendation: string;
+}
+
+export interface ProtocolOpportunity {
+  protocol: string;
+  apy: number;
+  riskScore: number;
+  liquidityScore: number;
+  gasEstimate: number;
+  confidence: number;
+}
+
+export interface ProtocolComparison {
+  rateDifference: number;
+  riskDifference: number;
+  gasCostComparison: number;
+  liquidityComparison: number;
+  totalScore: number;
 }
 
 export interface StrategyCondition {
@@ -154,18 +189,24 @@ export interface MarketConditions {
 export class LendingAgent extends BaseAgent {
   private strategies: Map<string, LendingStrategy> = new Map();
   private protocols: Map<string, ProtocolData> = new Map();
+  private protocolAdapters: Map<string, ProtocolAdapter> = new Map();
   private lendingState: LendingState;
   private performanceCache: Map<string, PerformanceData[]> = new Map();
   private riskCalculationCache: Map<string, RiskMetrics> = new Map();
   private marketConditions: MarketConditions;
   private readonly CACHE_TTL = 300000; // 5 minutes
   private lastCacheUpdate = 0;
+  private provider?: ethers.Provider;
+  private signer?: ethers.Signer;
 
-  constructor(config: AgentConfig) {
+  constructor(config: AgentConfig, provider?: ethers.Provider, signer?: ethers.Signer) {
     super(config);
+    this.provider = provider;
+    this.signer = signer;
     this.lendingState = this.initializeLendingState();
     this.marketConditions = this.initializeMarketConditions();
     this.initializeStrategies();
+    this.initializeProtocolAdapters();
     this.registerLendingActions();
   }
 
@@ -218,7 +259,7 @@ export class LendingAgent extends BaseAgent {
         targetAPY: 8,
         maxExposure: 0.3,
         rebalanceThreshold: 0.05,
-        protocols: ['compound', 'aave', 'maker'],
+        protocols: ['compound', 'aave', 'maker', 'takara'],
         conditions: [
           { type: 'risk_metric', operator: 'lt', value: 0.3, weight: 0.4 },
           { type: 'yield_threshold', operator: 'gte', value: 6, weight: 0.3 },
@@ -233,7 +274,7 @@ export class LendingAgent extends BaseAgent {
         targetAPY: 15,
         maxExposure: 0.5,
         rebalanceThreshold: 0.08,
-        protocols: ['compound', 'aave', 'yearn', 'curve'],
+        protocols: ['compound', 'aave', 'yearn', 'curve', 'takara'],
         conditions: [
           { type: 'risk_metric', operator: 'lt', value: 0.6, weight: 0.3 },
           { type: 'yield_threshold', operator: 'gte', value: 10, weight: 0.4 },
@@ -248,7 +289,7 @@ export class LendingAgent extends BaseAgent {
         targetAPY: 30,
         maxExposure: 0.8,
         rebalanceThreshold: 0.12,
-        protocols: ['compound', 'aave', 'yearn', 'curve', 'convex', 'frax'],
+        protocols: ['compound', 'aave', 'yearn', 'curve', 'convex', 'frax', 'takara'],
         conditions: [
           { type: 'yield_threshold', operator: 'gte', value: 20, weight: 0.5 },
           { type: 'risk_metric', operator: 'lt', value: 0.8, weight: 0.2 },
@@ -263,7 +304,7 @@ export class LendingAgent extends BaseAgent {
         targetAPY: 20,
         maxExposure: 0.6,
         rebalanceThreshold: 0.06,
-        protocols: ['compound', 'aave', 'yearn', 'curve', 'convex'],
+        protocols: ['compound', 'aave', 'yearn', 'curve', 'convex', 'takara'],
         conditions: [
           { type: 'market_condition', operator: 'gte', value: 0.4, weight: 0.4 },
           { type: 'yield_threshold', operator: 'gte', value: 12, weight: 0.3 },
@@ -275,6 +316,27 @@ export class LendingAgent extends BaseAgent {
     strategies.forEach(strategy => {
       this.strategies.set(strategy.id, strategy);
     });
+  }
+
+  /**
+   * Initialize protocol adapters
+   */
+  private initializeProtocolAdapters(): void {
+    // Initialize Takara Protocol adapter if provider is available
+    if (this.provider) {
+      const takaraAdapter: ProtocolAdapter = {
+        id: 'takara',
+        name: 'Takara Protocol',
+        adapter: createTakaraProtocolWrapper(this.provider, this.signer),
+        priority: 1,
+        isActive: true
+      };
+      this.protocolAdapters.set('takara', takaraAdapter);
+    }
+
+    // Initialize YeiFinance adapter
+    // Note: YeiFinanceAdapter would need to be updated to match the same interface
+    // For now, we'll focus on Takara integration
   }
 
   /**
@@ -338,6 +400,56 @@ export class LendingAgent extends BaseAgent {
         validation: [
           { field: 'strategyId', required: true, type: 'string' as const },
           { field: 'updates', required: true, type: 'object' as const }
+        ]
+      },
+      {
+        id: 'compare_protocols',
+        name: 'Compare Protocols',
+        description: 'Compare lending rates and risks across all supported protocols',
+        handler: this.compareProtocols.bind(this),
+        validation: [
+          { field: 'asset', required: true, type: 'string' as const },
+          { field: 'amount', required: false, type: 'number' as const }
+        ]
+      },
+      {
+        id: 'optimize_yield',
+        name: 'Optimize Yield',
+        description: 'Find optimal protocol allocation for maximum yield',
+        handler: this.optimizeYield.bind(this),
+        validation: [
+          { field: 'totalAmount', required: true, type: 'number' as const },
+          { field: 'riskTolerance', required: false, type: 'string' as const }
+        ]
+      },
+      {
+        id: 'takara_supply',
+        name: 'Takara Supply',
+        description: 'Supply assets to Takara protocol specifically',
+        handler: this.takaraSupply.bind(this),
+        validation: [
+          { field: 'asset', required: true, type: 'string' as const },
+          { field: 'amount', required: true, type: 'number' as const }
+        ]
+      },
+      {
+        id: 'takara_borrow',
+        name: 'Takara Borrow',
+        description: 'Borrow assets from Takara protocol',
+        handler: this.takaraBorrow.bind(this),
+        validation: [
+          { field: 'asset', required: true, type: 'string' as const },
+          { field: 'amount', required: true, type: 'number' as const }
+        ]
+      },
+      {
+        id: 'cross_protocol_arbitrage',
+        name: 'Cross Protocol Arbitrage',
+        description: 'Identify arbitrage opportunities between protocols',
+        handler: this.crossProtocolArbitrage.bind(this),
+        validation: [
+          { field: 'asset', required: true, type: 'string' as const },
+          { field: 'minProfitBps', required: false, type: 'number' as const }
         ]
       }
     ];
@@ -483,23 +595,30 @@ export class LendingAgent extends BaseAgent {
         async () => {
           // Simulate protocol data updates
           // In real implementation, this would fetch from DeFi protocols APIs
-          const protocols = ['compound', 'aave', 'yearn', 'curve', 'convex', 'frax'];
+          const protocols = ['compound', 'aave', 'yearn', 'curve', 'convex', 'frax', 'takara'];
           
           for (const protocolId of protocols) {
-            const data: ProtocolData = {
-              id: protocolId,
-              name: protocolId.charAt(0).toUpperCase() + protocolId.slice(1),
-              tvl: Math.random() * 10000000000, // Random TVL
-              apy: Math.random() * 50 + 5, // 5-55% APY
-              riskScore: Math.random() * 0.8 + 0.1, // 0.1-0.9 risk score
-              liquidityScore: Math.random() * 0.9 + 0.1,
-              securityScore: Math.random() * 0.8 + 0.2,
-              lastUpdate: new Date(),
-              supportedAssets: ['USDC', 'USDT', 'DAI', 'ETH', 'WBTC'],
-              minimumDeposit: 100,
-              withdrawalFee: 0.001,
-              performanceHistory: this.generatePerformanceHistory()
-            };
+            let data: ProtocolData;
+            
+            if (protocolId === 'takara') {
+              // Get real data from Takara adapter if available
+              data = await this.updateTakaraProtocolData();
+            } else {
+              data = {
+                id: protocolId,
+                name: protocolId.charAt(0).toUpperCase() + protocolId.slice(1),
+                tvl: Math.random() * 10000000000, // Random TVL
+                apy: Math.random() * 50 + 5, // 5-55% APY
+                riskScore: Math.random() * 0.8 + 0.1, // 0.1-0.9 risk score
+                liquidityScore: Math.random() * 0.9 + 0.1,
+                securityScore: Math.random() * 0.8 + 0.2,
+                lastUpdate: new Date(),
+                supportedAssets: ['USDC', 'USDT', 'DAI', 'ETH', 'WBTC'],
+                minimumDeposit: 100,
+                withdrawalFee: 0.001,
+                performanceHistory: this.generatePerformanceHistory()
+              };
+            }
             
             this.protocols.set(protocolId, data);
           }
@@ -1213,6 +1332,355 @@ export class LendingAgent extends BaseAgent {
   }
 
   /**
+   * Update Takara protocol data using real adapter
+   */
+  private async updateTakaraProtocolData(): Promise<ProtocolData> {
+    const takaraAdapter = this.protocolAdapters.get('takara');
+    
+    if (!takaraAdapter) {
+      // Fallback to simulated data
+      return {
+        id: 'takara',
+        name: 'Takara Protocol',
+        tvl: 50000000, // $50M simulated
+        apy: 12.5, // 12.5% APY
+        riskScore: 0.25, // Low risk (newer but audited)
+        liquidityScore: 0.8,
+        securityScore: 0.85,
+        lastUpdate: new Date(),
+        supportedAssets: ['SEI', 'iSEI', 'USDT', 'USDC', 'fastUSD', 'uBTC'],
+        minimumDeposit: 1,
+        withdrawalFee: 0.0001,
+        performanceHistory: this.generatePerformanceHistory()
+      };
+    }
+
+    try {
+      // Get real data from Takara adapter
+      const adapter = takaraAdapter.adapter as TakaraProtocolWrapper;
+      const supportedAssets = await adapter.getSupportedAssets();
+      
+      if (supportedAssets._tag === 'Right') {
+        const assets = supportedAssets.right;
+        let totalTvl = 0n;
+        let avgApy = 0n;
+        let assetCount = 0n;
+
+        // Calculate aggregate metrics from supported assets
+        for (const asset of assets) {
+          try {
+            const rates = await adapter.getLendingRates(asset.symbol);
+            if (rates._tag === 'Right') {
+              totalTvl += rates.right.totalSupply;
+              avgApy += rates.right.supplyRate;
+              assetCount++;
+            }
+          } catch (error) {
+            // Skip assets with errors
+            continue;
+          }
+        }
+
+        const averageApy = assetCount > 0n ? Number(avgApy / assetCount) / 1e25 : 12.5; // Convert from ray to percentage
+
+        return {
+          id: 'takara',
+          name: 'Takara Protocol',
+          tvl: Number(totalTvl) / 1e18, // Convert from wei
+          apy: averageApy,
+          riskScore: 0.25, // Static for now, could be calculated based on protocol metrics
+          liquidityScore: 0.8,
+          securityScore: 0.85,
+          lastUpdate: new Date(),
+          supportedAssets: assets.map(a => a.symbol),
+          minimumDeposit: 1,
+          withdrawalFee: 0.0001,
+          performanceHistory: this.generatePerformanceHistory()
+        };
+      }
+    } catch (error) {
+      console.warn('Failed to fetch Takara protocol data:', error);
+    }
+
+    // Fallback to simulated data
+    return {
+      id: 'takara',
+      name: 'Takara Protocol',
+      tvl: 50000000,
+      apy: 12.5,
+      riskScore: 0.25,
+      liquidityScore: 0.8,
+      securityScore: 0.85,
+      lastUpdate: new Date(),
+      supportedAssets: ['SEI', 'iSEI', 'USDT', 'USDC', 'fastUSD', 'uBTC'],
+      minimumDeposit: 1,
+      withdrawalFee: 0.0001,
+      performanceHistory: this.generatePerformanceHistory()
+    };
+  }
+
+  /**
+   * Compare protocols for a specific asset
+   */
+  private compareProtocols(context: ActionContext): TaskEither<AgentError, ActionResult> {
+    const { asset, amount = 10000 } = context.parameters;
+
+    return pipe(
+      this.updateProtocolData(),
+      TE.chain(() => TE.tryCatch(
+        async () => {
+          const opportunities: ProtocolOpportunity[] = [];
+          
+          for (const [protocolId, protocolData] of this.protocols) {
+            if (protocolData.supportedAssets.includes(asset)) {
+              const gasEstimate = await this.estimateGasCost(protocolId, 'supply');
+              
+              opportunities.push({
+                protocol: protocolId,
+                apy: protocolData.apy,
+                riskScore: protocolData.riskScore,
+                liquidityScore: protocolData.liquidityScore,
+                gasEstimate,
+                confidence: this.calculateProtocolConfidence(protocolData)
+              });
+            }
+          }
+
+          opportunities.sort((a, b) => b.confidence - a.confidence);
+          
+          const best = opportunities[0];
+          const comparison = this.generateProtocolComparison(opportunities);
+
+          const multiProtocolOpportunity: MultiProtocolOpportunity = {
+            bestProtocol: best?.protocol || '',
+            alternatives: opportunities,
+            comparison,
+            recommendation: this.generateComparisonRecommendation(opportunities, asset, amount)
+          };
+
+          return multiProtocolOpportunity;
+        },
+        error => this.createError('PROTOCOL_COMPARISON_FAILED', `Failed to compare protocols: ${error}`)
+      )),
+      TE.map(comparison => ({
+        success: true,
+        data: comparison,
+        message: `Compared ${comparison.alternatives.length} protocols for ${asset}`
+      }))
+    );
+  }
+
+  /**
+   * Optimize yield across multiple protocols
+   */
+  private optimizeYield(context: ActionContext): TaskEither<AgentError, ActionResult> {
+    const { totalAmount, riskTolerance = 'medium' } = context.parameters;
+
+    return pipe(
+      this.updateProtocolData(),
+      TE.chain(() => TE.tryCatch(
+        async () => {
+          const allocations = await this.calculateOptimalAllocation(totalAmount, riskTolerance);
+          const projectedYield = this.calculateProjectedYield(allocations);
+          const riskMetrics = this.calculateAllocationRisk(allocations);
+
+          return {
+            allocations,
+            projectedYield,
+            riskMetrics,
+            rebalanceFrequency: this.calculateOptimalRebalanceFrequency(allocations),
+            expectedGasCosts: this.estimateAllocationGasCosts(allocations)
+          };
+        },
+        error => this.createError('YIELD_OPTIMIZATION_FAILED', `Failed to optimize yield: ${error}`)
+      )),
+      TE.map(optimization => ({
+        success: true,
+        data: optimization,
+        message: `Optimized allocation for $${totalAmount} with ${riskTolerance} risk tolerance`
+      }))
+    );
+  }
+
+  /**
+   * Supply assets to Takara protocol
+   */
+  private takaraSupply(context: ActionContext): TaskEither<AgentError, ActionResult> {
+    const { asset, amount } = context.parameters;
+
+    return pipe(
+      TE.tryCatch(
+        async () => {
+          const takaraAdapter = this.protocolAdapters.get('takara');
+          if (!takaraAdapter || !this.signer) {
+            throw new Error('Takara adapter not available or no signer provided');
+          }
+
+          const adapter = takaraAdapter.adapter as TakaraProtocolWrapper;
+          const amountBigInt = BigInt(Math.floor(amount * 1e18)); // Convert to wei
+
+          const result = await adapter.supply({
+            asset,
+            amount: amountBigInt,
+            referralCode: 0
+          });
+
+          if (result._tag === 'Left') {
+            throw new Error(result.left.message);
+          }
+
+          // Update local state
+          const position: LendingPosition = {
+            id: `takara_${asset}_${Date.now()}`,
+            protocol: 'takara',
+            asset,
+            amount,
+            apy: this.protocols.get('takara')?.apy || 0,
+            entryPrice: 1,
+            entryTime: new Date(),
+            lastUpdate: new Date(),
+            unrealizedPnL: 0,
+            fees: amount * 0.0001,
+            strategyId: 'adaptive'
+          };
+
+          this.lendingState.positions.push(position);
+          this.recalculatePortfolioMetrics();
+
+          return {
+            transaction: result.right,
+            position,
+            newHealthFactor: await this.getTakaraHealthFactor()
+          };
+        },
+        error => this.createError('TAKARA_SUPPLY_FAILED', `Takara supply failed: ${error}`)
+      ),
+      TE.map(result => ({
+        success: true,
+        data: result,
+        message: `Successfully supplied ${amount} ${asset} to Takara Protocol`
+      }))
+    );
+  }
+
+  /**
+   * Borrow assets from Takara protocol
+   */
+  private takaraBorrow(context: ActionContext): TaskEither<AgentError, ActionResult> {
+    const { asset, amount } = context.parameters;
+
+    return pipe(
+      TE.tryCatch(
+        async () => {
+          const takaraAdapter = this.protocolAdapters.get('takara');
+          if (!takaraAdapter || !this.signer) {
+            throw new Error('Takara adapter not available or no signer provided');
+          }
+
+          const adapter = takaraAdapter.adapter as TakaraProtocolWrapper;
+          const amountBigInt = BigInt(Math.floor(amount * 1e18));
+
+          // Check health factor before borrowing
+          const currentHealthFactor = await this.getTakaraHealthFactor();
+          if (currentHealthFactor < 1.5) {
+            throw new Error(`Health factor ${currentHealthFactor} too low for borrowing`);
+          }
+
+          const result = await adapter.borrow({
+            asset,
+            amount: amountBigInt,
+            interestRateMode: 'variable',
+            referralCode: 0
+          });
+
+          if (result._tag === 'Left') {
+            throw new Error(result.left.message);
+          }
+
+          const newHealthFactor = await this.getTakaraHealthFactor();
+
+          return {
+            transaction: result.right,
+            oldHealthFactor: currentHealthFactor,
+            newHealthFactor,
+            liquidationRisk: TakaraRiskAssessment.calculateLiquidationRisk(BigInt(Math.floor(newHealthFactor * 1e18)))
+          };
+        },
+        error => this.createError('TAKARA_BORROW_FAILED', `Takara borrow failed: ${error}`)
+      ),
+      TE.map(result => ({
+        success: true,
+        data: result,
+        message: `Successfully borrowed ${amount} ${asset} from Takara Protocol`
+      }))
+    );
+  }
+
+  /**
+   * Identify cross-protocol arbitrage opportunities
+   */
+  private crossProtocolArbitrage(context: ActionContext): TaskEither<AgentError, ActionResult> {
+    const { asset, minProfitBps = 50 } = context.parameters; // 50 basis points minimum profit
+
+    return pipe(
+      this.updateProtocolData(),
+      TE.chain(() => TE.tryCatch(
+        async () => {
+          const opportunities = [];
+          const protocols = Array.from(this.protocols.values());
+          
+          for (let i = 0; i < protocols.length; i++) {
+            for (let j = i + 1; j < protocols.length; j++) {
+              const protocolA = protocols[i];
+              const protocolB = protocols[j];
+              
+              if (protocolA.supportedAssets.includes(asset) && protocolB.supportedAssets.includes(asset)) {
+                const rateDiff = Math.abs(protocolA.apy - protocolB.apy);
+                const profitBps = rateDiff * 100; // Convert to basis points
+                
+                if (profitBps >= minProfitBps) {
+                  const borrowFrom = protocolA.apy < protocolB.apy ? protocolA : protocolB;
+                  const lendTo = protocolA.apy > protocolB.apy ? protocolA : protocolB;
+                  
+                  const gasCosts = await this.estimateArbitrageGasCosts(borrowFrom.id, lendTo.id);
+                  const breakEvenAmount = this.calculateArbitrageBreakEven(rateDiff, gasCosts);
+                  
+                  opportunities.push({
+                    borrowFrom: borrowFrom.id,
+                    lendTo: lendTo.id,
+                    asset,
+                    rateDifference: rateDiff,
+                    profitBps,
+                    gasCosts,
+                    breakEvenAmount,
+                    maxProfitableAmount: breakEvenAmount * 10, // Conservative estimate
+                    riskAssessment: this.assessArbitrageRisk(borrowFrom, lendTo)
+                  });
+                }
+              }
+            }
+          }
+          
+          opportunities.sort((a, b) => b.profitBps - a.profitBps);
+          
+          return {
+            opportunities: opportunities.slice(0, 5), // Top 5 opportunities
+            totalOpportunities: opportunities.length,
+            bestOpportunity: opportunities[0] || null,
+            marketConditions: this.marketConditions
+          };
+        },
+        error => this.createError('ARBITRAGE_ANALYSIS_FAILED', `Failed to analyze arbitrage: ${error}`)
+      )),
+      TE.map(analysis => ({
+        success: true,
+        data: analysis,
+        message: `Found ${analysis.totalOpportunities} arbitrage opportunities for ${asset}`
+      }))
+    );
+  }
+
+  /**
    * Generate performance history (placeholder)
    */
   private generatePerformanceHistory(): PerformanceData[] {
@@ -1238,6 +1706,241 @@ export class LendingAgent extends BaseAgent {
     }
     
     return history;
+  }
+
+  /**
+   * Helper methods for new functionality
+   */
+  
+  private async estimateGasCost(protocolId: string, operation: string): Promise<number> {
+    // Simplified gas estimation
+    const baseGas = {
+      supply: 150000,
+      withdraw: 120000,
+      borrow: 180000,
+      repay: 140000
+    };
+    
+    const protocolMultiplier = protocolId === 'takara' ? 1.1 : 1.0; // Takara might be slightly more expensive
+    return (baseGas[operation as keyof typeof baseGas] || 150000) * protocolMultiplier;
+  }
+
+  private calculateProtocolConfidence(protocolData: ProtocolData): number {
+    // Weighted confidence score
+    const apyScore = Math.min(protocolData.apy / 50, 1) * 0.3;
+    const riskScore = (1 - protocolData.riskScore) * 0.4;
+    const liquidityScore = protocolData.liquidityScore * 0.2;
+    const securityScore = protocolData.securityScore * 0.1;
+    
+    return apyScore + riskScore + liquidityScore + securityScore;
+  }
+
+  private generateProtocolComparison(opportunities: ProtocolOpportunity[]): ProtocolComparison {
+    if (opportunities.length < 2) {
+      return {
+        rateDifference: 0,
+        riskDifference: 0,
+        gasCostComparison: 0,
+        liquidityComparison: 0,
+        totalScore: 0
+      };
+    }
+
+    const best = opportunities[0];
+    const second = opportunities[1];
+
+    return {
+      rateDifference: best.apy - second.apy,
+      riskDifference: second.riskScore - best.riskScore,
+      gasCostComparison: second.gasEstimate - best.gasEstimate,
+      liquidityComparison: best.liquidityScore - second.liquidityScore,
+      totalScore: best.confidence - second.confidence
+    };
+  }
+
+  private generateComparisonRecommendation(opportunities: ProtocolOpportunity[], asset: string, amount: number): string {
+    if (opportunities.length === 0) {
+      return `No protocols support ${asset} currently.`;
+    }
+
+    const best = opportunities[0];
+    const rateDiff = opportunities.length > 1 ? best.apy - opportunities[1].apy : 0;
+
+    let recommendation = `Best option: ${best.protocol} with ${best.apy.toFixed(2)}% APY. `;
+    
+    if (rateDiff > 1) {
+      recommendation += `Significantly better than alternatives (+${rateDiff.toFixed(2)}%). `;
+    } else if (rateDiff > 0.1) {
+      recommendation += `Marginally better than alternatives (+${rateDiff.toFixed(2)}%). `;
+    }
+
+    if (best.riskScore > 0.6) {
+      recommendation += `⚠️ High risk score (${(best.riskScore * 100).toFixed(1)}%) - consider smaller allocation.`;
+    }
+
+    return recommendation;
+  }
+
+  private async calculateOptimalAllocation(totalAmount: number, riskTolerance: string): Promise<any[]> {
+    const allocations = [];
+    const protocols = Array.from(this.protocols.values());
+    
+    // Risk tolerance mapping
+    const riskWeights = {
+      conservative: { risk: 0.7, yield: 0.3 },
+      medium: { risk: 0.5, yield: 0.5 },
+      aggressive: { risk: 0.3, yield: 0.7 }
+    };
+    
+    const weights = riskWeights[riskTolerance as keyof typeof riskWeights] || riskWeights.medium;
+    
+    // Calculate scores for each protocol
+    const scoredProtocols = protocols.map(protocol => ({
+      ...protocol,
+      score: (protocol.apy / 50 * weights.yield) + ((1 - protocol.riskScore) * weights.risk)
+    })).sort((a, b) => b.score - a.score);
+
+    // Allocate based on scores (top 3-5 protocols)
+    const topProtocols = scoredProtocols.slice(0, Math.min(5, scoredProtocols.length));
+    const totalScore = topProtocols.reduce((sum, p) => sum + p.score, 0);
+    
+    let remainingAmount = totalAmount;
+    
+    topProtocols.forEach((protocol, index) => {
+      const isLast = index === topProtocols.length - 1;
+      const allocation = isLast ? remainingAmount : Math.floor((protocol.score / totalScore) * totalAmount);
+      
+      allocations.push({
+        protocol: protocol.id,
+        amount: allocation,
+        percentage: (allocation / totalAmount) * 100,
+        expectedApy: protocol.apy,
+        riskScore: protocol.riskScore
+      });
+      
+      remainingAmount -= allocation;
+    });
+
+    return allocations;
+  }
+
+  private calculateProjectedYield(allocations: any[]): any {
+    const totalAmount = allocations.reduce((sum, alloc) => sum + alloc.amount, 0);
+    const weightedApy = allocations.reduce((sum, alloc) => 
+      sum + (alloc.expectedApy * alloc.amount / totalAmount), 0
+    );
+
+    return {
+      totalAmount,
+      weightedApy,
+      estimatedYearlyReturn: totalAmount * (weightedApy / 100),
+      estimatedMonthlyReturn: totalAmount * (weightedApy / 100) / 12,
+      breakdown: allocations.map(alloc => ({
+        protocol: alloc.protocol,
+        amount: alloc.amount,
+        yearlyReturn: alloc.amount * (alloc.expectedApy / 100)
+      }))
+    };
+  }
+
+  private calculateAllocationRisk(allocations: any[]): any {
+    const totalAmount = allocations.reduce((sum, alloc) => sum + alloc.amount, 0);
+    const weightedRisk = allocations.reduce((sum, alloc) => 
+      sum + (alloc.riskScore * alloc.amount / totalAmount), 0
+    );
+
+    return {
+      overallRiskScore: weightedRisk,
+      riskLevel: weightedRisk < 0.3 ? 'Low' : weightedRisk < 0.6 ? 'Medium' : 'High',
+      diversificationScore: allocations.length / 5, // Max 5 protocols
+      concentration: Math.max(...allocations.map(a => a.percentage)),
+      riskBreakdown: allocations.map(alloc => ({
+        protocol: alloc.protocol,
+        risk: alloc.riskScore,
+        contribution: (alloc.amount / totalAmount) * alloc.riskScore
+      }))
+    };
+  }
+
+  private calculateOptimalRebalanceFrequency(allocations: any[]): string {
+    const avgRisk = allocations.reduce((sum, alloc) => sum + alloc.riskScore, 0) / allocations.length;
+    
+    if (avgRisk < 0.3) return 'Monthly';
+    if (avgRisk < 0.6) return 'Bi-weekly';
+    return 'Weekly';
+  }
+
+  private estimateAllocationGasCosts(allocations: any[]): any {
+    const gasPrice = 20; // 20 gwei assumed
+    const ethPrice = 2000; // $2000 ETH assumed
+    
+    const totalGas = allocations.reduce((sum, alloc) => {
+      return sum + 150000; // Estimated gas per allocation
+    }, 0);
+
+    const gasCostEth = (totalGas * gasPrice) / 1e9;
+    const gasCostUsd = gasCostEth * ethPrice;
+
+    return {
+      totalGas,
+      gasCostEth,
+      gasCostUsd,
+      gasPerAllocation: 150000,
+      estimatedRebalanceCost: gasCostUsd * 0.5 // Assuming rebalancing uses ~50% of initial allocation gas
+    };
+  }
+
+  private async getTakaraHealthFactor(): Promise<number> {
+    const takaraAdapter = this.protocolAdapters.get('takara');
+    if (!takaraAdapter || !this.signer) {
+      return 2.0; // Default safe value
+    }
+
+    try {
+      const adapter = takaraAdapter.adapter as TakaraProtocolWrapper;
+      const userAddress = await this.signer.getAddress();
+      const healthData = await adapter.getHealthFactor(userAddress);
+      
+      if (healthData._tag === 'Right') {
+        return Number(healthData.right.healthFactor) / 1e18;
+      }
+    } catch (error) {
+      console.warn('Failed to get Takara health factor:', error);
+    }
+    
+    return 2.0;
+  }
+
+  private async estimateArbitrageGasCosts(borrowProtocol: string, lendProtocol: string): Promise<number> {
+    // Estimate gas for borrow + supply operations
+    const borrowGas = await this.estimateGasCost(borrowProtocol, 'borrow');
+    const supplyGas = await this.estimateGasCost(lendProtocol, 'supply');
+    
+    return borrowGas + supplyGas + 50000; // Additional gas for approvals and coordination
+  }
+
+  private calculateArbitrageBreakEven(rateDiff: number, gasCosts: number): number {
+    const gasPrice = 20; // 20 gwei
+    const ethPrice = 2000; // $2000 ETH
+    const gasCostUsd = (gasCosts * gasPrice) / 1e9 * ethPrice;
+    
+    // Break-even amount where rate difference covers gas costs over 1 year
+    return gasCostUsd / (rateDiff / 100);
+  }
+
+  private assessArbitrageRisk(borrowProtocol: ProtocolData, lendProtocol: ProtocolData): any {
+    const combinedRisk = (borrowProtocol.riskScore + lendProtocol.riskScore) / 2;
+    const liquidityRisk = Math.min(borrowProtocol.liquidityScore, lendProtocol.liquidityScore);
+    
+    return {
+      overallRisk: combinedRisk,
+      liquidityRisk: 1 - liquidityRisk,
+      protocolRisk: {
+        borrow: borrowProtocol.riskScore,
+        lend: lendProtocol.riskScore
+      },
+      recommendation: combinedRisk < 0.4 ? 'Low risk' : combinedRisk < 0.7 ? 'Medium risk' : 'High risk'
+    };
   }
 
   /**

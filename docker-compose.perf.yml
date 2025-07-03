@@ -1,0 +1,343 @@
+version: '3.8'
+
+services:
+  # Performance monitoring stack
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: sei-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus-perf.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    networks:
+      - perf-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sei-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - perf-network
+    restart: unless-stopped
+
+  # Application under test
+  sei-agent-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.performance
+    container_name: sei-agent-app
+    ports:
+      - "8080:8080"
+      - "8081:8081"  # Metrics endpoint
+    environment:
+      - NODE_ENV=performance
+      - METRICS_ENABLED=true
+      - PROMETHEUS_ENDPOINT=http://prometheus:9090
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://perfuser:perfpass@postgres:5432/perfdb
+      - LOG_LEVEL=info
+      - PERFORMANCE_PROFILING=true
+      - MEMORY_MONITORING=true
+      - CPU_PROFILING=true
+    depends_on:
+      - redis
+      - postgres
+      - prometheus
+    networks:
+      - perf-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+          cpus: '1.0'
+
+  # Load generator
+  load-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile.loadgen
+    container_name: sei-load-generator
+    depends_on:
+      - sei-agent-app
+    environment:
+      - TARGET_URL=http://sei-agent-app:8080
+      - CONCURRENT_USERS=100
+      - DURATION=3600
+      - RAMP_UP_TIME=300
+      - RAMP_DOWN_TIME=300
+      - TEST_SCENARIO=mixed_workload
+      - METRICS_ENDPOINT=http://prometheus:9090
+    volumes:
+      - ./test-results/performance:/app/results
+      - ./test/performance/scenarios:/app/scenarios:ro
+    networks:
+      - perf-network
+    restart: "no"
+
+  # Stress test generator
+  stress-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile.stress
+    container_name: sei-stress-generator
+    depends_on:
+      - sei-agent-app
+    environment:
+      - TARGET_URL=http://sei-agent-app:8080
+      - STRESS_LEVEL=high
+      - CONCURRENT_CONNECTIONS=1000
+      - REQUESTS_PER_SECOND=500
+      - DURATION=1800
+      - CHAOS_ENGINEERING=true
+    volumes:
+      - ./test-results/stress:/app/results
+    networks:
+      - perf-network
+    restart: "no"
+
+  # Protocol simulators
+  protocol-simulator:
+    build:
+      context: .
+      dockerfile: Dockerfile.protocol-sim
+    container_name: sei-protocol-simulator
+    ports:
+      - "8082:8082"  # Symphony simulator
+      - "8083:8083"  # DragonSwap simulator
+      - "8084:8084"  # Yei Finance simulator
+    environment:
+      - SIMULATOR_MODE=all
+      - LATENCY_SIMULATION=true
+      - FAILURE_SIMULATION=true
+      - NETWORK_DELAY_MS=50
+      - FAILURE_RATE=0.02
+    networks:
+      - perf-network
+    restart: unless-stopped
+
+  # Database for performance testing
+  postgres:
+    image: postgres:15
+    container_name: sei-postgres-perf
+    environment:
+      - POSTGRES_USER=perfuser
+      - POSTGRES_PASSWORD=perfpass
+      - POSTGRES_DB=perfdb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./monitoring/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - perf-network
+    restart: unless-stopped
+
+  # Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    container_name: sei-redis-perf
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 1gb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - perf-network
+    restart: unless-stopped
+
+  # Resource monitoring
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: sei-cadvisor
+    ports:
+      - "8081:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    networks:
+      - perf-network
+    restart: unless-stopped
+
+  # Node exporter for system metrics
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: sei-node-exporter
+    ports:
+      - "9100:9100"
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - perf-network
+    restart: unless-stopped
+
+  # Elasticsearch for log aggregation
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
+    container_name: sei-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - perf-network
+    restart: unless-stopped
+
+  # Logstash for log processing
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.8.0
+    container_name: sei-logstash
+    volumes:
+      - ./monitoring/logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - ./monitoring/logstash/config:/usr/share/logstash/config:ro
+    ports:
+      - "5044:5044"
+    depends_on:
+      - elasticsearch
+    networks:
+      - perf-network
+    restart: unless-stopped
+
+  # Kibana for log visualization
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.8.0
+    container_name: sei-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - perf-network
+    restart: unless-stopped
+
+  # Jaeger for distributed tracing
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: sei-jaeger
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - perf-network
+    restart: unless-stopped
+
+  # Performance test orchestrator
+  test-orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile.test-orchestrator
+    container_name: sei-test-orchestrator
+    depends_on:
+      - sei-agent-app
+      - prometheus
+      - grafana
+    environment:
+      - APP_URL=http://sei-agent-app:8080
+      - PROMETHEUS_URL=http://prometheus:9090
+      - GRAFANA_URL=http://grafana:3000
+      - TEST_SUITE=comprehensive
+      - PARALLEL_EXECUTION=true
+      - CHAOS_TESTING=true
+    volumes:
+      - ./test-results:/app/results
+      - ./test/performance:/app/tests:ro
+    networks:
+      - perf-network
+    restart: "no"
+
+  # Network simulator for latency testing
+  network-simulator:
+    image: alexei/docker-toxiproxy:latest
+    container_name: sei-network-simulator
+    ports:
+      - "8474:8474"  # API
+      - "8475:8475"  # Proxy
+    command: -host=0.0.0.0
+    networks:
+      - perf-network
+    restart: unless-stopped
+
+  # Memory profiler
+  memory-profiler:
+    build:
+      context: .
+      dockerfile: Dockerfile.memory-profiler
+    container_name: sei-memory-profiler
+    depends_on:
+      - sei-agent-app
+    environment:
+      - TARGET_APP=sei-agent-app:8080
+      - PROFILING_INTERVAL=30
+      - HEAP_ANALYSIS=true
+      - MEMORY_LEAK_DETECTION=true
+    volumes:
+      - ./test-results/memory:/app/results
+    networks:
+      - perf-network
+    restart: "no"
+
+networks:
+  perf-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  elasticsearch_data:
+    driver: local

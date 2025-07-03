@@ -90,8 +90,8 @@ function parseUserIntent(message: string, sessionId: string): UserIntent {
 // Format agent response for chat
 function formatAgentResponse(result: TaskResult, agentType?: string): string {
   if (result.error) {
-    return `I encountered an error: ${result.error.message}. ${
-      result.error.recoverable ? "I'll try a different approach." : "Please try rephrasing your request."
+    return `The dragon encountered turbulence: ${result.error.message}. ${
+      result.error.recoverable ? "Seiron will try a different mystical approach." : "Please speak your wish more clearly."
     }`
   }
 
@@ -102,34 +102,34 @@ function formatAgentResponse(result: TaskResult, agentType?: string): string {
   switch (agentType) {
     case 'lending_agent':
       if (data.action === 'supply') {
-        response = `✅ Successfully supplied ${data.amount} ${data.asset} to ${data.protocol}.\n`
-        response += `📊 Current APY: ${data.apy}%\n`
-        response += `💰 You're now earning interest on your deposit!`
+        response = `🐉 Seiron has manifested your wish! Successfully supplied ${data.amount} ${data.asset} to ${data.protocol}.\n`
+        response += `✨ Dragon's Power Level: ${data.apy}%\n`
+        response += `💎 Your treasures now grow with mystical energy!`
       } else if (data.action === 'borrow') {
-        response = `✅ Successfully borrowed ${data.amount} ${data.asset} from ${data.protocol}.\n`
-        response += `📊 Borrow APR: ${data.apr}%\n`
-        response += `⚠️ Remember to monitor your health factor to avoid liquidation.`
+        response = `🐉 The dragon has granted your borrowing wish! ${data.amount} ${data.asset} from ${data.protocol}.\n`
+        response += `⚡ Dragon's Demand: ${data.apr}%\n`
+        response += `🔮 Keep your power level high to maintain the dragon's favor.`
       }
       break
 
     case 'liquidity_agent':
       if (data.action === 'add_liquidity') {
-        response = `✅ Successfully added liquidity to ${data.pool}.\n`
-        response += `💧 Liquidity: ${data.liquidityAmount}\n`
-        response += `📊 Estimated APR: ${data.estimatedApr}%`
+        response = `🐉 Seiron has channeled your energy into ${data.pool}!\n`
+        response += `💫 Mystical Liquidity: ${data.liquidityAmount}\n`
+        response += `✨ Dragon's Blessing: ${data.estimatedApr}%`
       } else if (data.action === 'swap') {
-        response = `✅ Swap executed successfully!\n`
-        response += `🔄 ${data.fromAmount} ${data.fromToken} → ${data.toAmount} ${data.toToken}\n`
-        response += `💵 Price: ${data.executionPrice} ${data.toToken}/${data.fromToken}`
+        response = `🐉 The dragon has transformed your treasures!\n`
+        response += `⚡ ${data.fromAmount} ${data.fromToken} → ${data.toAmount} ${data.toToken}\n`
+        response += `🔮 Mystical Exchange Rate: ${data.executionPrice} ${data.toToken}/${data.fromToken}`
       }
       break
 
     case 'portfolio_agent':
       if (data.positions) {
-        response = `📊 Your Portfolio Overview:\n\n`
-        response += `Total Value: $${data.totalValue.toLocaleString()}\n`
-        response += `24h Change: ${data.change24h > 0 ? '+' : ''}${data.change24h}%\n\n`
-        response += `Positions:\n`
+        response = `🐉 Seiron's Vision of Your Treasure Vault:\n\n`
+        response += `Total Power Level: $${data.totalValue.toLocaleString()}\n`
+        response += `Dragon's Favor: ${data.change24h > 0 ? '+' : ''}${data.change24h}%\n\n`
+        response += `Mystical Treasures:\n`
         data.positions.forEach((pos: any) => {
           response += `• ${pos.asset}: $${pos.value.toLocaleString()} (${pos.allocation}%)\n`
         })
@@ -137,7 +137,7 @@ function formatAgentResponse(result: TaskResult, agentType?: string): string {
       break
 
     default:
-      response = `Task completed successfully. ${JSON.stringify(data)}`
+      response = `🐉 Seiron has fulfilled your wish! ${JSON.stringify(data)}`
   }
 
   return response
@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
 
     if (!message || !sessionId) {
       return NextResponse.json(
-        { error: 'Message and sessionId are required' },
+        { error: 'The dragon requires both your wish and a summoning circle (sessionId)' },
         { status: 400 }
       )
     }
@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
 
     if (result._tag === 'Left') {
       return NextResponse.json({
-        message: `I couldn't process that request: ${result.left}. Please try rephrasing.`,
+        message: `Seiron could not understand your wish: ${result.left}. Please speak more clearly to the dragon.`,
         timestamp: new Date().toISOString(),
         agentType: 'orchestrator',
         error: true,
@@ -193,7 +193,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { 
         error: 'Failed to process message',
-        message: 'I encountered an error processing your request. Please try again.',
+        message: 'The dragon encountered mystical interference. Please try summoning again.',
       },
       { status: 500 }
     )
@@ -207,7 +207,7 @@ export async function GET(request: NextRequest) {
 
   if (!sessionId) {
     return NextResponse.json(
-      { error: 'SessionId is required for WebSocket connection' },
+      { error: 'A summoning circle (sessionId) is required for the dragon connection' },
       { status: 400 }
     )
   }

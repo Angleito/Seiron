@@ -1,8 +1,9 @@
 /**
- * Lending Agent Module Exports
+ * Enhanced Lending Agent Module Exports with Takara Integration
  */
 
 export { LendingAgent } from './LendingAgent';
+export { TakaraIntegrationExample, runTakaraIntegrationExample } from './TakaraIntegrationExample';
 
 export type {
   LendingStrategy,
@@ -15,5 +16,9 @@ export type {
   RebalanceRecommendation,
   LendingState,
   AlertItem,
-  MarketConditions
+  MarketConditions,
+  ProtocolAdapter,
+  MultiProtocolOpportunity,
+  ProtocolOpportunity,
+  ProtocolComparison
 } from './LendingAgent';

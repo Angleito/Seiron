@@ -3,6 +3,7 @@ export * from './types';
 export * from './constants';
 export * from './utils';
 export { DragonSwapAdapter, createDragonSwapAdapter } from './DragonSwapAdapter';
+export { EnhancedLiquidityManager, createEnhancedLiquidityManager, defaultEnhancedLiquidityConfig } from './EnhancedLiquidityManager';
 
 // Convenience re-exports
 export {

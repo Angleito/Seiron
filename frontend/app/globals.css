@@ -16,3 +16,668 @@
     text-wrap: balance;
   }
 }
+
+/* ========================================
+   SEIRON DRAGON MYSTICAL ANIMATIONS
+   ======================================== */
+
+/* Dragon Fire Breathing Effect */
+@keyframes dragonFire {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.7;
+    filter: hue-rotate(0deg) brightness(1);
+  }
+  25% {
+    transform: scale(1.1) rotate(90deg);
+    opacity: 0.9;
+    filter: hue-rotate(30deg) brightness(1.2);
+  }
+  50% {
+    transform: scale(1.2) rotate(180deg);
+    opacity: 1;
+    filter: hue-rotate(60deg) brightness(1.4);
+  }
+  75% {
+    transform: scale(1.1) rotate(270deg);
+    opacity: 0.8;
+    filter: hue-rotate(90deg) brightness(1.1);
+  }
+  100% {
+    transform: scale(1) rotate(360deg);
+    opacity: 0.7;
+    filter: hue-rotate(0deg) brightness(1);
+  }
+}
+
+/* Dragon Scale Shimmer */
+@keyframes scaleShimmer {
+  0% {
+    background-position: -200% 0;
+    opacity: 0.5;
+  }
+  50% {
+    background-position: 200% 0;
+    opacity: 1;
+  }
+  100% {
+    background-position: -200% 0;
+    opacity: 0.5;
+  }
+}
+
+/* Power Surge Effect */
+@keyframes powerSurge {
+  0% {
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+    transform: scale(1);
+  }
+  25% {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.8), 0 0 30px rgba(251, 146, 60, 0.6);
+    transform: scale(1.02);
+  }
+  50% {
+    box-shadow: 0 0 35px rgba(239, 68, 68, 1), 0 0 50px rgba(251, 146, 60, 0.8), 0 0 70px rgba(252, 211, 77, 0.6);
+    transform: scale(1.05);
+  }
+  75% {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.8), 0 0 30px rgba(251, 146, 60, 0.6);
+    transform: scale(1.02);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+    transform: scale(1);
+  }
+}
+
+/* Mystical Particle Floating */
+@keyframes mysticalFloat {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.6;
+  }
+  25% {
+    transform: translateY(-10px) rotate(90deg);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-15px) rotate(180deg);
+    opacity: 1;
+  }
+  75% {
+    transform: translateY(-8px) rotate(270deg);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(0) rotate(360deg);
+    opacity: 0.6;
+  }
+}
+
+/* Dragon Orb Pulsing */
+@keyframes dragonOrb {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+    opacity: 0.8;
+  }
+  30% {
+    transform: scale(1.1);
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.8), 0 0 40px rgba(251, 146, 60, 0.6);
+    opacity: 1;
+  }
+  60% {
+    transform: scale(1.2);
+    box-shadow: 0 0 40px rgba(239, 68, 68, 1), 0 0 60px rgba(251, 146, 60, 0.8), 0 0 80px rgba(252, 211, 77, 0.6);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+    opacity: 0.8;
+  }
+}
+
+/* Cosmic Glow Animation */
+@keyframes cosmicGlow {
+  0% {
+    background: radial-gradient(circle at 50% 50%, rgba(239, 68, 68, 0.3) 0%, rgba(251, 146, 60, 0.2) 50%, transparent 100%);
+    transform: rotate(0deg);
+  }
+  25% {
+    background: radial-gradient(circle at 50% 50%, rgba(251, 146, 60, 0.4) 0%, rgba(252, 211, 77, 0.3) 50%, transparent 100%);
+    transform: rotate(90deg);
+  }
+  50% {
+    background: radial-gradient(circle at 50% 50%, rgba(252, 211, 77, 0.5) 0%, rgba(239, 68, 68, 0.3) 50%, transparent 100%);
+    transform: rotate(180deg);
+  }
+  75% {
+    background: radial-gradient(circle at 50% 50%, rgba(251, 146, 60, 0.4) 0%, rgba(239, 68, 68, 0.2) 50%, transparent 100%);
+    transform: rotate(270deg);
+  }
+  100% {
+    background: radial-gradient(circle at 50% 50%, rgba(239, 68, 68, 0.3) 0%, rgba(251, 146, 60, 0.2) 50%, transparent 100%);
+    transform: rotate(360deg);
+  }
+}
+
+/* Animated Gradient Shift */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Dragon Loading Spinner */
+@keyframes dragonSpin {
+  0% {
+    transform: rotate(0deg) scale(1);
+    border-color: rgba(239, 68, 68, 0.8) transparent rgba(251, 146, 60, 0.8) transparent;
+  }
+  25% {
+    transform: rotate(90deg) scale(1.1);
+    border-color: rgba(251, 146, 60, 0.8) transparent rgba(252, 211, 77, 0.8) transparent;
+  }
+  50% {
+    transform: rotate(180deg) scale(1.2);
+    border-color: rgba(252, 211, 77, 0.8) transparent rgba(239, 68, 68, 0.8) transparent;
+  }
+  75% {
+    transform: rotate(270deg) scale(1.1);
+    border-color: rgba(239, 68, 68, 0.8) transparent rgba(251, 146, 60, 0.8) transparent;
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+    border-color: rgba(239, 68, 68, 0.8) transparent rgba(251, 146, 60, 0.8) transparent;
+  }
+}
+
+/* Power Level Indicator */
+@keyframes powerLevel {
+  0% {
+    width: 0%;
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.8), rgba(251, 146, 60, 0.8));
+  }
+  25% {
+    width: 25%;
+    background: linear-gradient(90deg, rgba(251, 146, 60, 0.8), rgba(252, 211, 77, 0.8));
+  }
+  50% {
+    width: 50%;
+    background: linear-gradient(90deg, rgba(252, 211, 77, 0.8), rgba(239, 68, 68, 0.8));
+  }
+  75% {
+    width: 75%;
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.8), rgba(251, 146, 60, 0.8));
+  }
+  100% {
+    width: 100%;
+    background: linear-gradient(90deg, rgba(251, 146, 60, 0.8), rgba(252, 211, 77, 0.8));
+  }
+}
+
+/* Floating Orb Effects */
+@keyframes floatingOrb {
+  0% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+    opacity: 0.4;
+  }
+  25% {
+    transform: translateY(-20px) translateX(10px) rotate(90deg);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-30px) translateX(20px) rotate(180deg);
+    opacity: 0.8;
+  }
+  75% {
+    transform: translateY(-15px) translateX(10px) rotate(270deg);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(0) translateX(0) rotate(360deg);
+    opacity: 0.4;
+  }
+}
+
+/* ========================================
+   UTILITY CLASSES FOR MYSTICAL EFFECTS
+   ======================================== */
+
+/* Dragon Fire Effect */
+.dragon-fire {
+  animation: dragonFire 4s ease-in-out infinite;
+}
+
+/* Scale Shimmer Effect */
+.scale-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(239, 68, 68, 0.1) 0%,
+    rgba(251, 146, 60, 0.3) 50%,
+    rgba(239, 68, 68, 0.1) 100%
+  );
+  background-size: 200% 100%;
+  animation: scaleShimmer 3s ease-in-out infinite;
+}
+
+/* Power Surge Effect */
+.power-surge {
+  animation: powerSurge 2s ease-in-out infinite;
+}
+
+/* Mystical Float Effect */
+.mystical-float {
+  animation: mysticalFloat 6s ease-in-out infinite;
+}
+
+/* Dragon Orb Effect */
+.dragon-orb {
+  animation: dragonOrb 3s ease-in-out infinite;
+}
+
+/* Cosmic Glow Background */
+.cosmic-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.cosmic-glow::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(239, 68, 68, 0.3) 0%,
+    rgba(251, 146, 60, 0.2) 50%,
+    transparent 100%
+  );
+  animation: cosmicGlow 8s linear infinite;
+  z-index: -1;
+}
+
+/* Animated Gradient Background */
+.gradient-shift {
+  background: linear-gradient(
+    -45deg,
+    rgba(239, 68, 68, 0.8),
+    rgba(251, 146, 60, 0.8),
+    rgba(252, 211, 77, 0.8),
+    rgba(239, 68, 68, 0.8)
+  );
+  background-size: 400% 400%;
+  animation: gradientShift 5s ease infinite;
+}
+
+/* Dragon Loading Spinner */
+.dragon-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid transparent;
+  border-radius: 50%;
+  animation: dragonSpin 1.5s linear infinite;
+}
+
+/* Power Level Indicator */
+.power-level {
+  height: 4px;
+  background: rgba(75, 85, 99, 0.3);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.power-level::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 2px;
+  animation: powerLevel 3s ease-in-out infinite;
+}
+
+/* Floating Orb Effects */
+.floating-orb {
+  animation: floatingOrb 8s ease-in-out infinite;
+}
+
+/* Dragon Scale Pattern Background */
+.dragon-scales {
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(239, 68, 68, 0.2) 2px, transparent 2px),
+    radial-gradient(circle at 75% 75%, rgba(251, 146, 60, 0.2) 2px, transparent 2px);
+  background-size: 30px 30px;
+  background-position: 0 0, 15px 15px;
+}
+
+/* Mystical Hover Effects */
+.mystical-hover {
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.mystical-hover:hover {
+  transform: scale(1.05);
+  box-shadow: 
+    0 0 20px rgba(239, 68, 68, 0.5),
+    0 0 40px rgba(251, 146, 60, 0.3),
+    0 0 60px rgba(252, 211, 77, 0.2);
+}
+
+/* Dragon Ball Hover Effect */
+.dragon-ball-hover {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.dragon-ball-hover::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(252, 211, 77, 0.3) 0%,
+    rgba(251, 146, 60, 0.2) 30%,
+    transparent 70%
+  );
+  transform: scale(0);
+  transition: transform 0.4s ease;
+  z-index: -1;
+}
+
+.dragon-ball-hover:hover::before {
+  transform: scale(1);
+}
+
+.dragon-ball-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 
+    0 10px 25px rgba(0, 0, 0, 0.3),
+    0 0 30px rgba(252, 211, 77, 0.4);
+}
+
+/* Mystical Card Transform */
+.mystical-card {
+  transition: all 0.3s ease;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.mystical-card:hover {
+  transform: rotateY(5deg) rotateX(5deg);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 0 30px rgba(239, 68, 68, 0.3);
+}
+
+/* Dragon Breath Glow Effect */
+.dragon-breath {
+  position: relative;
+  overflow: hidden;
+}
+
+.dragon-breath::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(252, 211, 77, 0.4),
+    rgba(251, 146, 60, 0.6),
+    rgba(239, 68, 68, 0.4),
+    transparent
+  );
+  animation: dragonBreath 3s ease-in-out infinite;
+}
+
+@keyframes dragonBreath {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* Mystical Depth Shadow */
+.mystical-depth {
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.24),
+    0 0 20px rgba(239, 68, 68, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* New Dragon Floating Animations */
+@keyframes dragon-float {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg);
+    filter: drop-shadow(0 0 20px rgba(239, 68, 68, 0.3));
+  }
+  25% { 
+    transform: translateY(-10px) rotate(1deg);
+    filter: drop-shadow(0 0 30px rgba(239, 68, 68, 0.4));
+  }
+  50% { 
+    transform: translateY(-5px) rotate(0deg);
+    filter: drop-shadow(0 0 25px rgba(239, 68, 68, 0.5));
+  }
+  75% { 
+    transform: translateY(-15px) rotate(-1deg);
+    filter: drop-shadow(0 0 35px rgba(239, 68, 68, 0.4));
+  }
+}
+
+@keyframes dragon-balls-orbit {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes dragon-balls-fast {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(720deg); }
+}
+
+@keyframes dragon-ball-float {
+  0%, 100% { 
+    transform: translateY(0px) scale(1);
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+  }
+  50% { 
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 0 15px rgba(251, 191, 36, 0.6);
+  }
+}
+
+@keyframes ember-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(100px) scale(0.5);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(80px) scale(1);
+  }
+  90% {
+    opacity: 1;
+    transform: translateY(-80px) scale(0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100px) scale(0.3);
+  }
+}
+
+@keyframes power-ring {
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  50% { 
+    transform: scale(1.1);
+    opacity: 0.6;
+  }
+}
+
+@keyframes power-pulse {
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% { 
+    transform: scale(1.5);
+    opacity: 0.4;
+  }
+}
+
+@keyframes star-twinkle {
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.6;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes trail {
+  0% {
+    opacity: 1;
+    transform: translateX(-20px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-40px) scale(0.5);
+  }
+}
+
+/* Utility Classes */
+.animate-dragon-float {
+  animation: dragon-float 6s ease-in-out infinite;
+}
+
+.animate-dragon-balls-orbit {
+  animation: dragon-balls-orbit 15s linear infinite;
+}
+
+.animate-dragon-balls-fast {
+  animation: dragon-balls-fast 5s linear infinite;
+}
+
+.animate-dragon-ball-float {
+  animation: dragon-ball-float 4s ease-in-out infinite;
+}
+
+.animate-ember-rise {
+  animation: ember-rise 4s ease-out infinite;
+}
+
+.animate-power-ring {
+  animation: power-ring 3s ease-in-out infinite;
+}
+
+.animate-power-pulse {
+  animation: power-pulse 2s ease-in-out infinite;
+}
+
+.animate-star-twinkle {
+  animation: star-twinkle 3s ease-in-out infinite;
+}
+
+.animate-trail {
+  animation: trail 1s ease-out infinite;
+}
+
+/* Dragon Power Button */
+.dragon-power-btn {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    45deg,
+    rgba(239, 68, 68, 0.9),
+    rgba(251, 146, 60, 0.9),
+    rgba(252, 211, 77, 0.9)
+  );
+  background-size: 300% 300%;
+  animation: gradientShift 4s ease infinite;
+  transition: all 0.3s ease;
+}
+
+.dragon-power-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 
+    0 0 30px rgba(239, 68, 68, 0.6),
+    0 0 50px rgba(251, 146, 60, 0.4),
+    0 0 70px rgba(252, 211, 77, 0.3);
+}
+
+.dragon-power-btn:active {
+  transform: scale(0.98);
+  animation: powerSurge 0.5s ease;
+}
+
+/* Seiron Text Effect */
+.seiron-text {
+  background: linear-gradient(
+    45deg,
+    #ef4444,
+    #fb923c,
+    #fcd34d,
+    #ef4444
+  );
+  background-size: 400% 400%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 3s ease infinite;
+  text-shadow: 0 0 30px rgba(239, 68, 68, 0.5);
+}
+
+/* Mystical Particle System */
+.particle-system {
+  position: relative;
+  overflow: hidden;
+}
+
+.particle-system::before,
+.particle-system::after {
+  content: '';
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(252, 211, 77, 0.6);
+  border-radius: 50%;
+  animation: mysticalFloat 6s ease-in-out infinite;
+}
+
+.particle-system::before {
+  top: 20%;
+  left: 20%;
+  animation-delay: 0s;
+}
+
+.particle-system::after {
+  top: 60%;
+  right: 30%;
+  animation-delay: 2s;
+}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Send, Bot, Loader2 } from 'lucide-react'
+import { Send, Bot, Loader2, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AgentMessage, AgentStreamEvent } from '@/types/agent'
 import { getOrchestrator } from '@/lib/orchestrator-client'
@@ -15,7 +15,7 @@ export function ChatInterface() {
       id: '1',
       type: 'agent',
       agentType: 'portfolio_agent',
-      content: 'Hello! I\'m your AI portfolio manager. I can help you manage your crypto portfolio, execute trades, provide market insights, and more. How can I assist you today?',
+      content: 'Greetings, mortal! I am Seiron, the Dragon of Financial Wisdom. I possess the power to manage your digital treasures, execute mystical trades, provide ancient market insights, and grant your investing wishes. What fortune do you seek today?',
       timestamp: new Date(),
     },
   ])
@@ -40,7 +40,7 @@ export function ChatInterface() {
       if (event.type === 'status' && event.data) {
         const statusData = event.data as { status: string; message?: string }
         if (statusData.message) {
-          addSystemMessage(`${event.agentType}: ${statusData.message}`)
+          addSystemMessage(`🐉 ${event.agentType?.replace('_', ' ').replace('agent', 'dragon')}: ${statusData.message}`)
         }
         if (statusData.status === 'connected') {
           setConnectedAgents(prev => new Set(prev).add(event.agentId))
@@ -51,7 +51,7 @@ export function ChatInterface() {
     const unsubscribeProgress = orchestrator.on('progress', (event: AgentStreamEvent) => {
       if (event.type === 'progress' && event.data) {
         const progressData = event.data as { message: string }
-        addSystemMessage(`${event.agentType} is working: ${progressData.message}`)
+        addSystemMessage(`🐉 ${event.agentType?.replace('_', ' ').replace('agent', 'dragon')} is conjuring magic: ${progressData.message}`)
       }
     })
 
@@ -110,7 +110,7 @@ export function ChatInterface() {
           id: (Date.now() + 1).toString(),
           type: 'agent',
           agentType: 'portfolio_agent',
-          content: data.message || 'I encountered an error. Please try again.',
+          content: data.message || 'The mystical energies are disrupted. Allow me to recalibrate and try again.',
           timestamp: new Date(),
           metadata: {
             error: true,
@@ -138,7 +138,7 @@ export function ChatInterface() {
       const errorMessage: AgentMessage = {
         id: (Date.now() + 1).toString(),
         type: 'agent',
-        content: 'Failed to connect to the AI service. Please check your connection and try again.',
+        content: 'The connection to the Dragon Realm has been severed. Check your mystical conduits and try summoning again.',
         timestamp: new Date(),
         metadata: {
           error: true,
@@ -160,27 +160,41 @@ export function ChatInterface() {
   const getAgentIcon = (agentType?: string) => {
     switch (agentType) {
       case 'lending_agent':
-        return '💰'
+        return '🐉'
       case 'liquidity_agent':
-        return '💧'
+        return '🐲'
       case 'portfolio_agent':
-        return '📊'
+        return '🔥'
       case 'risk_agent':
         return '🛡️'
       case 'analysis_agent':
-        return '📈'
+        return '🔮'
       default:
-        return <Bot className="h-4 w-4" />
+        return '🐉'
     }
   }
 
+  const getPowerLevel = (confidence?: number) => {
+    if (!confidence) return ''
+    const level = Math.floor(confidence * 7) + 1
+    return '⭐'.repeat(level)
+  }
+
   return (
-    <div className="flex flex-col h-full">
-      {/* Connected Agents Indicator */}
+    <div className="flex flex-col h-full bg-gradient-to-b from-gray-950 to-black"
+         style={{
+           backgroundImage: `
+             radial-gradient(circle at 20% 80%, rgba(220, 38, 38, 0.1) 0%, transparent 50%),
+             radial-gradient(circle at 80% 20%, rgba(220, 38, 38, 0.1) 0%, transparent 50%),
+             radial-gradient(circle at 40% 40%, rgba(220, 38, 38, 0.05) 0%, transparent 50%)
+           `
+         }}>
+      {/* Connected Dragons Indicator */}
       {connectedAgents.size > 0 && (
-        <div className="px-4 py-2 bg-green-50 border-b">
-          <p className="text-sm text-green-700">
-            Connected agents: {Array.from(connectedAgents).join(', ')}
+        <div className="px-4 py-2 bg-gradient-to-r from-red-50 to-orange-50 border-b border-red-200">
+          <p className="text-sm text-red-700 flex items-center gap-2">
+            <Sparkles className="h-4 w-4" />
+            Dragon Legion Active: {Array.from(connectedAgents).map(agent => agent.replace('_', ' ').replace('agent', 'dragon')).join(', ')}
           </p>
         </div>
       )}
@@ -197,22 +211,35 @@ export function ChatInterface() {
           >
             <div
               className={cn(
-                'max-w-[70%] rounded-lg px-4 py-2',
+                'max-w-[70%] rounded-lg px-4 py-2 border',
                 message.type === 'user'
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-gradient-to-r from-red-600 to-red-700 text-white border-red-800 shadow-lg'
                   : message.type === 'system'
-                  ? 'bg-gray-50 text-gray-600 italic'
+                  ? 'bg-gradient-to-r from-gray-800 to-gray-900 text-gray-300 italic border-gray-700 shadow-md'
                   : message.metadata?.error
-                  ? 'bg-red-50 text-red-900'
-                  : 'bg-gray-100 text-gray-900'
+                  ? 'bg-gradient-to-r from-red-100 to-red-200 text-red-900 border-red-300 shadow-md'
+                  : 'bg-gradient-to-r from-gray-900 to-black text-red-100 border-red-800 shadow-lg relative overflow-hidden'
               )}
+              style={message.type === 'agent' && !message.metadata?.error ? {
+                background: 'linear-gradient(135deg, #1a1a1a 0%, #2d1b1b 50%, #1a1a1a 100%)',
+                boxShadow: '0 4px 20px rgba(220, 38, 38, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+                backgroundImage: `
+                  radial-gradient(circle at 10% 20%, rgba(220, 38, 38, 0.1) 0%, transparent 20%),
+                  radial-gradient(circle at 80% 80%, rgba(220, 38, 38, 0.1) 0%, transparent 20%)
+                `
+              } : {}}
             >
               {message.type === 'agent' && (
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-lg">{getAgentIcon(message.agentType)}</span>
-                  <span className="text-xs font-medium text-gray-600">
-                    {message.agentType?.replace('_', ' ').toUpperCase()}
+                  <span className="text-2xl animate-pulse">{getAgentIcon(message.agentType)}</span>
+                  <span className="text-xs font-bold text-red-300 tracking-wide">
+                    {message.agentType?.replace('_', ' ').replace('AGENT', 'DRAGON').toUpperCase()}
                   </span>
+                  {message.metadata?.confidence && (
+                    <span className="text-xs text-yellow-400 ml-2">
+                      {getPowerLevel(message.metadata.confidence)}
+                    </span>
+                  )}
                 </div>
               )}
               <p className="text-sm whitespace-pre-wrap">{message.content}</p>
@@ -221,20 +248,22 @@ export function ChatInterface() {
                   className={cn(
                     'text-xs',
                     message.type === 'user'
-                      ? 'text-blue-200'
+                      ? 'text-red-200'
+                      : message.type === 'agent'
+                      ? 'text-red-400'
                       : 'text-gray-500'
                   )}
                 >
                   {message.timestamp.toLocaleTimeString()}
                 </p>
                 {message.metadata?.executionTime && (
-                  <p className="text-xs text-gray-500">
-                    {(message.metadata.executionTime / 1000).toFixed(2)}s
+                  <p className="text-xs text-red-400">
+                    ⚡ {(message.metadata.executionTime / 1000).toFixed(2)}s
                   </p>
                 )}
                 {message.metadata?.confidence && (
-                  <p className="text-xs text-gray-500">
-                    {Math.round(message.metadata.confidence * 100)}% confident
+                  <p className="text-xs text-yellow-400 font-bold">
+                    🔥 {Math.round(message.metadata.confidence * 100)}% Power Level
                   </p>
                 )}
               </div>
@@ -243,10 +272,11 @@ export function ChatInterface() {
         ))}
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-lg px-4 py-2">
+            <div className="bg-gradient-to-r from-gray-900 to-black rounded-lg px-4 py-2 border border-red-800 shadow-lg">
               <div className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm text-gray-600">AI is thinking...</span>
+                <div className="text-2xl animate-bounce">🐉</div>
+                <Sparkles className="h-4 w-4 animate-spin text-red-400" />
+                <span className="text-sm text-red-300 font-medium">Seiron is conjuring magic...</span>
               </div>
             </div>
           </div>
@@ -254,27 +284,33 @@ export function ChatInterface() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
-      <div className="border-t p-4">
+      {/* Mystical Input Area */}
+      <div className="border-t border-red-800 p-4 bg-gradient-to-r from-gray-900 to-black">
         <div className="flex space-x-2">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Try: 'Show my portfolio', 'Swap 100 USDC for ETH', 'Add liquidity to USDC/ETH pool'..."
-            className="flex-1 resize-none rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600"
-            rows={1}
-          />
+          <div className="relative flex-1">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Tell Seiron your investing wishes... 🐉"
+              className="w-full resize-none rounded-lg border border-red-700 bg-gray-900 text-red-100 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-500 placeholder-red-400"
+              rows={1}
+            />
+            <div className="absolute right-2 top-2 text-red-600 opacity-50">
+              <Sparkles className="h-4 w-4" />
+            </div>
+          </div>
           <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="rounded-lg bg-gradient-to-r from-red-600 to-red-700 px-4 py-2 text-white hover:from-red-700 hover:to-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg border border-red-800 hover:shadow-red-900/50"
           >
             <Send className="h-4 w-4" />
           </button>
         </div>
-        <p className="text-xs text-gray-500 mt-2">
-          Powered by multiple specialized AI agents for lending, liquidity, portfolio management, and more.
+        <p className="text-xs text-red-400 mt-2 flex items-center gap-1">
+          <span className="text-red-600">🔥</span>
+          Empowered by the Dragon Legion - Financial Dragons of unparalleled wisdom and power
         </p>
       </div>
     </div>

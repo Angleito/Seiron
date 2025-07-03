@@ -1,30 +1,37 @@
 import Link from 'next/link'
-import { Bot, Shield, TrendingUp, Zap } from 'lucide-react'
+import { Bot, Shield, TrendingUp, Zap, Star, Eye, Sparkles } from 'lucide-react'
+import { FloatingDragonLogo } from '@/components/FloatingDragonLogo'
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-red-950 via-red-900 to-red-800">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+          {/* Floating Dragon Logo */}
+          <div className="flex justify-center mb-12">
+            <FloatingDragonLogo size="xl" showDragonBalls={true} />
+          </div>
+          
           <div className="text-center">
-            <h1 className="text-5xl font-bold text-gray-900 mb-6">
-              AI-Powered Portfolio Management
+            <h1 className="text-6xl font-bold text-transparent bg-gradient-to-r from-red-400 via-orange-400 to-yellow-400 bg-clip-text mb-6 drop-shadow-lg">
+              Seiron - The Wish-Granting Dragon
             </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-              Let artificial intelligence manage your crypto portfolio. Natural language commands, 
-              automated trading, and intelligent insights - all in one platform.
+            <p className="text-xl text-orange-200 max-w-3xl mx-auto mb-8 leading-relaxed">
+              Summon Seiron to grant your DeFi investing wishes in the Sei ecosystem. 
+              Speak your desires in plain words, and watch as the eternal dragon manifests your trading strategies with mystical precision.
             </p>
             <div className="flex justify-center gap-4">
               <Link
                 href="/dashboard"
-                className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold rounded-lg hover:from-red-700 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
-                Launch Dashboard
+                <Star className="mr-2 h-5 w-5" />
+                Summon Seiron
               </Link>
               <a
                 href="#features"
-                className="inline-flex items-center px-6 py-3 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+                className="inline-flex items-center px-6 py-3 bg-transparent text-orange-200 font-medium rounded-lg border border-orange-400 hover:bg-red-800/50 transition-colors"
               >
                 Learn More
               </a>
@@ -32,151 +39,159 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Background decoration */}
+        {/* Dragon Scale Background */}
         <div className="absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-indigo-50 opacity-50" />
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-blue-200 rounded-full blur-3xl opacity-20" />
+          <div className="absolute inset-0 bg-gradient-to-r from-red-900/40 to-orange-900/40 opacity-70" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-red-500 rounded-full blur-3xl opacity-20 animate-pulse" />
+          <div className="absolute top-20 left-1/4 w-64 h-64 bg-orange-500 rounded-full blur-2xl opacity-15 animate-pulse" />
+          <div className="absolute bottom-20 right-1/4 w-80 h-80 bg-yellow-500 rounded-full blur-3xl opacity-10 animate-pulse" />
+          {/* Dragon Scale Pattern */}
+          <div className="absolute inset-0 opacity-5" style={{
+            backgroundImage: 'radial-gradient(circle at 20px 20px, rgba(255,0,0,0.3) 2px, transparent 2px)',
+            backgroundSize: '40px 40px'
+          }} />
         </div>
       </div>
 
-      {/* Features Section */}
-      <div id="features" className="py-24 bg-white">
+      {/* Dragon Powers Section */}
+      <div id="features" className="py-24 bg-gradient-to-b from-red-900 to-red-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Intelligent Portfolio Management
+            <h2 className="text-3xl font-bold text-transparent bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text mb-4">
+              Seiron's Mystical Powers
             </h2>
-            <p className="text-lg text-gray-600">
-              Powered by advanced AI to make crypto investing effortless
+            <p className="text-lg text-orange-300">
+              Harness the eternal dragon's abilities to dominate the Sei DeFi realm
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {/* Feature 1 */}
+            {/* Dragon Power 1 */}
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 text-blue-600 rounded-lg mb-4">
-                <Bot className="h-8 w-8" />
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-red-600 to-orange-600 text-white rounded-lg mb-4 shadow-lg">
+                <Sparkles className="h-8 w-8" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Natural Language Interface
+              <h3 className="text-lg font-semibold text-orange-100 mb-2">
+                Wish Interpretation
               </h3>
-              <p className="text-gray-600">
-                Simply tell the AI what you want to do. No complex interfaces or trading jargon.
+              <p className="text-orange-400">
+                Speak your desires in plain words. Seiron understands your wishes and manifests them into reality.
               </p>
             </div>
 
-            {/* Feature 2 */}
+            {/* Dragon Power 2 */}
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 text-green-600 rounded-lg mb-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-600 to-red-600 text-white rounded-lg mb-4 shadow-lg">
                 <TrendingUp className="h-8 w-8" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Smart Trading Strategies
+              <h3 className="text-lg font-semibold text-orange-100 mb-2">
+                Dragon Ball Strategies
               </h3>
-              <p className="text-gray-600">
-                AI analyzes market conditions and executes trades based on proven strategies.
+              <p className="text-orange-400">
+                Ancient dragon wisdom guides market predictions with power levels over 9000.
               </p>
             </div>
 
-            {/* Feature 3 */}
+            {/* Dragon Power 3 */}
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 text-purple-600 rounded-lg mb-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-red-700 to-orange-700 text-white rounded-lg mb-4 shadow-lg">
                 <Shield className="h-8 w-8" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Secure & Non-Custodial
+              <h3 className="text-lg font-semibold text-orange-100 mb-2">
+                Dragon's Protection
               </h3>
-              <p className="text-gray-600">
-                Your funds stay in your wallet. We never have access to your private keys.
+              <p className="text-orange-400">
+                Your treasure remains in your vault. The dragon guards without possessing.
               </p>
             </div>
 
-            {/* Feature 4 */}
+            {/* Dragon Power 4 */}
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-100 text-orange-600 rounded-lg mb-4">
-                <Zap className="h-8 w-8" />
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-600 to-red-600 text-white rounded-lg mb-4 shadow-lg">
+                <Eye className="h-8 w-8" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Real-Time Insights
+              <h3 className="text-lg font-semibold text-orange-100 mb-2">
+                Dragon Sight
               </h3>
-              <p className="text-gray-600">
-                Get instant market analysis and portfolio recommendations powered by AI.
+              <p className="text-orange-400">
+                See through market illusions with the dragon's all-seeing eyes and eternal wisdom.
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* How It Works Section */}
-      <div className="py-24 bg-gray-50">
+      {/* The Summoning Ritual Section */}
+      <div className="py-24 bg-gradient-to-b from-red-950 to-red-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              How It Works
+            <h2 className="text-3xl font-bold text-transparent bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text mb-4">
+              The Summoning Ritual
             </h2>
-            <p className="text-lg text-gray-600">
-              Get started in minutes with our simple process
+            <p className="text-lg text-orange-300">
+              Three sacred steps to awaken the eternal dragon
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-white rounded-lg p-8 shadow-sm">
-              <div className="text-3xl font-bold text-blue-600 mb-4">1</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Connect Your Wallet
+            <div className="bg-gradient-to-br from-red-800 to-red-900 rounded-lg p-8 shadow-xl border border-orange-500/40">
+              <div className="text-3xl font-bold text-transparent bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text mb-4">1</div>
+              <h3 className="text-xl font-semibold text-orange-100 mb-2">
+                Prepare the Altar
               </h3>
-              <p className="text-gray-600">
-                Connect your MetaMask or Keplr wallet to get started. Your keys, your control.
+              <p className="text-orange-400">
+                Connect your sacred wallet (MetaMask or Keplr) to establish the summoning circle.
               </p>
             </div>
 
-            <div className="bg-white rounded-lg p-8 shadow-sm">
-              <div className="text-3xl font-bold text-blue-600 mb-4">2</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Chat with AI
+            <div className="bg-gradient-to-br from-red-800 to-red-900 rounded-lg p-8 shadow-xl border border-orange-500/40">
+              <div className="text-3xl font-bold text-transparent bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text mb-4">2</div>
+              <h3 className="text-xl font-semibold text-orange-100 mb-2">
+                Speak Your Wish
               </h3>
-              <p className="text-gray-600">
-                Tell the AI what you want: "Buy $1000 of ETH" or "Rebalance my portfolio."
+              <p className="text-orange-400">
+                Channel your desires: "Grant me $1000 of SEI" or "Balance my digital treasures."
               </p>
             </div>
 
-            <div className="bg-white rounded-lg p-8 shadow-sm">
-              <div className="text-3xl font-bold text-blue-600 mb-4">3</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                AI Executes
+            <div className="bg-gradient-to-br from-red-800 to-red-900 rounded-lg p-8 shadow-xl border border-orange-500/40">
+              <div className="text-3xl font-bold text-transparent bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text mb-4">3</div>
+              <h3 className="text-xl font-semibold text-orange-100 mb-2">
+                Dragon's Manifestation
               </h3>
-              <p className="text-gray-600">
-                The AI analyzes markets, finds the best prices, and executes your strategy.
+              <p className="text-orange-400">
+                Seiron awakens, scans the Sei realm, and grants your wish with mystical precision.
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* CTA Section */}
-      <div className="py-24 bg-blue-600">
+      {/* Final Summoning Section */}
+      <div className="py-24 bg-gradient-to-r from-red-800 via-red-900 to-orange-800">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-white mb-4">
-            Ready to Start Trading Smarter?
+          <h2 className="text-3xl font-bold text-orange-100 mb-4">
+            Ready to Summon the Dragon?
           </h2>
-          <p className="text-xl text-blue-100 mb-8">
-            Join thousands of users who are already using AI to manage their crypto portfolios.
+          <p className="text-xl text-orange-100 mb-8">
+            Join the chosen warriors who have already awakened Seiron's power in the Sei ecosystem.
           </p>
           <Link
             href="/dashboard"
-            className="inline-flex items-center px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-yellow-400 to-orange-400 text-red-900 font-bold rounded-lg hover:from-yellow-300 hover:to-orange-300 transition-all duration-300 shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-400/40 transform hover:scale-105 animate-power-pulse"
           >
-            Launch Dashboard
+            <Star className="mr-2 h-5 w-5" />
+            Summon Seiron
           </Link>
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-12">
+      <footer className="bg-red-950 text-orange-400 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <p className="text-sm">
-              2024 AI Portfolio Manager. Built on Sei Network.
+            <p className="text-sm text-orange-300">
+              2024 Seiron - The Wish-Granting Dragon. Powered by the eternal flames of Sei Network.
             </p>
           </div>
         </div>

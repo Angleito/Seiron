@@ -1,0 +1,66 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Test runner metrics
+  - job_name: 'test-runner'
+    static_configs:
+      - targets: ['test-runner:3001']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  # Sei testnet metrics
+  - job_name: 'sei-testnet'
+    static_configs:
+      - targets: ['sei-testnet:26657']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Redis metrics
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # PostgreSQL metrics
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Symphony mock metrics
+  - job_name: 'symphony-mock'
+    static_configs:
+      - targets: ['symphony-mock:8001']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Takara mock metrics
+  - job_name: 'takara-mock'
+    static_configs:
+      - targets: ['takara-mock:8002']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Docker container metrics
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['host.docker.internal:9323']
+    metrics_path: '/metrics'
+    scrape_interval: 30s

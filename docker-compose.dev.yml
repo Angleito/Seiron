@@ -40,7 +40,7 @@ services:
       redis:
         condition: service_healthy
     restart: unless-stopped
-    command: ["npm", "run", "api:dev"]
+    command: ["tsx", "watch", "src/api/simple-server.ts"]
 
   # Frontend (development mode)
   frontend:

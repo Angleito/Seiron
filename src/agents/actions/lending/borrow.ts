@@ -42,14 +42,14 @@ export const borrowAction: Action = {
       return false;
     }
     
-    // Validate protocol is supported
-    const supportedProtocols = ['aave', 'compound', 'maker'];
+    // Validate protocol is supported (now includes Takara)
+    const supportedProtocols = ['aave', 'compound', 'maker', 'takara', 'auto'];
     if (!supportedProtocols.includes(params.protocol.toLowerCase())) {
       return false;
     }
     
-    // Validate assets are supported
-    const supportedAssets = ['USDC', 'USDT', 'DAI', 'ETH', 'WBTC'];
+    // Validate assets are supported (now includes Takara assets)
+    const supportedAssets = ['USDC', 'USDT', 'DAI', 'ETH', 'WBTC', 'SEI', 'iSEI', 'fastUSD', 'uBTC'];
     if (!supportedAssets.includes(params.asset.toUpperCase()) || 
         !supportedAssets.includes(params.collateralAsset.toUpperCase())) {
       return false;
@@ -118,14 +118,79 @@ export const borrowAction: Action = {
       // Calculate liquidation price
       const liquidationPrice = (borrowValue / (params.collateralAmount * marketData.liquidationThreshold));
       
-      // Execute borrow transaction
-      const borrowResult = await executeBorrow(
-        protocol,
-        borrowAsset,
-        params.amount,
-        collateralAsset,
-        params.collateralAmount
-      );
+      // Execute borrow transaction based on protocol
+      let borrowResult;
+      
+      if (protocol === 'takara') {
+        // Use Takara protocol through lending agent
+        const lendingAgent = state.agents?.lending;
+        if (!lendingAgent) {
+          throw new Error("Lending agent not initialized for Takara operations");
+        }
+        
+        borrowResult = await lendingAgent.executeAction('takara_borrow', {
+          asset: borrowAsset,
+          amount: params.amount
+        });
+        
+        if (!borrowResult.success) {
+          throw new Error(borrowResult.message || 'Takara borrow failed');
+        }
+        
+        borrowResult = {
+          success: true,
+          txHash: borrowResult.data.transaction.txHash,
+          borrowId: `takara_borrow_${Date.now()}`,
+          gasUsed: borrowResult.data.transaction.gasUsed
+        };
+      } else if (protocol === 'auto') {
+        // Auto-select best protocol for borrowing
+        const lendingAgent = state.agents?.lending;
+        if (!lendingAgent) {
+          throw new Error("Lending agent not initialized for protocol comparison");
+        }
+        
+        const comparisonResult = await lendingAgent.executeAction('compare_protocols', {
+          asset: borrowAsset,
+          amount: params.amount
+        });
+        
+        if (comparisonResult.success) {
+          const bestProtocol = comparisonResult.data.bestProtocol;
+          if (bestProtocol === 'takara') {
+            borrowResult = await lendingAgent.executeAction('takara_borrow', {
+              asset: borrowAsset,
+              amount: params.amount
+            });
+          } else {
+            borrowResult = await executeBorrow(
+              bestProtocol,
+              borrowAsset,
+              params.amount,
+              collateralAsset,
+              params.collateralAmount
+            );
+          }
+        } else {
+          // Fallback to traditional protocols
+          borrowResult = await executeBorrow(
+            'aave',
+            borrowAsset,
+            params.amount,
+            collateralAsset,
+            params.collateralAmount
+          );
+        }
+      } else {
+        // Traditional protocol execution
+        borrowResult = await executeBorrow(
+          protocol,
+          borrowAsset,
+          params.amount,
+          collateralAsset,
+          params.collateralAmount
+        );
+      }
       
       if (!borrowResult.success) {
         callback({
@@ -225,25 +290,41 @@ async function getMarketData(protocol: string, borrowAsset: string, collateralAs
     USDT: 1,
     DAI: 1,
     ETH: 2500,
-    WBTC: 45000
+    WBTC: 45000,
+    SEI: 0.45,
+    iSEI: 0.42,
+    fastUSD: 1,
+    uBTC: 45000
   };
   
   const borrowAPYs: Record<string, Record<string, number>> = {
     aave: { USDC: 5.2, USDT: 5.0, DAI: 5.5, ETH: 3.2, WBTC: 2.8 },
     compound: { USDC: 5.8, USDT: 5.6, DAI: 6.1, ETH: 3.8, WBTC: 3.2 },
-    maker: { DAI: 5.0 }
+    maker: { DAI: 5.0 },
+    takara: { 
+      USDC: 4.8, USDT: 4.6, fastUSD: 4.2, 
+      SEI: 8.5, iSEI: 7.8, uBTC: 5.2 
+    }
   };
   
   const ltvRatios: Record<string, Record<string, number>> = {
     aave: { ETH: 0.82, WBTC: 0.75, USDC: 0.85, USDT: 0.85, DAI: 0.85 },
     compound: { ETH: 0.75, WBTC: 0.70, USDC: 0.80, USDT: 0.80, DAI: 0.80 },
-    maker: { ETH: 0.77, WBTC: 0.70 }
+    maker: { ETH: 0.77, WBTC: 0.70 },
+    takara: { 
+      SEI: 0.75, iSEI: 0.70, USDC: 0.80, USDT: 0.80, 
+      fastUSD: 0.75, uBTC: 0.70 
+    }
   };
   
   const liquidationThresholds: Record<string, Record<string, number>> = {
     aave: { ETH: 0.86, WBTC: 0.80, USDC: 0.88, USDT: 0.88, DAI: 0.88 },
     compound: { ETH: 0.83, WBTC: 0.78, USDC: 0.85, USDT: 0.85, DAI: 0.85 },
-    maker: { ETH: 0.85, WBTC: 0.78 }
+    maker: { ETH: 0.85, WBTC: 0.78 },
+    takara: { 
+      SEI: 0.85, iSEI: 0.80, USDC: 0.90, USDT: 0.90, 
+      fastUSD: 0.85, uBTC: 0.80 
+    }
   };
   
   if (!borrowAPYs[protocol]?.[borrowAsset]) {

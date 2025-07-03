@@ -1,0 +1,91 @@
+# Performance-optimized Dockerfile for Sei Agent Kit
+FROM node:18-alpine as base
+
+# Install performance monitoring tools
+RUN apk add --no-cache \
+    curl \
+    htop \
+    iotop \
+    perf \
+    strace \
+    tcpdump \
+    netstat-nat \
+    lsof \
+    procps
+
+# Create app directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY tsconfig.json ./
+
+# Install dependencies with performance optimizations
+ENV NODE_ENV=performance
+ENV NODE_OPTIONS="--max-old-space-size=2048 --expose-gc --trace-gc"
+RUN npm ci --only=production && npm cache clean --force
+
+# Development stage for performance testing
+FROM base as development
+
+# Install development dependencies for profiling
+RUN npm ci && npm install -g \
+    clinic \
+    autocannon \
+    0x \
+    nodemon
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN npm run build
+
+# Performance stage with optimizations
+FROM base as performance
+
+# Copy built application
+COPY --from=development /app/dist ./dist
+COPY --from=development /app/src ./src
+COPY --from=development /app/node_modules ./node_modules
+
+# Create performance monitoring directories
+RUN mkdir -p /app/logs/performance \
+    /app/profiles \
+    /app/metrics \
+    /app/traces
+
+# Install additional performance tools
+RUN npm install -g \
+    prom-client \
+    jaeger-client \
+    express-prometheus-middleware \
+    elastic-apm-node
+
+# Copy performance configuration
+COPY monitoring/performance-config.json ./config/
+COPY monitoring/apm-config.js ./config/
+
+# Set environment variables for performance monitoring
+ENV NODE_ENV=performance
+ENV ENABLE_PROFILING=true
+ENV ENABLE_METRICS=true
+ENV ENABLE_TRACING=true
+ENV PROMETHEUS_METRICS=true
+ENV APM_ENABLED=true
+ENV GC_MONITORING=true
+ENV MEMORY_PROFILING=true
+ENV CPU_PROFILING=true
+
+# Performance optimization flags
+ENV NODE_OPTIONS="--max-old-space-size=2048 --expose-gc --trace-gc --trace-warnings --experimental-worker"
+
+# Expose application and metrics ports
+EXPOSE 8080 8081
+
+# Health check for performance monitoring
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Performance monitoring command
+CMD ["node", "--require", "./config/apm-config.js", "--inspect=0.0.0.0:9229", "dist/api/server.js"]
