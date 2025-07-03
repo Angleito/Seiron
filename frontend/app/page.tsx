@@ -15,11 +15,11 @@ export default function Home() {
           
           <div className="text-center">
             <h1 className="text-6xl font-bold text-transparent bg-gradient-to-r from-red-400 via-orange-400 to-yellow-400 bg-clip-text mb-6 drop-shadow-lg">
-              Seiron - The Wish-Granting Dragon
+              Seiron - Granting your wildest Sei Investing Wishes
             </h1>
             <p className="text-xl text-orange-200 max-w-3xl mx-auto mb-8 leading-relaxed">
-              Summon Seiron to grant your DeFi investing wishes in the Sei ecosystem. 
-              Speak your desires in plain words, and watch as the eternal dragon manifests your trading strategies with mystical precision.
+              Unleash the power of the eternal dragon to fulfill your wildest investment dreams in the Sei ecosystem. 
+              Speak your boldest financial desires, and watch Seiron manifest extraordinary trading strategies with mystical precision.
             </p>
             <div className="flex justify-center gap-4">
               <Link
@@ -61,7 +61,7 @@ export default function Home() {
               Seiron's Mystical Powers
             </h2>
             <p className="text-lg text-orange-300">
-              Harness the eternal dragon's abilities to dominate the Sei DeFi realm
+              Unleash Seiron's legendary powers to fulfill your wildest investment fantasies
             </p>
           </div>
 
@@ -75,7 +75,7 @@ export default function Home() {
                 Wish Interpretation
               </h3>
               <p className="text-orange-400">
-                Speak your desires in plain words. Seiron understands your wishes and manifests them into reality.
+                Voice your wildest investment dreams. Seiron interprets your boldest wishes and brings them to life.
               </p>
             </div>
 
@@ -88,7 +88,7 @@ export default function Home() {
                 Dragon Ball Strategies
               </h3>
               <p className="text-orange-400">
-                Ancient dragon wisdom guides market predictions with power levels over 9000.
+                Investment strategies so wild and powerful, they shatter the boundaries of traditional finance. Power levels beyond imagination!
               </p>
             </div>
 
