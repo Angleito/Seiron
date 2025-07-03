@@ -171,10 +171,10 @@ export default function Home() {
       <div className="py-24 bg-gradient-to-r from-red-800 via-red-900 to-orange-800">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-orange-100 mb-4">
-            Ready to Summon the Dragon?
+            Ready to Make Your Wildest Investment Dreams Come True?
           </h2>
           <p className="text-xl text-orange-100 mb-8">
-            Join the chosen warriors who have already awakened Seiron's power in the Sei ecosystem.
+            Join the legendary investors who have already unleashed Seiron's power to fulfill their wildest Sei ecosystem fantasies.
           </p>
           <Link
             href="/dashboard"
@@ -191,7 +191,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <p className="text-sm text-orange-300">
-              2024 Seiron - The Wish-Granting Dragon. Powered by the eternal flames of Sei Network.
+              2024 Seiron - Granting your wildest Sei Investing Wishes. Powered by the eternal flames of Sei Network.
             </p>
           </div>
         </div>

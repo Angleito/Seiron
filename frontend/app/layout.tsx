@@ -15,8 +15,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Seiron - The Wish-Granting Dragon",
-  description: "Harness the mystical power of the eternal dragon for DeFi magic and crypto wish fulfillment",
+  title: "Seiron - Granting your wildest Sei Investing Wishes",
+  description: "Unleash the legendary dragon's power to fulfill your wildest investment dreams in the Sei ecosystem",
 };
 
 export default function RootLayout({

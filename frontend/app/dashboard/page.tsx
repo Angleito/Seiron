@@ -14,10 +14,10 @@ export default function DashboardPage() {
             <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-red-400 rounded-full opacity-40 animate-pulse delay-300"></div>
             
             <h1 className="text-3xl font-bold text-red-400 drop-shadow-lg">
-              Seiron - Your DeFi Wish-Granter
+              Seiron - Granting your wildest Sei Investing Wishes
             </h1>
-            <p className="text-sm text-gray-300 mt-1 font-medium">
-              Command the dragon to manage your Sei ecosystem investments
+            <p className="text-sm text-orange-300 mt-1 font-medium">
+              Unleash the dragon's power to fulfill your wildest investment dreams
             </p>
           </div>
           <div className="relative">
