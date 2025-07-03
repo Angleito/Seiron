@@ -157,3 +157,6 @@ docker-compose.override.yml
 
 # Analytics and tracking
 .analytics/
+
+# Claude AI context file (local development only)
+CLAUDE.md
