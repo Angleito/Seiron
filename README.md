@@ -1,6 +1,20 @@
-# Seiron - Granting your wildest Sei Investing Wishes 🐉
-
-A mystical AI-powered DeFi portfolio management platform for the Sei Network ecosystem, where the legendary dragon Seiron grants your wildest investment wishes through natural language interactions. Summon the power of advanced AI agents to execute extraordinary trading strategies, optimize yields, and dominate the Sei DeFi realm.
+<div align="center">
+  <img src="seiron.png" alt="Seiron - The Wish-Granting Dragon" width="400" height="400" />
+  
+  # Seiron - Granting your wildest Sei Investing Wishes 🐉
+  
+  <p><em>A mystical AI-powered DeFi portfolio management platform for the Sei Network ecosystem, where the legendary dragon Seiron grants your wildest investment wishes through natural language interactions. Summon the power of advanced AI agents to execute extraordinary trading strategies, optimize yields, and dominate the Sei DeFi realm.</em></p>
+  
+  [![License: MIT](https://img.shields.io/badge/License-MIT-red.svg)](https://opensource.org/licenses/MIT)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-DC2626?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+  [![Next.js](https://img.shields.io/badge/Next.js-DC2626?logo=next.js&logoColor=white)](https://nextjs.org/)
+  [![Sei Network](https://img.shields.io/badge/Sei_Network-F59E0B?logo=bitcoin&logoColor=white)](https://sei.io/)
+  [![Dragon Power](https://img.shields.io/badge/Power_Level-Over_9000!-red?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJMMTMuMDkgOC4yNkwyMCA5TDEzLjA5IDE1Ljc0TDEyIDIyTDEwLjkxIDE1Ljc0TDQgOUwxMC45MSA4LjI2TDEyIDJaIiBmaWxsPSIjRkZENzAwIi8+Cjwvc3ZnPgo=)](https://dragonball.fandom.com/wiki/Power_Level)
+  
+  <br/>
+  
+  **🔥 Multi-Agent AI** • **⚡ Natural Language Commands** • **🛡️ Non-Custodial** • **🎯 Sei Native**
+</div>
 
 ## 🐉 Overview
 
