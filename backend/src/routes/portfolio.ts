@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { body, query, validationResult } from 'express-validator';
 import { pipe } from 'fp-ts/function';
 import * as TE from 'fp-ts/TaskEither';
+import * as E from 'fp-ts/Either';
 
 const router = Router();
 
@@ -57,27 +58,49 @@ router.get('/summary', [
 
 /**
  * POST /api/portfolio/lending/supply
- * Supply tokens to lending market
+ * Create pending supply transaction (requires confirmation)
  */
 router.post('/lending/supply', [
   body('walletAddress').isEthereumAddress().withMessage('Valid wallet address required'),
   body('asset').notEmpty().withMessage('Asset is required'),
   body('amount').isNumeric().withMessage('Amount must be numeric'),
-  body('onBehalfOf').optional().isEthereumAddress()
+  body('onBehalfOf').optional().isEthereumAddress(),
+  body('requireConfirmation').optional().isBoolean()
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { walletAddress, asset, amount, onBehalfOf } = req.body;
+  const { walletAddress, asset, amount, onBehalfOf, requireConfirmation = true } = req.body;
 
+  const params = {
+    walletAddress,
+    asset,
+    amount: BigInt(Math.floor(parseFloat(amount) * 1e18)),
+    onBehalfOf: onBehalfOf || walletAddress
+  };
+
+  // If confirmation required, create pending transaction
+  if (requireConfirmation) {
+    const result = await pipe(
+      req.services.portfolio.createPendingLendingOperation('supply', params),
+      TE.fold(
+        (error) => TE.of({ success: false, error: error.message }),
+        (pendingResult) => TE.of({ 
+          success: true, 
+          data: pendingResult,
+          requiresConfirmation: true 
+        })
+      )
+    )();
+
+    return res.json(result);
+  }
+
+  // Direct execution without confirmation (backward compatibility)
   const result = await pipe(
-    req.services.portfolio.executeLendingOperation('supply', {
-      asset,
-      amount: BigInt(Math.floor(parseFloat(amount) * 1e18)),
-      onBehalfOf: onBehalfOf || walletAddress
-    }),
+    req.services.portfolio.executeLendingOperation('supply', params),
     TE.fold(
       (error) => TE.of({ success: false, error: error.message }),
       (txResult) => {
@@ -96,28 +119,110 @@ router.post('/lending/supply', [
 });
 
 /**
- * POST /api/portfolio/lending/withdraw
- * Withdraw tokens from lending market
+ * POST /api/portfolio/lending/supply/execute
+ * Execute a confirmed supply transaction
  */
-router.post('/lending/withdraw', [
-  body('walletAddress').isEthereumAddress().withMessage('Valid wallet address required'),
-  body('asset').notEmpty().withMessage('Asset is required'),
-  body('amount').isNumeric().withMessage('Amount must be numeric'),
-  body('to').optional().isEthereumAddress()
+router.post('/lending/supply/execute', [
+  body('transactionId').isUUID().withMessage('Valid transaction ID required'),
+  body('walletAddress').isEthereumAddress().withMessage('Valid wallet address required')
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { walletAddress, asset, amount, to } = req.body;
+  const { transactionId, walletAddress } = req.body;
 
+  // Get transaction details and execute
+  const transactionResult = await pipe(
+    req.services.confirmation.getPendingTransaction(transactionId),
+    TE.chain(transaction => {
+      if (transaction.walletAddress !== walletAddress) {
+        return TE.left(new Error('Unauthorized'));
+      }
+      if (transaction.status !== 'confirmed') {
+        return TE.left(new Error('Transaction not confirmed'));
+      }
+      return TE.right(transaction);
+    })
+  )();
+
+  if (E.isLeft(transactionResult)) {
+    return res.status(400).json({ 
+      success: false, 
+      error: transactionResult.left.message 
+    });
+  }
+
+  const transaction = transactionResult.right;
+  
   const result = await pipe(
-    req.services.portfolio.executeLendingOperation('withdraw', {
-      asset,
-      amount: BigInt(Math.floor(parseFloat(amount) * 1e18)),
-      to: to || walletAddress
-    }),
+    req.services.portfolio.executeLendingOperation(
+      transaction.action as 'supply',
+      transaction.parameters,
+      transactionId
+    ),
+    TE.fold(
+      (error) => TE.of({ success: false, error: error.message }),
+      (txResult) => {
+        req.services.socket.sendTransactionUpdate(
+          walletAddress,
+          txResult.txHash,
+          'pending'
+        );
+        return TE.of({ success: true, data: txResult });
+      }
+    )
+  )();
+
+  res.json(result);
+});
+
+/**
+ * POST /api/portfolio/lending/withdraw
+ * Create pending withdraw transaction (requires confirmation)
+ */
+router.post('/lending/withdraw', [
+  body('walletAddress').isEthereumAddress().withMessage('Valid wallet address required'),
+  body('asset').notEmpty().withMessage('Asset is required'),
+  body('amount').isNumeric().withMessage('Amount must be numeric'),
+  body('to').optional().isEthereumAddress(),
+  body('requireConfirmation').optional().isBoolean()
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { walletAddress, asset, amount, to, requireConfirmation = true } = req.body;
+
+  const params = {
+    walletAddress,
+    asset,
+    amount: BigInt(Math.floor(parseFloat(amount) * 1e18)),
+    to: to || walletAddress
+  };
+
+  // If confirmation required, create pending transaction
+  if (requireConfirmation) {
+    const result = await pipe(
+      req.services.portfolio.createPendingLendingOperation('withdraw', params),
+      TE.fold(
+        (error) => TE.of({ success: false, error: error.message }),
+        (pendingResult) => TE.of({ 
+          success: true, 
+          data: pendingResult,
+          requiresConfirmation: true 
+        })
+      )
+    )();
+
+    return res.json(result);
+  }
+
+  // Direct execution without confirmation
+  const result = await pipe(
+    req.services.portfolio.executeLendingOperation('withdraw', params),
     TE.fold(
       (error) => TE.of({ success: false, error: error.message }),
       (txResult) => {

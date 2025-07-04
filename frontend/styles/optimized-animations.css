@@ -1,0 +1,327 @@
+/* ========================================
+   OPTIMIZED DRAGON ANIMATIONS
+   Performance-focused with quality levels
+   ======================================== */
+
+/* GPU-accelerated base animations */
+@keyframes dragon-float-optimized {
+  0%, 100% { 
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  25% { 
+    transform: translate3d(0, -10px, 0) rotate(1deg);
+  }
+  50% { 
+    transform: translate3d(0, -5px, 0) rotate(0deg);
+  }
+  75% { 
+    transform: translate3d(0, -15px, 0) rotate(-1deg);
+  }
+}
+
+@keyframes dragon-balls-orbit-optimized {
+  0% { 
+    transform: rotate3d(0, 0, 1, 0deg);
+  }
+  100% { 
+    transform: rotate3d(0, 0, 1, 360deg);
+  }
+}
+
+/* Reduced motion variants */
+@media (prefers-reduced-motion: reduce) {
+  .animate-dragon-float {
+    animation: none !important;
+  }
+  
+  .animate-dragon-balls-orbit {
+    animation: dragon-balls-orbit-optimized 30s linear infinite;
+  }
+  
+  .animate-dragon-ball-float,
+  .animate-ember-rise,
+  .animate-power-ring,
+  .animate-mystical-glow {
+    animation: none !important;
+  }
+}
+
+/* Quality level: LOW */
+.quality-low {
+  /* Disable complex animations */
+  .animate-dragon-ball-float,
+  .animate-ember-rise,
+  .animate-power-ring,
+  .animate-mystical-glow,
+  .animate-trail {
+    animation: none !important;
+  }
+  
+  /* Simplified shadows */
+  .shadow-lg {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Disable filters */
+  .blur-xl,
+  .blur-2xl,
+  .blur-sm {
+    filter: none !important;
+  }
+  
+  /* Reduce opacity layers */
+  .bg-gradient-to-r {
+    opacity: 0.5;
+  }
+}
+
+/* Quality level: MEDIUM */
+.quality-medium {
+  /* Slower, simpler animations */
+  .animate-dragon-float {
+    animation-duration: 8s;
+  }
+  
+  .animate-dragon-balls-orbit {
+    animation-duration: 20s;
+  }
+  
+  /* Disable complex effects */
+  .animate-trail,
+  .animate-power-ring {
+    animation: none !important;
+  }
+  
+  /* Simplified blur effects */
+  .blur-2xl {
+    filter: blur(16px);
+  }
+}
+
+/* Quality level: HIGH */
+.quality-high {
+  /* Enable all animations with will-change */
+  .animate-dragon-float,
+  .animate-dragon-balls-orbit,
+  .animate-dragon-ball-float {
+    will-change: transform;
+  }
+  
+  .animate-ember-rise {
+    will-change: transform, opacity;
+  }
+  
+  .animate-power-ring,
+  .animate-mystical-glow {
+    will-change: transform, opacity;
+  }
+}
+
+/* Performance-optimized utility classes */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+.contain-layout {
+  contain: layout;
+}
+
+.contain-paint {
+  contain: paint;
+}
+
+.contain-strict {
+  contain: strict;
+}
+
+/* Optimized dragon breathing animation */
+@keyframes dragon-breathe-optimized {
+  0%, 100% {
+    transform: scale3d(1, 1, 1);
+  }
+  50% {
+    transform: scale3d(1.02, 1.02, 1);
+  }
+}
+
+.animate-dragon-breathe {
+  animation: dragon-breathe-optimized 4s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Optimized particle system */
+.particle-optimized {
+  position: absolute;
+  pointer-events: none;
+  will-change: transform, opacity;
+  contain: paint;
+}
+
+@keyframes particle-float-optimized {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0);
+    opacity: 0;
+  }
+  10% {
+    transform: translate3d(0, -10px, 0) scale(1);
+    opacity: 1;
+  }
+  90% {
+    transform: translate3d(0, -100px, 0) scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, -120px, 0) scale(0.5);
+    opacity: 0;
+  }
+}
+
+/* Batch animation updates */
+.animation-batch {
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Memory-efficient glow effects */
+.glow-optimized {
+  position: relative;
+  overflow: hidden;
+}
+
+.glow-optimized::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: radial-gradient(
+    circle at center,
+    rgba(239, 68, 68, 0.2) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.glow-optimized:hover::before {
+  opacity: 1;
+}
+
+/* Reduce paint areas for shadows */
+.shadow-optimized {
+  position: relative;
+}
+
+.shadow-optimized::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  opacity: 0.8;
+  z-index: -1;
+}
+
+/* Frame-rate independent timing */
+.timing-optimized {
+  animation-timing-function: steps(60);
+}
+
+/* Reduce composite layers */
+.layer-optimized {
+  isolation: isolate;
+  transform-style: flat;
+}
+
+/* Optimized transforms for different quality levels */
+@supports (transform: rotate3d(1, 0, 0, 0deg)) {
+  .transform-optimized {
+    transform: rotate3d(0, 0, 1, var(--rotation, 0deg)) 
+               translate3d(var(--x, 0), var(--y, 0), 0)
+               scale3d(var(--scale, 1), var(--scale, 1), 1);
+  }
+}
+
+/* CSS containment for animation boundaries */
+.animation-container {
+  contain: layout style paint;
+  content-visibility: auto;
+}
+
+/* Reduce repaints with CSS variables */
+.variable-animation {
+  --progress: 0;
+  transform: translateX(calc(var(--progress) * 100px));
+  transition: none;
+}
+
+/* Memory-efficient particle pooling */
+.particle-pool {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.particle-pool > * {
+  position: absolute;
+  animation: particle-float-optimized 4s linear infinite;
+  animation-play-state: paused;
+}
+
+.particle-pool > .active {
+  animation-play-state: running;
+}
+
+/* Optimized star twinkle */
+@keyframes star-twinkle-optimized {
+  0%, 100% { 
+    transform: scale3d(1, 1, 1);
+    opacity: 1;
+  }
+  50% { 
+    transform: scale3d(0.9, 0.9, 1);
+    opacity: 0.8;
+  }
+}
+
+/* Reduce animation overhead on inactive tabs */
+@media (prefers-reduced-motion: no-preference) {
+  .pause-when-hidden {
+    animation-play-state: paused;
+  }
+  
+  .pause-when-hidden:focus-within,
+  .pause-when-hidden:hover {
+    animation-play-state: running;
+  }
+}
+
+/* Performance monitoring indicator */
+.perf-indicator {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--perf-color, #10b981);
+  transition: background-color 0.3s ease;
+  z-index: 9999;
+}
+
+.perf-indicator[data-fps="low"] {
+  --perf-color: #ef4444;
+}
+
+.perf-indicator[data-fps="medium"] {
+  --perf-color: #f59e0b;
+}
+
+.perf-indicator[data-fps="high"] {
+  --perf-color: #10b981;
+}

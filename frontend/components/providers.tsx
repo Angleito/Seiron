@@ -1,12 +1,20 @@
 'use client'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { WagmiProvider } from 'wagmi'
-import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
-import { wagmiConfig } from '@/config/wagmi'
-import '@rainbow-me/rainbowkit/styles.css'
+import { PrivyProvider } from '@privy-io/react-auth'
+import { WagmiProvider, createConfig } from '@privy-io/wagmi'
+import { http } from 'viem'
+import { privyConfig, seiMainnet } from '@/config/privy'
 
 const queryClient = new QueryClient()
+
+// Create wagmi config for Privy
+const wagmiConfig = createConfig({
+  chains: [seiMainnet],
+  transports: {
+    [seiMainnet.id]: http(),
+  },
+})
 
 export function Providers({
   children,
@@ -14,12 +22,16 @@ export function Providers({
   children: React.ReactNode
 }) {
   return (
-    <WagmiProvider config={wagmiConfig}>
+    <PrivyProvider
+      appId={privyConfig.appId}
+      clientId={privyConfig.clientId}
+      config={privyConfig.config}
+    >
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>
+        <WagmiProvider config={wagmiConfig}>
           {children}
-        </RainbowKitProvider>
+        </WagmiProvider>
       </QueryClientProvider>
-    </WagmiProvider>
+    </PrivyProvider>
   )
 }

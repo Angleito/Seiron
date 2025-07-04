@@ -99,6 +99,12 @@ const config: Config = {
         // Performance optimized versions
         "dragon-pulse-slow": "dragon-pulse 4s ease-in-out infinite",
         "mystical-glow-slow": "mystical-glow 6s ease-in-out infinite",
+        // Mobile optimized animations
+        "dragon-float-mobile": "dragon-float-mobile 5s ease-in-out infinite",
+        "dragon-balls-reduced": "dragon-balls-orbit-reduced 30s linear infinite",
+        // Touch gesture feedback
+        "touch-ripple": "touch-ripple 0.6s ease-out",
+        "swipe-hint": "swipe-hint 1s ease-in-out infinite",
       },
       keyframes: {
         "dragon-pulse": {
@@ -141,6 +147,38 @@ const config: Config = {
           },
           "50%": { 
             transform: "translateY(-10px)" 
+          },
+        },
+        "dragon-float-mobile": {
+          "0%, 100%": { 
+            transform: "translateY(0px)" 
+          },
+          "50%": { 
+            transform: "translateY(-5px)" 
+          },
+        },
+        "dragon-balls-orbit-reduced": {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
+        "touch-ripple": {
+          "0%": {
+            transform: "scale(0)",
+            opacity: "1",
+          },
+          "100%": {
+            transform: "scale(4)",
+            opacity: "0",
+          },
+        },
+        "swipe-hint": {
+          "0%, 100%": {
+            transform: "translateX(0)",
+            opacity: "0.5",
+          },
+          "50%": {
+            transform: "translateX(10px)",
+            opacity: "1",
           },
         },
       },

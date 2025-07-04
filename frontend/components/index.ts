@@ -7,6 +7,10 @@ export { default as SeiroonDemo } from './SeiroonDemo';
 export { FloatingDragonLogo } from './FloatingDragonLogo';
 export { CirclingDragonBalls } from './CirclingDragonBalls';
 
+// Interactive Dragon Components
+export { InteractiveDragon } from './dragon/InteractiveDragon';
+export { DragonInteractionProvider, useDragonInteraction } from './dragon/DragonInteractionController';
+
 // Existing Components
 export { WalletConnect } from './wallet/wallet-connect';
 export { Providers } from './providers';

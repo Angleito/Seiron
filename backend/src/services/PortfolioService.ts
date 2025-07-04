@@ -28,6 +28,7 @@ import { portfolioCacheManager, PortfolioCacheManager } from '../caching/Portfol
 import { createYeiFinanceAdapter, YeiFinanceAdapter } from '../adapters/YeiFinanceAdapter';
 import { createDragonSwapAdapter, DragonSwapAdapter } from '../adapters/DragonSwapAdapter';
 import { SocketService } from './SocketService';
+import { ConfirmationService } from './ConfirmationService';
 import logger from '../utils/logger';
 
 // Legacy interfaces for backward compatibility
@@ -66,13 +67,15 @@ export class PortfolioService {
   private analytics: PortfolioAnalytics;
   private cacheManager: PortfolioCacheManager;
   private socketService?: SocketService;
+  private confirmationService?: ConfirmationService;
 
-  constructor(socketService?: SocketService) {
+  constructor(socketService?: SocketService, confirmationService?: ConfirmationService) {
     this.portfolioState = new PortfolioState();
     this.positionTracker = new PositionTracker(this.portfolioState);
     this.analytics = new PortfolioAnalytics(this.portfolioState);
     this.cacheManager = portfolioCacheManager;
     this.socketService = socketService;
+    this.confirmationService = confirmationService;
 
     this.setupEventListeners();
   }
@@ -197,9 +200,53 @@ export class PortfolioService {
   });
 
   /**
-   * Execute lending operation with state updates
+   * Create pending lending operation that requires confirmation
+   */
+  public createPendingLendingOperation = (
+    operation: 'supply' | 'withdraw' | 'borrow' | 'repay',
+    params: any
+  ): AsyncResult<{ transactionId: string }> => {
+    if (!this.confirmationService) {
+      return TE.left(new Error('Confirmation service not initialized'));
+    }
+
+    return pipe(
+      this.confirmationService.createPendingTransaction(
+        params.walletAddress,
+        'lending',
+        operation,
+        params
+      ),
+      TE.map(pendingTransaction => ({ transactionId: pendingTransaction.id }))
+    );
+  };
+
+  /**
+   * Execute lending operation with state updates (after confirmation)
    */
   public executeLendingOperation = (
+    operation: 'supply' | 'withdraw' | 'borrow' | 'repay',
+    params: any,
+    transactionId?: string
+  ): AsyncResult<{ txHash: string; newSnapshot: PortfolioSnapshot }> => {
+    // If transactionId provided, verify it's confirmed
+    if (transactionId && this.confirmationService) {
+      return pipe(
+        this.confirmationService.isTransactionConfirmed(transactionId),
+        TE.chain(isConfirmed => {
+          if (!isConfirmed) {
+            return TE.left(new Error('Transaction not confirmed'));
+          }
+          return this.executeConfirmedLendingOperation(operation, params);
+        })
+      );
+    }
+
+    // Direct execution (for backward compatibility or when confirmation not required)
+    return this.executeConfirmedLendingOperation(operation, params);
+  };
+
+  private executeConfirmedLendingOperation = (
     operation: 'supply' | 'withdraw' | 'borrow' | 'repay',
     params: any
   ): AsyncResult<{ txHash: string; newSnapshot: PortfolioSnapshot }> =>
@@ -215,9 +262,53 @@ export class PortfolioService {
     );
 
   /**
-   * Execute liquidity operation with state updates
+   * Create pending liquidity operation that requires confirmation
+   */
+  public createPendingLiquidityOperation = (
+    operation: 'addLiquidity' | 'removeLiquidity' | 'collectFees',
+    params: any
+  ): AsyncResult<{ transactionId: string }> => {
+    if (!this.confirmationService) {
+      return TE.left(new Error('Confirmation service not initialized'));
+    }
+
+    return pipe(
+      this.confirmationService.createPendingTransaction(
+        params.walletAddress,
+        'liquidity',
+        operation,
+        params
+      ),
+      TE.map(pendingTransaction => ({ transactionId: pendingTransaction.id }))
+    );
+  };
+
+  /**
+   * Execute liquidity operation with state updates (after confirmation)
    */
   public executeLiquidityOperation = (
+    operation: 'addLiquidity' | 'removeLiquidity' | 'collectFees',
+    params: any,
+    transactionId?: string
+  ): AsyncResult<{ txHash: string; newSnapshot: PortfolioSnapshot }> => {
+    // If transactionId provided, verify it's confirmed
+    if (transactionId && this.confirmationService) {
+      return pipe(
+        this.confirmationService.isTransactionConfirmed(transactionId),
+        TE.chain(isConfirmed => {
+          if (!isConfirmed) {
+            return TE.left(new Error('Transaction not confirmed'));
+          }
+          return this.executeConfirmedLiquidityOperation(operation, params);
+        })
+      );
+    }
+
+    // Direct execution (for backward compatibility or when confirmation not required)
+    return this.executeConfirmedLiquidityOperation(operation, params);
+  };
+
+  private executeConfirmedLiquidityOperation = (
     operation: 'addLiquidity' | 'removeLiquidity' | 'collectFees',
     params: any
   ): AsyncResult<{ txHash: string; newSnapshot: PortfolioSnapshot }> =>

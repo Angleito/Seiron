@@ -2,7 +2,8 @@ import { Server, Socket } from 'socket.io';
 import * as TE from 'fp-ts/TaskEither';
 
 export interface PortfolioUpdate {
-  type: 'position_update' | 'balance_change' | 'transaction_complete' | 'error';
+  type: 'position_update' | 'balance_change' | 'transaction_complete' | 'error' | 
+        'confirmation_required' | 'transaction_confirmed' | 'transaction_rejected' | 'transaction_expired';
   data: any;
   timestamp: string;
 }
@@ -165,5 +166,50 @@ export class SocketService {
    */
   public isUserConnected(walletAddress: string): boolean {
     return this.getUserSocketCount(walletAddress) > 0;
+  }
+
+  /**
+   * Send confirmation request to user
+   */
+  public sendConfirmationRequest = (
+    walletAddress: string,
+    transactionId: string,
+    transactionDetails: any
+  ): TE.TaskEither<Error, void> =>
+    this.sendPortfolioUpdate(walletAddress, {
+      type: 'confirmation_required',
+      data: {
+        transactionId,
+        transaction: transactionDetails,
+        requiresAction: true
+      },
+      timestamp: new Date().toISOString()
+    });
+
+  /**
+   * Send confirmation status update
+   */
+  public sendConfirmationStatus = (
+    walletAddress: string,
+    transactionId: string,
+    status: 'confirmed' | 'rejected' | 'expired',
+    details?: any
+  ): TE.TaskEither<Error, void> => {
+    const typeMap = {
+      'confirmed': 'transaction_confirmed',
+      'rejected': 'transaction_rejected',
+      'expired': 'transaction_expired'
+    } as const;
+
+    return this.sendPortfolioUpdate(walletAddress, {
+      type: typeMap[status],
+      data: {
+        transactionId,
+        status,
+        details,
+        timestamp: new Date().toISOString()
+      },
+      timestamp: new Date().toISOString()
+    });
   }
 }

@@ -11,9 +11,11 @@ import * as TE from 'fp-ts/TaskEither';
 import { chatRouter } from './routes/chat';
 import { portfolioRouter } from './routes/portfolio';
 import { aiRouter } from './routes/ai';
+import { confirmationRouter } from './routes/confirmation';
 import { SocketService } from './services/SocketService';
 import { PortfolioService } from './services/PortfolioService';
 import { AIService } from './services/AIService';
+import { ConfirmationService } from './services/ConfirmationService';
 import { errorHandler } from './middleware/errorHandler';
 import { validateWallet } from './middleware/validateWallet';
 
@@ -48,7 +50,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // Initialize services
 const socketService = new SocketService(io);
-const portfolioService = new PortfolioService();
+const confirmationService = new ConfirmationService(socketService);
+const portfolioService = new PortfolioService(socketService, confirmationService);
 const aiService = new AIService();
 
 // Make services available in request context
@@ -56,7 +59,8 @@ app.use((req, _res, next) => {
   req.services = {
     socket: socketService,
     portfolio: portfolioService,
-    ai: aiService
+    ai: aiService,
+    confirmation: confirmationService
   };
   next();
 });
@@ -65,6 +69,7 @@ app.use((req, _res, next) => {
 app.use('/api/chat', validateWallet, chatRouter);
 app.use('/api/portfolio', validateWallet, portfolioRouter);
 app.use('/api/ai', validateWallet, aiRouter);
+app.use('/api', validateWallet, confirmationRouter);
 
 // Health check
 app.get('/health', (_req, res) => {
@@ -96,6 +101,47 @@ io.on('connection', (socket) => {
     )();
 
     socket.emit('chat_response', response);
+  });
+
+  // Confirmation-related events
+  socket.on('confirm_transaction', async (data) => {
+    const { transactionId, walletAddress } = data;
+    
+    const result = await pipe(
+      confirmationService.confirmTransaction(transactionId, walletAddress),
+      TE.fold(
+        (error) => TE.of({ success: false, error: error.message }),
+        (confirmationResult) => TE.of({ success: true, data: confirmationResult })
+      )
+    )();
+
+    socket.emit('confirmation_result', result);
+  });
+
+  socket.on('reject_transaction', async (data) => {
+    const { transactionId, walletAddress, reason } = data;
+    
+    const result = await pipe(
+      confirmationService.rejectTransaction(transactionId, walletAddress, reason),
+      TE.fold(
+        (error) => TE.of({ success: false, error: error.message }),
+        (confirmationResult) => TE.of({ success: true, data: confirmationResult })
+      )
+    )();
+
+    socket.emit('confirmation_result', result);
+  });
+
+  socket.on('get_pending_transactions', async (walletAddress: string) => {
+    const result = await pipe(
+      confirmationService.getPendingTransactionsForWallet(walletAddress),
+      TE.fold(
+        (error) => TE.of({ success: false, error: error.message }),
+        (transactions) => TE.of({ success: true, data: transactions })
+      )
+    )();
+
+    socket.emit('pending_transactions', result);
   });
 
   socket.on('disconnect', () => {
