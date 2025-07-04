@@ -1,10 +1,35 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Send, Bot, Loader2, Sparkles } from 'lucide-react'
+import { Send, Bot, Loader2, Sparkles, Search, TrendingUp, Activity, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AgentMessage, AgentStreamEvent } from '@/types/agent'
 import { getOrchestrator } from '@/lib/orchestrator-client'
+
+// New adapter-related types
+interface HiveInsight {
+  id: string
+  type: 'trend' | 'anomaly' | 'opportunity' | 'risk' | 'correlation'
+  title: string
+  description: string
+  confidence: number
+  data: Record<string, any>
+}
+
+interface SeiNetworkStatus {
+  blockNumber: number
+  networkStatus: 'healthy' | 'congested' | 'offline'
+  gasPrice: string
+  validators: number
+  totalSupply: string
+}
+
+interface AdapterAction {
+  type: 'sak' | 'hive' | 'mcp'
+  action: string
+  params: Record<string, any>
+  description: string
+}
 
 // Generate unique session ID
 const generateSessionId = () => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -15,7 +40,7 @@ export function ChatInterface() {
       id: '1',
       type: 'agent',
       agentType: 'portfolio_agent',
-      content: 'Greetings, mortal! I am Seiron, the Dragon of Financial Wisdom. I possess the power to manage your digital treasures, execute mystical trades, provide ancient market insights, and grant your investing wishes. What fortune do you seek today?',
+      content: 'Greetings, mortal! I am Seiron, the Dragon of Financial Wisdom. Enhanced with the power of Sei Agent Kit, Hive Intelligence, and real-time MCP protocols, I now possess legendary abilities to manage your digital treasures, execute mystical trades, provide ancient market insights, and grant your investing wishes with Saiyan-level precision. What fortune do you seek today?',
       timestamp: new Date(),
     },
   ])
@@ -23,6 +48,11 @@ export function ChatInterface() {
   const [isLoading, setIsLoading] = useState(false)
   const [sessionId] = useState(generateSessionId())
   const [connectedAgents, setConnectedAgents] = useState<Set<string>>(new Set())
+  const [hiveInsights, setHiveInsights] = useState<HiveInsight[]>([])
+  const [networkStatus, setNetworkStatus] = useState<SeiNetworkStatus | null>(null)
+  const [powerLevel, setPowerLevel] = useState<number>(9000)
+  const [adapterActions, setAdapterActions] = useState<AdapterAction[]>([])
+  const [showAdapterActions, setShowAdapterActions] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Initialize WebSocket connection
@@ -34,6 +64,16 @@ export function ChatInterface() {
 
     // Connect WebSocket for real-time updates
     orchestrator.connectWebSocket(sessionId)
+
+    // Initialize adapter actions
+    setAdapterActions([
+      { type: 'hive', action: 'search', params: {}, description: 'Search blockchain data with AI' },
+      { type: 'hive', action: 'analytics', params: {}, description: 'Get AI-powered market insights' },
+      { type: 'sak', action: 'get_token_balance', params: {}, description: 'Check token balances' },
+      { type: 'sak', action: 'takara_supply', params: {}, description: 'Supply to Takara protocol' },
+      { type: 'mcp', action: 'get_blockchain_state', params: {}, description: 'Get real-time network status' },
+      { type: 'mcp', action: 'get_wallet_balance', params: {}, description: 'Get live wallet balance' },
+    ])
 
     // Subscribe to agent events
     const unsubscribeStatus = orchestrator.on('status', (event: AgentStreamEvent) => {
@@ -55,9 +95,42 @@ export function ChatInterface() {
       }
     })
 
+    // Subscribe to Hive Intelligence events
+    const unsubscribeHive = orchestrator.on('hive:insights', (event: AgentStreamEvent) => {
+      if (event.data && Array.isArray(event.data.insights)) {
+        setHiveInsights(event.data.insights)
+        addSystemMessage(`🔮 Hive Intelligence: ${event.data.insights.length} new insights discovered!`)
+      }
+    })
+
+    // Subscribe to MCP network status events
+    const unsubscribeMCP = orchestrator.on('mcp:network_status', (event: AgentStreamEvent) => {
+      if (event.data) {
+        setNetworkStatus(event.data as SeiNetworkStatus)
+        const status = event.data as SeiNetworkStatus
+        addSystemMessage(`⚡ Sei Network Update: Block ${status.blockNumber}, Status: ${status.networkStatus.toUpperCase()}`)
+      }
+    })
+
+    // Subscribe to power level updates
+    const unsubscribePowerLevel = orchestrator.on('portfolio:power_level', (event: AgentStreamEvent) => {
+      if (event.data && typeof event.data.powerLevel === 'number') {
+        setPowerLevel(event.data.powerLevel)
+        const level = event.data.powerLevel
+        if (level > 50000) {
+          addSystemMessage(`🔥 INCREDIBLE! Your power level has exceeded ${level}! You've achieved legendary status!`)
+        } else if (level > 20000) {
+          addSystemMessage(`💪 Your power level has grown to ${level}! You're becoming a true warrior!`)
+        }
+      }
+    })
+
     return () => {
       unsubscribeStatus()
       unsubscribeProgress()
+      unsubscribeHive()
+      unsubscribeMCP()
+      unsubscribePowerLevel()
       orchestrator.disconnectWebSocket()
     }
   }, [sessionId])
@@ -75,6 +148,65 @@ export function ChatInterface() {
       timestamp: new Date(),
     }
     setMessages(prev => [...prev, systemMessage])
+  }
+
+  const executeAdapterAction = async (action: AdapterAction) => {
+    if (isLoading) return
+
+    const actionMessage: AgentMessage = {
+      id: Date.now().toString(),
+      type: 'user',
+      content: `🔧 Executing ${action.type.toUpperCase()} action: ${action.description}`,
+      timestamp: new Date(),
+    }
+
+    setMessages(prev => [...prev, actionMessage])
+    setIsLoading(true)
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: `Execute ${action.type} action: ${action.action}`,
+          sessionId,
+          adapterAction: action,
+        }),
+      })
+
+      const data = await response.json()
+
+      const assistantMessage: AgentMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'agent',
+        agentType: `${action.type}_agent`,
+        content: data.message || `${action.type.toUpperCase()} action executed successfully!`,
+        timestamp: new Date(),
+        metadata: {
+          adapterType: action.type,
+          action: action.action,
+          confidence: data.metadata?.confidence || 0.9,
+          taskId: data.taskId,
+          executionTime: data.executionTime,
+        },
+      }
+      setMessages(prev => [...prev, assistantMessage])
+    } catch (error) {
+      const errorMessage: AgentMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'agent',
+        content: `Failed to execute ${action.type.toUpperCase()} action. The mystical energies are unstable.`,
+        timestamp: new Date(),
+        metadata: {
+          error: true,
+        },
+      }
+      setMessages(prev => [...prev, errorMessage])
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleSend = async () => {
@@ -100,6 +232,9 @@ export function ChatInterface() {
         body: JSON.stringify({
           message: input,
           sessionId,
+          powerLevel,
+          hiveInsights,
+          networkStatus,
         }),
       })
 
@@ -130,9 +265,16 @@ export function ChatInterface() {
             confidence: data.metadata?.confidence,
             taskId: data.taskId,
             executionTime: data.executionTime,
+            powerLevel: data.metadata?.powerLevel || powerLevel,
+            dragonBallMessage: data.metadata?.dragonBallMessage,
           },
         }
         setMessages(prev => [...prev, assistantMessage])
+
+        // Update power level if provided
+        if (data.metadata?.powerLevel) {
+          setPowerLevel(data.metadata.powerLevel)
+        }
       }
     } catch (error) {
       const errorMessage: AgentMessage = {
@@ -169,8 +311,27 @@ export function ChatInterface() {
         return '🛡️'
       case 'analysis_agent':
         return '🔮'
+      case 'sak_agent':
+        return '⚡'
+      case 'hive_agent':
+        return '🔮'
+      case 'mcp_agent':
+        return '🌐'
       default:
         return '🐉'
+    }
+  }
+
+  const getAdapterIcon = (type: string) => {
+    switch (type) {
+      case 'sak':
+        return <Zap className="h-4 w-4" />
+      case 'hive':
+        return <Search className="h-4 w-4" />
+      case 'mcp':
+        return <Activity className="h-4 w-4" />
+      default:
+        return <Sparkles className="h-4 w-4" />
     }
   }
 
@@ -189,13 +350,94 @@ export function ChatInterface() {
              radial-gradient(circle at 40% 40%, rgba(220, 38, 38, 0.05) 0%, transparent 50%)
            `
          }}>
-      {/* Connected Dragons Indicator */}
-      {connectedAgents.size > 0 && (
-        <div className="px-4 py-2 bg-gradient-to-r from-red-50 to-orange-50 border-b border-red-200">
-          <p className="text-sm text-red-700 flex items-center gap-2">
-            <Sparkles className="h-4 w-4" />
-            Dragon Legion Active: {Array.from(connectedAgents).map(agent => agent.replace('_', ' ').replace('agent', 'dragon')).join(', ')}
-          </p>
+      {/* Enhanced Status Bar */}
+      <div className="px-4 py-2 bg-gradient-to-r from-red-50 to-orange-50 border-b border-red-200">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          {/* Connected Dragons Indicator */}
+          {connectedAgents.size > 0 && (
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-red-600" />
+              <span className="text-sm text-red-700">
+                Dragon Legion Active: {Array.from(connectedAgents).map(agent => agent.replace('_', ' ').replace('agent', 'dragon')).join(', ')}
+              </span>
+            </div>
+          )}
+          
+          {/* Power Level Display */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1">
+              <TrendingUp className="h-4 w-4 text-red-600" />
+              <span className="text-sm text-red-700 font-bold">
+                Power Level: {powerLevel.toLocaleString()}
+              </span>
+            </div>
+            
+            {/* Network Status */}
+            {networkStatus && (
+              <div className="flex items-center gap-1">
+                <Activity className={cn(
+                  "h-4 w-4",
+                  networkStatus.networkStatus === 'healthy' ? 'text-green-600' : 
+                  networkStatus.networkStatus === 'congested' ? 'text-yellow-600' : 'text-red-600'
+                )} />
+                <span className="text-sm text-red-700">
+                  Block {networkStatus.blockNumber}
+                </span>
+              </div>
+            )}
+            
+            {/* Adapter Actions Toggle */}
+            <button
+              onClick={() => setShowAdapterActions(!showAdapterActions)}
+              className="flex items-center gap-1 px-2 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition-colors"
+            >
+              <Zap className="h-3 w-3" />
+              Adapters
+            </button>
+          </div>
+        </div>
+        
+        {/* Hive Insights Preview */}
+        {hiveInsights.length > 0 && (
+          <div className="mt-2 flex items-center gap-2">
+            <Search className="h-4 w-4 text-red-600" />
+            <span className="text-xs text-red-600">
+              {hiveInsights.length} AI insights available
+            </span>
+            {hiveInsights.slice(0, 2).map((insight, index) => (
+              <span key={insight.id} className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
+                {insight.type}: {insight.confidence}% confidence
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Adapter Actions Panel */}
+      {showAdapterActions && (
+        <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+          <h3 className="text-sm font-semibold text-gray-700 mb-2">Dragon Power Adapters</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {adapterActions.map((action, index) => (
+              <button
+                key={index}
+                onClick={() => executeAdapterAction(action)}
+                disabled={isLoading}
+                className={cn(
+                  "flex items-center gap-2 p-2 rounded border text-sm transition-colors",
+                  "hover:bg-white hover:shadow-sm",
+                  action.type === 'sak' && "border-yellow-300 bg-yellow-50 text-yellow-700",
+                  action.type === 'hive' && "border-blue-300 bg-blue-50 text-blue-700",
+                  action.type === 'mcp' && "border-green-300 bg-green-50 text-green-700",
+                  isLoading && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                {getAdapterIcon(action.type)}
+                <span className="font-medium">{action.type.toUpperCase()}</span>
+                <span className="text-xs">{action.description}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -266,6 +508,21 @@ export function ChatInterface() {
                     🔥 {Math.round(message.metadata.confidence * 100)}% Power Level
                   </p>
                 )}
+                {message.metadata?.powerLevel && (
+                  <p className="text-xs text-orange-400 font-bold">
+                    ⚡ Saiyan Level: {message.metadata.powerLevel.toLocaleString()}
+                  </p>
+                )}
+                {message.metadata?.adapterType && (
+                  <p className="text-xs text-blue-400">
+                    🔧 {message.metadata.adapterType.toUpperCase()} Adapter
+                  </p>
+                )}
+                {message.metadata?.dragonBallMessage && (
+                  <p className="text-xs text-orange-300 italic mt-1 border-l-2 border-orange-400 pl-2">
+                    🐲 {message.metadata.dragonBallMessage}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -308,10 +565,30 @@ export function ChatInterface() {
             <Send className="h-4 w-4" />
           </button>
         </div>
-        <p className="text-xs text-red-400 mt-2 flex items-center gap-1">
-          <span className="text-red-600">🔥</span>
-          Empowered by the Dragon Legion - Financial Dragons of unparalleled wisdom and power
-        </p>
+        <div className="flex items-center justify-between mt-2">
+          <p className="text-xs text-red-400 flex items-center gap-1">
+            <span className="text-red-600">🔥</span>
+            Empowered by Dragon Legion + SAK + Hive Intelligence + MCP Protocol
+          </p>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-orange-400">⚡ Power: {powerLevel.toLocaleString()}</span>
+            {networkStatus && (
+              <span className={cn(
+                "px-2 py-1 rounded",
+                networkStatus.networkStatus === 'healthy' ? 'bg-green-100 text-green-700' :
+                networkStatus.networkStatus === 'congested' ? 'bg-yellow-100 text-yellow-700' :
+                'bg-red-100 text-red-700'
+              )}>
+                {networkStatus.networkStatus.toUpperCase()}
+              </span>
+            )}
+            {hiveInsights.length > 0 && (
+              <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                {hiveInsights.length} AI Insights
+              </span>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )

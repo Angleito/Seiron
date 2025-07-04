@@ -17,6 +17,9 @@ import type {
   AgentCapability,
   OrchestratorEvent
 } from './types.js';
+import { SeiAgentKitAdapter } from '../agents/adapters/SeiAgentKitAdapter.js';
+import { HiveIntelligenceAdapter } from '../agents/adapters/HiveIntelligenceAdapter.js';
+import { SeiMCPAdapter } from '../agents/adapters/SeiMCPAdapter.js';
 
 /**
  * Agent registry state
@@ -26,6 +29,20 @@ interface AgentRegistryState {
   readonly healthChecks: ReadonlyRecord<string, HealthCheckResult>;
   readonly capabilities: ReadonlyRecord<string, ReadonlyArray<AgentCapability>>;
   readonly loadMetrics: ReadonlyRecord<string, LoadMetrics>;
+  readonly adapters: ReadonlyRecord<string, AdapterInstance>;
+}
+
+/**
+ * Adapter instance information
+ */
+interface AdapterInstance {
+  readonly id: string;
+  readonly type: 'seiAgentKit' | 'hiveIntelligence' | 'seiMCP';
+  readonly instance: SeiAgentKitAdapter | HiveIntelligenceAdapter | SeiMCPAdapter;
+  readonly capabilities: ReadonlyArray<string>;
+  readonly status: 'active' | 'inactive' | 'error';
+  readonly lastHealthCheck: number;
+  readonly priority: number;
 }
 
 interface HealthCheckResult {
@@ -53,6 +70,12 @@ export interface AgentRegistryConfig {
   readonly maxConsecutiveFailures: number;
   readonly responseTimeoutMs: number;
   readonly loadBalancingWeights: ReadonlyRecord<string, number>;
+  readonly adapterConfig: {
+    enableLoadBalancing: boolean;
+    maxAdaptersPerType: number;
+    healthCheckTimeoutMs: number;
+    failoverEnabled: boolean;
+  };
 }
 
 /**
@@ -69,7 +92,8 @@ export class AgentRegistry {
       agents: {},
       healthChecks: {},
       capabilities: {},
-      loadMetrics: {}
+      loadMetrics: {},
+      adapters: {}
     };
   }
 
@@ -247,6 +271,215 @@ export class AgentRegistry {
       )
     );
 
+  // ============================================================================
+  // Adapter Management Methods
+  // ============================================================================
+
+  /**
+   * Register an adapter instance
+   */
+  public registerAdapter = (
+    id: string,
+    type: 'seiAgentKit' | 'hiveIntelligence' | 'seiMCP',
+    instance: SeiAgentKitAdapter | HiveIntelligenceAdapter | SeiMCPAdapter,
+    capabilities: ReadonlyArray<string>,
+    priority: number = 1
+  ): Either<string, void> => {
+    try {
+      if (this.state.adapters[id]) {
+        return EitherM.left(`Adapter ${id} already registered`);
+      }
+
+      // Check if we've reached max adapters of this type
+      const adaptersOfType = Object.values(this.state.adapters)
+        .filter(adapter => adapter.type === type);
+      
+      if (adaptersOfType.length >= this.config.adapterConfig.maxAdaptersPerType) {
+        return EitherM.left(`Maximum number of ${type} adapters reached`);
+      }
+
+      const adapterInstance: AdapterInstance = {
+        id,
+        type,
+        instance,
+        capabilities,
+        status: 'active',
+        lastHealthCheck: Date.now(),
+        priority
+      };
+
+      this.state = {
+        ...this.state,
+        adapters: { ...this.state.adapters, [id]: adapterInstance }
+      };
+
+      return EitherM.right(undefined);
+    } catch (error) {
+      return EitherM.left(`Failed to register adapter: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  /**
+   * Unregister an adapter
+   */
+  public unregisterAdapter = (id: string): Either<string, void> => {
+    if (!this.state.adapters[id]) {
+      return EitherM.left(`Adapter ${id} not found`);
+    }
+
+    const { [id]: removed, ...remainingAdapters } = this.state.adapters;
+    this.state = {
+      ...this.state,
+      adapters: remainingAdapters
+    };
+
+    return EitherM.right(undefined);
+  };
+
+  /**
+   * Get adapter by ID
+   */
+  public getAdapter = (id: string): Option<AdapterInstance> =>
+    Maybe.fromNullable(this.state.adapters[id]);
+
+  /**
+   * Get all adapters
+   */
+  public getAllAdapters = (): ReadonlyArray<AdapterInstance> =>
+    Object.values(this.state.adapters);
+
+  /**
+   * Get adapters by type
+   */
+  public getAdaptersByType = (type: 'seiAgentKit' | 'hiveIntelligence' | 'seiMCP'): ReadonlyArray<AdapterInstance> =>
+    this.getAllAdapters().filter(adapter => adapter.type === type);
+
+  /**
+   * Get healthy adapters
+   */
+  public getHealthyAdapters = (): ReadonlyArray<AdapterInstance> =>
+    this.getAllAdapters().filter(adapter => adapter.status === 'active');
+
+  /**
+   * Get adapters by capability
+   */
+  public getAdaptersByCapability = (capability: string): ReadonlyArray<AdapterInstance> =>
+    this.getAllAdapters().filter(adapter =>
+      adapter.capabilities.includes(capability)
+    );
+
+  /**
+   * Find best adapter for capability with load balancing
+   */
+  public findBestAdapter = (
+    capability: string,
+    preferredType?: 'seiAgentKit' | 'hiveIntelligence' | 'seiMCP'
+  ): Option<AdapterInstance> => {
+    let candidates = this.getHealthyAdapters()
+      .filter(adapter => adapter.capabilities.includes(capability));
+
+    // Filter by preferred type if specified
+    if (preferredType) {
+      const preferredCandidates = candidates.filter(adapter => adapter.type === preferredType);
+      if (preferredCandidates.length > 0) {
+        candidates = preferredCandidates;
+      }
+    }
+
+    if (candidates.length === 0) {
+      return Maybe.none();
+    }
+
+    // Load balancing: select based on priority and last usage
+    if (this.config.adapterConfig.enableLoadBalancing) {
+      candidates.sort((a, b) => {
+        // Higher priority first
+        if (a.priority !== b.priority) {
+          return b.priority - a.priority;
+        }
+        // Then by least recently used
+        return a.lastHealthCheck - b.lastHealthCheck;
+      });
+    }
+
+    return Maybe.some(candidates[0]);
+  };
+
+  /**
+   * Update adapter status
+   */
+  public updateAdapterStatus = (
+    id: string,
+    status: 'active' | 'inactive' | 'error'
+  ): Either<string, void> =>
+    pipe(
+      this.getAdapter(id),
+      Maybe.fold(
+        () => EitherM.left(`Adapter ${id} not found`),
+        (adapter) => EitherM.right((() => {
+          this.state = {
+            ...this.state,
+            adapters: {
+              ...this.state.adapters,
+              [id]: { ...adapter, status, lastHealthCheck: Date.now() }
+            }
+          };
+        })())
+      )
+    );
+
+  /**
+   * Get adapter load balancing information
+   */
+  public getAdapterLoadInfo = (): ReadonlyRecord<string, {
+    adaptersCount: number;
+    healthyCount: number;
+    capabilities: ReadonlyArray<string>;
+  }> => {
+    const loadInfo: Record<string, {
+      adaptersCount: number;
+      healthyCount: number;
+      capabilities: ReadonlyArray<string>;
+    }> = {};
+
+    const adapterTypes = ['seiAgentKit', 'hiveIntelligence', 'seiMCP'] as const;
+    
+    adapterTypes.forEach(type => {
+      const adapters = this.getAdaptersByType(type);
+      const healthy = adapters.filter(a => a.status === 'active');
+      const allCapabilities = [...new Set(adapters.flatMap(a => a.capabilities))];
+      
+      loadInfo[type] = {
+        adaptersCount: adapters.length,
+        healthyCount: healthy.length,
+        capabilities: allCapabilities
+      };
+    });
+
+    return loadInfo;
+  };
+
+  /**
+   * Perform health checks on adapters
+   */
+  public performAdapterHealthChecks = async (): Promise<void> => {
+    const adapters = this.getAllAdapters();
+    
+    for (const adapter of adapters) {
+      try {
+        const isHealthy = await this.checkAdapterHealth(adapter);
+        const newStatus = isHealthy ? 'active' : 'error';
+        
+        if (adapter.status !== newStatus) {
+          this.updateAdapterStatus(adapter.id, newStatus);
+        }
+      } catch (error) {
+        console.error(`Health check failed for adapter ${adapter.id}:`, error);
+        this.updateAdapterStatus(adapter.id, 'error');
+      }
+    }
+  };
+
   // Private helper methods
 
   private validateAgent = (agent: Agent): Either<string, Agent> => {
@@ -315,6 +548,7 @@ export class AgentRegistry {
   };
 
   private performHealthChecks = async (): Promise<void> => {
+    // Check agents
     const agents = this.getAllAgents();
     
     for (const agent of agents) {
@@ -364,6 +598,9 @@ export class AgentRegistry {
         };
       }
     }
+
+    // Check adapters
+    await this.performAdapterHealthChecks();
   };
 
   private checkAgentHealth = async (agent: Agent): Promise<boolean> => {
@@ -374,5 +611,39 @@ export class AgentRegistry {
         resolve(agent.status !== 'error' && agent.status !== 'offline');
       }, Math.random() * 100); // Simulate network delay
     });
+  };
+
+  /**
+   * Check adapter health
+   */
+  private checkAdapterHealth = async (adapter: AdapterInstance): Promise<boolean> => {
+    try {
+      // Attempt a simple health check based on adapter type
+      switch (adapter.type) {
+        case 'seiAgentKit':
+          // Check if SAK adapter is responsive
+          const sakAdapter = adapter.instance as SeiAgentKitAdapter;
+          // In a real implementation, this would call a health check method
+          return sakAdapter.getConfig() !== undefined;
+          
+        case 'hiveIntelligence':
+          // Check if Hive adapter is responsive
+          const hiveAdapter = adapter.instance as HiveIntelligenceAdapter;
+          // In a real implementation, this would ping the API
+          return hiveAdapter.getConfig() !== undefined;
+          
+        case 'seiMCP':
+          // Check if MCP adapter connection is active
+          const mcpAdapter = adapter.instance as SeiMCPAdapter;
+          // In a real implementation, this would check WebSocket connection
+          return mcpAdapter.getConfig() !== undefined;
+          
+        default:
+          return false;
+      }
+    } catch (error) {
+      console.error(`Health check failed for adapter ${adapter.id}:`, error);
+      return false;
+    }
   };
 }

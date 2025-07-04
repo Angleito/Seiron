@@ -10,13 +10,13 @@ WORKDIR /app
 COPY package*.json ./
 COPY frontend/package*.json ./frontend/
 
-# Copy package-lock.json
-COPY package-lock.json ./
-COPY frontend/package-lock.json ./frontend/
+# Copy lock files if they exist
+COPY package-loc[k].json* ./
+COPY frontend/package-loc[k].json* ./frontend/
 
-# Install dependencies
-RUN npm ci --omit=dev
-RUN npm ci --prefix frontend --omit=dev
+# Install dependencies (use npm install if no lock file exists)
+RUN if [ -f package-lock.json ]; then npm ci --omit=dev; else npm install --omit=dev; fi
+RUN if [ -f frontend/package-lock.json ]; then npm ci --prefix frontend --omit=dev; else npm install --prefix frontend --omit=dev; fi
 
 # Copy source code
 COPY . .

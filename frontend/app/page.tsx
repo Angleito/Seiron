@@ -1,6 +1,8 @@
+'use client'
+
 import Link from 'next/link'
 import { Bot, Shield, TrendingUp, Zap, Star, Eye, Sparkles } from 'lucide-react'
-import { FloatingDragonLogo } from '@/components/FloatingDragonLogo'
+import { EnhancedDragonCharacter } from '@/components/dragon/EnhancedDragonCharacter'
 
 export default function Home() {
   return (
@@ -8,9 +10,21 @@ export default function Home() {
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-          {/* Floating Dragon Logo */}
+          {/* Enhanced Dragon Character */}
           <div className="flex justify-center mb-12">
-            <FloatingDragonLogo size="xl" showDragonBalls={true} />
+            <EnhancedDragonCharacter 
+              size="xl" 
+              initialState="ready"
+              initialMood="powerful"
+              interactive={true}
+              showDragonBalls={true}
+              enableCursorTracking={true}
+              autoStates={true}
+              animationConfig={{
+                performanceMode: 'quality',
+                autoQualityAdjustment: true
+              }}
+            />
           </div>
           
           <div className="text-center">
@@ -28,6 +42,13 @@ export default function Home() {
               >
                 <Star className="mr-2 h-5 w-5" />
                 Summon Seiron
+              </Link>
+              <Link
+                href="/dragon-showcase"
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-yellow-600 to-red-600 text-white font-medium rounded-lg hover:from-yellow-700 hover:to-red-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                Dragon Powers
               </Link>
               <a
                 href="#features"

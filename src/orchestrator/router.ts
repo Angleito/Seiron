@@ -20,6 +20,9 @@ import type {
   Agent,
   OrchestratorEvent
 } from './types.js';
+import { SeiAgentKitAdapter } from '../agents/adapters/SeiAgentKitAdapter.js';
+import { HiveIntelligenceAdapter } from '../agents/adapters/HiveIntelligenceAdapter.js';
+import { SeiMCPAdapter } from '../agents/adapters/SeiMCPAdapter.js';
 
 /**
  * Message routing configuration
@@ -30,6 +33,12 @@ export interface MessageRouterConfig {
   readonly retryAttempts: number;
   readonly backoffMultiplier: number;
   readonly enableParallelExecution: boolean;
+  readonly adapterRouting: {
+    enableAdapterMessages: boolean;
+    adapterTimeout: number;
+    maxConcurrentAdapterCalls: number;
+    prioritizeAdaptersByType: boolean;
+  };
 }
 
 /**
@@ -39,6 +48,30 @@ interface MessageRouterState {
   readonly pendingMessages: ReadonlyRecord<string, PendingMessage>;
   readonly messageHandlers: ReadonlyRecord<AgentMessageType, MessageHandler>;
   readonly routingRules: ReadonlyArray<RoutingRule>;
+  readonly adapterInstances: ReadonlyRecord<string, AdapterInstance>;
+  readonly adapterMessageQueue: ReadonlyArray<AdapterMessage>;
+}
+
+/**
+ * Adapter message types
+ */
+interface AdapterMessage {
+  id: string;
+  adapterType: 'seiAgentKit' | 'hiveIntelligence' | 'seiMCP';
+  operation: string;
+  parameters: Record<string, any>;
+  context?: Record<string, any>;
+  priority: number;
+  timestamp: number;
+  retryCount: number;
+}
+
+interface AdapterInstance {
+  type: 'seiAgentKit' | 'hiveIntelligence' | 'seiMCP';
+  instance: SeiAgentKitAdapter | HiveIntelligenceAdapter | SeiMCPAdapter;
+  isHealthy: boolean;
+  lastUsed: number;
+  activeOperations: number;
 }
 
 interface PendingMessage {
@@ -66,13 +99,16 @@ export class MessageRouter {
   private config: MessageRouterConfig;
   private messageQueue: AgentMessage[] = [];
   private processingMessages = new Set<string>();
+  private adapterProcessingQueue = new Set<string>();
 
   constructor(config: MessageRouterConfig) {
     this.config = config;
     this.state = {
       pendingMessages: {},
       messageHandlers: this.createDefaultHandlers(),
-      routingRules: []
+      routingRules: [],
+      adapterInstances: {},
+      adapterMessageQueue: []
     };
   }
 
@@ -218,6 +254,224 @@ export class MessageRouter {
   public getQueueLength = (): number => 
     this.messageQueue.length;
 
+  // ============================================================================
+  // Adapter Message Routing Methods
+  // ============================================================================
+
+  /**
+   * Register an adapter instance with the router
+   */
+  public registerAdapter = (
+    id: string,
+    type: 'seiAgentKit' | 'hiveIntelligence' | 'seiMCP',
+    instance: SeiAgentKitAdapter | HiveIntelligenceAdapter | SeiMCPAdapter
+  ): Either<string, void> => {
+    if (this.state.adapterInstances[id]) {
+      return EitherM.left(`Adapter ${id} already registered`);
+    }
+
+    const adapterInstance: AdapterInstance = {
+      type,
+      instance,
+      isHealthy: true,
+      lastUsed: Date.now(),
+      activeOperations: 0
+    };
+
+    this.state = {
+      ...this.state,
+      adapterInstances: { ...this.state.adapterInstances, [id]: adapterInstance }
+    };
+
+    return EitherM.right(undefined);
+  };
+
+  /**
+   * Unregister an adapter instance
+   */
+  public unregisterAdapter = (id: string): Either<string, void> => {
+    if (!this.state.adapterInstances[id]) {
+      return EitherM.left(`Adapter ${id} not found`);
+    }
+
+    const { [id]: removed, ...remainingAdapters } = this.state.adapterInstances;
+    this.state = {
+      ...this.state,
+      adapterInstances: remainingAdapters
+    };
+
+    return EitherM.right(undefined);
+  };
+
+  /**
+   * Route adapter operation with load balancing
+   */
+  public routeAdapterOperation = async (
+    adapterType: 'seiAgentKit' | 'hiveIntelligence' | 'seiMCP',
+    operation: string,
+    parameters: Record<string, any>,
+    context?: Record<string, any>,
+    priority: number = 1
+  ): Promise<Either<string, unknown>> => {
+    if (!this.config.adapterRouting.enableAdapterMessages) {
+      return EitherM.left('Adapter message routing is disabled');
+    }
+
+    // Check if we're at concurrent adapter limit
+    if (this.adapterProcessingQueue.size >= this.config.adapterRouting.maxConcurrentAdapterCalls) {
+      const adapterMessage: AdapterMessage = {
+        id: this.generateMessageId(),
+        adapterType,
+        operation,
+        parameters,
+        context,
+        priority,
+        timestamp: Date.now(),
+        retryCount: 0
+      };
+
+      this.state = {
+        ...this.state,
+        adapterMessageQueue: [...this.state.adapterMessageQueue, adapterMessage]
+      };
+
+      return EitherM.left('Adapter operation queued - at concurrent limit');
+    }
+
+    return this.processAdapterOperation(adapterType, operation, parameters, context, priority);
+  };
+
+  /**
+   * Route multiple adapter operations in parallel
+   */
+  public routeAdapterOperationsParallel = async (
+    operations: Array<{
+      adapterType: 'seiAgentKit' | 'hiveIntelligence' | 'seiMCP';
+      operation: string;
+      parameters: Record<string, any>;
+      context?: Record<string, any>;
+      priority?: number;
+    }>
+  ): Promise<ReadonlyArray<Either<string, unknown>>> => {
+    if (!this.config.enableParallelExecution) {
+      // Sequential processing
+      const results: Either<string, unknown>[] = [];
+      for (const op of operations) {
+        results.push(await this.routeAdapterOperation(
+          op.adapterType,
+          op.operation,
+          op.parameters,
+          op.context,
+          op.priority || 1
+        ));
+      }
+      return results;
+    }
+
+    // Parallel processing with concurrency limit
+    return AsyncUtils.mapWithConcurrency(
+      operations,
+      (op) => this.routeAdapterOperation(
+        op.adapterType,
+        op.operation,
+        op.parameters,
+        op.context,
+        op.priority || 1
+      ),
+      this.config.adapterRouting.maxConcurrentAdapterCalls
+    );
+  };
+
+  /**
+   * Process queued adapter operations
+   */
+  public processAdapterQueue = async (): Promise<void> => {
+    while (this.state.adapterMessageQueue.length > 0 && 
+           this.adapterProcessingQueue.size < this.config.adapterRouting.maxConcurrentAdapterCalls) {
+      
+      // Sort by priority and timestamp
+      const sortedQueue = [...this.state.adapterMessageQueue].sort((a, b) => {
+        if (a.priority !== b.priority) {
+          return b.priority - a.priority; // Higher priority first
+        }
+        return a.timestamp - b.timestamp; // Earlier timestamp first
+      });
+
+      const nextMessage = sortedQueue[0];
+      if (nextMessage) {
+        // Remove from queue
+        this.state = {
+          ...this.state,
+          adapterMessageQueue: this.state.adapterMessageQueue.filter(msg => msg.id !== nextMessage.id)
+        };
+
+        // Process operation
+        this.processAdapterOperation(
+          nextMessage.adapterType,
+          nextMessage.operation,
+          nextMessage.parameters,
+          nextMessage.context,
+          nextMessage.priority
+        ).catch(console.error);
+      }
+    }
+  };
+
+  /**
+   * Get adapter load balancing information
+   */
+  public getAdapterLoadInfo = (): ReadonlyRecord<string, {
+    instanceCount: number;
+    healthyCount: number;
+    activeOperations: number;
+    queueSize: number;
+  }> => {
+    const loadInfo: Record<string, {
+      instanceCount: number;
+      healthyCount: number;
+      activeOperations: number;
+      queueSize: number;
+    }> = {};
+
+    const adapterTypes = ['seiAgentKit', 'hiveIntelligence', 'seiMCP'] as const;
+    
+    adapterTypes.forEach(type => {
+      const instances = Object.values(this.state.adapterInstances).filter(a => a.type === type);
+      const healthy = instances.filter(a => a.isHealthy);
+      const totalActiveOps = instances.reduce((sum, a) => sum + a.activeOperations, 0);
+      const queuedForType = this.state.adapterMessageQueue.filter(msg => msg.adapterType === type);
+      
+      loadInfo[type] = {
+        instanceCount: instances.length,
+        healthyCount: healthy.length,
+        activeOperations: totalActiveOps,
+        queueSize: queuedForType.length
+      };
+    });
+
+    return loadInfo;
+  };
+
+  /**
+   * Update adapter health status
+   */
+  public updateAdapterHealth = (id: string, isHealthy: boolean): Either<string, void> => {
+    const adapter = this.state.adapterInstances[id];
+    if (!adapter) {
+      return EitherM.left(`Adapter ${id} not found`);
+    }
+
+    this.state = {
+      ...this.state,
+      adapterInstances: {
+        ...this.state.adapterInstances,
+        [id]: { ...adapter, isHealthy }
+      }
+    };
+
+    return EitherM.right(undefined);
+  };
+
   /**
    * Process queued messages
    */
@@ -229,9 +483,185 @@ export class MessageRouter {
         this.processMessage(message).catch(console.error);
       }
     }
+
+    // Also process adapter queue
+    await this.processAdapterQueue();
   };
 
   // Private helper methods
+
+  /**
+   * Process adapter operation with load balancing
+   */
+  private processAdapterOperation = async (
+    adapterType: 'seiAgentKit' | 'hiveIntelligence' | 'seiMCP',
+    operation: string,
+    parameters: Record<string, any>,
+    context?: Record<string, any>,
+    priority: number = 1
+  ): Promise<Either<string, unknown>> => {
+    const operationId = this.generateMessageId();
+    this.adapterProcessingQueue.add(operationId);
+
+    try {
+      // Find best adapter instance for this operation
+      const adapter = this.findBestAdapterForOperation(adapterType);
+      if (!adapter) {
+        return EitherM.left(`No healthy ${adapterType} adapter available`);
+      }
+
+      // Update active operation count
+      this.incrementAdapterOperations(adapter.id);
+
+      // Set up timeout
+      const timeoutPromise = new Promise<Either<string, unknown>>((resolve) => {
+        setTimeout(() => {
+          resolve(EitherM.left('Adapter operation timeout'));
+        }, this.config.adapterRouting.adapterTimeout);
+      });
+
+      // Execute operation with timeout
+      const operationPromise = this.executeAdapterOperation(adapter, operation, parameters, context);
+      
+      const result = await Promise.race([operationPromise, timeoutPromise]);
+      
+      // Update last used timestamp
+      this.updateAdapterLastUsed(adapter.id);
+      
+      return result;
+
+    } finally {
+      this.adapterProcessingQueue.delete(operationId);
+      // Note: We'll decrement operation count in the finally of executeAdapterOperation
+    }
+  };
+
+  /**
+   * Execute operation on specific adapter
+   */
+  private executeAdapterOperation = async (
+    adapter: { id: string; instance: SeiAgentKitAdapter | HiveIntelligenceAdapter | SeiMCPAdapter },
+    operation: string,
+    parameters: Record<string, any>,
+    context?: Record<string, any>
+  ): Promise<Either<string, unknown>> => {
+    try {
+      let result;
+
+      if (adapter.instance instanceof SeiAgentKitAdapter) {
+        result = await adapter.instance.executeSAKTool(operation, parameters, context)();
+      } else if (adapter.instance instanceof HiveIntelligenceAdapter) {
+        switch (operation) {
+          case 'search':
+            result = await adapter.instance.search(parameters.query, parameters.metadata)();
+            break;
+          case 'get_analytics':
+            result = await adapter.instance.getAnalytics(parameters.query, parameters.metadata)();
+            break;
+          default:
+            return EitherM.left(`Unknown Hive operation: ${operation}`);
+        }
+      } else if (adapter.instance instanceof SeiMCPAdapter) {
+        switch (operation) {
+          case 'get_blockchain_state':
+            result = await adapter.instance.getBlockchainState()();
+            break;
+          case 'query_contract':
+            result = await adapter.instance.queryContract(parameters.contractAddress, parameters.query)();
+            break;
+          default:
+            return EitherM.left(`Unknown MCP operation: ${operation}`);
+        }
+      } else {
+        return EitherM.left('Unknown adapter type');
+      }
+
+      return result._tag === 'Right' 
+        ? EitherM.right(result.right)
+        : EitherM.left(result.left.message || 'Adapter operation failed');
+
+    } catch (error) {
+      return EitherM.left(`Adapter operation error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      this.decrementAdapterOperations(adapter.id);
+    }
+  };
+
+  /**
+   * Find best adapter for operation with load balancing
+   */
+  private findBestAdapterForOperation = (
+    adapterType: 'seiAgentKit' | 'hiveIntelligence' | 'seiMCP'
+  ): { id: string; instance: SeiAgentKitAdapter | HiveIntelligenceAdapter | SeiMCPAdapter } | null => {
+    const candidates = Object.entries(this.state.adapterInstances)
+      .filter(([_, adapter]) => adapter.type === adapterType && adapter.isHealthy)
+      .map(([id, adapter]) => ({ id, ...adapter }));
+
+    if (candidates.length === 0) {
+      return null;
+    }
+
+    // Load balancing: select adapter with fewest active operations and least recently used
+    candidates.sort((a, b) => {
+      if (a.activeOperations !== b.activeOperations) {
+        return a.activeOperations - b.activeOperations; // Fewer operations first
+      }
+      return a.lastUsed - b.lastUsed; // Least recently used first
+    });
+
+    return candidates[0];
+  };
+
+  /**
+   * Increment active operations for adapter
+   */
+  private incrementAdapterOperations = (adapterId: string): void => {
+    const adapter = this.state.adapterInstances[adapterId];
+    if (adapter) {
+      this.state = {
+        ...this.state,
+        adapterInstances: {
+          ...this.state.adapterInstances,
+          [adapterId]: { ...adapter, activeOperations: adapter.activeOperations + 1 }
+        }
+      };
+    }
+  };
+
+  /**
+   * Decrement active operations for adapter
+   */
+  private decrementAdapterOperations = (adapterId: string): void => {
+    const adapter = this.state.adapterInstances[adapterId];
+    if (adapter) {
+      this.state = {
+        ...this.state,
+        adapterInstances: {
+          ...this.state.adapterInstances,
+          [adapterId]: { 
+            ...adapter, 
+            activeOperations: Math.max(0, adapter.activeOperations - 1) 
+          }
+        }
+      };
+    }
+  };
+
+  /**
+   * Update last used timestamp for adapter
+   */
+  private updateAdapterLastUsed = (adapterId: string): void => {
+    const adapter = this.state.adapterInstances[adapterId];
+    if (adapter) {
+      this.state = {
+        ...this.state,
+        adapterInstances: {
+          ...this.state.adapterInstances,
+          [adapterId]: { ...adapter, lastUsed: Date.now() }
+        }
+      };
+    }
+  };
 
   private processMessage = async (
     message: AgentMessage

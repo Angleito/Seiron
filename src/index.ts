@@ -3,8 +3,9 @@
 // Core portfolio management modules
 export * from './chat/ChatInterface';
 export * from './ai/AIDecisionEngine';
-export * from './portfolio/PortfolioManager';
-export * from './lending/LendingManager';
+export { PortfolioManager, PortfolioConfig, PortfolioSummary, LiquidityPosition, StakingPosition, Performance } from './portfolio/PortfolioManager';
+export { LendingManager, LendingConfig, LendingParams, LendingRate, ProtocolComparison } from './lending/LendingManager';
+export { LendingPosition } from './lending/LendingManager';
 export * from './liquidity/LiquidityManager';
 
 // Data collection for training (kept for model improvement)

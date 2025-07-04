@@ -289,6 +289,289 @@
   }
 }
 
+/* ========================================
+   SVG-SPECIFIC DRAGON ANIMATIONS
+   ======================================== */
+
+/* SVG Dragon breathing animation */
+@keyframes svg-dragon-breathe {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+/* SVG Wing flutter animation */
+@keyframes svg-wing-flutter {
+  0%, 100% {
+    transform: rotateZ(-8deg) translateY(2px);
+  }
+  25% {
+    transform: rotateZ(-5deg) translateY(0px);
+  }
+  50% {
+    transform: rotateZ(-10deg) translateY(4px);
+  }
+  75% {
+    transform: rotateZ(-6deg) translateY(1px);
+  }
+}
+
+/* SVG Eye blink animation */
+@keyframes svg-eye-blink {
+  0%, 90%, 100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.1);
+  }
+}
+
+/* SVG Tail sway animation */
+@keyframes svg-tail-sway {
+  0%, 100% {
+    transform: rotateZ(0deg);
+  }
+  25% {
+    transform: rotateZ(5deg);
+  }
+  75% {
+    transform: rotateZ(-5deg);
+  }
+}
+
+/* SVG Power aura rotation */
+@keyframes svg-power-aura {
+  0% {
+    transform: rotateZ(0deg) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: rotateZ(180deg) scale(1.3);
+    opacity: 0.2;
+  }
+  100% {
+    transform: rotateZ(360deg) scale(1);
+    opacity: 0.6;
+  }
+}
+
+/* SVG Nostril glow for powering-up state */
+@keyframes svg-nostril-glow {
+  0%, 100% {
+    fill: black;
+    filter: none;
+  }
+  50% {
+    fill: #facc15;
+    filter: drop-shadow(0 0 8px #facc15);
+  }
+}
+
+/* SVG Hover pulse effect */
+@keyframes svg-hover-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.6;
+  }
+}
+
+/* SVG Dragon awakening shimmer */
+@keyframes svg-awakening-shimmer {
+  0% {
+    filter: hue-rotate(0deg) brightness(1);
+  }
+  25% {
+    filter: hue-rotate(15deg) brightness(1.2);
+  }
+  50% {
+    filter: hue-rotate(30deg) brightness(1.4);
+  }
+  75% {
+    filter: hue-rotate(15deg) brightness(1.2);
+  }
+  100% {
+    filter: hue-rotate(0deg) brightness(1);
+  }
+}
+
+/* CSS Classes for SVG Dragon Elements */
+.dragon-svg {
+  will-change: transform, filter;
+  contain: layout style;
+}
+
+.dragon-body {
+  animation: svg-dragon-breathe 4s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.dragon-wings {
+  animation: svg-wing-flutter 6s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.dragon-eyes {
+  animation: svg-eye-blink 8s ease-in-out infinite;
+}
+
+.dragon-tail {
+  animation: svg-tail-sway 8s ease-in-out infinite;
+  transform-origin: 120px 280px;
+}
+
+.power-aura {
+  animation: svg-power-aura 2s linear infinite;
+  transform-origin: center;
+}
+
+.hover-ring {
+  animation: svg-hover-pulse 1s ease-out;
+}
+
+.dragon-awakening .dragon-body {
+  animation: svg-awakening-shimmer 2s ease-in-out;
+}
+
+.dragon-powering-up .dragon-nostrils ellipse {
+  animation: svg-nostril-glow 1.5s ease-in-out infinite;
+}
+
+/* Performance-based SVG quality levels */
+.quality-low .dragon-svg {
+  /* Disable complex SVG animations */
+  .power-aura,
+  .hover-ring {
+    display: none;
+  }
+  
+  /* Simplified breathing */
+  .dragon-body {
+    animation-duration: 6s;
+  }
+  
+  /* Disable wing flutter */
+  .dragon-wings {
+    animation: none;
+  }
+}
+
+.quality-medium .dragon-svg {
+  /* Slower animations */
+  .dragon-body {
+    animation-duration: 5s;
+  }
+  
+  .dragon-wings {
+    animation-duration: 8s;
+  }
+  
+  /* Simplified power effects */
+  .power-aura {
+    animation-duration: 3s;
+  }
+}
+
+.quality-high .dragon-svg {
+  /* Full quality animations */
+  .dragon-body,
+  .dragon-wings,
+  .dragon-eyes,
+  .dragon-tail {
+    will-change: transform;
+  }
+  
+  /* Enhanced power effects */
+  .power-aura {
+    filter: drop-shadow(0 0 10px currentColor);
+  }
+}
+
+/* Reduced motion preferences for SVG */
+@media (prefers-reduced-motion: reduce) {
+  .dragon-svg * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+  
+  .motion-safe\:dragon-wings {
+    animation: none;
+  }
+  
+  .motion-safe\:dragon-tail {
+    animation: none;
+  }
+  
+  .motion-safe\:power-aura {
+    animation: none;
+  }
+}
+
+/* Mobile-optimized SVG animations */
+@media (max-width: 640px) {
+  .dragon-svg {
+    /* Slower animations for better performance */
+    .dragon-body {
+      animation-duration: 6s;
+    }
+    
+    .dragon-wings {
+      animation-duration: 10s;
+    }
+    
+    /* Disable complex effects on mobile */
+    .power-aura {
+      display: none;
+    }
+    
+    .hover-ring {
+      display: none;
+    }
+  }
+}
+
+/* Touch feedback for SVG elements */
+.dragon-svg.touching {
+  filter: brightness(1.1) saturate(1.1);
+  transition: filter 0.2s ease-out;
+}
+
+/* Focus styles for SVG dragon */
+.dragon-svg:focus-visible {
+  outline: 3px solid #FCD34D;
+  outline-offset: 4px;
+  border-radius: 50%;
+}
+
+/* GPU acceleration for SVG animations */
+.dragon-svg,
+.dragon-svg > g,
+.dragon-svg > g > * {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Optimized gradients and filters */
+.dragon-svg defs {
+  contain: strict;
+}
+
+/* Battery saving mode for SVG */
+.battery-saver .dragon-svg {
+  animation-play-state: paused;
+}
+
+.battery-saver .dragon-svg:hover,
+.battery-saver .dragon-svg:focus {
+  animation-play-state: running;
+}
+
 /* Reduce animation overhead on inactive tabs */
 @media (prefers-reduced-motion: no-preference) {
   .pause-when-hidden {

@@ -3,90 +3,88 @@
    ======================================== */
 
 /* Base responsive utilities */
-@layer utilities {
-  /* Responsive dragon sizes */
-  .dragon-xs {
-    --dragon-size: 120px;
-    --dragon-ball-size: 20px;
-    --orbit-radius: 60px;
-  }
+/* Responsive dragon sizes */
+.dragon-xs {
+  --dragon-size: 120px;
+  --dragon-ball-size: 20px;
+  --orbit-radius: 60px;
+}
 
-  .dragon-sm {
-    --dragon-size: 160px;
-    --dragon-ball-size: 24px;
-    --orbit-radius: 80px;
-  }
+.dragon-sm {
+  --dragon-size: 160px;
+  --dragon-ball-size: 24px;
+  --orbit-radius: 80px;
+}
 
-  .dragon-md {
-    --dragon-size: 200px;
-    --dragon-ball-size: 28px;
-    --orbit-radius: 100px;
-  }
+.dragon-md {
+  --dragon-size: 200px;
+  --dragon-ball-size: 28px;
+  --orbit-radius: 100px;
+}
 
-  .dragon-lg {
-    --dragon-size: 300px;
-    --dragon-ball-size: 32px;
-    --orbit-radius: 150px;
-  }
+.dragon-lg {
+  --dragon-size: 300px;
+  --dragon-ball-size: 32px;
+  --orbit-radius: 150px;
+}
 
-  .dragon-xl {
-    --dragon-size: 400px;
-    --dragon-ball-size: 36px;
-    --orbit-radius: 200px;
-  }
+.dragon-xl {
+  --dragon-size: 400px;
+  --dragon-ball-size: 36px;
+  --orbit-radius: 200px;
+}
 
-  /* Responsive animation speeds */
+/* Responsive animation speeds */
+.animation-speed-auto {
+  --animation-multiplier: 1;
+}
+
+@media (max-width: 640px) {
   .animation-speed-auto {
-    --animation-multiplier: 1;
+    --animation-multiplier: 1.5; /* Slower on mobile */
   }
+}
 
-  @media (max-width: 640px) {
-    .animation-speed-auto {
-      --animation-multiplier: 1.5; /* Slower on mobile */
-    }
+@media (prefers-reduced-motion: reduce) {
+  .animation-speed-auto {
+    --animation-multiplier: 3; /* Much slower for accessibility */
   }
+}
 
-  @media (prefers-reduced-motion: reduce) {
-    .animation-speed-auto {
-      --animation-multiplier: 3; /* Much slower for accessibility */
-    }
-  }
+/* Touch-optimized interaction areas */
+.touch-target {
+  position: relative;
+}
 
-  /* Touch-optimized interaction areas */
-  .touch-target {
-    position: relative;
-  }
+.touch-target::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  bottom: -12px;
+  left: -12px;
+  /* Minimum 44px touch target */
+  min-width: 44px;
+  min-height: 44px;
+}
 
-  .touch-target::before {
-    content: '';
-    position: absolute;
-    top: -12px;
-    right: -12px;
-    bottom: -12px;
-    left: -12px;
-    /* Minimum 44px touch target */
-    min-width: 44px;
-    min-height: 44px;
-  }
+/* Performance-based animation quality */
+.quality-high {
+  --shadow-quality: 0 0 30px rgba(251, 191, 36, 0.6);
+  --glow-layers: 3;
+  --particle-count: 10;
+}
 
-  /* Performance-based animation quality */
-  .quality-high {
-    --shadow-quality: 0 0 30px rgba(251, 191, 36, 0.6);
-    --glow-layers: 3;
-    --particle-count: 10;
-  }
+.quality-balanced {
+  --shadow-quality: 0 0 20px rgba(251, 191, 36, 0.4);
+  --glow-layers: 2;
+  --particle-count: 5;
+}
 
-  .quality-balanced {
-    --shadow-quality: 0 0 20px rgba(251, 191, 36, 0.4);
-    --glow-layers: 2;
-    --particle-count: 5;
-  }
-
-  .quality-low {
-    --shadow-quality: 0 0 10px rgba(251, 191, 36, 0.3);
-    --glow-layers: 1;
-    --particle-count: 0;
-  }
+.quality-low {
+  --shadow-quality: 0 0 10px rgba(251, 191, 36, 0.3);
+  --glow-layers: 1;
+  --particle-count: 0;
 }
 
 /* Mobile-optimized animations */

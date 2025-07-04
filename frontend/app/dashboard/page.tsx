@@ -1,6 +1,7 @@
 import { ChatInterface } from '@/components/chat/chat-interface'
 import { PortfolioSidebar } from '@/components/portfolio/portfolio-sidebar'
 import { WalletConnect } from '@/components/wallet/wallet-connect'
+import { EnhancedDragonCharacter } from '@/components/dragon/EnhancedDragonCharacter'
 
 export default function DashboardPage() {
   return (
@@ -35,6 +36,24 @@ export default function DashboardPage() {
           <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-red-500 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute bottom-1/3 right-1/3 w-24 h-24 bg-red-400 rounded-full blur-2xl animate-pulse delay-1000"></div>
           <div className="absolute top-2/3 right-1/4 w-20 h-20 bg-red-600 rounded-full blur-xl animate-pulse delay-500"></div>
+        </div>
+
+        {/* Floating Dragon in bottom right */}
+        <div className="absolute bottom-4 right-4 z-10">
+          <EnhancedDragonCharacter 
+            size="md" 
+            initialState="attention"
+            initialMood="mystical"
+            interactive={true}
+            showDragonBalls={true}
+            enableCursorTracking={true}
+            autoStates={true}
+            animationConfig={{
+              performanceMode: 'balanced',
+              autoQualityAdjustment: true
+            }}
+            className="opacity-80 hover:opacity-100 transition-opacity"
+          />
         </div>
 
         {/* Chat Area */}

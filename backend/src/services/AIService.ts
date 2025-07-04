@@ -1,6 +1,8 @@
 import { pipe } from 'fp-ts/function';
 import * as TE from 'fp-ts/TaskEither';
 import OpenAI from 'openai';
+import { createServiceLogger, createServiceErrorHandler } from './LoggingService';
+import { withErrorRecovery } from './ErrorHandlingService';
 
 // Types will be defined locally for now
 export interface Command {
@@ -32,12 +34,15 @@ export class AIService {
   private openai: OpenAI;
   private chatInterface: ChatInterface;
   private contexts: Map<string, ChatContext> = new Map();
+  private logger = createServiceLogger('AIService');
+  private errorHandler = createServiceErrorHandler('AIService');
 
   constructor() {
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY
     });
     this.chatInterface = new ChatInterface();
+    this.logger.info('AIService initialized with Dragon Ball Z theming');
   }
 
   /**
@@ -277,4 +282,115 @@ Keep the analysis concise and actionable.`;
       },
       (error) => new Error(`Failed to generate portfolio analysis: ${error}`)
     );
+
+  /**
+   * Generate enhanced portfolio analysis using all adapters
+   */
+  public generateEnhancedPortfolioAnalysis = (
+    portfolioData: any,
+    walletAddress: string,
+    options: {
+      includeHiveInsights?: boolean;
+      includeSAKData?: boolean;
+      includeMCPRealtime?: boolean;
+    } = {}
+  ): TE.TaskEither<Error, any> =>
+    pipe(
+      this.gatherAdapterData('analyze portfolio performance and recommendations', walletAddress),
+      TE.chain(adapterData => 
+        TE.tryCatch(
+          async () => {
+            const baseAnalysisPrompt = `Analyze this DeFi portfolio with enhanced data sources:\n\nPortfolio Data:\n${JSON.stringify(portfolioData, null, 2)}`;
+
+            let enhancedPrompt = baseAnalysisPrompt;
+
+            if (options.includeHiveInsights && adapterData.hiveData) {
+              enhancedPrompt += `\n\nHive Intelligence Insights:\n${JSON.stringify(adapterData.hiveData, null, 2)}`;
+            }
+
+            if (options.includeSAKData && adapterData.sakData) {
+              enhancedPrompt += `\n\nSei Agent Kit Data:\n${JSON.stringify(adapterData.sakData, null, 2)}`;
+            }
+
+            if (options.includeMCPRealtime && adapterData.mcpData) {
+              enhancedPrompt += `\n\nReal-time Blockchain Data:\n${JSON.stringify(adapterData.mcpData, null, 2)}`;
+            }
+
+            enhancedPrompt += `\n\nProvide:\n1. Comprehensive risk assessment\n2. AI-powered yield optimization suggestions\n3. Real-time market impact analysis\n4. Actionable rebalancing recommendations\n5. Dragon Ball Z themed power level assessment\n\nKeep the analysis detailed yet actionable.`;
+
+            const completion = await this.openai.chat.completions.create({
+              model: 'gpt-4',
+              messages: [{ role: 'user', content: enhancedPrompt }],
+              temperature: 0.3,
+              max_tokens: 1200
+            });
+
+            const analysisText = completion.choices[0]?.message?.content || 'Unable to generate enhanced analysis.';
+            
+            return {
+              analysisText,
+              enhancedData: this.generateEnhancedAnalysis(adapterData),
+              rawAdapterData: adapterData,
+              timestamp: new Date().toISOString(),
+              analysisType: 'enhanced_comprehensive'
+            };
+          },
+          (error) => new Error(`Failed to generate enhanced portfolio analysis: ${error}`)
+        )
+      )
+    );
+
+  /**
+   * Get adapter connection status
+   */
+  public getAdapterStatus(): {
+    hive: boolean;
+    sak: boolean;
+    mcp: boolean;
+  } {
+    return {
+      hive: !!this.hiveAdapter,
+      sak: !!this.sakAdapter,
+      mcp: !!this.mcpAdapter && this.mcpAdapter.isConnected()
+    };
+  }
+
+  /**
+   * Initialize adapters
+   */
+  public initializeAdapters(
+    hiveAdapter?: HiveIntelligenceAdapter,
+    sakAdapter?: SeiAgentKitAdapter,
+    mcpAdapter?: SeiMCPAdapter
+  ): void {
+    if (hiveAdapter) this.hiveAdapter = hiveAdapter;
+    if (sakAdapter) this.sakAdapter = sakAdapter;
+    if (mcpAdapter) this.mcpAdapter = mcpAdapter;
+  }
+}
+
+// ChatInterface class needs to be imported or defined
+class ChatInterface {
+  parseCommand(message: string): E.Either<Error, Command | undefined> {
+    // Simplified command parsing
+    const lowerMessage = message.toLowerCase();
+    
+    if (lowerMessage.includes('supply') || lowerMessage.includes('lend')) {
+      return E.right({ type: 'supply', payload: { action: 'supply' } });
+    }
+    
+    if (lowerMessage.includes('withdraw') || lowerMessage.includes('remove')) {
+      return E.right({ type: 'withdraw', payload: { action: 'withdraw' } });
+    }
+    
+    if (lowerMessage.includes('swap') || lowerMessage.includes('trade')) {
+      return E.right({ type: 'swap', payload: { action: 'swap' } });
+    }
+    
+    if (lowerMessage.includes('balance') || lowerMessage.includes('portfolio')) {
+      return E.right({ type: 'query', payload: { action: 'balance' } });
+    }
+    
+    return E.right(undefined);
+  }
 }

@@ -10,7 +10,7 @@ import type { QualityLevel } from '../../hooks/useAnimationPerformance'
 
 export default function AnimationDemoPage() {
   const [showOptimized, setShowOptimized] = useState(true)
-  const [currentQuality, setCurrentQuality] = useState<QualityLevel>('high')
+  const [currentQuality, setCurrentQuality] = useState<QualityLevel>(75)
   const [showDebugger, setShowDebugger] = useState(true)
   
   return (
@@ -65,10 +65,10 @@ export default function AnimationDemoPage() {
             
             <div className="text-white">
               Current Quality: <span className={`font-bold ${
-                currentQuality === 'high' ? 'text-green-400' :
-                currentQuality === 'medium' ? 'text-yellow-400' :
+                currentQuality > 75 ? 'text-green-400' :
+                currentQuality > 50 ? 'text-yellow-400' :
                 'text-orange-400'
-              }`}>{currentQuality.toUpperCase()}</span>
+              }`}>{currentQuality}%</span>
             </div>
           </div>
         </div>
@@ -86,7 +86,10 @@ export default function AnimationDemoPage() {
                   size="lg"
                   showDragonBalls={true}
                   enablePerformanceMonitoring={true}
-                  onQualityChange={setCurrentQuality}
+                  onQualityChange={(quality: string) => {
+                    const numericQuality = quality === 'high' ? 75 : quality === 'medium' ? 50 : 25;
+                    setCurrentQuality(numericQuality);
+                  }}
                 />
               ) : (
                 <FloatingDragonLogo 

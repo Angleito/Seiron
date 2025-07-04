@@ -1,5 +1,7 @@
 import { Server, Socket } from 'socket.io';
 import * as TE from 'fp-ts/TaskEither';
+import { createServiceLogger, createServiceErrorHandler } from './LoggingService';
+import { withErrorRecovery } from './ErrorHandlingService';
 
 export interface PortfolioUpdate {
   type: 'position_update' | 'balance_change' | 'transaction_complete' | 'error' | 
@@ -11,9 +13,12 @@ export interface PortfolioUpdate {
 export class SocketService {
   private io: Server;
   private userSockets: Map<string, Socket[]> = new Map();
+  private logger = createServiceLogger('SocketService');
+  private errorHandler = createServiceErrorHandler('SocketService');
 
   constructor(io: Server) {
     this.io = io;
+    this.logger.info('SocketService initialized for real-time Dragon Ball themed updates');
   }
 
   /**
@@ -24,7 +29,13 @@ export class SocketService {
     userSockets.push(socket);
     this.userSockets.set(walletAddress, userSockets);
     
-    console.log(`Added socket for user ${walletAddress}. Total: ${userSockets.length}`);
+    this.logger.info('User socket connected', {
+      walletAddress,
+      metadata: { 
+        socketId: socket.id,
+        totalConnections: userSockets.length 
+      }
+    });
   }
 
   /**
@@ -40,7 +51,13 @@ export class SocketService {
         } else {
           this.userSockets.set(walletAddress, sockets);
         }
-        console.log(`Removed socket for user ${walletAddress}`);
+        this.logger.info('User socket disconnected', {
+          walletAddress,
+          metadata: { 
+            socketId: socket.id,
+            remainingConnections: sockets.length 
+          }
+        });
         break;
       }
     }
@@ -209,7 +226,9 @@ export class SocketService {
         details,
         timestamp: new Date().toISOString()
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      source: 'system',
+      priority: status === 'confirmed' ? 'high' : 'medium'
     });
   }
 }

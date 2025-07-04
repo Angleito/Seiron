@@ -11,6 +11,31 @@ export { CirclingDragonBalls } from './CirclingDragonBalls';
 export { InteractiveDragon } from './dragon/InteractiveDragon';
 export { DragonInteractionProvider, useDragonInteraction } from './dragon/DragonInteractionController';
 
+// Enhanced Dragon Animation System
+export {
+  EnhancedDragonCharacter,
+  DragonPresets,
+  createDragonConfig,
+  getOptimalDragonConfig,
+  detectDeviceType,
+  useDragonStateMachine,
+  useMouseTracking,
+  useTouchGestures,
+  useAnimationPerformance,
+  performanceUtils
+} from './dragon';
+
+export { DragonShowcase } from './dragon/DragonShowcase';
+
+// Dragon Types
+export type {
+  DragonState,
+  DragonMood,
+  EnhancedDragonCharacterProps,
+  DragonAnimationConfig,
+  PerformanceMode
+} from './dragon';
+
 // Existing Components
 export { WalletConnect } from './wallet/wallet-connect';
 export { Providers } from './providers';

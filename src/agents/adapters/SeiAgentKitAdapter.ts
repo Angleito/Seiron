@@ -2,7 +2,13 @@ import { Either, left, right } from 'fp-ts/Either';
 import { TaskEither } from 'fp-ts/TaskEither';
 import * as TE from 'fp-ts/TaskEither';
 import { pipe } from 'fp-ts/function';
+import { PublicClient, WalletClient, createPublicClient, createWalletClient, http, parseAbi } from 'viem';
+import { cosmosjs, getCosmWasmClient, getSigningCosmWasmClient } from '@sei-js/cosmjs';
+import { evmUtils, getEthersProvider, getSeiEvmWalletProvider } from '@sei-js/evm';
+import { seiprotocol } from '@sei-js/proto';
 import { BaseAgent, AgentConfig, AgentError, ActionContext, ActionResult, AgentPlugin } from '../base/BaseAgent';
+import type { TakaraProtocolWrapper } from '../../protocols/sei/adapters/TakaraProtocolWrapper';
+import type { SymphonyProtocolWrapper } from '../../protocols/sei/adapters/SymphonyProtocolWrapper';
 
 /**
  * SeiAgentKitAdapter - Core Integration Bridge
@@ -67,10 +73,19 @@ export interface SAKContext {
  * SAK Integration Config - configuration for SAK integration
  */
 export interface SAKIntegrationConfig {
-  sakEndpoint: string;
-  apiKey?: string;
+  seiRpcUrl: string;
+  seiEvmRpcUrl: string;
+  chainId: string;
   network: 'mainnet' | 'testnet' | 'devnet';
   defaultPermissions: string[];
+  walletPrivateKey?: string;
+  walletMnemonic?: string;
+  apiKeys?: {
+    takara?: string;
+    symphony?: string;
+    dragonswap?: string;
+    silo?: string;
+  };
   rateLimitConfig: {
     defaultMaxCalls: number;
     defaultWindowMs: number;
@@ -83,6 +98,24 @@ export interface SAKIntegrationConfig {
   retryConfig: {
     maxRetries: number;
     backoffMs: number;
+  };
+  protocolConfigs: {
+    takara: {
+      enabled: boolean;
+      contractAddresses: Record<string, string>;
+    };
+    symphony: {
+      enabled: boolean;
+      contractAddresses: Record<string, string>;
+    };
+    dragonswap: {
+      enabled: boolean;
+      contractAddresses: Record<string, string>;
+    };
+    silo: {
+      enabled: boolean;
+      contractAddresses: Record<string, string>;
+    };
   };
 }
 
@@ -175,6 +208,18 @@ export class SeiAgentKitAdapter extends BaseAgent {
   private readonly toolRegistrationBridge: ToolRegistrationBridge;
   private readonly cache: Map<string, CacheEntry> = new Map();
   private readonly rateLimiters: Map<string, RateLimiter> = new Map();
+  
+  // Sei SDK instances
+  private publicClient?: PublicClient;
+  private walletClient?: WalletClient;
+  private cosmWasmClient?: any;
+  private signingCosmWasmClient?: any;
+  
+  // Protocol adapters
+  private takaraAdapter?: TakaraProtocolWrapper;
+  private symphonyAdapter?: SymphonyProtocolWrapper;
+  private dragonswapAdapter?: any;
+  private siloAdapter?: any;
 
   constructor(config: AgentConfig, sakConfig: SAKIntegrationConfig) {
     super(config);
@@ -477,44 +522,56 @@ export class SeiAgentKitAdapter extends BaseAgent {
    * Initialize SAK connection
    */
   private async initializeSAKConnection(): Promise<void> {
-    // Placeholder for actual SAK connection initialization
-    // This would typically:
-    // 1. Establish connection to SAK endpoint
-    // 2. Authenticate with API key
-    // 3. Verify network connectivity
-    // 4. Load available tools from SAK
-    
-    await new Promise(resolve => setTimeout(resolve, 100)); // Simulate async operation
+    try {
+      // Initialize Viem clients for EVM interactions
+      this.publicClient = createPublicClient({
+        transport: http(this.sakConfig.seiEvmRpcUrl),
+      });
+      
+      if (this.sakConfig.walletPrivateKey) {
+        this.walletClient = createWalletClient({
+          transport: http(this.sakConfig.seiEvmRpcUrl),
+        });
+      }
+      
+      // Initialize CosmWasm clients for Cosmos interactions
+      this.cosmWasmClient = await getCosmWasmClient(this.sakConfig.seiRpcUrl);
+      
+      if (this.sakConfig.walletMnemonic || this.sakConfig.walletPrivateKey) {
+        this.signingCosmWasmClient = await getSigningCosmWasmClient(
+          this.sakConfig.seiRpcUrl,
+          this.sakConfig.walletMnemonic || ''
+        );
+      }
+      
+      // Initialize protocol adapters
+      await this.initializeProtocolAdapters();
+      
+      this.emit('sak:connection:initialized', {
+        network: this.sakConfig.network,
+        chainId: this.sakConfig.chainId,
+        protocols: Object.keys(this.sakConfig.protocolConfigs).filter(
+          key => this.sakConfig.protocolConfigs[key as keyof typeof this.sakConfig.protocolConfigs].enabled
+        )
+      });
+    } catch (error) {
+      throw new Error(`Failed to initialize SAK connection: ${error}`);
+    }
   }
 
   /**
    * Load default SAK tools
    */
   private async loadDefaultSAKTools(): Promise<void> {
-    // Placeholder for loading default tools
-    // This would typically fetch available tools from SAK and register them
+    const tools = await this.generateSAKTools();
     
-    const defaultTools: SAKTool[] = [
-      // These would be loaded from actual SAK
-      {
-        name: 'get_balance',
-        description: 'Get wallet balance for specified token',
-        parameters: { address: 'string', token: 'string' },
-        execute: async (params) => ({ balance: '1000', token: params.token }),
-        category: 'blockchain'
-      },
-      {
-        name: 'send_transaction',
-        description: 'Send transaction on Sei network',
-        parameters: { to: 'string', amount: 'string', token: 'string' },
-        execute: async (params) => ({ txHash: '0x123...', success: true }),
-        category: 'blockchain',
-        permission: 'write'
-      }
-    ];
-    
-    defaultTools.forEach(tool => {
+    tools.forEach(tool => {
       this.toolRegistry.set(tool.name, tool);
+    });
+    
+    this.emit('sak:tools:loaded', {
+      count: tools.length,
+      categories: [...new Set(tools.map(t => t.category))]
     });
   }
 
@@ -548,6 +605,375 @@ export class SeiAgentKitAdapter extends BaseAgent {
   }
 
   /**
+   * Initialize protocol adapters
+   */
+  private async initializeProtocolAdapters(): Promise<void> {
+    const ethersProvider = this.publicClient ? getEthersProvider(this.publicClient) : undefined;
+    const signer = this.walletClient ? undefined : undefined; // TODO: Convert WalletClient to ethers Signer
+    
+    // Initialize Takara Protocol Adapter
+    if (this.sakConfig.protocolConfigs.takara.enabled && ethersProvider) {
+      const { TakaraProtocolWrapper } = await import('../../protocols/sei/adapters/TakaraProtocolWrapper');
+      this.takaraAdapter = new TakaraProtocolWrapper(ethersProvider, signer);
+    }
+    
+    // Initialize Symphony Protocol Adapter
+    if (this.sakConfig.protocolConfigs.symphony.enabled && this.publicClient && this.walletClient) {
+      const { SymphonyProtocolWrapper } = await import('../../protocols/sei/adapters/SymphonyProtocolWrapper');
+      // Note: This would need proper config and integration setup
+      // this.symphonyAdapter = new SymphonyProtocolWrapper(config, integrationConfig, this.publicClient, this.walletClient);
+    }
+    
+    // Initialize DragonSwap Adapter (placeholder)
+    if (this.sakConfig.protocolConfigs.dragonswap.enabled) {
+      // this.dragonswapAdapter = new DragonSwapAdapter();
+    }
+    
+    // Initialize Silo Adapter (placeholder)
+    if (this.sakConfig.protocolConfigs.silo.enabled) {
+      // this.siloAdapter = new SiloAdapter();
+    }
+  }
+
+  /**
+   * Generate comprehensive SAK tools
+   */
+  private async generateSAKTools(): Promise<SAKTool[]> {
+    const tools: SAKTool[] = [];
+    
+    // Token operations
+    tools.push(...this.generateTokenTools());
+    
+    // Takara protocol tools
+    if (this.sakConfig.protocolConfigs.takara.enabled && this.takaraAdapter) {
+      tools.push(...await this.generateTakaraTools());
+    }
+    
+    // Symphony protocol tools
+    if (this.sakConfig.protocolConfigs.symphony.enabled && this.symphonyAdapter) {
+      tools.push(...this.generateSymphonyTools());
+    }
+    
+    // DragonSwap tools
+    if (this.sakConfig.protocolConfigs.dragonswap.enabled) {
+      tools.push(...this.generateDragonSwapTools());
+    }
+    
+    // Silo staking tools
+    if (this.sakConfig.protocolConfigs.silo.enabled) {
+      tools.push(...this.generateSiloTools());
+    }
+    
+    return tools;
+  }
+
+  /**
+   * Generate token operation tools
+   */
+  private generateTokenTools(): SAKTool[] {
+    return [
+      {
+        name: 'get_token_balance',
+        description: 'Get token balance for a specific address and token',
+        parameters: {
+          address: 'string',
+          tokenAddress: 'string',
+          tokenType: 'string' // 'erc20', 'cw20', 'native'
+        },
+        execute: async (params) => this.executeGetTokenBalance(params),
+        category: 'blockchain',
+        permission: 'read',
+        rateLimit: { maxCalls: 100, windowMs: 60000 }
+      },
+      {
+        name: 'get_native_balance',
+        description: 'Get native SEI balance for an address',
+        parameters: {
+          address: 'string'
+        },
+        execute: async (params) => this.executeGetNativeBalance(params),
+        category: 'blockchain',
+        permission: 'read',
+        rateLimit: { maxCalls: 100, windowMs: 60000 }
+      },
+      {
+        name: 'transfer_token',
+        description: 'Transfer tokens to another address',
+        parameters: {
+          to: 'string',
+          amount: 'string',
+          tokenAddress: 'string',
+          tokenType: 'string'
+        },
+        execute: async (params) => this.executeTransferToken(params),
+        category: 'blockchain',
+        permission: 'write',
+        rateLimit: { maxCalls: 10, windowMs: 60000 }
+      },
+      {
+        name: 'approve_token',
+        description: 'Approve token spending for a contract',
+        parameters: {
+          tokenAddress: 'string',
+          spenderAddress: 'string',
+          amount: 'string'
+        },
+        execute: async (params) => this.executeApproveToken(params),
+        category: 'blockchain',
+        permission: 'write',
+        rateLimit: { maxCalls: 20, windowMs: 60000 }
+      }
+    ];
+  }
+
+  /**
+   * Generate Takara protocol tools
+   */
+  private async generateTakaraTools(): Promise<SAKTool[]> {
+    return [
+      {
+        name: 'takara_supply',
+        description: 'Supply assets to Takara lending protocol',
+        parameters: {
+          asset: 'string',
+          amount: 'string',
+          onBehalfOf: 'string'
+        },
+        execute: async (params) => this.executeTakaraSupply(params),
+        category: 'defi',
+        permission: 'write',
+        rateLimit: { maxCalls: 5, windowMs: 60000 }
+      },
+      {
+        name: 'takara_withdraw',
+        description: 'Withdraw assets from Takara lending protocol',
+        parameters: {
+          asset: 'string',
+          amount: 'string' // Can be 'max' for full withdrawal
+        },
+        execute: async (params) => this.executeTakaraWithdraw(params),
+        category: 'defi',
+        permission: 'write',
+        rateLimit: { maxCalls: 5, windowMs: 60000 }
+      },
+      {
+        name: 'takara_borrow',
+        description: 'Borrow assets from Takara lending protocol',
+        parameters: {
+          asset: 'string',
+          amount: 'string',
+          onBehalfOf: 'string'
+        },
+        execute: async (params) => this.executeTakaraBorrow(params),
+        category: 'defi',
+        permission: 'write',
+        rateLimit: { maxCalls: 5, windowMs: 60000 }
+      },
+      {
+        name: 'takara_repay',
+        description: 'Repay borrowed assets to Takara lending protocol',
+        parameters: {
+          asset: 'string',
+          amount: 'string', // Can be 'max' for full repayment
+          onBehalfOf: 'string'
+        },
+        execute: async (params) => this.executeTakaraRepay(params),
+        category: 'defi',
+        permission: 'write',
+        rateLimit: { maxCalls: 5, windowMs: 60000 }
+      },
+      {
+        name: 'takara_get_user_data',
+        description: 'Get user account data from Takara protocol',
+        parameters: {
+          userAddress: 'string'
+        },
+        execute: async (params) => this.executeTakaraGetUserData(params),
+        category: 'defi',
+        permission: 'read',
+        rateLimit: { maxCalls: 50, windowMs: 60000 }
+      },
+      {
+        name: 'takara_get_reserve_data',
+        description: 'Get reserve data for an asset from Takara protocol',
+        parameters: {
+          asset: 'string'
+        },
+        execute: async (params) => this.executeTakaraGetReserveData(params),
+        category: 'defi',
+        permission: 'read',
+        rateLimit: { maxCalls: 50, windowMs: 60000 }
+      },
+      {
+        name: 'takara_get_health_factor',
+        description: 'Get health factor for a user in Takara protocol',
+        parameters: {
+          userAddress: 'string'
+        },
+        execute: async (params) => this.executeTakaraGetHealthFactor(params),
+        category: 'defi',
+        permission: 'read',
+        rateLimit: { maxCalls: 50, windowMs: 60000 }
+      }
+    ];
+  }
+
+  /**
+   * Generate Symphony protocol tools
+   */
+  private generateSymphonyTools(): SAKTool[] {
+    return [
+      {
+        name: 'symphony_swap',
+        description: 'Execute token swap on Symphony protocol',
+        parameters: {
+          tokenIn: 'string',
+          tokenOut: 'string',
+          amountIn: 'string',
+          amountOutMin: 'string',
+          slippage: 'number'
+        },
+        execute: async (params) => this.executeSymphonySwap(params),
+        category: 'trading',
+        permission: 'write',
+        rateLimit: { maxCalls: 10, windowMs: 60000 }
+      },
+      {
+        name: 'symphony_get_quote',
+        description: 'Get swap quote from Symphony protocol',
+        parameters: {
+          tokenIn: 'string',
+          tokenOut: 'string',
+          amountIn: 'string'
+        },
+        execute: async (params) => this.executeSymphonyGetQuote(params),
+        category: 'trading',
+        permission: 'read',
+        rateLimit: { maxCalls: 100, windowMs: 60000 }
+      },
+      {
+        name: 'symphony_get_routes',
+        description: 'Get optimal routes for token swap',
+        parameters: {
+          tokenIn: 'string',
+          tokenOut: 'string',
+          amountIn: 'string'
+        },
+        execute: async (params) => this.executeSymphonyGetRoutes(params),
+        category: 'trading',
+        permission: 'read',
+        rateLimit: { maxCalls: 100, windowMs: 60000 }
+      }
+    ];
+  }
+
+  /**
+   * Generate DragonSwap tools
+   */
+  private generateDragonSwapTools(): SAKTool[] {
+    return [
+      {
+        name: 'dragonswap_add_liquidity',
+        description: 'Add liquidity to DragonSwap pool',
+        parameters: {
+          tokenA: 'string',
+          tokenB: 'string',
+          amountA: 'string',
+          amountB: 'string',
+          amountAMin: 'string',
+          amountBMin: 'string'
+        },
+        execute: async (params) => this.executeDragonSwapAddLiquidity(params),
+        category: 'defi',
+        permission: 'write',
+        rateLimit: { maxCalls: 5, windowMs: 60000 }
+      },
+      {
+        name: 'dragonswap_remove_liquidity',
+        description: 'Remove liquidity from DragonSwap pool',
+        parameters: {
+          tokenA: 'string',
+          tokenB: 'string',
+          liquidity: 'string',
+          amountAMin: 'string',
+          amountBMin: 'string'
+        },
+        execute: async (params) => this.executeDragonSwapRemoveLiquidity(params),
+        category: 'defi',
+        permission: 'write',
+        rateLimit: { maxCalls: 5, windowMs: 60000 }
+      },
+      {
+        name: 'dragonswap_get_pool_info',
+        description: 'Get information about a DragonSwap pool',
+        parameters: {
+          tokenA: 'string',
+          tokenB: 'string'
+        },
+        execute: async (params) => this.executeDragonSwapGetPoolInfo(params),
+        category: 'defi',
+        permission: 'read',
+        rateLimit: { maxCalls: 50, windowMs: 60000 }
+      }
+    ];
+  }
+
+  /**
+   * Generate Silo staking tools
+   */
+  private generateSiloTools(): SAKTool[] {
+    return [
+      {
+        name: 'silo_stake',
+        description: 'Stake tokens in Silo protocol',
+        parameters: {
+          amount: 'string',
+          validator: 'string'
+        },
+        execute: async (params) => this.executeSiloStake(params),
+        category: 'defi',
+        permission: 'write',
+        rateLimit: { maxCalls: 5, windowMs: 60000 }
+      },
+      {
+        name: 'silo_unstake',
+        description: 'Unstake tokens from Silo protocol',
+        parameters: {
+          amount: 'string',
+          validator: 'string'
+        },
+        execute: async (params) => this.executeSiloUnstake(params),
+        category: 'defi',
+        permission: 'write',
+        rateLimit: { maxCalls: 5, windowMs: 60000 }
+      },
+      {
+        name: 'silo_claim_rewards',
+        description: 'Claim staking rewards from Silo protocol',
+        parameters: {
+          validator: 'string'
+        },
+        execute: async (params) => this.executeSiloClaimRewards(params),
+        category: 'defi',
+        permission: 'write',
+        rateLimit: { maxCalls: 10, windowMs: 60000 }
+      },
+      {
+        name: 'silo_get_staking_info',
+        description: 'Get staking information for a user',
+        parameters: {
+          userAddress: 'string',
+          validator: 'string'
+        },
+        execute: async (params) => this.executeSiloGetStakingInfo(params),
+        category: 'defi',
+        permission: 'read',
+        rateLimit: { maxCalls: 50, windowMs: 60000 }
+      }
+    ];
+  }
+
+  /**
    * Get from cache
    */
   private getFromCache<T>(key: string): T | null {
@@ -568,6 +994,311 @@ export class SeiAgentKitAdapter extends BaseAgent {
       data,
       expiresAt: Date.now() + ttl
     });
+  }
+
+  // ============================================================================
+  // SAK Tool Implementation Methods
+  // ============================================================================
+
+  /**
+   * Token operation implementations
+   */
+  private async executeGetTokenBalance(params: any): Promise<any> {
+    const { address, tokenAddress, tokenType } = params;
+    
+    try {
+      if (tokenType === 'native') {
+        return this.executeGetNativeBalance({ address });
+      } else if (tokenType === 'erc20' && this.publicClient) {
+        const balance = await this.publicClient.readContract({
+          address: tokenAddress as `0x${string}`,
+          abi: parseAbi(['function balanceOf(address) view returns (uint256)']),
+          functionName: 'balanceOf',
+          args: [address as `0x${string}`]
+        });
+        return { balance: balance.toString(), tokenAddress, address };
+      } else if (tokenType === 'cw20' && this.cosmWasmClient) {
+        const result = await this.cosmWasmClient.queryContractSmart(tokenAddress, {
+          balance: { address }
+        });
+        return { balance: result.balance, tokenAddress, address };
+      }
+      
+      throw new Error(`Unsupported token type: ${tokenType}`);
+    } catch (error) {
+      throw new Error(`Failed to get token balance: ${error}`);
+    }
+  }
+
+  private async executeGetNativeBalance(params: any): Promise<any> {
+    const { address } = params;
+    
+    try {
+      if (this.publicClient) {
+        const balance = await this.publicClient.getBalance({
+          address: address as `0x${string}`
+        });
+        return { balance: balance.toString(), address, token: 'SEI' };
+      } else if (this.cosmWasmClient) {
+        const balance = await this.cosmWasmClient.getBalance(address, 'usei');
+        return { balance: balance.amount, address, token: 'SEI' };
+      }
+      
+      throw new Error('No client available for native balance query');
+    } catch (error) {
+      throw new Error(`Failed to get native balance: ${error}`);
+    }
+  }
+
+  private async executeTransferToken(params: any): Promise<any> {
+    const { to, amount, tokenAddress, tokenType } = params;
+    
+    if (!this.walletClient && !this.signingCosmWasmClient) {
+      throw new Error('No signing client available for transfers');
+    }
+    
+    try {
+      if (tokenType === 'erc20' && this.walletClient) {
+        const hash = await this.walletClient.writeContract({
+          address: tokenAddress as `0x${string}`,
+          abi: parseAbi(['function transfer(address to, uint256 amount) returns (bool)']),
+          functionName: 'transfer',
+          args: [to as `0x${string}`, BigInt(amount)]
+        });
+        return { txHash: hash, success: true, amount, to, tokenAddress };
+      } else if (tokenType === 'cw20' && this.signingCosmWasmClient) {
+        const result = await this.signingCosmWasmClient.execute(
+          await this.signingCosmWasmClient.senderAddress,
+          tokenAddress,
+          {
+            transfer: {
+              recipient: to,
+              amount: amount
+            }
+          },
+          'auto'
+        );
+        return { txHash: result.transactionHash, success: true, amount, to, tokenAddress };
+      }
+      
+      throw new Error(`Unsupported token type for transfer: ${tokenType}`);
+    } catch (error) {
+      throw new Error(`Failed to transfer token: ${error}`);
+    }
+  }
+
+  private async executeApproveToken(params: any): Promise<any> {
+    const { tokenAddress, spenderAddress, amount } = params;
+    
+    if (!this.walletClient) {
+      throw new Error('No EVM wallet client available for token approval');
+    }
+    
+    try {
+      const hash = await this.walletClient.writeContract({
+        address: tokenAddress as `0x${string}`,
+        abi: parseAbi(['function approve(address spender, uint256 amount) returns (bool)']),
+        functionName: 'approve',
+        args: [spenderAddress as `0x${string}`, BigInt(amount)]
+      });
+      
+      return { txHash: hash, success: true, amount, spenderAddress, tokenAddress };
+    } catch (error) {
+      throw new Error(`Failed to approve token: ${error}`);
+    }
+  }
+
+  /**
+   * Takara protocol implementations
+   */
+  private async executeTakaraSupply(params: any): Promise<any> {
+    if (!this.takaraAdapter) {
+      throw new Error('Takara adapter not initialized');
+    }
+    
+    const result = await this.takaraAdapter.supply({
+      asset: params.asset,
+      amount: BigInt(params.amount),
+      onBehalfOf: params.onBehalfOf
+    });
+    
+    if (result._tag === 'Left') {
+      throw new Error(`Takara supply failed: ${result.left.message}`);
+    }
+    
+    return result.right;
+  }
+
+  private async executeTakaraWithdraw(params: any): Promise<any> {
+    if (!this.takaraAdapter) {
+      throw new Error('Takara adapter not initialized');
+    }
+    
+    const amount = params.amount === 'max' ? 'max' as const : BigInt(params.amount);
+    const result = await this.takaraAdapter.withdraw({
+      asset: params.asset,
+      amount,
+      to: params.to
+    });
+    
+    if (result._tag === 'Left') {
+      throw new Error(`Takara withdraw failed: ${result.left.message}`);
+    }
+    
+    return result.right;
+  }
+
+  private async executeTakaraBorrow(params: any): Promise<any> {
+    if (!this.takaraAdapter) {
+      throw new Error('Takara adapter not initialized');
+    }
+    
+    const result = await this.takaraAdapter.borrow({
+      asset: params.asset,
+      amount: BigInt(params.amount),
+      interestRateMode: 'variable' as const,
+      onBehalfOf: params.onBehalfOf
+    });
+    
+    if (result._tag === 'Left') {
+      throw new Error(`Takara borrow failed: ${result.left.message}`);
+    }
+    
+    return result.right;
+  }
+
+  private async executeTakaraRepay(params: any): Promise<any> {
+    if (!this.takaraAdapter) {
+      throw new Error('Takara adapter not initialized');
+    }
+    
+    const amount = params.amount === 'max' ? 'max' as const : BigInt(params.amount);
+    const result = await this.takaraAdapter.repay({
+      asset: params.asset,
+      amount,
+      interestRateMode: 'variable' as const,
+      onBehalfOf: params.onBehalfOf
+    });
+    
+    if (result._tag === 'Left') {
+      throw new Error(`Takara repay failed: ${result.left.message}`);
+    }
+    
+    return result.right;
+  }
+
+  private async executeTakaraGetUserData(params: any): Promise<any> {
+    if (!this.takaraAdapter) {
+      throw new Error('Takara adapter not initialized');
+    }
+    
+    const result = await this.takaraAdapter.getUserAccountData(params.userAddress);
+    
+    if (result._tag === 'Left') {
+      throw new Error(`Failed to get Takara user data: ${result.left.message}`);
+    }
+    
+    return result.right;
+  }
+
+  private async executeTakaraGetReserveData(params: any): Promise<any> {
+    if (!this.takaraAdapter) {
+      throw new Error('Takara adapter not initialized');
+    }
+    
+    const result = await this.takaraAdapter.getReserveData(params.asset);
+    
+    if (result._tag === 'Left') {
+      throw new Error(`Failed to get Takara reserve data: ${result.left.message}`);
+    }
+    
+    return result.right;
+  }
+
+  private async executeTakaraGetHealthFactor(params: any): Promise<any> {
+    if (!this.takaraAdapter) {
+      throw new Error('Takara adapter not initialized');
+    }
+    
+    const result = await this.takaraAdapter.getHealthFactor(params.userAddress);
+    
+    if (result._tag === 'Left') {
+      throw new Error(`Failed to get Takara health factor: ${result.left.message}`);
+    }
+    
+    return result.right;
+  }
+
+  /**
+   * Symphony protocol implementations
+   */
+  private async executeSymphonySwap(params: any): Promise<any> {
+    if (!this.symphonyAdapter) {
+      throw new Error('Symphony adapter not initialized');
+    }
+    
+    // Note: This is a placeholder implementation
+    // The actual Symphony adapter would need to be properly configured
+    throw new Error('Symphony swap implementation not yet available');
+  }
+
+  private async executeSymphonyGetQuote(params: any): Promise<any> {
+    if (!this.symphonyAdapter) {
+      throw new Error('Symphony adapter not initialized');
+    }
+    
+    // Note: This is a placeholder implementation
+    throw new Error('Symphony quote implementation not yet available');
+  }
+
+  private async executeSymphonyGetRoutes(params: any): Promise<any> {
+    if (!this.symphonyAdapter) {
+      throw new Error('Symphony adapter not initialized');
+    }
+    
+    // Note: This is a placeholder implementation
+    throw new Error('Symphony routes implementation not yet available');
+  }
+
+  /**
+   * DragonSwap implementations (placeholders)
+   */
+  private async executeDragonSwapAddLiquidity(params: any): Promise<any> {
+    // Placeholder for DragonSwap liquidity addition
+    throw new Error('DragonSwap add liquidity implementation not yet available');
+  }
+
+  private async executeDragonSwapRemoveLiquidity(params: any): Promise<any> {
+    // Placeholder for DragonSwap liquidity removal
+    throw new Error('DragonSwap remove liquidity implementation not yet available');
+  }
+
+  private async executeDragonSwapGetPoolInfo(params: any): Promise<any> {
+    // Placeholder for DragonSwap pool info
+    throw new Error('DragonSwap pool info implementation not yet available');
+  }
+
+  /**
+   * Silo staking implementations (placeholders)
+   */
+  private async executeSiloStake(params: any): Promise<any> {
+    // Placeholder for Silo staking
+    throw new Error('Silo stake implementation not yet available');
+  }
+
+  private async executeSiloUnstake(params: any): Promise<any> {
+    // Placeholder for Silo unstaking
+    throw new Error('Silo unstake implementation not yet available');
+  }
+
+  private async executeSiloClaimRewards(params: any): Promise<any> {
+    // Placeholder for Silo reward claiming
+    throw new Error('Silo claim rewards implementation not yet available');
+  }
+
+  private async executeSiloGetStakingInfo(params: any): Promise<any> {
+    // Placeholder for Silo staking info
+    throw new Error('Silo staking info implementation not yet available');
   }
 
   /**
@@ -920,6 +1651,153 @@ class ErrorBridgeImpl implements ErrorBridge {
     return right(strategy);
   }
 }
+
+// ============================================================================
+// Factory Functions and Utilities
+// ============================================================================
+
+/**
+ * Factory function to create a properly configured SeiAgentKitAdapter
+ */
+export const createSeiAgentKitAdapter = (
+  agentConfig: AgentConfig,
+  sakConfig: SAKIntegrationConfig
+): SeiAgentKitAdapter => {
+  return new SeiAgentKitAdapter(agentConfig, sakConfig);
+};
+
+/**
+ * Default SAK configuration for different networks
+ */
+export const DEFAULT_SAK_CONFIGS: Record<string, Partial<SAKIntegrationConfig>> = {
+  mainnet: {
+    seiRpcUrl: 'https://rpc.sei.io',
+    seiEvmRpcUrl: 'https://evm-rpc.sei.io',
+    chainId: 'pacific-1',
+    network: 'mainnet',
+    defaultPermissions: ['read', 'write'],
+    protocolConfigs: {
+      takara: {
+        enabled: true,
+        contractAddresses: {
+          comptroller: '0x0000000000000000000000000000000000000000', // Replace with actual
+          priceOracle: '0x0000000000000000000000000000000000000000'
+        }
+      },
+      symphony: {
+        enabled: true,
+        contractAddresses: {
+          router: '0x0000000000000000000000000000000000000000',
+          quoter: '0x0000000000000000000000000000000000000000'
+        }
+      },
+      dragonswap: {
+        enabled: true,
+        contractAddresses: {
+          factory: '0x0000000000000000000000000000000000000000',
+          router: '0x0000000000000000000000000000000000000000'
+        }
+      },
+      silo: {
+        enabled: true,
+        contractAddresses: {
+          staking: '0x0000000000000000000000000000000000000000'
+        }
+      }
+    },
+    rateLimitConfig: {
+      defaultMaxCalls: 100,
+      defaultWindowMs: 60000
+    },
+    cacheConfig: {
+      enabled: true,
+      ttlMs: 30000,
+      maxSize: 1000
+    },
+    retryConfig: {
+      maxRetries: 3,
+      backoffMs: 1000
+    }
+  },
+  testnet: {
+    seiRpcUrl: 'https://rpc-testnet.sei.io',
+    seiEvmRpcUrl: 'https://evm-rpc-testnet.sei.io',
+    chainId: 'atlantic-2',
+    network: 'testnet',
+    defaultPermissions: ['read', 'write'],
+    protocolConfigs: {
+      takara: {
+        enabled: true,
+        contractAddresses: {
+          comptroller: '0x0000000000000000000000000000000000000000',
+          priceOracle: '0x0000000000000000000000000000000000000000'
+        }
+      },
+      symphony: {
+        enabled: true,
+        contractAddresses: {
+          router: '0x0000000000000000000000000000000000000000',
+          quoter: '0x0000000000000000000000000000000000000000'
+        }
+      },
+      dragonswap: {
+        enabled: true,
+        contractAddresses: {
+          factory: '0x0000000000000000000000000000000000000000',
+          router: '0x0000000000000000000000000000000000000000'
+        }
+      },
+      silo: {
+        enabled: true,
+        contractAddresses: {
+          staking: '0x0000000000000000000000000000000000000000'
+        }
+      }
+    },
+    rateLimitConfig: {
+      defaultMaxCalls: 50,
+      defaultWindowMs: 60000
+    },
+    cacheConfig: {
+      enabled: true,
+      ttlMs: 15000,
+      maxSize: 500
+    },
+    retryConfig: {
+      maxRetries: 2,
+      backoffMs: 500
+    }
+  }
+};
+
+/**
+ * Utility function to merge configurations
+ */
+export const mergeSAKConfig = (
+  baseConfig: Partial<SAKIntegrationConfig>,
+  userConfig: Partial<SAKIntegrationConfig>
+): SAKIntegrationConfig => {
+  return {
+    ...baseConfig,
+    ...userConfig,
+    protocolConfigs: {
+      ...baseConfig.protocolConfigs,
+      ...userConfig.protocolConfigs
+    },
+    rateLimitConfig: {
+      ...baseConfig.rateLimitConfig,
+      ...userConfig.rateLimitConfig
+    },
+    cacheConfig: {
+      ...baseConfig.cacheConfig,
+      ...userConfig.cacheConfig
+    },
+    retryConfig: {
+      ...baseConfig.retryConfig,
+      ...userConfig.retryConfig
+    }
+  } as SAKIntegrationConfig;
+};
 
 export {
   SAKTool,

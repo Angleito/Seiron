@@ -1,0 +1,495 @@
+name: Dragon Component QA Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'frontend/components/dragon/**'
+      - 'frontend/hooks/**'
+      - 'frontend/__tests__/**'
+      - '.github/workflows/dragon-qa.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'frontend/components/dragon/**'
+      - 'frontend/hooks/**'
+      - 'frontend/__tests__/**'
+
+env:
+  NODE_VERSION: '18.x'
+  FORCE_COLOR: 3
+
+jobs:
+  # Basic unit and integration tests
+  unit-tests:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+          
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci --prefer-offline --no-audit
+          
+      - name: Run unit tests
+        run: |
+          cd frontend
+          npm run test:ci
+          
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-results
+          path: |
+            frontend/coverage/
+            frontend/test-results.xml
+          retention-days: 7
+
+  # Performance testing
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+          
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci --prefer-offline --no-audit
+          
+      - name: Run performance tests
+        run: |
+          cd frontend
+          npm run test:performance
+          
+      - name: Upload performance results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-test-results
+          path: |
+            frontend/performance-results/
+            frontend/benchmarks/
+          retention-days: 14
+
+  # Accessibility testing
+  accessibility-tests:
+    name: Accessibility Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+          
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci --prefer-offline --no-audit
+          
+      - name: Run accessibility tests
+        run: |
+          cd frontend
+          npm run test:accessibility
+          
+      - name: Upload accessibility results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: accessibility-test-results
+          path: |
+            frontend/accessibility-results/
+            frontend/axe-reports/
+          retention-days: 7
+
+  # Visual regression testing
+  visual-tests:
+    name: Visual Regression Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+          
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci --prefer-offline --no-audit
+          
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            fonts-liberation \
+            fonts-dejavu-core \
+            fontconfig
+            
+      - name: Setup display server
+        run: |
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+          
+      - name: Run visual regression tests
+        run: |
+          cd frontend
+          npm run test:visual
+        env:
+          DISPLAY: :99
+          
+      - name: Upload visual test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: visual-test-results
+          path: |
+            frontend/__visual_tests__/
+            frontend/visual-diff-reports/
+          retention-days: 14
+
+  # Cross-browser testing
+  cross-browser-tests:
+    name: Cross-Browser Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        browser: [chromium, firefox, webkit]
+        
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+          
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci --prefer-offline --no-audit
+          
+      - name: Install Playwright browsers
+        run: |
+          cd frontend
+          npx playwright install ${{ matrix.browser }} --with-deps
+          
+      - name: Build application
+        run: |
+          cd frontend
+          npm run build
+          
+      - name: Start application
+        run: |
+          cd frontend
+          npm start &
+          sleep 10
+          
+      - name: Run cross-browser tests
+        run: |
+          cd frontend
+          npx playwright test --project=${{ matrix.browser }}
+        env:
+          BROWSER: ${{ matrix.browser }}
+          
+      - name: Upload browser test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-test-results-${{ matrix.browser }}
+          path: |
+            frontend/playwright-report/
+            frontend/test-results-${{ matrix.browser }}/
+          retention-days: 7
+
+  # Mobile device testing
+  mobile-tests:
+    name: Mobile Device Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        device: [iPhone-12, iPad, Samsung-Galaxy-S21]
+        
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+          
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci --prefer-offline --no-audit
+          
+      - name: Install Playwright
+        run: |
+          cd frontend
+          npx playwright install chromium --with-deps
+          
+      - name: Build application
+        run: |
+          cd frontend
+          npm run build
+          
+      - name: Start application
+        run: |
+          cd frontend
+          npm start &
+          sleep 10
+          
+      - name: Run mobile device tests
+        run: |
+          cd frontend
+          npx playwright test --project=mobile-${{ matrix.device }}
+        env:
+          DEVICE: ${{ matrix.device }}
+          
+      - name: Upload mobile test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-test-results-${{ matrix.device }}
+          path: |
+            frontend/mobile-test-results/
+          retention-days: 7
+
+  # Lighthouse performance audit
+  lighthouse-audit:
+    name: Lighthouse Performance Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+          
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci --prefer-offline --no-audit
+          
+      - name: Build application
+        run: |
+          cd frontend
+          npm run build
+          
+      - name: Start application
+        run: |
+          cd frontend
+          npm start &
+          sleep 10
+          
+      - name: Run Lighthouse audit
+        run: |
+          cd frontend
+          npx lighthouse http://localhost:3000/dragon-showcase \
+            --chrome-flags="--headless --no-sandbox" \
+            --output=html,json \
+            --output-path=./lighthouse-results/lighthouse-report \
+            --preset=desktop \
+            --only-categories=performance,accessibility
+            
+      - name: Check Lighthouse scores
+        run: |
+          cd frontend
+          node scripts/check-lighthouse-scores.js ./lighthouse-results/lighthouse-report.json
+          
+      - name: Upload Lighthouse results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-results
+          path: |
+            frontend/lighthouse-results/
+          retention-days: 14
+
+  # Security and dependency checks
+  security-checks:
+    name: Security & Dependency Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+          
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci --prefer-offline --no-audit
+          
+      - name: Run npm audit
+        run: |
+          cd frontend
+          npm audit --audit-level=moderate
+          
+      - name: Check bundle size
+        run: |
+          cd frontend
+          npm run build
+          npx bundlesize
+          
+      - name: Run security linting
+        run: |
+          cd frontend
+          npx eslint components/dragon/ --ext .tsx,.ts --config .eslintrc.security.js
+
+  # Test result aggregation and reporting
+  test-results:
+    name: Aggregate Test Results
+    runs-on: ubuntu-latest
+    needs: [unit-tests, performance-tests, accessibility-tests, visual-tests, lighthouse-audit]
+    if: always()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download all test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: test-artifacts/
+          
+      - name: Generate test report
+        run: |
+          node scripts/generate-qa-report.js test-artifacts/
+          
+      - name: Upload consolidated report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dragon-qa-report
+          path: |
+            qa-report.html
+            qa-summary.json
+          retention-days: 30
+          
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = JSON.parse(fs.readFileSync('qa-summary.json', 'utf8'));
+            
+            const comment = `
+            ## 🐉 Dragon Component QA Report
+            
+            ### Test Results Summary
+            - **Unit Tests**: ${summary.unitTests.status} (${summary.unitTests.coverage}% coverage)
+            - **Performance**: ${summary.performance.status} (${summary.performance.averageScore}/100)
+            - **Accessibility**: ${summary.accessibility.status} (${summary.accessibility.violations} violations)
+            - **Visual Regression**: ${summary.visual.status} (${summary.visual.changedFiles} files changed)
+            - **Lighthouse Score**: ${summary.lighthouse.performance}/100 performance
+            
+            ### Performance Benchmarks
+            - Initial render: ${summary.benchmarks.initialRender}ms
+            - State transition: ${summary.benchmarks.stateTransition}ms
+            - Interaction response: ${summary.benchmarks.interactionResponse}ms
+            
+            [View detailed report](${summary.reportUrl})
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  # Performance regression detection
+  performance-regression:
+    name: Performance Regression Detection
+    runs-on: ubuntu-latest
+    needs: [performance-tests]
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Download performance results
+        uses: actions/download-artifact@v4
+        with:
+          name: performance-test-results
+          path: current-performance/
+          
+      - name: Get baseline performance
+        run: |
+          git checkout ${{ github.base_ref }}
+          cd frontend
+          npm ci --prefer-offline --no-audit
+          npm run test:performance
+          mv performance-results/ ../baseline-performance/
+          
+      - name: Compare performance
+        run: |
+          node scripts/compare-performance.js baseline-performance/ current-performance/
+          
+      - name: Fail on regression
+        run: |
+          if [ -f performance-regression.json ]; then
+            echo "Performance regression detected!"
+            cat performance-regression.json
+            exit 1
+          fi

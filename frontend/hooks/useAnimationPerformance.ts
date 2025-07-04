@@ -2,6 +2,15 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 
+// Export types for compatibility
+export type QualityLevel = number; // 0-100 quality level
+
+export const QUALITY_FEATURES = {
+  HIGH: 75,
+  MEDIUM: 50,
+  LOW: 25
+} as const;
+
 type PerformanceMode = 'full' | 'reduced' | 'minimal'
 
 interface PerformanceMetrics {
@@ -9,6 +18,10 @@ interface PerformanceMetrics {
   frameTime: number
   droppedFrames: number
   gpuMemory?: number
+  cpuUsage?: number
+  memoryUsage?: number
+  networkLatency?: number
+  lastUpdate: number
 }
 
 interface UseAnimationPerformanceOptions {
@@ -28,7 +41,11 @@ export function useAnimationPerformance(options: UseAnimationPerformanceOptions 
   const [metrics, setMetrics] = useState<PerformanceMetrics>({
     fps: 60,
     frameTime: 16.67,
-    droppedFrames: 0
+    droppedFrames: 0,
+    cpuUsage: 0,
+    memoryUsage: 0,
+    networkLatency: 0,
+    lastUpdate: Date.now()
   })
   const [isLowPerformance, setIsLowPerformance] = useState(false)
 
@@ -212,7 +229,22 @@ export function useAnimationPerformance(options: UseAnimationPerformanceOptions 
     shouldAnimate,
     getAnimationDuration,
     getParticleCount,
-    deviceCapabilities: getDeviceCapabilities()
+    deviceCapabilities: getDeviceCapabilities(),
+    // Additional compatibility properties for debugger
+    qualityLevel: 75, // Default quality level
+    isMonitoring: true,
+    shouldReduceMotion: false,
+    startMonitoring: () => {},
+    stopMonitoring: () => {},
+    forceQualityLevel: (level: number) => {},
+    resetMetrics: () => setMetrics({
+      fps: 60,
+      frameTime: 16.67,
+      droppedFrames: 0,
+      lastUpdate: Date.now(),
+      cpuUsage: 0,
+      networkLatency: 0
+    })
   }
 }
 

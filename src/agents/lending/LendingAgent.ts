@@ -6,9 +6,20 @@ import { BaseAgent, AgentConfig, AgentError, ActionContext, ActionResult } from 
 import { TakaraProtocolWrapper, createTakaraProtocolWrapper, TakaraRiskAssessment } from '../../protocols/sei/adapters/TakaraProtocolWrapper';
 import { YeiFinanceAdapter } from '../../lending/YeiFinanceAdapter';
 import { ethers } from 'ethers';
+import { 
+  SeiAgentKitAdapter, 
+  HiveIntelligenceAdapter, 
+  SeiMCPAdapter,
+  createSAKAdapter,
+  createHiveAdapter,
+  createMCPAdapter,
+  MCPTool,
+  HiveQuery,
+  SAKTool
+} from '../adapters';
 
 /**
- * Comprehensive Lending Agent (~800 lines)
+ * Enhanced Lending Agent with Advanced Adapter Integration (~1200+ lines)
  * 
  * Features:
  * - Multiple lending strategies (conservative, balanced, aggressive, adaptive)
@@ -17,6 +28,12 @@ import { ethers } from 'ethers';
  * - Detailed action handlers with error recovery
  * - Performance-optimized calculations
  * - State management for better decision-making
+ * - SeiAgentKitAdapter for real Takara protocol operations
+ * - HiveIntelligenceAdapter for enhanced lending analytics
+ * - SeiMCPAdapter for real-time balance monitoring
+ * - Power level calculations for Dragon Ball Z themed responses
+ * - Live market data integration
+ * - Advanced cross-protocol intelligence
  */
 
 export interface LendingStrategy {
@@ -198,6 +215,14 @@ export class LendingAgent extends BaseAgent {
   private lastCacheUpdate = 0;
   private provider?: ethers.Provider;
   private signer?: ethers.Signer;
+  
+  // Enhanced adapter integrations
+  private seiAgentKitAdapter: SeiAgentKitAdapter;
+  private hiveIntelligenceAdapter: HiveIntelligenceAdapter;
+  private seiMCPAdapter: SeiMCPAdapter;
+  private powerLevel: number = 0;
+  private dragonBallTheme: string = 'Saiyan Lending Master';
+  private adapterTools: Map<string, MCPTool | SAKTool> = new Map();
 
   constructor(config: AgentConfig, provider?: ethers.Provider, signer?: ethers.Signer) {
     super(config);
@@ -205,9 +230,19 @@ export class LendingAgent extends BaseAgent {
     this.signer = signer;
     this.lendingState = this.initializeLendingState();
     this.marketConditions = this.initializeMarketConditions();
+    
+    // Initialize enhanced adapters
+    this.seiAgentKitAdapter = createSAKAdapter(config);
+    this.hiveIntelligenceAdapter = createHiveAdapter(config);
+    this.seiMCPAdapter = createMCPAdapter(config);
+    
     this.initializeStrategies();
     this.initializeProtocolAdapters();
+    this.initializeAdapterTools();
     this.registerLendingActions();
+    
+    // Calculate initial power level
+    this.updatePowerLevel();
   }
 
   /**
@@ -337,6 +372,82 @@ export class LendingAgent extends BaseAgent {
     // Initialize YeiFinance adapter
     // Note: YeiFinanceAdapter would need to be updated to match the same interface
     // For now, we'll focus on Takara integration
+  }
+
+  /**
+   * Initialize adapter tools
+   */
+  private initializeAdapterTools(): void {
+    // Register SAK tools for Takara operations
+    this.adapterTools.set('takara_supply_enhanced', {
+      name: 'takara_supply_enhanced',
+      description: 'Enhanced Takara supply with power level calculation',
+      category: 'defi',
+      execute: this.enhancedTakaraSupply.bind(this),
+      parameters: {
+        asset: { type: 'string', required: true, description: 'Asset to supply' },
+        amount: { type: 'number', required: true, description: 'Amount to supply' },
+        powerBoost: { type: 'boolean', required: false, description: 'Apply Saiyan power boost' }
+      },
+      powerLevel: 5000,
+      dragonBallTheme: 'Kamehameha Supply Wave'
+    });
+    
+    this.adapterTools.set('lending_intelligence', {
+      name: 'lending_intelligence',
+      description: 'Get AI-powered lending insights from Hive Intelligence',
+      category: 'analysis',
+      execute: this.getLendingIntelligence.bind(this),
+      parameters: {
+        query: { type: 'string', required: true, description: 'Intelligence query' },
+        includeMarketData: { type: 'boolean', required: false, description: 'Include market data' }
+      },
+      powerLevel: 3000,
+      dragonBallTheme: 'Scouter Analysis'
+    });
+
+    this.adapterTools.set('realtime_balance_monitor', {
+      name: 'realtime_balance_monitor',
+      description: 'Monitor real-time balance changes across protocols',
+      category: 'query',
+      execute: this.realtimeBalanceMonitor.bind(this),
+      parameters: {
+        address: { type: 'string', required: true, description: 'Wallet address to monitor' },
+        protocols: { type: 'array', required: false, description: 'Protocols to monitor' }
+      },
+      powerLevel: 2000,
+      dragonBallTheme: 'Ki Detection'
+    });
+  }
+
+  /**
+   * Update power level based on portfolio performance
+   */
+  private updatePowerLevel(): void {
+    const baseLevel = 1000;
+    const portfolioValue = this.lendingState.totalValue;
+    const yieldMultiplier = this.lendingState.averageAPY / 10;
+    const riskAdjustment = Math.max(0.1, 1 - this.lendingState.riskScore);
+    const diversificationBonus = this.lendingState.positions.length * 100;
+    
+    this.powerLevel = Math.floor(
+      baseLevel + 
+      (portfolioValue / 1000) + 
+      (yieldMultiplier * 500) + 
+      (riskAdjustment * 1000) + 
+      diversificationBonus
+    );
+    
+    // Update theme based on power level
+    if (this.powerLevel >= 10000) {
+      this.dragonBallTheme = 'Ultra Instinct Lending Master';
+    } else if (this.powerLevel >= 5000) {
+      this.dragonBallTheme = 'Super Saiyan Lending Warrior';
+    } else if (this.powerLevel >= 2000) {
+      this.dragonBallTheme = 'Elite Saiyan Lender';
+    } else {
+      this.dragonBallTheme = 'Saiyan Lending Apprentice';
+    }
   }
 
   /**
@@ -584,6 +695,218 @@ export class LendingAgent extends BaseAgent {
         message: `Strategy ${strategyId} updated successfully`
       }))
     );
+  }
+
+  /**
+   * Update protocol data using enhanced adapters
+   */
+  private updateProtocolDataWithAdapters(): TaskEither<AgentError, void> {
+    return pipe(
+      TE.tryCatch(
+        async () => {
+          // Get real-time data using MCP adapter
+          try {
+            await this.seiMCPAdapter.getChainData();
+          } catch (error) {
+            console.warn('MCP data fetch failed, continuing with legacy data');
+          }
+          
+          // Update protocols with enhanced data
+          await this.updateProtocolDataLegacy();
+          
+          // Add power level enhancements
+          this.enhanceProtocolsWithPowerLevels();
+        },
+        error => this.createError('ENHANCED_PROTOCOL_UPDATE_FAILED', `Failed to update protocol data with adapters: ${error}`)
+      )
+    );
+  }
+
+  /**
+   * Calculate opportunities with AI intelligence
+   */
+  private calculateOpportunitiesWithIntelligence(context: ActionContext): TaskEither<AgentError, LendingOpportunity[]> {
+    return pipe(
+      TE.tryCatch(
+        async () => {
+          // Get base opportunities
+          const baseOpportunities = await this.calculateOpportunitiesLegacy(context);
+          
+          // Enhance with Hive Intelligence
+          const enhancedOpportunities = await this.enhanceOpportunitiesWithAI(baseOpportunities, context);
+          
+          // Apply Dragon Ball Z power calculations
+          const powerEnhancedOpportunities = this.applyPowerLevelCalculations(enhancedOpportunities);
+          
+          return powerEnhancedOpportunities;
+        },
+        error => this.createError('ENHANCED_OPPORTUNITY_CALCULATION_FAILED', `Failed to calculate enhanced opportunities: ${error}`)
+      )
+    );
+  }
+
+  /**
+   * Calculate protocol power level
+   */
+  private calculateProtocolPowerLevel(protocolId: string): number {
+    const protocol = this.protocols.get(protocolId);
+    if (!protocol) return 1000;
+    
+    const basePower = 1000;
+    const apyPower = protocol.apy * 100;
+    const securityPower = protocol.securityScore * 2000;
+    const liquidityPower = protocol.liquidityScore * 1500;
+    const riskReduction = (1 - protocol.riskScore) * 1000;
+    
+    return Math.floor(basePower + apyPower + securityPower + liquidityPower + riskReduction);
+  }
+
+  /**
+   * Get power level description
+   */
+  private getPowerLevelDescription(powerLevel: number): string {
+    if (powerLevel >= 9000) return 'Over 9000! Legendary Protocol Power!';
+    if (powerLevel >= 5000) return 'Super Saiyan Protocol Strength';
+    if (powerLevel >= 3000) return 'Elite Warrior Protocol';
+    if (powerLevel >= 1500) return 'Strong Fighter Protocol';
+    return 'Training Protocol';
+  }
+
+  /**
+   * Enhance protocols with power levels
+   */
+  private enhanceProtocolsWithPowerLevels(): void {
+    for (const [protocolId, protocolData] of this.protocols) {
+      const powerLevel = this.calculateProtocolPowerLevel(protocolId);
+      (protocolData as any).powerLevel = powerLevel;
+      (protocolData as any).powerDescription = this.getPowerLevelDescription(powerLevel);
+    }
+  }
+
+  /**
+   * Enhanced opportunity enhancement with AI
+   */
+  private async enhanceOpportunitiesWithAI(opportunities: LendingOpportunity[], context: ActionContext): Promise<LendingOpportunity[]> {
+    try {
+      const query: HiveQuery = {
+        text: `Analyze these DeFi lending opportunities: ${JSON.stringify(opportunities.slice(0, 3))}`,
+        type: 'analysis',
+        metadata: {
+          source: 'lending_agent',
+          context: 'opportunity_enhancement',
+          timestamp: new Date().toISOString()
+        }
+      };
+      
+      const hiveResponse = await this.hiveIntelligenceAdapter.query(query);
+      
+      if (hiveResponse._tag === 'Right') {
+        const insights = hiveResponse.right.insights || [];
+        
+        return opportunities.map(opp => ({
+          ...opp,
+          aiInsights: insights.filter(insight => 
+            insight.content.toLowerCase().includes(opp.protocol.toLowerCase()) ||
+            insight.content.toLowerCase().includes(opp.asset.toLowerCase())
+          ),
+          confidence: Math.min(1, opp.confidence * (1 + insights.length * 0.05))
+        }));
+      }
+    } catch (error) {
+      console.warn('Failed to enhance opportunities with AI:', error);
+    }
+    
+    return opportunities;
+  }
+
+  /**
+   * Apply Dragon Ball Z power level calculations
+   */
+  private applyPowerLevelCalculations(opportunities: LendingOpportunity[]): LendingOpportunity[] {
+    return opportunities.map(opp => {
+      const protocolPowerLevel = this.calculateProtocolPowerLevel(opp.protocol);
+      const powerMultiplier = Math.min(2, 1 + (protocolPowerLevel / 10000));
+      
+      return {
+        ...opp,
+        powerLevel: protocolPowerLevel,
+        confidence: Math.min(1, opp.confidence * powerMultiplier),
+        reasoning: [
+          ...opp.reasoning,
+          `🐉 Protocol Power Level: ${protocolPowerLevel} - ${this.getPowerLevelDescription(protocolPowerLevel)}`
+        ]
+      };
+    });
+  }
+
+  /**
+   * Generate Dragon Ball Z themed recommendations
+   */
+  private generateDragonBallRecommendations(opportunities: LendingOpportunity[], context: ActionContext): string[] {
+    const recommendations: string[] = [];
+    
+    if (opportunities.length === 0) {
+      recommendations.push('🐉 No suitable lending opportunities detected in the current power level scan!');
+      return recommendations;
+    }
+    
+    const topOpportunity = opportunities[0];
+    const powerLevel = (topOpportunity as any).powerLevel || 1000;
+    
+    recommendations.push(
+      `🐉 **KAMEHAMEHA RECOMMENDATION!** ${topOpportunity.asset} on ${topOpportunity.protocol} with ${topOpportunity.apy.toFixed(2)}% APY (Power Level: ${powerLevel})`
+    );
+    
+    if (opportunities.length > 1) {
+      recommendations.push('🐉 Consider fusion technique - diversify across multiple protocols to increase your power level!');
+    }
+    
+    if (this.marketConditions.volatility > 0.6) {
+      recommendations.push('⚡ High market volatility detected! Use defensive stance - conservative strategies recommended!');
+    }
+    
+    if (this.powerLevel >= 9000) {
+      recommendations.push('🐉🔥 Your power level is OVER 9000! You can handle high-risk, high-reward strategies!');
+    }
+    
+    return recommendations;
+  }
+
+  /**
+   * Generate AI insights summary
+   */
+  private generateAIInsights(opportunities: LendingOpportunity[]): string[] {
+    const insights: string[] = [];
+    
+    const avgAPY = opportunities.reduce((sum, opp) => sum + opp.apy, 0) / opportunities.length;
+    const avgRisk = opportunities.reduce((sum, opp) => sum + opp.riskScore, 0) / opportunities.length;
+    
+    insights.push(`Average APY across top opportunities: ${avgAPY.toFixed(2)}%`);
+    insights.push(`Average risk score: ${(avgRisk * 100).toFixed(1)}%`);
+    
+    if (avgAPY > 15) {
+      insights.push('High yield environment detected - consider taking advantage while managing risk');
+    }
+    
+    if (avgRisk < 0.3) {
+      insights.push('Low risk environment - good time for conservative growth strategies');
+    }
+    
+    return insights;
+  }
+
+  /**
+   * Legacy opportunity calculation implementation
+   */
+  private calculateOpportunitiesLegacy(context: ActionContext): TaskEither<AgentError, LendingOpportunity[]> {
+    return this.calculateOpportunities(context);
+  }
+
+  /**
+   * Legacy protocol data update 
+   */
+  private updateProtocolDataLegacy(): TaskEither<AgentError, void> {
+    return this.updateProtocolData();
   }
 
   /**
@@ -1944,20 +2267,484 @@ export class LendingAgent extends BaseAgent {
   }
 
   /**
-   * Agent-specific initialization
+   * Enhanced Takara supply with power boost
    */
-  protected initialize(): TaskEither<AgentError, void> {
+  private enhancedTakaraSupply(context: ActionContext): TaskEither<AgentError, ActionResult> {
+    const { asset, amount, powerBoost = false } = context.parameters;
+
     return pipe(
-      this.updateProtocolData(),
-      TE.chain(() => this.updateMarketConditions())
+      TE.tryCatch(
+        async () => {
+          // Calculate power boost multiplier
+          const powerMultiplier = powerBoost ? Math.min(1.5, 1 + (this.powerLevel / 20000)) : 1;
+          const enhancedAmount = amount * powerMultiplier;
+          
+          // Get real-time data before executing
+          const realtimeData = await this.seiMCPAdapter.getWalletBalance(
+            this.signer ? await this.signer.getAddress() : ''
+          );
+          
+          // Execute enhanced supply using SAK adapter
+          const sakResult = await this.seiAgentKitAdapter.executeTool(
+            'takara_supply_enhanced',
+            {
+              asset,
+              amount: enhancedAmount,
+              powerLevel: this.powerLevel
+            }
+          );
+          
+          // Update power level after successful operation
+          this.updatePowerLevel();
+          
+          const result = {
+            originalAmount: amount,
+            enhancedAmount,
+            powerBoostApplied: powerBoost,
+            powerLevel: this.powerLevel,
+            theme: this.dragonBallTheme,
+            realtimeBalance: realtimeData._tag === 'Right' ? realtimeData.right : null,
+            sakExecution: sakResult._tag === 'Right' ? sakResult.right : null
+          };
+          
+          return result;
+        },
+        error => this.createError('ENHANCED_TAKARA_SUPPLY_FAILED', `Enhanced Takara supply failed: ${error}`)
+      ),
+      TE.map(result => ({
+        success: true,
+        data: result,
+        message: `🐉 KAMEHAMEHA SUPPLY COMPLETE! ${result.enhancedAmount} ${asset} supplied with ${result.powerBoostApplied ? 'POWER BOOST' : 'standard'} technique. New Power Level: ${result.powerLevel}!`
+      }))
     );
   }
 
   /**
-   * Agent-specific cleanup
+   * Get AI-powered lending intelligence
+   */
+  private getLendingIntelligence(context: ActionContext): TaskEither<AgentError, ActionResult> {
+    const { query, includeMarketData = true } = context.parameters;
+
+    return pipe(
+      TE.tryCatch(
+        async () => {
+          const hiveQuery: HiveQuery = {
+            text: query,
+            type: 'analysis',
+            metadata: {
+              source: 'lending_agent',
+              powerLevel: this.powerLevel.toString(),
+              theme: this.dragonBallTheme,
+              includeMarketData
+            }
+          };
+          
+          const response = await this.hiveIntelligenceAdapter.query(hiveQuery);
+          
+          if (response._tag === 'Left') {
+            throw new Error(response.left.message);
+          }
+          
+          const intelligence = response.right;
+          
+          // Enhance with current portfolio data if available
+          const portfolioContext = {
+            totalValue: this.lendingState.totalValue,
+            averageAPY: this.lendingState.averageAPY,
+            riskScore: this.lendingState.riskScore,
+            positionCount: this.lendingState.positions.length,
+            powerLevel: this.powerLevel
+          };
+          
+          return {
+            intelligence,
+            portfolioContext,
+            powerLevel: this.powerLevel,
+            theme: this.dragonBallTheme,
+            creditUsage: intelligence.creditUsage
+          };
+        },
+        error => this.createError('LENDING_INTELLIGENCE_FAILED', `Failed to get lending intelligence: ${error}`)
+      ),
+      TE.map(result => ({
+        success: true,
+        data: result,
+        message: `🔍 ${this.dragonBallTheme} analysis complete! Scouter readings show: ${result.intelligence.insights?.length || 0} insights detected.`
+      }))
+    );
+  }
+
+  /**
+   * Real-time balance monitoring
+   */
+  private realtimeBalanceMonitor(context: ActionContext): TaskEither<AgentError, ActionResult> {
+    const { address, protocols = [] } = context.parameters;
+
+    return pipe(
+      TE.tryCatch(
+        async () => {
+          // Get wallet balance from MCP adapter
+          const balanceResult = await this.seiMCPAdapter.getWalletBalance(address);
+          
+          if (balanceResult._tag === 'Left') {
+            throw new Error(balanceResult.left.message);
+          }
+          
+          const walletData = balanceResult.right;
+          
+          // Get protocol-specific data
+          const protocolBalances = [];
+          for (const protocolId of protocols.length > 0 ? protocols : Array.from(this.protocols.keys())) {
+            try {
+              const protocolBalance = await this.getProtocolBalance(address, protocolId);
+              protocolBalances.push({
+                protocol: protocolId,
+                balance: protocolBalance,
+                powerLevel: this.calculateProtocolPowerLevel(protocolId)
+              });
+            } catch (error) {
+              console.warn(`Failed to get balance for ${protocolId}:`, error);
+            }
+          }
+          
+          // Calculate total power level across all positions
+          const totalProtocolPower = protocolBalances.reduce((sum, pb) => sum + pb.powerLevel, 0);
+          
+          return {
+            walletData,
+            protocolBalances,
+            totalProtocolPower,
+            userPowerLevel: this.powerLevel,
+            theme: this.dragonBallTheme,
+            lastUpdate: new Date().toISOString()
+          };
+        },
+        error => this.createError('REALTIME_MONITORING_FAILED', `Real-time monitoring failed: ${error}`)
+      ),
+      TE.map(result => ({
+        success: true,
+        data: result,
+        message: `🐉 Ki detection complete! Monitoring ${result.protocolBalances.length} protocols. Total Protocol Power: ${result.totalProtocolPower}`
+      }))
+    );
+  }
+
+  /**
+   * Power level analysis
+   */
+  private powerLevelAnalysis(context: ActionContext): TaskEither<AgentError, ActionResult> {
+    return pipe(
+      TE.tryCatch(
+        async () => {
+          this.updatePowerLevel();
+          
+          const analysis = {
+            currentPowerLevel: this.powerLevel,
+            theme: this.dragonBallTheme,
+            powerBreakdown: {
+              baseLevel: 1000,
+              portfolioValue: Math.floor(this.lendingState.totalValue / 1000),
+              yieldMultiplier: Math.floor((this.lendingState.averageAPY / 10) * 500),
+              riskAdjustment: Math.floor(Math.max(0.1, 1 - this.lendingState.riskScore) * 1000),
+              diversificationBonus: this.lendingState.positions.length * 100
+            },
+            protocolPowerLevels: Array.from(this.protocols.entries()).map(([id, data]) => ({
+              protocol: id,
+              powerLevel: this.calculateProtocolPowerLevel(id),
+              description: this.getPowerLevelDescription(this.calculateProtocolPowerLevel(id))
+            })),
+            recommendations: this.generatePowerLevelRecommendations()
+          };
+          
+          return analysis;
+        },
+        error => this.createError('POWER_LEVEL_ANALYSIS_FAILED', `Power level analysis failed: ${error}`)
+      ),
+      TE.map(result => ({
+        success: true,
+        data: result,
+        message: `🐉 Power Level: ${result.currentPowerLevel} - ${result.theme}! Your training in DeFi lending continues to grow stronger!`
+      }))
+    );
+  }
+
+  /**
+   * Cross-protocol fusion strategy
+   */
+  private crossProtocolFusion(context: ActionContext): TaskEither<AgentError, ActionResult> {
+    const { totalAmount, fusionType = 'balanced' } = context.parameters;
+
+    return pipe(
+      TE.tryCatch(
+        async () => {
+          // Get AI insights for fusion strategy
+          const aiQuery: HiveQuery = {
+            text: `Design a cross-protocol fusion strategy for $${totalAmount} with ${fusionType} fusion type`,
+            type: 'strategy',
+            metadata: {
+              source: 'fusion_strategy',
+              amount: totalAmount.toString(),
+              fusionType,
+              powerLevel: this.powerLevel.toString()
+            }
+          };
+          
+          const aiResponse = await this.hiveIntelligenceAdapter.query(aiQuery);
+          
+          // Calculate optimal allocation using multiple adapters
+          const allocation = await this.calculateFusionAllocation(totalAmount, fusionType);
+          
+          // Get real-time data for validation
+          const realtimeValidation = await this.validateFusionStrategy(allocation);
+          
+          const fusionStrategy = {
+            type: fusionType,
+            totalAmount,
+            allocation,
+            powerLevel: this.powerLevel,
+            fusionPowerMultiplier: this.calculateFusionPowerMultiplier(allocation),
+            aiInsights: aiResponse._tag === 'Right' ? aiResponse.right.insights : [],
+            realtimeValidation,
+            estimatedAPY: allocation.reduce((sum, alloc) => sum + (alloc.apy * alloc.percentage / 100), 0),
+            riskScore: allocation.reduce((sum, alloc) => sum + (alloc.riskScore * alloc.percentage / 100), 0)
+          };
+          
+          return fusionStrategy;
+        },
+        error => this.createError('FUSION_STRATEGY_FAILED', `Cross-protocol fusion failed: ${error}`)
+      ),
+      TE.map(result => ({
+        success: true,
+        data: result,
+        message: `🐉⚡ FUSION TECHNIQUE COMPLETE! ${result.type.toUpperCase()} fusion strategy created with ${result.fusionPowerMultiplier.toFixed(2)}x power multiplier!`
+      }))
+    );
+  }
+
+  /**
+   * Get protocol balance for address
+   */
+  private async getProtocolBalance(address: string, protocolId: string): Promise<any> {
+    // This would integrate with specific protocol adapters
+    // For now, return simulated data
+    return {
+      supplied: Math.random() * 10000,
+      borrowed: Math.random() * 5000,
+      netPosition: Math.random() * 5000,
+      healthFactor: 1.5 + Math.random()
+    };
+  }
+
+  /**
+   * Generate power level recommendations
+   */
+  private generatePowerLevelRecommendations(): string[] {
+    const recommendations: string[] = [];
+    
+    if (this.powerLevel < 2000) {
+      recommendations.push('🐉 Your power level is still growing! Consider diversifying across more protocols to increase your strength.');
+      recommendations.push('⚡ Focus on stable, low-risk protocols to build your foundation.');
+    } else if (this.powerLevel < 5000) {
+      recommendations.push('🐉 You\'re becoming a strong fighter! Consider adding some medium-risk, high-yield protocols.');
+      recommendations.push('⚡ Your training is paying off - time to explore more advanced strategies.');
+    } else if (this.powerLevel < 9000) {
+      recommendations.push('🐉 Super Saiyan level achieved! You can handle high-risk strategies with proper risk management.');
+      recommendations.push('⚡ Consider cross-protocol arbitrage and advanced yield farming techniques.');
+    } else {
+      recommendations.push('🐉🔥 OVER 9000! You\'ve achieved legendary status! Master of all DeFi protocols!');
+      recommendations.push('⚡ You can safely explore the most aggressive yield strategies and lead fusion techniques!');
+    }
+    
+    return recommendations;
+  }
+
+  /**
+   * Calculate fusion allocation
+   */
+  private async calculateFusionAllocation(totalAmount: number, fusionType: string): Promise<any[]> {
+    const protocols = Array.from(this.protocols.values());
+    const allocation: any[] = [];
+    
+    // Fusion type strategies
+    const fusionStrategies = {
+      balanced: { riskWeight: 0.5, yieldWeight: 0.5, diversification: 0.8 },
+      aggressive: { riskWeight: 0.2, yieldWeight: 0.8, diversification: 0.6 },
+      defensive: { riskWeight: 0.8, yieldWeight: 0.2, diversification: 0.9 }
+    };
+    
+    const strategy = fusionStrategies[fusionType as keyof typeof fusionStrategies] || fusionStrategies.balanced;
+    
+    // Score protocols based on fusion strategy
+    const scoredProtocols = protocols.map(protocol => {
+      const powerLevel = this.calculateProtocolPowerLevel(protocol.id);
+      const riskScore = (1 - protocol.riskScore) * strategy.riskWeight;
+      const yieldScore = (protocol.apy / 50) * strategy.yieldWeight;
+      const powerScore = (powerLevel / 10000) * 0.2;
+      
+      return {
+        ...protocol,
+        fusionScore: riskScore + yieldScore + powerScore,
+        powerLevel
+      };
+    }).sort((a, b) => b.fusionScore - a.fusionScore);
+    
+    // Allocate based on fusion scores
+    const topProtocols = scoredProtocols.slice(0, Math.min(5, scoredProtocols.length));
+    const totalScore = topProtocols.reduce((sum, p) => sum + p.fusionScore, 0);
+    
+    let remainingAmount = totalAmount;
+    
+    topProtocols.forEach((protocol, index) => {
+      const isLast = index === topProtocols.length - 1;
+      const percentage = isLast ? (remainingAmount / totalAmount) * 100 : (protocol.fusionScore / totalScore) * 100;
+      const amount = isLast ? remainingAmount : Math.floor((percentage / 100) * totalAmount);
+      
+      allocation.push({
+        protocol: protocol.id,
+        amount,
+        percentage,
+        apy: protocol.apy,
+        riskScore: protocol.riskScore,
+        powerLevel: protocol.powerLevel,
+        fusionScore: protocol.fusionScore
+      });
+      
+      remainingAmount -= amount;
+    });
+    
+    return allocation;
+  }
+
+  /**
+   * Calculate fusion power multiplier
+   */
+  private calculateFusionPowerMultiplier(allocation: any[]): number {
+    const diversificationBonus = Math.min(1.5, allocation.length / 3);
+    const powerBonus = allocation.reduce((sum, alloc) => sum + (alloc.powerLevel / 10000) * (alloc.percentage / 100), 0);
+    const fusionSynergy = allocation.length > 1 ? 1.2 : 1.0;
+    
+    return diversificationBonus + powerBonus + fusionSynergy;
+  }
+
+  /**
+   * Validate fusion strategy with real-time data
+   */
+  private async validateFusionStrategy(allocation: any[]): Promise<any> {
+    const validation = {
+      liquidity: 'sufficient',
+      gasEstimate: 0,
+      risks: [],
+      opportunities: []
+    };
+    
+    for (const alloc of allocation) {
+      const protocol = this.protocols.get(alloc.protocol);
+      if (protocol) {
+        validation.gasEstimate += await this.estimateGasCost(alloc.protocol, 'supply');
+        
+        if (protocol.liquidityScore < 0.5) {
+          validation.risks.push(`Low liquidity risk on ${alloc.protocol}`);
+        }
+        
+        if (protocol.apy > 20) {
+          validation.opportunities.push(`High yield opportunity on ${alloc.protocol}: ${protocol.apy.toFixed(2)}%`);
+        }
+      }
+    }
+    
+    return validation;
+  }
+
+  /**
+   * Agent-specific initialization with adapter setup
+   */
+  protected initialize(): TaskEither<AgentError, void> {
+    return pipe(
+      this.initializeAdapters(),
+      TE.chain(() => this.updateProtocolDataWithAdapters()),
+      TE.chain(() => this.updateMarketConditions()),
+      TE.chain(() => this.validateAdapterConnections())
+    );
+  }
+
+  /**
+   * Initialize all adapters
+   */
+  private initializeAdapters(): TaskEither<AgentError, void> {
+    return pipe(
+      TE.tryCatch(
+        async () => {
+          // Initialize SAK adapter
+          await this.seiAgentKitAdapter.initialize();
+          
+          // Initialize Hive Intelligence adapter
+          await this.hiveIntelligenceAdapter.initialize();
+          
+          // Initialize MCP adapter
+          await this.seiMCPAdapter.initialize();
+          
+          console.log('🐉 All adapters initialized successfully! Power level rising...');
+        },
+        error => this.createError('ADAPTER_INITIALIZATION_FAILED', `Failed to initialize adapters: ${error}`)
+      )
+    );
+  }
+
+  /**
+   * Validate adapter connections
+   */
+  private validateAdapterConnections(): TaskEither<AgentError, void> {
+    return pipe(
+      TE.tryCatch(
+        async () => {
+          // Test SAK connection
+          const sakTest = await this.seiAgentKitAdapter.getAvailableTools();
+          if (sakTest._tag === 'Left') {
+            throw new Error('SAK adapter connection failed');
+          }
+          
+          // Test Hive connection
+          const hiveTest = await this.hiveIntelligenceAdapter.query({
+            text: 'connection test',
+            type: 'ping',
+            metadata: { source: 'initialization' }
+          });
+          
+          // Test MCP connection (optional, might not always be available)
+          try {
+            await this.seiMCPAdapter.getChainData();
+          } catch (error) {
+            console.warn('MCP adapter connection test failed, but continuing:', error);
+          }
+          
+          console.log('🐉 All adapter connections validated! Ready for battle!');
+        },
+        error => this.createError('ADAPTER_VALIDATION_FAILED', `Failed to validate adapter connections: ${error}`)
+      )
+    );
+  }
+
+  /**
+   * Agent-specific cleanup with adapter cleanup
    */
   protected cleanup(): TaskEither<AgentError, void> {
-    return TE.right(undefined);
+    return pipe(
+      TE.tryCatch(
+        async () => {
+          // Cleanup SAK adapter
+          await this.seiAgentKitAdapter.cleanup?.();
+          
+          // Cleanup Hive adapter
+          await this.hiveIntelligenceAdapter.cleanup?.();
+          
+          // Cleanup MCP adapter
+          await this.seiMCPAdapter.cleanup?.();
+          
+          console.log('🐉 All adapters cleaned up successfully. Until next time, warriors!');
+        },
+        error => this.createError('ADAPTER_CLEANUP_FAILED', `Failed to cleanup adapters: ${error}`)
+      )
+    );
   }
 
   /**

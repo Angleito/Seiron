@@ -74,11 +74,9 @@ export function AnimationPerformanceDebugger({
   }
   
   const getQualityColor = (level: QualityLevel) => {
-    switch (level) {
-      case 'high': return 'text-green-400'
-      case 'medium': return 'text-yellow-400'
-      case 'low': return 'text-orange-400'
-    }
+    if (level > 75) return 'text-green-400'
+    if (level > 50) return 'text-yellow-400'
+    return 'text-orange-400'
   }
   
   // Don't render in production unless explicitly enabled
@@ -114,7 +112,7 @@ export function AnimationPerformanceDebugger({
               <div className="bg-gray-800/50 rounded p-2">
                 <div className="text-gray-400 text-xs">Quality</div>
                 <div className={`text-lg font-mono ${getQualityColor(qualityLevel)}`}>
-                  {qualityLevel.toUpperCase()}
+                  {qualityLevel}%
                 </div>
               </div>
               
@@ -155,7 +153,7 @@ export function AnimationPerformanceDebugger({
             <div className="border-t border-gray-700 pt-2">
               <div className="text-xs text-gray-400 mb-1">Quality Override</div>
               <div className="flex gap-1">
-                {(['low', 'medium', 'high'] as const).map((level) => (
+                {([25, 50, 75] as const).map((level) => (
                   <button
                     key={level}
                     onClick={() => handleQualityChange(level === selectedQuality ? null : level)}
@@ -167,7 +165,7 @@ export function AnimationPerformanceDebugger({
                       }
                     `}
                   >
-                    {level}
+                    {level}%
                   </button>
                 ))}
                 <button

@@ -29,6 +29,29 @@ import type {
 } from './types.js';
 import { AgentRegistry, type AgentRegistryConfig } from './registry.js';
 import { MessageRouter, type MessageRouterConfig } from './router.js';
+import { SeiAgentKitAdapter, type SAKIntegrationConfig } from '../agents/adapters/SeiAgentKitAdapter.js';
+import { HiveIntelligenceAdapter, type HiveIntelligenceConfig } from '../agents/adapters/HiveIntelligenceAdapter.js';
+import { SeiMCPAdapter, type MCPServerConfig } from '../agents/adapters/SeiMCPAdapter.js';
+
+/**
+ * Extended orchestrator configuration with adapter configs
+ */
+export interface ExtendedOrchestratorConfig extends OrchestratorConfig {
+  adapters: {
+    seiAgentKit?: {
+      enabled: boolean;
+      config: SAKIntegrationConfig;
+    };
+    hiveIntelligence?: {
+      enabled: boolean;
+      config: HiveIntelligenceConfig;
+    };
+    seiMCP?: {
+      enabled: boolean;
+      config: MCPServerConfig;
+    };
+  };
+}
 
 /**
  * Core orchestrator implementation
@@ -36,12 +59,18 @@ import { MessageRouter, type MessageRouterConfig } from './router.js';
 export class Orchestrator {
   private agentRegistry: AgentRegistry;
   private messageRouter: MessageRouter;
-  private config: OrchestratorConfig;
+  private config: ExtendedOrchestratorConfig;
   private state: OrchestratorState;
   private eventHandlers: Map<string, Array<(event: OrchestratorEvent) => void>> = new Map();
+  
+  // Adapter instances
+  private seiAgentKitAdapter?: SeiAgentKitAdapter;
+  private hiveIntelligenceAdapter?: HiveIntelligenceAdapter;
+  private seiMCPAdapter?: SeiMCPAdapter;
+  private adapterCapabilities: Map<string, ReadonlyArray<string>> = new Map();
 
   constructor(
-    config: OrchestratorConfig,
+    config: ExtendedOrchestratorConfig,
     registryConfig: AgentRegistryConfig,
     routerConfig: MessageRouterConfig
   ) {
@@ -54,6 +83,9 @@ export class Orchestrator {
       sessions: {},
       messageQueue: []
     };
+    
+    // Initialize adapters if enabled
+    this.initializeAdapters();
   }
 
   /**
@@ -81,7 +113,7 @@ export class Orchestrator {
     );
 
   /**
-   * Analyze user intent
+   * Analyze user intent with enhanced adapter capabilities
    */
   public analyzeIntent = async (intent: UserIntent): Promise<IntentAnalysisResult> => {
     try {
@@ -92,10 +124,18 @@ export class Orchestrator {
         timestamp: Date.now()
       });
 
+      // Enhanced intent analysis with adapter capabilities
       const analysis = pipe(
         this.validateIntent(intent),
         EitherM.flatMap(this.extractIntentActions),
-        EitherM.map(actions => this.buildAnalyzedIntent(intent, actions))
+        EitherM.flatMap(async (actions) => {
+          // Enrich actions with adapter capabilities
+          const enrichedActions = await this.enrichActionsWithAdapterCapabilities(actions, intent);
+          return pipe(
+            enrichedActions,
+            EitherM.map(enriched => this.buildAnalyzedIntent(intent, enriched))
+          );
+        })
       );
 
       return analysis;
@@ -302,6 +342,63 @@ export class Orchestrator {
    */
   public stop = (): void => {
     this.agentRegistry.stopHealthMonitoring();
+    this.stopAdapters();
+  };
+
+  /**
+   * Get available adapter capabilities
+   */
+  public getAdapterCapabilities = (): ReadonlyRecord<string, ReadonlyArray<string>> => {
+    const capabilities: Record<string, ReadonlyArray<string>> = {};
+    for (const [adapter, caps] of this.adapterCapabilities.entries()) {
+      capabilities[adapter] = caps;
+    }
+    return capabilities;
+  };
+
+  /**
+   * Execute adapter operation
+   */
+  public executeAdapterOperation = async (
+    adapterName: string,
+    operation: string,
+    parameters: Record<string, unknown>,
+    context?: Record<string, unknown>
+  ): Promise<Either<string, unknown>> => {
+    try {
+      switch (adapterName) {
+        case 'seiAgentKit':
+          return this.seiAgentKitAdapter 
+            ? await this.executeSAKOperation(operation, parameters, context)
+            : EitherM.left('SeiAgentKit adapter not available');
+            
+        case 'hiveIntelligence':
+          return this.hiveIntelligenceAdapter
+            ? await this.executeHiveOperation(operation, parameters, context)
+            : EitherM.left('HiveIntelligence adapter not available');
+            
+        case 'seiMCP':
+          return this.seiMCPAdapter
+            ? await this.executeMCPOperation(operation, parameters, context)
+            : EitherM.left('SeiMCP adapter not available');
+            
+        default:
+          return EitherM.left(`Unknown adapter: ${adapterName}`);
+      }
+    } catch (error) {
+      return EitherM.left(`Adapter operation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  /**
+   * Get adapter health status
+   */
+  public getAdapterHealth = (): ReadonlyRecord<string, 'healthy' | 'unhealthy' | 'disabled'> => {
+    return {
+      seiAgentKit: this.seiAgentKitAdapter ? 'healthy' : 'disabled',
+      hiveIntelligence: this.hiveIntelligenceAdapter ? 'healthy' : 'disabled',
+      seiMCP: this.seiMCPAdapter ? 'healthy' : 'disabled'
+    };
   };
 
   // Private helper methods
@@ -483,6 +580,342 @@ export class Orchestrator {
 
   private generateTaskId = (): string =>
     `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+  // ============================================================================
+  // Adapter Integration Methods
+  // ============================================================================
+
+  /**
+   * Initialize enabled adapters
+   */
+  private initializeAdapters = (): void => {
+    try {
+      // Initialize SeiAgentKit adapter
+      if (this.config.adapters.seiAgentKit?.enabled && this.config.adapters.seiAgentKit.config) {
+        this.seiAgentKitAdapter = new SeiAgentKitAdapter(
+          {
+            id: 'sak-adapter',
+            name: 'Sei Agent Kit Adapter',
+            version: '1.0.0',
+            description: 'Sei blockchain operations adapter',
+            capabilities: ['blockchain', 'defi', 'trading'],
+            settings: {}
+          },
+          this.config.adapters.seiAgentKit.config
+        );
+        this.adapterCapabilities.set('seiAgentKit', [
+          'get_token_balance', 'transfer_token', 'approve_token',
+          'takara_supply', 'takara_withdraw', 'takara_borrow', 'takara_repay',
+          'symphony_swap', 'dragonswap_add_liquidity', 'silo_stake'
+        ]);
+      }
+
+      // Initialize HiveIntelligence adapter
+      if (this.config.adapters.hiveIntelligence?.enabled && this.config.adapters.hiveIntelligence.config) {
+        this.hiveIntelligenceAdapter = new HiveIntelligenceAdapter(
+          {
+            id: 'hive-adapter',
+            name: 'Hive Intelligence Adapter',
+            version: '1.0.0',
+            description: 'AI-powered blockchain analytics adapter',
+            capabilities: ['analytics', 'search', 'insights'],
+            settings: {}
+          },
+          this.config.adapters.hiveIntelligence.config
+        );
+        this.adapterCapabilities.set('hiveIntelligence', [
+          'search', 'get_analytics', 'get_portfolio_analysis',
+          'get_market_insights', 'get_credit_analysis'
+        ]);
+      }
+
+      // Initialize SeiMCP adapter
+      if (this.config.adapters.seiMCP?.enabled && this.config.adapters.seiMCP.config) {
+        this.seiMCPAdapter = new SeiMCPAdapter(
+          {
+            id: 'mcp-adapter',
+            name: 'Sei MCP Adapter',
+            version: '1.0.0',
+            description: 'MCP protocol real-time data adapter',
+            capabilities: ['realtime', 'blockchain', 'contract'],
+            settings: {}
+          },
+          this.config.adapters.seiMCP.config
+        );
+        this.adapterCapabilities.set('seiMCP', [
+          'get_blockchain_state', 'query_contract', 'execute_contract',
+          'get_wallet_balance', 'send_transaction', 'subscribe_events'
+        ]);
+      }
+
+      this.emitEvent({
+        type: 'adapters_initialized',
+        timestamp: Date.now(),
+        data: { adapters: Array.from(this.adapterCapabilities.keys()) }
+      });
+    } catch (error) {
+      console.error('Failed to initialize adapters:', error);
+      this.emitEvent({
+        type: 'adapter_error',
+        timestamp: Date.now(),
+        data: { error: error instanceof Error ? error.message : 'Unknown error' }
+      });
+    }
+  };
+
+  /**
+   * Stop all adapters
+   */
+  private stopAdapters = (): void => {
+    try {
+      // Stop adapters if they have cleanup methods
+      this.seiAgentKitAdapter?.stop?.();
+      this.hiveIntelligenceAdapter?.stop?.();
+      this.seiMCPAdapter?.stop?.();
+
+      this.emitEvent({
+        type: 'adapters_stopped',
+        timestamp: Date.now(),
+        data: { adapters: Array.from(this.adapterCapabilities.keys()) }
+      });
+    } catch (error) {
+      console.error('Error stopping adapters:', error);
+    }
+  };
+
+  /**
+   * Enrich actions with adapter capabilities
+   */
+  private enrichActionsWithAdapterCapabilities = async (
+    actions: ReadonlyArray<string>,
+    intent: UserIntent
+  ): Promise<Either<any, ReadonlyArray<string>>> => {
+    try {
+      const enrichedActions = [...actions];
+
+      // Add blockchain-specific actions from SeiAgentKit
+      if (this.seiAgentKitAdapter && this.isBlockchainIntent(intent)) {
+        enrichedActions.push(...this.getSAKRelevantActions(intent));
+      }
+
+      // Add analytics actions from HiveIntelligence
+      if (this.hiveIntelligenceAdapter && this.isAnalyticsIntent(intent)) {
+        enrichedActions.push(...this.getHiveRelevantActions(intent));
+      }
+
+      // Add real-time actions from SeiMCP
+      if (this.seiMCPAdapter && this.isRealTimeIntent(intent)) {
+        enrichedActions.push(...this.getMCPRelevantActions(intent));
+      }
+
+      return EitherM.right(enrichedActions);
+    } catch (error) {
+      return EitherM.left({
+        type: 'action_enrichment_failed',
+        message: `Failed to enrich actions: ${error instanceof Error ? error.message : 'Unknown error'}`
+      });
+    }
+  };
+
+  /**
+   * Execute SeiAgentKit operation
+   */
+  private executeSAKOperation = async (
+    operation: string,
+    parameters: Record<string, unknown>,
+    context?: Record<string, unknown>
+  ): Promise<Either<string, unknown>> => {
+    if (!this.seiAgentKitAdapter) {
+      return EitherM.left('SeiAgentKit adapter not initialized');
+    }
+
+    try {
+      const result = await this.seiAgentKitAdapter.executeSAKTool(
+        operation,
+        parameters,
+        context as any
+      )();
+      
+      return result._tag === 'Right' 
+        ? EitherM.right(result.right)
+        : EitherM.left(result.left.message);
+    } catch (error) {
+      return EitherM.left(`SAK operation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  /**
+   * Execute HiveIntelligence operation
+   */
+  private executeHiveOperation = async (
+    operation: string,
+    parameters: Record<string, unknown>,
+    context?: Record<string, unknown>
+  ): Promise<Either<string, unknown>> => {
+    if (!this.hiveIntelligenceAdapter) {
+      return EitherM.left('HiveIntelligence adapter not initialized');
+    }
+
+    try {
+      let result;
+      switch (operation) {
+        case 'search':
+          result = await this.hiveIntelligenceAdapter.search(
+            parameters.query as string,
+            parameters.metadata as any
+          )();
+          break;
+        case 'get_analytics':
+          result = await this.hiveIntelligenceAdapter.getAnalytics(
+            parameters.query as string,
+            parameters.metadata as any
+          )();
+          break;
+        default:
+          return EitherM.left(`Unknown Hive operation: ${operation}`);
+      }
+      
+      return result._tag === 'Right' 
+        ? EitherM.right(result.right)
+        : EitherM.left(result.left.message);
+    } catch (error) {
+      return EitherM.left(`Hive operation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  /**
+   * Execute SeiMCP operation
+   */
+  private executeMCPOperation = async (
+    operation: string,
+    parameters: Record<string, unknown>,
+    context?: Record<string, unknown>
+  ): Promise<Either<string, unknown>> => {
+    if (!this.seiMCPAdapter) {
+      return EitherM.left('SeiMCP adapter not initialized');
+    }
+
+    try {
+      let result;
+      switch (operation) {
+        case 'get_blockchain_state':
+          result = await this.seiMCPAdapter.getBlockchainState()();
+          break;
+        case 'query_contract':
+          result = await this.seiMCPAdapter.queryContract(
+            parameters.contractAddress as string,
+            parameters.query as any
+          )();
+          break;
+        default:
+          return EitherM.left(`Unknown MCP operation: ${operation}`);
+      }
+      
+      return result._tag === 'Right' 
+        ? EitherM.right(result.right)
+        : EitherM.left(result.left.message);
+    } catch (error) {
+      return EitherM.left(`MCP operation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  /**
+   * Check if intent is blockchain-related
+   */
+  private isBlockchainIntent = (intent: UserIntent): boolean => {
+    const blockchainKeywords = ['swap', 'supply', 'borrow', 'stake', 'token', 'balance', 'transfer'];
+    return blockchainKeywords.some(keyword => 
+      intent.action.toLowerCase().includes(keyword) ||
+      intent.type === 'lending' ||
+      intent.type === 'liquidity' ||
+      intent.type === 'trading'
+    );
+  };
+
+  /**
+   * Check if intent is analytics-related
+   */
+  private isAnalyticsIntent = (intent: UserIntent): boolean => {
+    const analyticsKeywords = ['analyze', 'insight', 'report', 'trend', 'performance'];
+    return analyticsKeywords.some(keyword => 
+      intent.action.toLowerCase().includes(keyword) ||
+      intent.type === 'analysis'
+    );
+  };
+
+  /**
+   * Check if intent requires real-time data
+   */
+  private isRealTimeIntent = (intent: UserIntent): boolean => {
+    const realTimeKeywords = ['current', 'latest', 'live', 'monitor', 'watch'];
+    return realTimeKeywords.some(keyword => 
+      intent.action.toLowerCase().includes(keyword) ||
+      intent.type === 'info'
+    );
+  };
+
+  /**
+   * Get relevant SAK actions for intent
+   */
+  private getSAKRelevantActions = (intent: UserIntent): ReadonlyArray<string> => {
+    const sakActions: string[] = [];
+    
+    if (intent.type === 'lending') {
+      sakActions.push('takara_supply', 'takara_withdraw', 'takara_borrow', 'takara_repay');
+    }
+    if (intent.type === 'liquidity') {
+      sakActions.push('dragonswap_add_liquidity', 'dragonswap_remove_liquidity');
+    }
+    if (intent.type === 'trading') {
+      sakActions.push('symphony_swap', 'symphony_get_quote');
+    }
+    if (intent.action.includes('balance')) {
+      sakActions.push('get_token_balance', 'get_native_balance');
+    }
+    if (intent.action.includes('transfer')) {
+      sakActions.push('transfer_token', 'approve_token');
+    }
+    
+    return sakActions;
+  };
+
+  /**
+   * Get relevant Hive actions for intent
+   */
+  private getHiveRelevantActions = (intent: UserIntent): ReadonlyArray<string> => {
+    const hiveActions: string[] = [];
+    
+    if (intent.type === 'analysis') {
+      hiveActions.push('get_analytics', 'get_market_insights');
+    }
+    if (intent.type === 'portfolio') {
+      hiveActions.push('get_portfolio_analysis', 'get_credit_analysis');
+    }
+    if (intent.action.includes('search')) {
+      hiveActions.push('search');
+    }
+    
+    return hiveActions;
+  };
+
+  /**
+   * Get relevant MCP actions for intent
+   */
+  private getMCPRelevantActions = (intent: UserIntent): ReadonlyArray<string> => {
+    const mcpActions: string[] = [];
+    
+    if (intent.type === 'info') {
+      mcpActions.push('get_blockchain_state', 'get_wallet_balance');
+    }
+    if (intent.action.includes('contract')) {
+      mcpActions.push('query_contract', 'execute_contract');
+    }
+    if (intent.action.includes('transaction')) {
+      mcpActions.push('send_transaction');
+    }
+    
+    return mcpActions;
+  };
 }
 
 /**
