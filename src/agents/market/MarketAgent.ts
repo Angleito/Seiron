@@ -342,15 +342,195 @@ export class MarketAgent extends BaseAgent {
     
     this.initializePredictionModels();
     this.initializeTradingStrategies();
+    this.initializeDragonBallAdapterTools();
     this.registerMarketActions();
     this.registerTradingActions();
+    this.registerDragonBallActions();
+    
+    // Calculate initial power level
+    this.updatePowerLevel();
   }
 
   /**
-   * Initialize market state
+   * Initialize Dragon Ball Z themed adapter tools
+   */
+  private initializeDragonBallAdapterTools(): void {
+    // Scouter market analysis tool
+    this.adapterTools.set('scouter_market_scan', {
+      name: 'scouter_market_scan',
+      description: 'Ultra-advanced scouter scan for market power levels and battle conditions',
+      category: 'analysis',
+      execute: this.scouterMarketScan.bind(this),
+      parameters: {
+        symbols: { type: 'array', required: true, description: 'Assets to scan' },
+        timeframe: { type: 'string', required: false, description: 'Analysis timeframe' },
+        powerLevelThreshold: { type: 'number', required: false, description: 'Minimum power level to report' }
+      },
+      powerLevel: 4000,
+      dragonBallTheme: 'Scouter Analysis Mode'
+    });
+    
+    // Kamehameha trading signal
+    this.adapterTools.set('kamehameha_trading', {
+      name: 'kamehameha_trading',
+      description: 'Unleash devastating Kamehameha trading strategies with maximum power',
+      category: 'trading',
+      execute: this.kamehamehaTrading.bind(this),
+      parameters: {
+        symbol: { type: 'string', required: true, description: 'Trading pair' },
+        strategy: { type: 'string', required: true, description: 'Kamehameha strategy type' },
+        powerLevel: { type: 'number', required: false, description: 'Power level multiplier' }
+      },
+      powerLevel: 8000,
+      dragonBallTheme: 'Kamehameha Wave'
+    });
+
+    // Spirit Bomb market intelligence
+    this.adapterTools.set('spirit_bomb_intelligence', {
+      name: 'spirit_bomb_intelligence',
+      description: 'Gather energy from all market participants for ultimate intelligence',
+      category: 'analysis',
+      execute: this.spiritBombIntelligence.bind(this),
+      parameters: {
+        query: { type: 'string', required: true, description: 'Intelligence query' },
+        gatherTime: { type: 'number', required: false, description: 'Energy gathering time in seconds' }
+      },
+      powerLevel: 6000,
+      dragonBallTheme: 'Spirit Bomb Charging'
+    });
+
+    // Ultra Instinct risk detection
+    this.adapterTools.set('ultra_instinct_risk', {
+      name: 'ultra_instinct_risk',
+      description: 'Achieve Ultra Instinct state for automatic risk detection and response',
+      category: 'query',
+      execute: this.ultraInstinctRisk.bind(this),
+      parameters: {
+        portfolio: { type: 'object', required: false, description: 'Portfolio to protect' },
+        sensitivity: { type: 'string', required: false, description: 'Risk sensitivity level' }
+      },
+      powerLevel: 12000,
+      dragonBallTheme: 'Ultra Instinct'
+    });
+  }
+
+  /**
+   * Register Dragon Ball Z themed market actions
+   */
+  private registerDragonBallActions(): void {
+    const dragonBallActions = [
+      {
+        id: 'power_level_market_scan',
+        name: 'Power Level Market Scan',
+        description: 'Scan market with Dragon Ball Z power level calculations',
+        handler: this.powerLevelMarketScan.bind(this),
+        validation: [
+          { field: 'symbols', required: true, type: 'object' as const },
+          { field: 'scanDepth', required: false, type: 'string' as const }
+        ]
+      },
+      {
+        id: 'fusion_strategy_analysis',
+        name: 'Fusion Strategy Analysis',
+        description: 'Combine multiple analysis techniques using fusion dance',
+        handler: this.fusionStrategyAnalysis.bind(this),
+        validation: [
+          { field: 'strategies', required: true, type: 'object' as const },
+          { field: 'fusionType', required: false, type: 'string' as const }
+        ]
+      },
+      {
+        id: 'saiyan_transformation',
+        name: 'Saiyan Market Transformation',
+        description: 'Transform analysis capabilities based on market power level',
+        handler: this.saiyanTransformation.bind(this),
+        validation: [
+          { field: 'targetPowerLevel', required: false, type: 'number' as const }
+        ]
+      },
+      {
+        id: 'dragon_radar_opportunities',
+        name: 'Dragon Radar Opportunities',
+        description: 'Use Dragon Radar to detect hidden market opportunities',
+        handler: this.dragonRadarOpportunities.bind(this),
+        validation: [
+          { field: 'radarRange', required: false, type: 'number' as const },
+          { field: 'opportunityType', required: false, type: 'string' as const }
+        ]
+      }
+    ];
+
+    dragonBallActions.forEach(action => {
+      this.registerAction(action);
+    });
+  }
+
+  /**
+   * Update power level based on market performance and analysis accuracy
+   */
+  private updatePowerLevel(): void {
+    const baseLevel = 1000;
+    const marketAccuracy = this.calculateMarketAccuracy();
+    const tradingPerformance = this.calculateTradingPerformance();
+    const analysisDepth = this.calculateAnalysisDepth();
+    const kiMultiplier = this.kiLevel / 1000;
+    
+    this.powerLevel = Math.floor(
+      baseLevel + 
+      (marketAccuracy * 2000) + 
+      (tradingPerformance * 3000) + 
+      (analysisDepth * 1000) + 
+      (kiMultiplier * 500)
+    );
+    
+    // Update theme and battle mode based on power level
+    if (this.powerLevel >= 15000) {
+      this.dragonBallTheme = 'Ultra Instinct Market Master';
+      this.battleMode = 'ultra_instinct';
+    } else if (this.powerLevel >= 9000) {
+      this.dragonBallTheme = 'Legendary Super Saiyan Trader';
+      this.battleMode = 'combat';
+    } else if (this.powerLevel >= 5000) {
+      this.dragonBallTheme = 'Super Saiyan Market Analyst';
+      this.battleMode = 'combat';
+    } else {
+      this.dragonBallTheme = 'Saiyan Market Scout';
+      this.battleMode = 'training';
+    }
+  }
+
+  /**
+   * Calculate market analysis accuracy
+   */
+  private calculateMarketAccuracy(): number {
+    // Simplified calculation - in production would use historical prediction accuracy
+    return Math.random() * 0.8 + 0.2; // 0.2-1.0
+  }
+
+  /**
+   * Calculate trading performance metrics
+   */
+  private calculateTradingPerformance(): number {
+    // Simplified calculation - in production would use P&L, Sharpe ratio, etc.
+    return Math.random() * 0.9 + 0.1; // 0.1-1.0
+  }
+
+  /**
+   * Calculate analysis depth and complexity
+   */
+  private calculateAnalysisDepth(): number {
+    const modelCount = this.models.size;
+    const cacheSize = this.analysisCache.size;
+    const strategyCount = this.tradingStrategies.size;
+    
+    return Math.min(1, (modelCount + cacheSize + strategyCount) / 20);
+  }
+
+  /**
+   * Initialize market state with Dragon Ball Z enhancements
    */
   private initializeMarketState(): MarketState {
-    return {
+    const baseState = {
       lastUpdate: new Date(),
       assets: new Map(),
       predictions: new Map(),
@@ -393,6 +573,88 @@ export class MarketAgent extends BaseAgent {
       },
       alerts: []
     };
+    
+    // Enhance with Dragon Ball Z properties
+    (baseState as any).powerLevel = this.powerLevel;
+    (baseState as any).battleConditions = this.assessBattleConditions();
+    (baseState as any).kiFlow = this.calculateKiFlow();
+    (baseState as any).dragonBallLocations = this.scanForDragonBalls();
+    
+    return baseState;
+  }
+
+  /**
+   * Assess current battle conditions in the market
+   */
+  private assessBattleConditions(): any {
+    return {
+      threatLevel: 'medium',
+      battleIntensity: Math.random() * 100,
+      enemyPowerLevels: this.detectEnemyPowerLevels(),
+      alliedForces: this.detectAlliedForces(),
+      strategicAdvantage: this.calculateStrategicAdvantage()
+    };
+  }
+
+  /**
+   * Calculate ki flow in the market
+   */
+  private calculateKiFlow(): any {
+    return {
+      currentKi: this.kiLevel,
+      maxKi: this.kiLevel * 2,
+      regenerationRate: 10,
+      flow: 'increasing',
+      purity: Math.random() * 100
+    };
+  }
+
+  /**
+   * Scan for dragon ball opportunities
+   */
+  private scanForDragonBalls(): any[] {
+    return [
+      { id: 1, star: 1, location: 'Compound Protocol', powerBonus: 1000 },
+      { id: 2, star: 2, location: 'Aave Protocol', powerBonus: 1200 },
+      { id: 3, star: 3, location: 'Takara Protocol', powerBonus: 1500 },
+      { id: 4, star: 4, location: 'Citrex Trading', powerBonus: 2000 },
+      { id: 5, star: 5, location: 'Hidden Arbitrage', powerBonus: 2500 },
+      { id: 6, star: 6, location: 'Yield Farming', powerBonus: 3000 },
+      { id: 7, star: 7, location: 'Perfect Timing', powerBonus: 5000 }
+    ];
+  }
+
+  /**
+   * Detect enemy power levels (market threats)
+   */
+  private detectEnemyPowerLevels(): any[] {
+    return [
+      { name: 'Volatility Beast', powerLevel: Math.random() * 5000 + 2000 },
+      { name: 'Liquidation Demon', powerLevel: Math.random() * 8000 + 3000 },
+      { name: 'Market Manipulation Emperor', powerLevel: Math.random() * 15000 + 5000 }
+    ];
+  }
+
+  /**
+   * Detect allied forces (favorable conditions)
+   */
+  private detectAlliedForces(): any[] {
+    return [
+      { name: 'Bull Market Ki', strength: Math.random() * 100 },
+      { name: 'Liquidity Support', strength: Math.random() * 100 },
+      { name: 'Positive Sentiment Wave', strength: Math.random() * 100 }
+    ];
+  }
+
+  /**
+   * Calculate strategic advantage
+   */
+  private calculateStrategicAdvantage(): number {
+    const marketKnowledge = this.models.size * 10;
+    const adaptability = this.battleMode === 'ultra_instinct' ? 50 : 25;
+    const powerLevel = this.powerLevel / 200;
+    
+    return Math.min(100, marketKnowledge + adaptability + powerLevel);
   }
 
   /**
