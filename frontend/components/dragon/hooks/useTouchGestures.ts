@@ -3,6 +3,8 @@
 import { useState, useRef, useCallback } from 'react'
 import type { TouchGesture, TouchGestureHookReturn } from '../types'
 import { INTERACTION_ZONES } from '../constants'
+import { pipe } from 'fp-ts/function'
+import * as O from 'fp-ts/Option'
 
 interface UseTouchGesturesOptions {
   enabled?: boolean
@@ -39,7 +41,7 @@ export function useTouchGestures({
     touches: TouchList
     positions: Array<{ x: number; y: number }>
   } | null>(null)
-  const longPressTimeoutRef = useRef<NodeJS.Timeout>()
+  const longPressTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
   const initialDistanceRef = useRef<number>(0)
   const initialAngleRef = useRef<number>(0)
 
@@ -58,11 +60,12 @@ export function useTouchGestures({
 
   const getTouchCenter = useCallback((touches: TouchList): { x: number; y: number } => {
     let x = 0, y = 0
-    for (let i = 0; i < touches.length; i++) {
-      x += touches[i].clientX
-      y += touches[i].clientY
+    const touchArray = Array.from(touches)
+    for (let i = 0; i < touchArray.length; i++) {
+      x += touchArray[i].clientX
+      y += touchArray[i].clientY
     }
-    return { x: x / touches.length, y: y / touches.length }
+    return { x: x / touchArray.length, y: y / touchArray.length }
   }, [])
 
   const getVelocity = useCallback((gesture: Partial<TouchGesture>): { x: number; y: number } => {
@@ -103,7 +106,9 @@ export function useTouchGestures({
     touchStartRef.current = {
       time: now,
       touches,
-      positions: Array.from(touches).map(touch => ({ x: touch.clientX, y: touch.clientY }))
+      positions: Array.from(touches)
+        .filter(touch => touch)
+        .map(touch => ({ x: touch.clientX, y: touch.clientY }))
     }
 
     setIsGestureActive(true)
@@ -204,7 +209,7 @@ export function useTouchGestures({
     const duration = now - touchStartRef.current.time
     const endPosition = e.changedTouches.length > 0 
       ? { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY }
-      : getTouchCenter(touchStartRef.current.touches)
+      : getTouchCenter(touchStartRef.current?.touches || ({} as TouchList))
 
     const startPosition = touchStartRef.current.positions[0] || endPosition
     const distance = Math.sqrt(

@@ -274,7 +274,7 @@ try {
       return false
     }
   }
-  window.addEventListener('test', null as any, options)
+  window.addEventListener('test' as any, null as any, options)
   window.removeEventListener('test', null as any, options)
 } catch (e) {}
 
@@ -288,7 +288,7 @@ export function addPerformantListener<K extends keyof WindowEventMap>(
   options?: boolean | AddEventListenerOptions
 ): () => void {
   const finalOptions = type === 'scroll' || type === 'touchmove' 
-    ? { ...options, ...(passiveEventOptions as AddEventListenerOptions) }
+    ? { ...((typeof options === 'object' ? options : {}) || {}), ...(passiveEventOptions as AddEventListenerOptions) }
     : options
   
   element.addEventListener(type as string, listener as EventListener, finalOptions)

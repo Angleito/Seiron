@@ -11,7 +11,7 @@ export default function dynamic<T extends ComponentType<any>>(
   const Component = lazy(async () => {
     const module = await loader()
     return 'default' in module ? module : { default: module }
-  }) as T
+  }) as unknown as T
 
   const DynamicComponent = (props: any) => (
     <Suspense fallback={options?.loading?.() || null}>

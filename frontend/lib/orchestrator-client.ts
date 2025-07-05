@@ -1,4 +1,4 @@
-import { UserIntent, TaskResult, AgentStreamEvent, Either } from '@types/agent'
+import { UserIntent, TaskResult, AgentStreamEvent, Either } from '@/types/agent'
 import { logger } from './logger'
 
 // New adapter-related types

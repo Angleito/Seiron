@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import type { PerformanceMetrics, PerformanceMode, PerformanceHookReturn } from '../types'
-import { PERFORMANCE_THRESHOLDS } from '../constants'
+// import { PERFORMANCE_THRESHOLDS } from '../constants'
 
 export function useAnimationPerformance(
   autoOptimization: boolean = true,
@@ -214,7 +214,6 @@ export function useReducedMotion(): boolean {
 // Performance monitoring utilities
 // Export types
 export type QualityLevel = number; // 0-100 quality level
-export type PerformanceMode = 'quality' | 'balanced' | 'performance';
 
 export const QUALITY_FEATURES = {
   HIGH: 75,

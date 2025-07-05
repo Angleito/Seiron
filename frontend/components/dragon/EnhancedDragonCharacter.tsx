@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion'
+import { useRef, useCallback, useMemo, useEffect } from 'react'
+import { motion, AnimatePresence, useMotionValue, useTransform, type Variants } from 'framer-motion'
 import { useDragonStateMachine } from './hooks/useDragonStateMachine'
 import { useMouseTracking } from './hooks/useMouseTracking'
 import { useTouchGestures } from './hooks/useTouchGestures'
-import { useAnimationPerformance, useReducedMotion } from './hooks/useAnimationPerformance'
+import { useReducedMotion } from './hooks/useAnimationPerformance'
 // Dragon components will be imported here when needed
-import type { EnhancedDragonCharacterProps, DragonState, InteractionType } from './types'
+import type { EnhancedDragonCharacterProps, InteractionType } from './types'
 import { 
   DRAGON_SIZE_CONFIG, 
   DRAGON_ANIMATION_PRESETS, 
@@ -19,7 +19,7 @@ import {
 export function EnhancedDragonCharacter({
   size = 'lg',
   initialState = 'idle',
-  initialMood = 'neutral',
+  // initialMood = 'neutral',
   interactive = true,
   showDragonBalls = true,
   animationConfig = {},
@@ -29,14 +29,14 @@ export function EnhancedDragonCharacter({
   onPowerLevelChange,
   onInteraction,
   className = '',
-  armsVariant = 'crossed',
+  // armsVariant = 'crossed',
   enableCursorTracking = true,
   autoStates = true
 }: EnhancedDragonCharacterProps) {
   const dragonRef = useRef<HTMLDivElement>(null)
-  const [isHovered, setIsHovered] = useState(false)
-  const [dragonsBreathing, setDragonsBreathing] = useState(true)
-  const [touchPosition, setTouchPosition] = useState<{ x: number; y: number } | null>(null)
+  // const [isHovered, setIsHovered] = useState(false)
+  // const [dragonsBreathing, setDragonsBreathing] = useState(true)
+  // const [touchPosition, setTouchPosition] = useState<{ x: number; y: number } | null>(null)
 
   // Merge animation config with defaults
   const config = useMemo(() => ({
@@ -47,7 +47,7 @@ export function EnhancedDragonCharacter({
 
   // Hooks
   const reducedMotion = useReducedMotion()
-  const { performanceMode, qualityLevel } = useAnimationPerformance(config.autoQualityAdjustment)
+  // const { performanceMode } = useAnimationPerformance(config.autoQualityAdjustment)
   const dragon = useDragonStateMachine(initialState)
   
   const mouseTracking = useMouseTracking({
@@ -59,19 +59,19 @@ export function EnhancedDragonCharacter({
 
   const touchGestures = useTouchGestures({
     enabled: interactive && !reducedMotion,
-    onTap: (gesture) => {
-      setTouchPosition(gesture.startPosition)
-      setTimeout(() => setTouchPosition(null), 800)
+    onTap: (_gesture) => {
+      // setTouchPosition(gesture.startPosition)
+      // setTimeout(() => setTouchPosition(null), 800)
       handleInteraction('click')
     },
-    onLongPress: (gesture) => {
-      setTouchPosition(gesture.startPosition)
-      setTimeout(() => setTouchPosition(null), 1200)
+    onLongPress: (_gesture) => {
+      // setTouchPosition(gesture.startPosition)
+      // setTimeout(() => setTouchPosition(null), 1200)
       dragon.actions.triggerSpecialAnimation('pulse')
     },
     onSwipe: (gesture) => {
-      setTouchPosition(gesture.startPosition)
-      setTimeout(() => setTouchPosition(null), 600)
+      // setTouchPosition(gesture.startPosition)
+      // setTimeout(() => setTouchPosition(null), 600)
       
       const dx = gesture.endPosition.x - gesture.startPosition.x
       const dy = gesture.endPosition.y - gesture.startPosition.y
@@ -95,15 +95,15 @@ export function EnhancedDragonCharacter({
   const rotateY = useTransform(mouseX, [-300, 300], [-5, 5])
   
   // Eye tracking position for SVG dragon
-  const [eyePosition, setEyePosition] = useState({ x: 0, y: 0 })
+  // const [eyePosition, setEyePosition] = useState({ x: 0, y: 0 })
   
   // Update eye position when mouse moves
   useEffect(() => {
-    const unsubscribeX = mouseX.onChange((x) => {
-      setEyePosition(prev => ({ ...prev, x }))
+    const unsubscribeX = mouseX.onChange((_x) => {
+      // setEyePosition(prev => ({ ...prev, x }))
     })
-    const unsubscribeY = mouseY.onChange((y) => {
-      setEyePosition(prev => ({ ...prev, y }))
+    const unsubscribeY = mouseY.onChange((_y) => {
+      // setEyePosition(prev => ({ ...prev, y }))
     })
     
     return () => {
@@ -123,13 +123,13 @@ export function EnhancedDragonCharacter({
 
     switch (type) {
       case 'hover':
-        setIsHovered(true)
+        // setIsHovered(true)
         if (dragon.state === 'idle') {
           dragon.actions.setState('attention')
         }
         break
       case 'leave':
-        setIsHovered(false)
+        // setIsHovered(false)
         break
       case 'click':
         if (dragon.state === 'attention') {
@@ -185,7 +185,7 @@ export function EnhancedDragonCharacter({
   }, [autoStates, mouseTracking.isInProximity, mouseTracking.isMouseActive, dragon.state, dragon.actions])
 
   // Animation variants based on state - optimized for SVG container
-  const dragonVariants = {
+  const dragonVariants: Variants = {
     idle: {
       scale: 1,
       rotate: 0,
@@ -307,9 +307,9 @@ export function EnhancedDragonCharacter({
 
   // Particle system
   const DragonParticles = () => {
-    if (!config.enableParticles || reducedMotion || qualityLevel < 50) return null
+    if (!config.enableParticles || reducedMotion) return null
 
-    const particleCount = Math.floor(config.particleCount * (qualityLevel / 100))
+    const particleCount = config.particleCount
 
     return (
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -384,8 +384,7 @@ export function EnhancedDragonCharacter({
           src="/dragon-logo.png"
           alt="Dragon"
           className={`object-contain filter drop-shadow-2xl ${
-            qualityLevel > 75 ? 'quality-high' : 
-            qualityLevel > 40 ? 'quality-medium' : 'quality-low'
+            'quality-medium'
           } ${reducedMotion ? 'motion-reduce' : ''} ${
             dragon.state === 'powering-up' ? 'dragon-powering-up' : ''
           } ${
@@ -433,7 +432,7 @@ export function EnhancedDragonCharacter({
           <div>State: {dragon.state}</div>
           <div>Mood: {dragon.mood}</div>
           <div>Power: {dragon.powerLevel}</div>
-          <div>Quality: {qualityLevel}%</div>
+          <div>Quality: Auto</div>
         </div>
       )}
     </motion.div>

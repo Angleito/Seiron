@@ -213,6 +213,30 @@ export type DragonPart =
   | 'wings' 
   | 'dragon-ball';
 
+// SVG-specific types for enhanced interaction
+export interface SVGInteractionZones {
+  head: SVGElement | null;
+  body: SVGElement | null;
+  leftArm: SVGElement | null;
+  rightArm: SVGElement | null;
+  dragonBalls: SVGElement[] | null;
+}
+
+export interface SVGInteractionState {
+  activeZone: DragonPart | null;
+  hoverPosition: { x: number; y: number } | null;
+  clickPosition: { x: number; y: number } | null;
+  isInteracting: boolean;
+}
+
+export interface SVGAccessibilityProps {
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+  tabIndex?: number;
+  role?: string;
+  focusable?: boolean;
+}
+
 export interface EnhancedMouseTrackingReturn extends MouseTrackingHookReturn {
   getElementAtPosition: (x: number, y: number) => DragonPart | null;
   updateEyeTracking: (mousePosition: { x: number; y: number }) => void;

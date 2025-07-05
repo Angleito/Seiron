@@ -9,7 +9,6 @@ export { EnhancedDragonInteractionSystem } from './EnhancedDragonInteractionSyst
 
 // Seiron Image Component
 export { SeironImage } from './SeironImage'
-export type { default as SeironImage } from './SeironImage'
 
 // Types
 export type {
@@ -38,7 +37,11 @@ export type {
   DragonPart,
   EnhancedMouseTrackingReturn,
   EnhancedTouchGestureReturn,
-  KeyboardNavigationConfig
+  KeyboardNavigationConfig,
+  // SVG Interaction Types
+  SVGInteractionZones,
+  SVGInteractionState,
+  SVGAccessibilityProps
 } from './types'
 
 // Hooks

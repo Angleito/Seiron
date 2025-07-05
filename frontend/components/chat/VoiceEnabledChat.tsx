@@ -9,6 +9,9 @@ import { VoiceInterface, useVoiceInterfaceAudio } from '@components/voice'
 import { ElevenLabsConfig } from '@hooks/voice/useElevenLabsTTS'
 import { ChatErrorBoundary, VoiceErrorBoundary } from '@components/error-boundaries'
 import { logger } from '@lib/logger'
+import { pipe } from 'fp-ts/function'
+import * as O from 'fp-ts/Option'
+import * as A from 'fp-ts/Array'
 
 // Generate unique session ID
 const generateSessionId = () => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -48,7 +51,7 @@ function VoiceEnabledChatContent() {
     retryFailedMessage
   } = useChatStream({
     sessionId,
-    onMessage: (message) => {
+    onMessage: (_message) => {
       // Auto-scroll on new message
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     },
@@ -97,22 +100,27 @@ function VoiceEnabledChatContent() {
   useEffect(() => {
     if (!isVoiceEnabled || messages.length === 0) return
     
-    const lastMessage = messages[messages.length - 1]
-    
-    // Check if it's an AI response and not an error
-    if (lastMessage.type === 'agent' && 
+    pipe(
+      A.last(messages),
+      O.filter((lastMessage: StreamMessage) => 
+        lastMessage.type === 'agent' && 
         !lastMessage.metadata?.error && 
         lastMessage.status === 'delivered' &&
-        !isPlaying) {
-      // Play the AI response
-      playResponse(lastMessage.content).catch(error => {
-        logger.error('Failed to play audio response:', error)
+        !isPlaying
+      ),
+      O.map((lastMessage: StreamMessage) => {
+        // Play the AI response
+        playResponse(lastMessage.content).catch(error => {
+          logger.error('Failed to play audio response:', error)
+        })
       })
-    }
+    )
   }, [messages, isVoiceEnabled, isPlaying, playResponse])
   
   // Message status icon
-  const getStatusIcon = (status?: StreamMessage['status']) => {
+  const getStatusIcon = (status?: StreamMessage['status']): string | null => {
+    if (!status) return null
+    
     switch (status) {
       case 'pending': return '○'
       case 'sending': return '◐'
@@ -131,10 +139,18 @@ function VoiceEnabledChatContent() {
           <div className="flex items-center gap-2">
             <div className={cn(
               "h-2 w-2 rounded-full",
-              connectionStatus.isConnected ? "bg-green-500" : "bg-red-500"
+              pipe(
+                O.fromNullable(connectionStatus),
+                O.map(status => status.isConnected),
+                O.getOrElse(() => false)
+              ) ? "bg-green-500" : "bg-red-500"
             )} />
             <span className="text-sm text-red-700">
-              {connectionStatus.isConnected ? 'Connected' : 'Connecting...'}
+              {pipe(
+                O.fromNullable(connectionStatus),
+                O.map(status => status.isConnected),
+                O.getOrElse(() => false)
+              ) ? 'Connected' : 'Connecting...'}
             </span>
           </div>
           

@@ -225,8 +225,8 @@ export const useElevenLabsTTS = (config: ElevenLabsConfig) => {
 
                       return response.arrayBuffer()
                     },
-                    (error) => {
-                      if (error instanceof TTSError) return error
+                    (error): TTSError => {
+                      if (error && typeof error === 'object' && 'type' in error) return error as TTSError
                       return createTTSError(
                         'NETWORK_ERROR',
                         'Network request failed',
@@ -285,12 +285,12 @@ export const useElevenLabsTTS = (config: ElevenLabsConfig) => {
 
   const preloadAudio = useCallback(
     (texts: string[]): TE.TaskEither<TTSError, void[]> =>
-      TE.traverseArray(texts)((text) =>
+      TE.traverseArray((text: string) =>
         pipe(
           synthesizeSpeech(text),
-          TE.map(() => undefined)
+          TE.map(() => undefined as void)
         )
-      ),
+      )(texts),
     [synthesizeSpeech]
   )
 

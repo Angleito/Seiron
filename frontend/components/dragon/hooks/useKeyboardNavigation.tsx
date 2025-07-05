@@ -6,6 +6,8 @@ import type {
   KeyboardNavigationConfig, 
   SVGAccessibilityProps 
 } from '../types'
+import { pipe } from 'fp-ts/function'
+import * as O from 'fp-ts/Option'
 
 interface UseKeyboardNavigationOptions {
   enabled?: boolean
@@ -105,16 +107,19 @@ export function useKeyboardNavigation({
 
   // Utility: Get element position for focus indicator
   const getElementPosition = useCallback((part: DragonPart): { x: number; y: number; width: number; height: number } | null => {
-    const element = document.querySelector(`[data-dragon-part="${part}"], .dragon-${part}`)
-    if (!element) return null
-
-    const rect = element.getBoundingClientRect()
-    return {
-      x: rect.left,
-      y: rect.top,
-      width: rect.width,
-      height: rect.height
-    }
+    return pipe(
+      O.fromNullable(document.querySelector(`[data-dragon-part="${part}"], .dragon-${part}`)),
+      O.map(element => {
+        const rect = element.getBoundingClientRect()
+        return {
+          x: rect.left,
+          y: rect.top,
+          width: rect.width,
+          height: rect.height
+        }
+      }),
+      O.getOrElse(() => null)
+    )
   }, [])
 
   // Utility: Announce to screen reader
@@ -138,10 +143,14 @@ export function useKeyboardNavigation({
     setAnnouncements(prev => [...prev, announcement])
 
     // Update ARIA live region if available
-    if (ariaLiveRegionRef.current) {
-      ariaLiveRegionRef.current.textContent = message
-      ariaLiveRegionRef.current.setAttribute('aria-live', priority)
-    }
+    pipe(
+      O.fromNullable(ariaLiveRegionRef.current),
+      O.map(region => {
+        region.textContent = message
+        region.setAttribute('aria-live', priority)
+        return region
+      })
+    )
 
     // Clean up old announcements
     setTimeout(() => {
@@ -184,10 +193,14 @@ export function useKeyboardNavigation({
     onPartFocus?.(nextPart)
 
     // Focus the actual element for proper accessibility
-    const element = document.querySelector(`[data-dragon-part="${nextPart}"], .dragon-${nextPart}`)
-    if (element && 'focus' in element) {
-      (element as HTMLElement).focus()
-    }
+    pipe(
+      O.fromNullable(document.querySelector(`[data-dragon-part="${nextPart}"], .dragon-${nextPart}`)),
+      O.filter(element => 'focus' in element),
+      O.map(element => {
+        (element as HTMLElement).focus()
+        return element
+      })
+    )
   }, [enabled, focusableElements, navigationState.focusIndex, getElementPosition, announcements, announceToScreenReader, onPartFocus])
 
   const navigateToPrevious = useCallback(() => {
@@ -226,10 +239,14 @@ export function useKeyboardNavigation({
     onPartFocus?.(prevPart)
 
     // Focus the actual element
-    const element = document.querySelector(`[data-dragon-part="${prevPart}"], .dragon-${prevPart}`)
-    if (element && 'focus' in element) {
-      (element as HTMLElement).focus()
-    }
+    pipe(
+      O.fromNullable(document.querySelector(`[data-dragon-part="${prevPart}"], .dragon-${prevPart}`)),
+      O.filter(element => 'focus' in element),
+      O.map(element => {
+        (element as HTMLElement).focus()
+        return element
+      })
+    )
   }, [enabled, focusableElements, navigationState.focusIndex, getElementPosition, announcements, announceToScreenReader, onPartFocus])
 
   const navigateToElement = useCallback((part: DragonPart) => {
@@ -309,9 +326,14 @@ export function useKeyboardNavigation({
     }))
 
     // Clear actual DOM focus
-    if (document.activeElement && 'blur' in document.activeElement) {
-      (document.activeElement as HTMLElement).blur()
-    }
+    pipe(
+      O.fromNullable(document.activeElement),
+      O.filter(element => 'blur' in element),
+      O.map(element => {
+        (element as HTMLElement).blur()
+        return element
+      })
+    )
   }, [])
 
   // Spatial navigation (arrow keys to nearest element)
@@ -491,19 +513,32 @@ export function useKeyboardNavigation({
     if (!enableFocusTrapping || !navigationState.isNavigating) return
 
     const handleFocusOut = (event: FocusEvent) => {
-      const dragonContainer = document.querySelector('[data-dragon-container]')
-      if (!dragonContainer || !event.relatedTarget) return
-
-      const isWithinDragon = dragonContainer.contains(event.relatedTarget as Node)
-      if (!isWithinDragon && navigationState.currentFocus) {
-        // Return focus to current dragon part
-        setTimeout(() => {
-          const element = document.querySelector(`[data-dragon-part="${navigationState.currentFocus}"]`)
-          if (element && 'focus' in element) {
-            (element as HTMLElement).focus()
+      pipe(
+        O.fromNullable(document.querySelector('[data-dragon-container]')),
+        O.chain(dragonContainer => 
+          pipe(
+            O.fromNullable(event.relatedTarget),
+            O.map(target => ({ dragonContainer, target }))
+          )
+        ),
+        O.map(({ dragonContainer, target }) => {
+          const isWithinDragon = dragonContainer.contains(target as Node)
+          if (!isWithinDragon && navigationState.currentFocus) {
+            // Return focus to current dragon part
+            setTimeout(() => {
+              pipe(
+                O.fromNullable(document.querySelector(`[data-dragon-part="${navigationState.currentFocus}"]`)),
+                O.filter(element => 'focus' in element),
+                O.map(element => {
+                  (element as HTMLElement).focus()
+                  return element
+                })
+              )
+            }, 0)
           }
-        }, 0)
-      }
+          return { dragonContainer, target }
+        })
+      )
     }
 
     document.addEventListener('focusout', handleFocusOut)
@@ -517,7 +552,7 @@ export function useKeyboardNavigation({
 
     return {
       role: 'button',
-      'aria-label': announcements[part] || `Dragon ${part}`,
+      'aria-label': announcementConfig[part] || `Dragon ${part}`,
       'aria-describedby': `dragon-${part}-description`,
       'aria-live': 'polite',
       tabIndex,

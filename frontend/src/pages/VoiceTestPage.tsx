@@ -1,18 +1,18 @@
 import VoiceInterface from '@components/voice/VoiceInterface'
-import { ChatInterface } from '@components/chat/chat-interface'
-import { useState } from 'react'
+// import { ChatInterface } from '@components/chat/chat-interface'
+// import { useState } from 'react'
 
 export default function VoiceTestPage() {
-  const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([])
+  // const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([])
 
-  const handleVoiceCommand = (transcript: string) => {
-    console.log('Voice command received:', transcript)
-    setMessages(prev => [...prev, { role: 'user', content: transcript }])
+  const _handleVoiceCommand = (_transcript: string) => {
+    console.log('Voice command received:', _transcript)
+    // setMessages(prev => [...prev, { role: 'user', content: _transcript }])
   }
 
-  const handleAIResponse = (response: string) => {
-    console.log('AI response:', response)
-    setMessages(prev => [...prev, { role: 'assistant', content: response }])
+  const _handleAIResponse = (_response: string) => {
+    console.log('AI response:', _response)
+    // setMessages(prev => [...prev, { role: 'assistant', content: _response }])
   }
 
   return (
@@ -24,11 +24,11 @@ export default function VoiceTestPage() {
         
         <div className="bg-gray-800 rounded-lg p-6 mb-8">
           <h2 className="text-2xl mb-4">Voice Controls</h2>
-          <VoiceInterface
-            onTranscript={handleVoiceCommand}
-            onAIResponse={handleAIResponse}
-            apiKey={import.meta.env.VITE_ELEVENLABS_API_KEY || ''}
-            voiceId={import.meta.env.VITE_ELEVENLABS_VOICE_ID || ''}
+          <VoiceInterface 
+            elevenLabsConfig={{
+              apiKey: import.meta.env.VITE_ELEVENLABS_API_KEY || '',
+              voiceId: import.meta.env.VITE_ELEVENLABS_VOICE_ID || ''
+            }}
           />
         </div>
 

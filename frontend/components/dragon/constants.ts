@@ -267,6 +267,21 @@ export const DRAGON_COLORS = {
     primary: 'rgba(239, 68, 68, 1.0)',
     secondary: 'rgba(251, 146, 60, 0.8)',
     accent: 'rgba(252, 211, 77, 0.6)'
+  },
+  'arms-crossed': {
+    primary: 'rgba(239, 68, 68, 0.5)',
+    secondary: 'rgba(251, 146, 60, 0.3)',
+    accent: 'rgba(252, 211, 77, 0.2)'
+  },
+  'sleeping': {
+    primary: 'rgba(239, 68, 68, 0.2)',
+    secondary: 'rgba(251, 146, 60, 0.1)',
+    accent: 'rgba(252, 211, 77, 0.05)'
+  },
+  'awakening': {
+    primary: 'rgba(239, 68, 68, 0.6)',
+    secondary: 'rgba(251, 146, 60, 0.4)',
+    accent: 'rgba(252, 211, 77, 0.3)'
   }
 } as const;
 
@@ -295,4 +310,11 @@ export const ORBITAL_PHYSICS = {
 // Default Animation Configuration
 export const DEFAULT_DRAGON_CONFIG: DragonAnimationConfig = DRAGON_ANIMATION_PRESETS.balanced;
 
-export const DEFAULT_DRAGON_BALL_CONFIG: DragonBallConfig = DRAGON_BALL_PRESETS.classic;
+export const DEFAULT_DRAGON_BALL_CONFIG: DragonBallConfig = DRAGON_BALL_PRESETS.classic || {
+  count: 7,
+  orbitPattern: 'circular',
+  orbitSpeed: 1.0,
+  orbitRadius: 150,
+  individualAnimation: true,
+  interactionEnabled: true
+};

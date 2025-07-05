@@ -69,7 +69,7 @@ export default defineConfig({
       name: 'accessibility',
       use: {
         ...devices['Desktop Chrome'],
-        reducedMotion: 'reduce',
+        // reducedMotion: 'reduce',
         forcedColors: 'active',
       },
       testMatch: '**/accessibility/*.spec.ts',

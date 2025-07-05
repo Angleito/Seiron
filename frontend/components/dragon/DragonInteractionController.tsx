@@ -142,14 +142,15 @@ export function DragonInteractionProvider({
   
   // Touch gestures
   const { 
-    isTouching, 
-    touchPosition, 
-    gesture 
-  } = useTouchGestures(dragonRef)
+    isGestureActive, 
+    currentGesture
+  } = useTouchGestures()
   
   // Update performance mode
   useEffect(() => {
-    dispatch({ type: 'SET_PERFORMANCE_MODE', payload: performanceMode })
+    const mappedMode = performanceMode === 'quality' ? 'full' : 
+                      performanceMode === 'balanced' ? 'reduced' : 'minimal'
+    dispatch({ type: 'SET_PERFORMANCE_MODE', payload: mappedMode })
   }, [performanceMode])
   
   // Calculate distance and orientation
@@ -165,7 +166,7 @@ export function DragonInteractionProvider({
     }
     
     // Use touch position if touching, otherwise mouse position
-    const interactionPoint = isTouching ? touchPosition : mousePosition
+    const interactionPoint = isGestureActive && currentGesture ? currentGesture.endPosition : mousePosition
     
     // Calculate distance
     const distance = Math.sqrt(
@@ -195,7 +196,7 @@ export function DragonInteractionProvider({
     }
     
     // Update state
-    const isInteracting = isTouching || (isMouseActive && distance < ACTIVE_DISTANCE)
+    const isInteracting = isGestureActive || (isMouseActive && distance < ACTIVE_DISTANCE)
     const newState = calculateState(distance, isInteracting, state.state)
     
     if (newState !== state.state) {
@@ -210,7 +211,7 @@ export function DragonInteractionProvider({
         dispatch({ type: 'UPDATE_LAST_INTERACTION' })
       }
     }
-  }, [mousePosition, touchPosition, isTouching, isMouseActive, dragonRef, state.state, state.orientation, state.intensity])
+  }, [mousePosition, currentGesture, isGestureActive, isMouseActive, dragonRef, state.state, state.orientation, state.intensity])
   
   // Handle idle timeout
   useEffect(() => {
@@ -238,23 +239,23 @@ export function DragonInteractionProvider({
   
   // Update touch state
   useEffect(() => {
-    if (state.isTouching !== isTouching) {
-      dispatch({ type: 'SET_TOUCHING', payload: isTouching })
+    if (state.isTouching !== isGestureActive) {
+      dispatch({ type: 'SET_TOUCHING', payload: isGestureActive })
     }
-  }, [isTouching, state.isTouching])
+  }, [isGestureActive, state.isTouching])
   
   // Handle gestures
   useEffect(() => {
-    if (!gesture) return
+    if (!currentGesture) return
     
-    switch (gesture.type) {
+    switch (currentGesture.type) {
       case 'tap':
         if (state.state !== 'active') {
           dispatch({ type: 'SET_STATE', payload: 'active' })
         }
         dispatch({ type: 'UPDATE_LAST_INTERACTION' })
         break
-      case 'hold':
+      case 'long-press':
         if (state.state !== 'ready') {
           dispatch({ type: 'SET_STATE', payload: 'ready' })
         }
@@ -271,7 +272,7 @@ export function DragonInteractionProvider({
         }
         break
     }
-  }, [gesture, state.state, state.intensity])
+  }, [currentGesture, state.state, state.intensity])
   
   // Action creators
   const actions: DragonInteractionActions = {

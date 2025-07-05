@@ -178,7 +178,7 @@ export function DragonAnimationDemo() {
       </div>
 
       {/* Import responsive styles */}
-      <style jsx global>{`
+      <style>{`
         @import '/styles/dragon-responsive.css';
       `}</style>
     </div>

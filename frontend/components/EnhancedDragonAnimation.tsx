@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, useAnimation, useMotionValue, useTransform, AnimatePresence } from 'framer-motion'
+import { motion, useAnimation, useMotionValue, useTransform, AnimatePresence, type Variants } from 'framer-motion'
 import { useEffect, useState, useRef } from 'react'
 
 interface EnhancedDragonAnimationProps {
@@ -41,7 +41,7 @@ export function EnhancedDragonAnimation({
   const rotateY = useTransform(mouseX, [-300, 300], [-5, 5])
 
   // Breathing animation variant
-  const breathingVariants = {
+  const breathingVariants: Variants = {
     idle: {
       scale: [1, 1.02, 1],
       transition: {
@@ -53,7 +53,7 @@ export function EnhancedDragonAnimation({
   }
 
   // Dragon state variants
-  const dragonVariants = {
+  const dragonVariants: Variants = {
     idle: {
       scale: 1,
       filter: "brightness(1) contrast(1)",
@@ -124,7 +124,7 @@ export function EnhancedDragonAnimation({
   }
 
   // Dragon ball orbit variants
-  const dragonBallOrbitVariants = {
+  const dragonBallOrbitVariants: Variants = {
     normal: {
       rotate: 360,
       transition: {
@@ -144,7 +144,7 @@ export function EnhancedDragonAnimation({
   }
 
   // Aura pulse animation
-  const auraPulseVariants = {
+  const auraPulseVariants: Variants = {
     idle: {
       opacity: [0.3, 0.5, 0.3],
       scale: [1, 1.1, 1],

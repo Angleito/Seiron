@@ -19,6 +19,11 @@ export function DragonShowcase() {
   
   const [powerLevel, setPowerLevel] = useState(1000)
   const [currentFPS, setCurrentFPS] = useState(60)
+  
+  // SVG Configuration states
+  const [renderMode, setRenderMode] = useState<'svg' | 'png' | 'auto'>('svg')
+  const [svgQuality, setSvgQuality] = useState<'minimal' | 'standard' | 'enhanced'>('standard')
+  const [enableSVGAnimations, setEnableSVGAnimations] = useState(true)
 
   const deviceType = detectDeviceType()
 
@@ -175,7 +180,7 @@ export function DragonShowcase() {
                   <label className="block text-sm text-gray-300 mb-1">Render Mode</label>
                   <select 
                     value={renderMode}
-                    onChange={(e) => setRenderMode(e.target.value as RenderMode)}
+                    onChange={(e) => setRenderMode(e.target.value as 'svg' | 'png' | 'auto')}
                     className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600"
                   >
                     <option value="svg">SVG (Recommended)</option>
@@ -188,7 +193,7 @@ export function DragonShowcase() {
                   <label className="block text-sm text-gray-300 mb-1">SVG Quality</label>
                   <select 
                     value={svgQuality}
-                    onChange={(e) => setSvgQuality(e.target.value as SVGQuality)}
+                    onChange={(e) => setSvgQuality(e.target.value as 'minimal' | 'standard' | 'enhanced')}
                     className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600"
                     disabled={renderMode === 'png'}
                   >

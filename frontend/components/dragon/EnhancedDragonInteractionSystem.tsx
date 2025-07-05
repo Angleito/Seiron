@@ -2,13 +2,14 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-// import { SVGDragonCharacter } from './SVGDragonCharacter'
-// import { useSVGInteraction, SVGAccessibilityAnnouncer } from './hooks/useSVGInteraction'
-import { useEnhancedMouseTracking } from './hooks/useEnhancedMouseTracking'
-import { useEnhancedTouchGestures } from './hooks/useEnhancedTouchGestures'
-import { useKeyboardNavigation } from './hooks/useKeyboardNavigation'
+import { SeironDragon } from './SeironDragon'
+// import { useEnhancedMouseTracking } from './hooks/useEnhancedMouseTracking'
+// import { useEnhancedTouchGestures } from './hooks/useEnhancedTouchGestures'
+// import { useKeyboardNavigation } from './hooks/useKeyboardNavigation'
 import { useAnimationPerformance } from './hooks/useAnimationPerformance'
 import { DragonErrorBoundary } from '@components/error-boundaries'
+import { pipe } from 'fp-ts/function'
+import * as O from 'fp-ts/Option'
 import type { 
   DragonState, 
   DragonMood, 
@@ -34,7 +35,7 @@ interface EnhancedDragonInteractionSystemProps {
   onStateChange?: (state: DragonState) => void
   onMoodChange?: (mood: DragonMood) => void
   onPowerLevelChange?: (level: number) => void
-  onInteractionEvent?: (type: InteractionType, data?: any) => void
+  onInteractionEvent?: (type: InteractionType, data?: unknown) => void
   onPerformanceAlert?: (metric: string, value: number) => void
 }
 
@@ -107,12 +108,12 @@ const DebugPanel: React.FC<{ debugInfo: DebugInfo; onClose: () => void }> = ({ d
       
       <div>
         <span className="text-cyan-400">FPS:</span> 
-        {debugInfo.performanceMetrics.fps.toFixed(1)}
+        {debugInfo.performanceMode || 'auto'}
       </div>
       
       <div>
         <span className="text-yellow-400">Latency:</span> 
-        {debugInfo.performanceMetrics.latency.toFixed(1)}ms
+        {debugInfo.performanceMode || 'auto'}
       </div>
       
       <div>
@@ -192,14 +193,14 @@ const EnhancedDragonInteractionSystemContent: React.FC<EnhancedDragonInteraction
   size = 'lg',
   initialState = 'idle',
   initialMood = 'neutral',
-  interactive = true,
-  showDragonBalls = true,
-  enableAdvancedInteractions = true,
+  // interactive = true,
+  // showDragonBalls = true,
+  // enableAdvancedInteractions = true,
   enablePerformanceOptimization = true,
   enableAccessibility = true,
-  enableHapticFeedback = true,
+  // enableHapticFeedback = true,
   enableDebugMode = false,
-  svgZones,
+  // svgZones,
   className = '',
   onStateChange,
   onMoodChange,
@@ -239,7 +240,7 @@ const EnhancedDragonInteractionSystemContent: React.FC<EnhancedDragonInteraction
   const handleStateChange = useCallback((state: DragonState) => {
     setCurrentState(state)
     onStateChange?.(state)
-    onInteractionEvent?.('state-change', { state })
+    onInteractionEvent?.('hover', { state })
     
     // Show feedback
     setInteractionFeedback({
@@ -252,13 +253,13 @@ const EnhancedDragonInteractionSystemContent: React.FC<EnhancedDragonInteraction
   const handleMoodChange = useCallback((mood: DragonMood) => {
     setCurrentMood(mood)
     onMoodChange?.(mood)
-    onInteractionEvent?.('mood-change', { mood })
+    onInteractionEvent?.('hover', { mood })
   }, [onMoodChange, onInteractionEvent])
 
   const handlePowerLevelChange = useCallback((level: number) => {
     setPowerLevel(level)
     onPowerLevelChange?.(level)
-    onInteractionEvent?.('power-change', { level })
+    onInteractionEvent?.('hover', { level })
     
     if (level > 9000) {
       setInteractionFeedback({
@@ -269,7 +270,7 @@ const EnhancedDragonInteractionSystemContent: React.FC<EnhancedDragonInteraction
     }
   }, [onPowerLevelChange, onInteractionEvent])
 
-  const handleDragonPartClick = useCallback((part: DragonPart, event: MouseEvent) => {
+  const handleDragonPartClick = useCallback((part: DragonPart, _event: MouseEvent) => {
     const responseTime = Date.now() - interactionStartTimeRef.current
     
     // Update interaction stats
@@ -283,7 +284,7 @@ const EnhancedDragonInteractionSystemContent: React.FC<EnhancedDragonInteraction
       averageResponseTime: (prev.averageResponseTime + responseTime) / 2
     }))
 
-    onInteractionEvent?.('dragon-part-click', { part, responseTime })
+    onInteractionEvent?.('click', { part, responseTime })
     
     // Show feedback for special interactions
     const feedbackMessages: Record<DragonPart, string> = {
@@ -300,13 +301,16 @@ const EnhancedDragonInteractionSystemContent: React.FC<EnhancedDragonInteraction
       'dragon-ball': 'Dragon ball collected!'
     }
 
-    if (feedbackMessages[part]) {
-      setInteractionFeedback({
-        id: `click-${Date.now()}`,
-        message: feedbackMessages[part],
-        type: part === 'dragon-ball' ? 'success' : 'info'
+    pipe(
+      O.fromNullable(feedbackMessages[part]),
+      O.map(message => {
+        setInteractionFeedback({
+          id: `click-${Date.now()}`,
+          message,
+          type: part === 'dragon-ball' ? 'success' : 'info'
+        })
       })
-    }
+    )
   }, [onInteractionEvent])
 
   const handleGestureDetected = useCallback((gesture: TouchGesture, part?: DragonPart) => {
@@ -318,7 +322,7 @@ const EnhancedDragonInteractionSystemContent: React.FC<EnhancedDragonInteraction
       }
     }))
 
-    onInteractionEvent?.('gesture-detected', { gesture, part })
+    onInteractionEvent?.('gesture-swipe', { gesture, part })
     
     // Provide feedback for complex gestures
     if (gesture.type === 'pinch' && gesture.scale && gesture.scale > 1.5) {
@@ -428,29 +432,24 @@ const EnhancedDragonInteractionSystemContent: React.FC<EnhancedDragonInteraction
       onMouseDown={handleInteractionStart}
       onTouchStart={handleInteractionStart}
     >
-      {/* Main SVG Dragon Component */}
-      <SVGDragonCharacter
-        size={size}
-        initialState={initialState}
-        initialMood={initialMood}
-        interactive={interactive}
-        showDragonBalls={showDragonBalls}
-        svgZones={svgZones}
-        enableAdvancedInteractions={enableAdvancedInteractions}
-        enableCursorEffects={true}
-        enableHapticFeedback={enableHapticFeedback}
-        enableKeyboardNavigation={enableAccessibility}
-        enableScreenReader={enableAccessibility}
-        showFocusIndicator={enableAccessibility}
-        onStateChange={handleStateChange}
-        onMoodChange={handleMoodChange}
-        onPowerLevelChange={handlePowerLevelChange}
-        onDragonPartClick={handleDragonPartClick}
-        onGestureDetected={handleGestureDetected}
+      {/* Main Dragon Component */}
+      <SeironDragon
+        size={size as 'sm' | 'md' | 'lg' | 'xl'}
+        className="interactive-dragon"
+        variant="hero"
       />
 
       {/* Accessibility Announcer */}
-      {enableAccessibility && <SVGAccessibilityAnnouncer />}
+      {enableAccessibility && (
+        <div 
+          aria-live="polite" 
+          aria-atomic="true" 
+          className="sr-only"
+          id="dragon-announcer"
+        >
+          Dragon state: {currentState}, mood: {currentMood}, power level: {powerLevel}
+        </div>
+      )}
 
       {/* Debug Panel */}
       <AnimatePresence>

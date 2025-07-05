@@ -54,7 +54,6 @@
     "@types/react-dom": "^18",
     "axe-core": "^4.8.4",
     "eslint": "^8",
-    "@types/react-router-dom": "^6.31.0",
     "@vitejs/plugin-react": "^4.4.4",
     "eslint-plugin-react": "^7.36.0",
     "eslint-plugin-react-hooks": "^5.1.0",

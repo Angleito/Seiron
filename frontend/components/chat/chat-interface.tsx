@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { Send, Bot, Loader2, Sparkles, Search, TrendingUp, Activity, Zap } from 'lucide-react'
+import { Send, Sparkles, Search, TrendingUp, Activity, Zap } from 'lucide-react'
 import { cn } from '@lib/utils'
-import { AgentMessage, AgentStreamEvent } from '@types/agent'
+import { AgentStreamEvent } from '@/types/agent'
 import { getOrchestrator } from '@lib/orchestrator-client'
 import { ChatStreamService, StreamMessage, TypingIndicator, ConnectionStatus } from './ChatStreamService'
 import { Subscription } from 'rxjs'
@@ -346,7 +346,7 @@ export function ChatInterface() {
             <span className="text-xs text-red-600">
               {hiveInsights.length} AI insights available
             </span>
-            {hiveInsights.slice(0, 2).map((insight, index) => (
+            {hiveInsights.slice(0, 2).map((insight) => (
               <span key={insight.id} className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
                 {insight.type}: {insight.confidence}% confidence
               </span>

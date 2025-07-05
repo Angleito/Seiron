@@ -1,9 +1,62 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
-import * as E from 'fp-ts/Either'
 import * as TE from 'fp-ts/TaskEither'
 import { pipe } from 'fp-ts/function'
-import { Observable, fromEvent, merge, Subject } from 'rxjs'
-import { map, filter, distinctUntilChanged, takeUntil } from 'rxjs/operators'
+import { fromEvent, merge, Subject } from 'rxjs'
+import { map, distinctUntilChanged, takeUntil } from 'rxjs/operators'
+
+// Web Speech API type declarations
+declare global {
+  interface Window {
+    SpeechRecognition: typeof SpeechRecognition
+    webkitSpeechRecognition: typeof SpeechRecognition
+  }
+  
+  interface SpeechRecognition extends EventTarget {
+    continuous: boolean
+    interimResults: boolean
+    lang: string
+    start(): void
+    stop(): void
+    abort(): void
+    onerror: (event: SpeechRecognitionErrorEvent) => void
+    onresult: (event: SpeechRecognitionEvent) => void
+    onstart: () => void
+    onend: () => void
+  }
+
+  interface SpeechRecognitionEvent {
+    results: SpeechRecognitionResultList
+    resultIndex: number
+  }
+
+  interface SpeechRecognitionResultList {
+    length: number
+    item(index: number): SpeechRecognitionResult
+    [index: number]: SpeechRecognitionResult
+  }
+
+  interface SpeechRecognitionResult {
+    length: number
+    item(index: number): SpeechRecognitionAlternative
+    [index: number]: SpeechRecognitionAlternative
+    isFinal: boolean
+  }
+
+  interface SpeechRecognitionAlternative {
+    transcript: string
+    confidence: number
+  }
+
+  interface SpeechRecognitionErrorEvent extends Event {
+    error: string
+    message: string
+  }
+
+  const SpeechRecognition: {
+    prototype: SpeechRecognition
+    new (): SpeechRecognition
+  }
+}
 
 export interface SpeechError {
   type: 'NO_SUPPORT' | 'PERMISSION_DENIED' | 'NETWORK' | 'UNKNOWN'
@@ -42,10 +95,12 @@ const extractTranscript = (event: SpeechRecognitionEvent): {
 
   for (let i = event.resultIndex; i < event.results.length; i++) {
     const result = event.results[i]
-    if (result.isFinal) {
-      transcript += result[0].transcript
-    } else {
-      interimTranscript += result[0].transcript
+    if (result && result.length > 0) {
+      if (result.isFinal) {
+        transcript += result[0]?.transcript || ''
+      } else {
+        interimTranscript += result[0]?.transcript || ''
+      }
     }
   }
 

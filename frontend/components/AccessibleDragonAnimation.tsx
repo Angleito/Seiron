@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { ResponsiveDragonAnimation } from './ResponsiveDragonAnimation'
 import { useResponsive } from '@hooks/useResponsive'
 
@@ -55,22 +55,24 @@ export function AccessibleDragonAnimation({
     - Press Tab to navigate to other elements
   `.trim()
 
-  // Handle state changes with announcements
-  const handleStateChange = (newState: 'idle' | 'active' | 'powered') => {
+  // Handle state changes with announcements (available for future use)
+  const _handleStateChange = useCallback((newState: 'idle' | 'active' | 'powered') => {
     setDragonState(newState)
     
-    switch (newState) {
-      case 'idle':
-        announce('Dragon is resting')
-        break
-      case 'active':
-        announce('Dragon is awakening')
-        break
-      case 'powered':
-        announce('Dragon is powered up and ready')
-        break
+    if (announceStateChanges) {
+      switch (newState) {
+        case 'idle':
+          announce('Dragon is resting')
+          break
+        case 'active':
+          announce('Dragon is awakening')
+          break
+        case 'powered':
+          announce('Dragon is powered up and ready')
+          break
+      }
     }
-  }
+  }, [announceStateChanges, announce])
 
   // Cleanup
   useEffect(() => {
@@ -121,10 +123,11 @@ export function AccessibleDragonAnimation({
           autoScale={autoScale}
           performanceMode={prefersReducedMotion ? 'low' : 'auto'}
         />
+        {/* handleStateChange is available for future state change handling */}
       </div>
 
       {/* Visual focus indicator for keyboard navigation */}
-      <style jsx>{`
+      <style>{`
         :focus-visible {
           outline: 3px solid ${shouldUseHighContrast ? '#000' : '#FCD34D'};
           outline-offset: 4px;

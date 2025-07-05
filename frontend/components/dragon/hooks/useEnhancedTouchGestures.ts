@@ -9,6 +9,9 @@ import type {
   EnhancedTouchGestureReturn 
 } from '../types'
 import { INTERACTION_ZONES } from '../constants'
+import { pipe } from 'fp-ts/function'
+import * as O from 'fp-ts/Option'
+import * as A from 'fp-ts/Array'
 
 interface UseEnhancedTouchGesturesOptions {
   enabled?: boolean
@@ -26,7 +29,7 @@ interface TouchGestureContext {
   dragonBallId: number | null
   gestureSequence: TouchGesture[]
   isSequentialGesture: boolean
-  contextualData: Record<string, any>
+  contextualData: Record<string, unknown>
 }
 
 interface GestureTrail {
@@ -243,18 +246,22 @@ export function useEnhancedTouchGestures({
       const newActiveTouches = new Map(prev.activeTouches)
 
       if (type === 'start' || type === 'move') {
-        for (let i = 0; i < touches.length; i++) {
-          const touch = touches[i]
-          const { part } = getSVGElementAtPosition(touch.clientX, touch.clientY)
-          newActiveTouches.set(touch.identifier, {
-            x: touch.clientX,
-            y: touch.clientY,
-            part
-          })
+        const touchArray = Array.from(touches)
+        for (const touch of touchArray) {
+          if (touch && typeof touch.identifier === 'number') {
+            const { part } = getSVGElementAtPosition(touch.clientX, touch.clientY)
+            newActiveTouches.set(touch.identifier, {
+              x: touch.clientX,
+              y: touch.clientY,
+              part
+            })
+          }
         }
       } else if (type === 'end') {
         // Keep existing touches that are still active
-        const activeTouchIds = Array.from(touches).map(t => t.identifier)
+        const activeTouchIds = Array.from(touches)
+          .filter(t => t && typeof t.identifier === 'number')
+          .map(t => t.identifier)
         for (const [id] of newActiveTouches) {
           if (!activeTouchIds.includes(id)) {
             newActiveTouches.delete(id)
@@ -375,17 +382,20 @@ export function useEnhancedTouchGestures({
 
   const expandTouchTarget = useCallback((part: DragonPart, expansion: number) => {
     // Implementation for expanding touch targets for better mobile UX
-    const element = document.querySelector(`[data-dragon-part="${part}"]`)
-    if (element) {
-      const rect = element.getBoundingClientRect()
-      const expandedTarget = {
-        x: rect.left - expansion / 2,
-        y: rect.top - expansion / 2,
-        width: rect.width + expansion,
-        height: rect.height + expansion
-      }
-      svgTouchTargets.set(part, expandedTarget)
-    }
+    pipe(
+      O.fromNullable(document.querySelector(`[data-dragon-part="${part}"]`)),
+      O.map(element => {
+        const rect = element.getBoundingClientRect()
+        const expandedTarget = {
+          x: rect.left - expansion / 2,
+          y: rect.top - expansion / 2,
+          width: rect.width + expansion,
+          height: rect.height + expansion
+        }
+        svgTouchTargets.set(part, expandedTarget)
+        return expandedTarget
+      })
+    )
   }, [])
 
   const handleSVGTouch = useCallback((part: DragonPart, event: React.TouchEvent) => {
@@ -395,20 +405,23 @@ export function useEnhancedTouchGestures({
     handleMultiTouch(event.touches, 'start')
 
     // Create synthetic gesture for direct SVG interaction
-    const touch = event.touches[0]
-    if (touch) {
-      const syntheticGesture: TouchGesture = {
-        type: 'tap',
-        startTime: Date.now(),
-        duration: 0,
-        startPosition: { x: touch.clientX, y: touch.clientY },
-        endPosition: { x: touch.clientX, y: touch.clientY },
-        distance: 0,
-        velocity: { x: 0, y: 0 }
-      }
+    pipe(
+      O.fromNullable(event.touches[0]),
+      O.map(touch => {
+        const syntheticGesture: TouchGesture = {
+          type: 'tap',
+          startTime: Date.now(),
+          duration: 0,
+          startPosition: { x: touch.clientX, y: touch.clientY },
+          endPosition: { x: touch.clientX, y: touch.clientY },
+          distance: 0,
+          velocity: { x: 0, y: 0 }
+        }
 
-      handleEnhancedGesture(syntheticGesture, 'direct-touch')
-    }
+        handleEnhancedGesture(syntheticGesture, 'direct-touch')
+        return syntheticGesture
+      })
+    )
   }, [handleMultiTouch, handleEnhancedGesture])
 
   // Cleanup trails periodically
@@ -433,15 +446,15 @@ export function useEnhancedTouchGestures({
     ...baseTouchGestures.gestureHandlers,
     onTouchStart: (e: React.TouchEvent) => {
       gestureStartTimeRef.current = Date.now()
-      handleMultiTouch(e.touches, 'start')
+      handleMultiTouch(e.touches as any, 'start')
       baseTouchGestures.gestureHandlers.onTouchStart(e)
     },
     onTouchMove: (e: React.TouchEvent) => {
-      handleMultiTouch(e.touches, 'move')
+      handleMultiTouch(e.touches as any, 'move')
       baseTouchGestures.gestureHandlers.onTouchMove(e)
     },
     onTouchEnd: (e: React.TouchEvent) => {
-      handleMultiTouch(e.changedTouches, 'end')
+      handleMultiTouch(e.changedTouches as any, 'end')
       baseTouchGestures.gestureHandlers.onTouchEnd(e)
     }
   }

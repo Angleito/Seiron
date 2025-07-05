@@ -2,16 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { ChatStreamService } from '../ChatStreamService'
-import { combineLatest, interval, merge } from 'rxjs'
+import { combineLatest, interval } from 'rxjs'
 import { 
   map, 
   filter, 
   scan, 
   debounceTime, 
-  distinctUntilChanged,
-  switchMap,
-  catchError,
-  take
+  distinctUntilChanged
 } from 'rxjs/operators'
 import * as A from 'fp-ts/Array'
 import * as O from 'fp-ts/Option'
@@ -36,12 +33,15 @@ export function StreamProcessingExample() {
     // Example 1: Message velocity calculation
     const messageVelocity$ = chatService.messages$.pipe(
       // Buffer messages in 5-second windows
-      scan((acc, msg) => {
+      scan((acc: Array<{ msg: any; timestamp: number }>, msg) => {
         const now = Date.now()
         const window = 5000 // 5 seconds
-        const recentMessages = [...acc, { msg, timestamp: now }]
-          .filter(item => now - item.timestamp < window)
-        return recentMessages
+        const newItem = { msg, timestamp: now }
+        
+        return pipe(
+          [...acc, newItem],
+          A.filter(item => now - item.timestamp < window)
+        )
       }, [] as Array<{ msg: any; timestamp: number }>),
       
       // Calculate messages per second
@@ -52,43 +52,77 @@ export function StreamProcessingExample() {
     )
     
     // Example 2: Response time analytics
+    interface ResponseTimeState {
+      lastUserMsg: O.Option<any>
+      pending: boolean
+      times: number[]
+    }
+    
     const responseTime$ = chatService.messages$.pipe(
       // Pair user messages with agent responses
-      scan((acc, msg) => {
+      scan((acc: ResponseTimeState, msg) => {
         if (msg.type === 'user') {
-          return { ...acc, lastUserMsg: msg, pending: true }
+          return { ...acc, lastUserMsg: O.some(msg), pending: true }
         } else if (msg.type === 'agent' && acc.pending) {
-          const responseTime = msg.timestamp.getTime() - acc.lastUserMsg.timestamp.getTime()
-          return { ...acc, pending: false, times: [...acc.times, responseTime] }
+          return pipe(
+            acc.lastUserMsg,
+            O.fold(
+              () => acc,
+              (lastMsg) => {
+                const responseTime = msg.timestamp.getTime() - lastMsg.timestamp.getTime()
+                return { 
+                  ...acc, 
+                  pending: false, 
+                  times: pipe(
+                    [...acc.times, responseTime],
+                    A.takeRight(10) // Keep last 10 responses
+                  )
+                }
+              }
+            )
+          )
         }
         return acc
-      }, { lastUserMsg: {} as any, pending: false, times: [] as number[] }),
+      }, { lastUserMsg: O.none, pending: false, times: [] } as ResponseTimeState),
       
       // Calculate average response time
-      map(data => {
-        const times = data.times.slice(-10) // Last 10 responses
-        return times.length > 0 
-          ? times.reduce((a, b) => a + b, 0) / times.length 
-          : 0
-      })
+      map(data => 
+        pipe(
+          data.times,
+          A.isEmpty,
+          isEmpty => isEmpty ? 0 : data.times.reduce((a, b) => a + b, 0) / data.times.length
+        )
+      )
     )
     
     // Example 3: Error rate monitoring
+    interface ErrorRateState {
+      events: Array<{ isError: boolean; timestamp: number }>
+      errorRate: number
+    }
+    
     const errorRate$ = chatService.messages$.pipe(
       // Count errors in sliding window
-      scan((acc, msg) => {
-        const isError = msg.status === 'failed' || msg.metadata?.error
+      scan((acc: ErrorRateState, msg) => {
+        const isError = msg.status === 'failed' || Boolean(msg.metadata?.error)
         const now = Date.now()
         const window = 60000 // 1 minute
+        const newEvent = { isError, timestamp: now }
         
-        const events = [...acc.events, { isError, timestamp: now }]
-          .filter(e => now - e.timestamp < window)
-        
-        const errorCount = events.filter(e => e.isError).length
-        const errorRate = events.length > 0 ? errorCount / events.length : 0
-        
-        return { events, errorRate }
-      }, { events: [] as Array<{ isError: boolean; timestamp: number }>, errorRate: 0 }),
+        return pipe(
+          [...acc.events, newEvent],
+          A.filter(e => now - e.timestamp < window),
+          (events) => {
+            const errorCount = pipe(
+              events,
+              A.filter(e => e.isError),
+              A.size
+            )
+            const errorRate = events.length > 0 ? errorCount / events.length : 0
+            return { events, errorRate }
+          }
+        )
+      }, { events: [], errorRate: 0 } as ErrorRateState),
       
       map(data => data.errorRate),
       distinctUntilChanged()
@@ -106,18 +140,25 @@ export function StreamProcessingExample() {
       distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
     )
     
-    // Example 5: Smart message batching for bulk operations
-    const batchedMessages$ = chatService.messages$.pipe(
+    // Example 5: Smart message batching for bulk operations (demonstration)
+    // This shows how to batch messages functionally
+    pipe(
+      chatService.messages$,
       // Only process user messages
       filter(msg => msg.type === 'user'),
       
       // Batch messages that arrive within 2 seconds of each other
-      scan((batch, msg) => {
+      scan((batch: any[], msg) => {
         const now = Date.now()
-        if (batch.length === 0 || now - batch[0].timestamp.getTime() < 2000) {
-          return [...batch, msg]
-        }
-        return [msg]
+        const batchWindow = 2000 // 2 seconds
+        
+        return pipe(
+          batch,
+          A.isEmpty,
+          isEmpty => isEmpty || now - batch[0].timestamp.getTime() < batchWindow
+            ? [...batch, msg]
+            : [msg]
+        )
       }, [] as any[]),
       
       // Emit batch when no new messages for 2 seconds
@@ -132,23 +173,30 @@ export function StreamProcessingExample() {
       }))
     )
     
-    // Example 6: Connection health monitoring
-    const connectionHealth$ = combineLatest([
-      chatService.connectionStatus,
-      interval(1000) // Check every second
-    ]).pipe(
+    // Example 6: Connection health monitoring (demonstration)
+    // This shows functional health monitoring patterns
+    pipe(
+      combineLatest([
+        chatService.connectionStatus,
+        interval(1000) // Check every second
+      ]),
       map(([status]) => {
         const now = Date.now()
         const timeSinceHeartbeat = now - status.lastHeartbeat
-        const health = timeSinceHeartbeat < 60000 ? 'healthy' : 
-                      timeSinceHeartbeat < 120000 ? 'degraded' : 'unhealthy'
+        
+        const health = pipe(
+          timeSinceHeartbeat,
+          time => time < 60000 ? 'healthy' as const :
+                  time < 120000 ? 'degraded' as const : 'unhealthy' as const
+        )
+        
         return { ...status, health }
       }),
       distinctUntilChanged((a, b) => a.health === b.health)
     )
     
-    // Example 7: Message pattern detection
-    const messagePatterns$ = chatService.messageHistory$.pipe(
+    // Example 7: Message pattern detection (currently unused but demonstrates functional patterns)
+    chatService.messageHistory$.pipe(
       map(history => 
         pipe(
           history,
@@ -156,22 +204,31 @@ export function StreamProcessingExample() {
           A.filter(msg => msg.type === 'user'),
           A.map(msg => msg.content.toLowerCase()),
           messages => {
-            // Detect common patterns
-            const hasGreeting = messages.some(m => 
-              /hello|hi|hey|greetings/.test(m)
+            // Detect common patterns using functional approach
+            const hasGreeting = pipe(
+              messages,
+              A.some(m => /hello|hi|hey|greetings/.test(m))
             )
-            const hasQuestion = messages.some(m => 
-              /\?|how|what|when|where|why/.test(m)
+            const hasQuestion = pipe(
+              messages,
+              A.some(m => /\?|how|what|when|where|why/.test(m))
             )
-            const hasCommand = messages.some(m => 
-              /show|display|get|fetch|find/.test(m)
+            const hasCommand = pipe(
+              messages,
+              A.some(m => /show|display|get|fetch|find/.test(m))
+            )
+            
+            const patternCount = pipe(
+              [hasGreeting, hasQuestion, hasCommand],
+              A.filter(Boolean),
+              A.size
             )
             
             return {
               hasGreeting,
               hasQuestion,
               hasCommand,
-              patternCount: [hasGreeting, hasQuestion, hasCommand].filter(Boolean).length
+              patternCount
             }
           }
         )
@@ -185,7 +242,7 @@ export function StreamProcessingExample() {
       responseTime$,
       errorRate$,
       activeAgents$,
-      chatService.messages$.pipe(scan((count, _) => count + 1, 0))
+      chatService.messages$.pipe(scan((count: number, _) => count + 1, 0))
     ]).subscribe(([velocity, avgResponse, errorRate, agents, msgCount]) => {
       setAnalytics({
         messageVelocity: velocity,

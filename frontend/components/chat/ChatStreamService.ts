@@ -1,13 +1,9 @@
-import { Observable, Subject, BehaviorSubject, ReplaySubject, merge, of, throwError, timer, EMPTY } from 'rxjs'
+import { Observable, Subject, BehaviorSubject, merge, of, timer, EMPTY } from 'rxjs'
 import { 
   map, 
-  filter, 
   catchError, 
   retry, 
-  tap, 
   distinctUntilChanged, 
-  debounceTime,
-  switchMap,
   mergeMap,
   concatMap,
   scan,
@@ -16,17 +12,17 @@ import {
   takeUntil,
   delay,
   timeout,
-  bufferTime,
-  throttleTime
+  bufferTime
 } from 'rxjs/operators'
 import * as E from 'fp-ts/Either'
 import * as O from 'fp-ts/Option'
-import * as TE from 'fp-ts/TaskEither'
 import * as A from 'fp-ts/Array'
+import * as Ord from 'fp-ts/Ord'
+import * as N from 'fp-ts/number'
 import { pipe } from 'fp-ts/function'
-import { AgentMessage, AgentStreamEvent, AgentType } from '@types/agent'
-import { getOrchestrator, AdapterAction } from '@lib/orchestrator-client'
-import { logger } from '@lib/logger'
+import { AgentMessage, AgentStreamEvent, AgentType } from '@/types/agent'
+import { getOrchestrator, AdapterAction } from '@/lib/orchestrator-client'
+import { logger } from '@/lib/logger'
 
 // Enhanced message types for streaming
 export interface StreamMessage extends AgentMessage {
@@ -116,10 +112,13 @@ export class ChatStreamService {
   
   private setupMessageStream(): Observable<StreamMessage> {
     return this.messageSubject$.pipe(
-      // Add timestamp if not present
+      // Add timestamp if not present using Option
       map(msg => ({
         ...msg,
-        timestamp: msg.timestamp || new Date()
+        timestamp: pipe(
+          O.fromNullable(msg.timestamp),
+          O.getOrElse(() => new Date())
+        )
       })),
       
       // Add retry logic for failed messages
@@ -163,21 +162,28 @@ export class ChatStreamService {
   private setupMessageHistory(): Observable<StreamMessage[]> {
     return this.messages$.pipe(
       scan((history, msg) => {
-        const updatedHistory = [...history]
-        const existingIndex = updatedHistory.findIndex(m => m.id === msg.id)
-        
-        if (existingIndex >= 0) {
-          updatedHistory[existingIndex] = msg
-        } else {
-          updatedHistory.push(msg)
-        }
-        
-        // Keep only last N messages
-        if (updatedHistory.length > this.config.bufferSize) {
-          updatedHistory.shift()
-        }
-        
-        return updatedHistory
+        return pipe(
+          history,
+          // Find existing message index
+          A.findIndex(m => m.id === msg.id),
+          O.fold(
+            // Message not found, add new message
+            () => pipe(
+              history,
+              A.append(msg),
+              // Keep only last N messages
+              A.takeRight(this.config.bufferSize)
+            ),
+            // Message found, update existing
+            (index) => pipe(
+              history,
+              A.updateAt(index, msg),
+              O.getOrElse(() => [...history, msg]),
+              // Keep only last N messages
+              A.takeRight(this.config.bufferSize)
+            )
+          )
+        )
       }, [] as StreamMessage[]),
       
       startWith([]),
@@ -237,12 +243,18 @@ export class ChatStreamService {
         })
       }
       
-      if (statusData.message) {
-        this.addSystemMessage(
-          `${event.agentType?.replace('_', ' ').replace('agent', 'dragon')}: ${statusData.message}`,
-          event.agentId
+      pipe(
+        O.fromNullable(statusData.message),
+        O.fold(
+          () => {},
+          (message) => {
+            this.addSystemMessage(
+              `${event.agentType?.replace('_', ' ').replace('agent', 'dragon')}: ${message}`,
+              event.agentId
+            )
+          }
         )
-      }
+      )
     }
   }
   
@@ -253,13 +265,19 @@ export class ChatStreamService {
       // Update typing indicator
       this.updateTypingIndicator(event.agentId, event.agentType, true)
       
-      // Add progress message
-      if (progressData.message) {
-        this.addSystemMessage(
-          `${event.agentType?.replace('_', ' ').replace('agent', 'dragon')} is working: ${progressData.message}`,
-          event.agentId
+      // Add progress message using Option
+      pipe(
+        O.fromNullable(progressData.message),
+        O.fold(
+          () => {},
+          (message) => {
+            this.addSystemMessage(
+              `${event.agentType?.replace('_', ' ').replace('agent', 'dragon')} is working: ${message}`,
+              event.agentId
+            )
+          }
         )
-      }
+      )
     }
   }
   
@@ -305,12 +323,15 @@ export class ChatStreamService {
         pipe(
           items,
           A.sortBy([
-            (a: MessageQueueItem, b: MessageQueueItem) => {
+            // Priority ordering (high = 0, normal = 1, low = 2)
+            Ord.fromCompare<MessageQueueItem>((a, b) => {
               const priorityOrder = { high: 0, normal: 1, low: 2 }
-              return priorityOrder[a.priority] - priorityOrder[b.priority]
-            },
-            (a: MessageQueueItem, b: MessageQueueItem) => 
-              a.timestamp - b.timestamp
+              return N.Ord.compare(priorityOrder[a.priority], priorityOrder[b.priority])
+            }),
+            // Timestamp ordering
+            Ord.fromCompare<MessageQueueItem>((a, b) => 
+              N.Ord.compare(a.timestamp, b.timestamp)
+            )
           ])
         )
       ),
@@ -366,9 +387,9 @@ export class ChatStreamService {
   }
   
   private sendMessageInternal(message: StreamMessage): Observable<void> {
-    return new Observable(observer => {
-      const sendTask = TE.tryCatch(
-        async () => {
+    return new Observable<void>(observer => {
+      const sendRequest = async () => {
+        try {
           const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
           const response = await fetch(`${apiBaseUrl}/chat/orchestrate`, {
             method: 'POST',
@@ -385,61 +406,46 @@ export class ChatStreamService {
             throw new Error(`HTTP error! status: ${response.status}`)
           }
           
-          return response.json()
-        },
-        (error) => error as Error
-      )
-      
-      pipe(
-        sendTask,
-        TE.fold(
-          (error) => {
-            // Update message status to failed
-            this.messageSubject$.next({
-              ...message,
-              status: 'failed',
-              metadata: { ...message.metadata, error: error.message }
-            })
-            observer.error(error)
-            return TE.of(void 0)
-          },
-          (data) => {
-            // Update message status to sent
-            this.messageSubject$.next({
-              ...message,
-              status: 'sent'
-            })
-            
-            // Process response
-            if (data.message) {
-              const responseMessage: StreamMessage = {
-                id: (Date.now() + 1).toString(),
-                type: 'agent',
-                agentType: data.agentType,
-                content: data.message,
-                timestamp: new Date(),
-                status: 'delivered',
-                metadata: data.metadata
-              }
-              
-              this.messageSubject$.next(responseMessage)
+          const data = await response.json()
+          
+          // Update message status to sent
+          this.messageSubject$.next({
+            ...message,
+            status: 'sent'
+          })
+          
+          // Process response
+          if (data.message) {
+            const responseMessage: StreamMessage = {
+              id: (Date.now() + 1).toString(),
+              type: 'agent',
+              agentType: data.agentType,
+              content: data.message,
+              timestamp: new Date(),
+              status: 'delivered',
+              metadata: data.metadata
             }
             
-            observer.next()
-            observer.complete()
-            return TE.of(void 0)
+            this.messageSubject$.next(responseMessage)
           }
-        )
-      )()
+          
+          observer.next()
+          observer.complete()
+        } catch (error) {
+          // Update message status to failed
+          this.messageSubject$.next({
+            ...message,
+            status: 'failed',
+            metadata: { ...message.metadata, error: true }
+          })
+          observer.error(error)
+        }
+      }
+      
+      sendRequest()
     }).pipe(
       timeout(this.config.messageTimeout),
-      retry({
-        count: this.config.maxRetries,
-        delay: (error, retryCount) => {
-          logger.error(`Message send attempt ${retryCount} failed:`, error)
-          return timer(this.config.retryDelay * Math.pow(2, retryCount))
-        }
-      }),
+      retry(this.config.maxRetries),
       catchError(error => {
         logger.error('Failed to send message after retries:', error)
         return EMPTY
@@ -482,7 +488,13 @@ export class ChatStreamService {
       content,
       timestamp: new Date(),
       status: 'delivered',
-      metadata: { agentId }
+      metadata: pipe(
+        O.fromNullable(agentId),
+        O.fold(
+          () => ({}),
+          (id) => ({ agentId: id })
+        )
+      )
     }
     
     this.messageSubject$.next(message)
@@ -545,11 +557,17 @@ export class ChatStreamService {
     this.destroy$.next()
     this.destroy$.complete()
     
-    // Close WebSocket
-    if (this.ws) {
-      this.ws.close()
-      this.ws = null
-    }
+    // Close WebSocket using Option
+    pipe(
+      O.fromNullable(this.ws),
+      O.fold(
+        () => {},
+        (ws) => {
+          ws.close()
+          this.ws = null
+        }
+      )
+    )
     
     // Disconnect orchestrator
     const orchestrator = getOrchestrator()
