@@ -72,6 +72,7 @@ export default defineConfig({
         // reducedMotion: 'reduce',
         // Use valid Playwright context options
         colorScheme: 'dark',
+        // forcedColors: 'active', // Removed as this property is not recognized
       },
       testMatch: '**/accessibility/*.spec.ts',
     },

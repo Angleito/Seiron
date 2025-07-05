@@ -1,23 +1,18 @@
 import VoiceInterface from '@components/voice/VoiceInterface'
-// import { ChatInterface } from '@components/chat/chat-interface'
 import { useState } from 'react'
 
 export default function VoiceTestPage() {
-  const [messages] = useState<Array<{ role: string; content: string }>>([])
+  const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([])
 
-  // Suppress unused variable warning - keeping for future chat integration
-  void messages
+  const _handleVoiceCommand = (_transcript: string) => {
+    console.log('Voice command received:', _transcript)
+    setMessages(prev => [...prev, { role: 'user', content: _transcript }])
+  }
 
-  // Voice command handlers available for future integration
-  // const handleVoiceCommand = (transcript: string) => {
-  //   console.log('Voice command received:', transcript)
-  //   setMessages(prev => [...prev, { role: 'user', content: transcript }])
-  // }
-
-  // const handleAIResponse = (response: string) => {
-  //   console.log('AI response:', response)
-  //   setMessages(prev => [...prev, { role: 'assistant', content: response }])
-  // }
+  const _handleAIResponse = (_response: string) => {
+    console.log('AI response:', _response)
+    setMessages(prev => [...prev, { role: 'assistant', content: _response }])
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white p-8">
