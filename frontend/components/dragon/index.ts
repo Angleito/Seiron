@@ -4,12 +4,8 @@
 // Core component
 export { EnhancedDragonCharacter } from './EnhancedDragonCharacter'
 
-// Enhanced SVG Components with Advanced Interactions
-export { SVGDragonCharacter } from './SVGDragonCharacter'
+// Enhanced Dragon Interaction System
 export { EnhancedDragonInteractionSystem } from './EnhancedDragonInteractionSystem'
-
-// SVG Dragon Ball Components
-export * from './svg'
 
 // Types
 export type {
@@ -34,19 +30,11 @@ export type {
   MouseTrackingHookReturn,
   TouchGestureHookReturn,
   PerformanceHookReturn,
-  // Enhanced SVG Interaction Types
-  SVGInteractionZones,
-  SVGPoint,
-  SVGRect,
-  SVGPath,
-  SVGCircle,
-  SVGInteractionEvents,
+  // Enhanced Interaction Types
   DragonPart,
-  SVGInteractionState,
   EnhancedMouseTrackingReturn,
   EnhancedTouchGestureReturn,
-  KeyboardNavigationConfig,
-  SVGAccessibilityProps
+  KeyboardNavigationConfig
 } from './types'
 
 // Hooks
@@ -55,8 +43,7 @@ export { useMouseTracking, useEyeTracking, useProximityDetection } from './hooks
 export { useTouchGestures, useSwipeDirection, useDragonGesturePower } from './hooks/useTouchGestures'
 export { useAnimationPerformance, useReducedMotion, performanceUtils } from './hooks/useAnimationPerformance'
 
-// Enhanced Interaction Hooks for SVG Dragons
-export { useSVGInteraction, SVGAccessibilityAnnouncer } from './hooks/useSVGInteraction'
+// Enhanced Interaction Hooks
 export { useEnhancedMouseTracking } from './hooks/useEnhancedMouseTracking'
 export { useEnhancedTouchGestures } from './hooks/useEnhancedTouchGestures'
 export { useKeyboardNavigation } from './hooks/useKeyboardNavigation'

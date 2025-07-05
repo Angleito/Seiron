@@ -142,10 +142,17 @@ export function useMouseTracking({
     // If mouse hasn't moved for a while, gradually reduce tracking intensity
     if (timeSinceUpdate > activityTimeout / 2) {
       // Gradually move target direction back to neutral
-      setTargetDirection(prev => ({
-        x: prev.x * 0.95,
-        y: prev.y * 0.95
-      }))
+      setTargetDirection(prev => {
+        const newX = prev.x * 0.95
+        const newY = prev.y * 0.95
+        
+        // Only update if values have changed significantly
+        if (Math.abs(newX - prev.x) < 0.01 && Math.abs(newY - prev.y) < 0.01) {
+          return prev
+        }
+        
+        return { x: newX, y: newY }
+      })
     }
 
     animationFrameRef.current = requestAnimationFrame(animationLoop)
@@ -229,20 +236,48 @@ export function useEyeTracking(
   maxRotation: number = 15 // degrees
 ) {
   const [eyeRotation, setEyeRotation] = useState({ x: 0, y: 0 })
+  const lastUpdateRef = useRef(0)
+  const animationFrameRef = useRef<number>()
 
   useEffect(() => {
-    const dx = mousePosition.x - dragonPosition.x
-    const dy = mousePosition.y - dragonPosition.y
+    const updateEyeRotation = () => {
+      const now = Date.now()
+      
+      // Throttle updates to 30fps (33ms)
+      if (now - lastUpdateRef.current < 33) {
+        animationFrameRef.current = requestAnimationFrame(updateEyeRotation)
+        return
+      }
+      
+      lastUpdateRef.current = now
+      
+      const dx = mousePosition.x - dragonPosition.x
+      const dy = mousePosition.y - dragonPosition.y
+      
+      // Normalize to max rotation
+      const distance = Math.sqrt(dx * dx + dy * dy)
+      const maxDistance = 200 // pixels
+      
+      const normalizedDistance = Math.min(distance / maxDistance, 1)
+      const rotationX = (dx / distance) * maxRotation * normalizedDistance || 0
+      const rotationY = (dy / distance) * maxRotation * normalizedDistance || 0
+      
+      setEyeRotation(prev => {
+        // Only update if values have changed significantly
+        if (Math.abs(prev.x - rotationX) < 0.1 && Math.abs(prev.y - rotationY) < 0.1) {
+          return prev
+        }
+        return { x: rotationX, y: rotationY }
+      })
+    }
     
-    // Normalize to max rotation
-    const distance = Math.sqrt(dx * dx + dy * dy)
-    const maxDistance = 200 // pixels
+    animationFrameRef.current = requestAnimationFrame(updateEyeRotation)
     
-    const normalizedDistance = Math.min(distance / maxDistance, 1)
-    const rotationX = (dx / distance) * maxRotation * normalizedDistance || 0
-    const rotationY = (dy / distance) * maxRotation * normalizedDistance || 0
-    
-    setEyeRotation({ x: rotationX, y: rotationY })
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
+    }
   }, [mousePosition.x, mousePosition.y, dragonPosition.x, dragonPosition.y, maxRotation])
 
   return eyeRotation

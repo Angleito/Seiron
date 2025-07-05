@@ -25,9 +25,17 @@ export const seiMainnet = defineChain({
 })
 
 // Privy configuration
+const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID || '';
+const clientId = process.env.NEXT_PUBLIC_PRIVY_CLIENT_ID || '';
+
+// Debug logging
+console.log('Privy App ID:', appId);
+console.log('Privy App ID length:', appId.length);
+console.log('Privy App ID present:', !!appId);
+
 export const privyConfig = {
-  appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID || '',
-  clientId: process.env.NEXT_PUBLIC_PRIVY_CLIENT_ID || '',
+  appId,
+  clientId,
   config: {
     appearance: {
       theme: 'dark',

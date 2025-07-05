@@ -5,8 +5,6 @@ import { EnhancedDragonCharacter } from './EnhancedDragonCharacter'
 import { DragonPresets, createDragonConfig, detectDeviceType } from './index'
 import type { DragonState, DragonMood, PerformanceMode } from './types'
 
-type RenderMode = 'svg' | 'png' | 'auto'
-type SVGQuality = 'minimal' | 'standard' | 'enhanced'
 
 export function DragonShowcase() {
   const [selectedPreset, setSelectedPreset] = useState<keyof typeof DragonPresets>('Balanced')
@@ -18,27 +16,28 @@ export function DragonShowcase() {
   const [enableCursorTracking, setEnableCursorTracking] = useState(true)
   const [performanceMode, setPerformanceMode] = useState<PerformanceMode>('balanced')
   
-  // NEW: SVG-specific state
-  const [renderMode, setRenderMode] = useState<RenderMode>('svg')
-  const [svgQuality, setSvgQuality] = useState<SVGQuality>('standard')
-  const [enableSVGAnimations, setEnableSVGAnimations] = useState(true)
   const [powerLevel, setPowerLevel] = useState(1000)
   const [currentFPS, setCurrentFPS] = useState(60)
 
   const deviceType = detectDeviceType()
 
-  // Monitor performance
+  // Monitor performance with state change prevention
   useEffect(() => {
     const interval = setInterval(() => {
       // Simulate FPS monitoring (in real implementation, this would be actual FPS)
-      const baseFPS = renderMode === 'svg' ? 60 : 45
-      const qualityMultiplier = svgQuality === 'enhanced' ? 0.9 : svgQuality === 'standard' ? 1.0 : 1.1
-      const mockFPS = Math.max(30, Math.min(60, baseFPS * qualityMultiplier + Math.random() * 5 - 2.5))
-      setCurrentFPS(Math.round(mockFPS))
+      const baseFPS = 60
+      const mockFPS = Math.max(30, Math.min(60, baseFPS + Math.random() * 5 - 2.5))
+      const newFPS = Math.round(mockFPS)
+      
+      setCurrentFPS(prev => {
+        // Only update if FPS changed
+        if (prev === newFPS) return prev
+        return newFPS
+      })
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [renderMode, svgQuality])
+  }, [])
 
   const handleStateChange = (state: DragonState) => {
     console.log('Dragon state changed to:', state)
@@ -63,15 +62,11 @@ export function DragonShowcase() {
     interactive,
     showDragonBalls,
     enableCursorTracking,
-    // NEW: SVG-specific props
-    renderMode,
-    svgQuality,
-    enableSVGAnimations,
     animationConfig: {
       performanceMode,
       autoQualityAdjustment: true,
-      enableParticles: svgQuality !== 'minimal',
-      enableAura: svgQuality === 'enhanced'
+      enableParticles: true,
+      enableAura: true
     },
     onStateChange: handleStateChange,
     onMoodChange: handleMoodChange,
@@ -86,10 +81,10 @@ export function DragonShowcase() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-red-900 to-orange-900 p-8">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-bold text-center text-white mb-8">
-          Enhanced SVG Dragon Animation Showcase
+          Enhanced Dragon Animation Showcase
         </h1>
         <p className="text-center text-gray-300 mb-12">
-          Experience the mystical power of Seiron with cutting-edge SVG graphics, enhanced animations, and scalable performance
+          Experience the mystical power of Seiron with enhanced animations and scalable performance
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -101,15 +96,7 @@ export function DragonShowcase() {
               </div>
               
               <div className="mt-8 text-center space-y-3">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div className="bg-black/20 rounded-lg p-3">
-                    <div className="text-gray-400">Render Mode</div>
-                    <div className="text-yellow-400 font-semibold">{renderMode.toUpperCase()}</div>
-                  </div>
-                  <div className="bg-black/20 rounded-lg p-3">
-                    <div className="text-gray-400">Quality</div>
-                    <div className="text-blue-400 font-semibold">{svgQuality}</div>
-                  </div>
+                <div className="grid grid-cols-2 md:grid-cols-2 gap-4 text-sm">
                   <div className="bg-black/20 rounded-lg p-3">
                     <div className="text-gray-400">FPS</div>
                     <div className={`font-semibold ${currentFPS >= 55 ? 'text-green-400' : currentFPS >= 45 ? 'text-yellow-400' : 'text-red-400'}`}>
@@ -341,24 +328,18 @@ export function DragonShowcase() {
               </div>
               
               <div className="border-t border-gray-600 pt-4">
-                <h4 className="text-sm font-semibold text-gray-300 mb-2">SVG Presets</h4>
+                <h4 className="text-sm font-semibold text-gray-300 mb-2">Quick Presets</h4>
                 <div className="grid grid-cols-1 gap-2">
                   <button
                     onClick={() => {
-                      setRenderMode('svg')
-                      setSvgQuality('enhanced')
-                      setEnableSVGAnimations(true)
                       setPerformanceMode('quality')
                     }}
                     className="p-2 bg-green-600 hover:bg-green-700 text-white rounded text-sm transition-colors"
                   >
-                    Max Quality SVG
+                    Max Quality
                   </button>
                   <button
                     onClick={() => {
-                      setRenderMode('svg')
-                      setSvgQuality('minimal')
-                      setEnableSVGAnimations(false)
                       setPerformanceMode('performance')
                     }}
                     className="p-2 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm transition-colors"
@@ -383,7 +364,7 @@ export function DragonShowcase() {
 
         {/* Info Section */}
         <div className="mt-12 bg-black/30 backdrop-blur-sm rounded-xl p-6 border border-red-500/20">
-          <h3 className="text-xl font-semibold text-white mb-4">Enhanced SVG Dragon Features</h3>
+          <h3 className="text-xl font-semibold text-white mb-4">Enhanced Dragon Features</h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-sm">
             <div>
               <h4 className="font-semibold text-yellow-400 mb-2">🎭 States & Moods</h4>
@@ -395,12 +376,12 @@ export function DragonShowcase() {
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-green-400 mb-2">🖼️ SVG Graphics</h4>
+              <h4 className="font-semibold text-green-400 mb-2">🖼️ Graphics</h4>
               <ul className="text-gray-300 space-y-1">
-                <li>• Scalable vector graphics</li>
-                <li>• Modular SVG components</li>
-                <li>• Advanced SVG filters & gradients</li>
-                <li>• Crisp rendering at any size</li>
+                <li>• High-quality animations</li>
+                <li>• Smooth transitions</li>
+                <li>• Particle effects</li>
+                <li>• Dynamic rendering</li>
               </ul>
             </div>
             <div>
@@ -424,17 +405,17 @@ export function DragonShowcase() {
           </div>
           
           <div className="mt-6 p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
-            <h4 className="font-semibold text-green-400 mb-2">✨ SVG Benefits</h4>
+            <h4 className="font-semibold text-green-400 mb-2">✨ Performance Benefits</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-300">
               <ul className="space-y-1">
-                <li>• 30-50% better performance than PNG</li>
-                <li>• Smaller bundle size</li>
-                <li>• Perfect scaling on all screens</li>
+                <li>• Optimized rendering engine</li>
+                <li>• Efficient animation system</li>
+                <li>• Adaptive quality settings</li>
               </ul>
               <ul className="space-y-1">
                 <li>• Enhanced accessibility features</li>
                 <li>• Better memory efficiency</li>
-                <li>• Future-proof vector graphics</li>
+                <li>• Mobile-optimized performance</li>
               </ul>
             </div>
           </div>

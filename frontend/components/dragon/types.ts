@@ -199,48 +199,7 @@ export interface PerformanceHookReturn {
   };
 }
 
-// SVG-specific interaction types and interfaces
-export interface SVGInteractionZones {
-  head: { x: number; y: number; radius: number };
-  eyes: { left: SVGPoint; right: SVGPoint };
-  body: { segments: SVGRect[] };
-  limbs: { frontArms: SVGPath[]; rearArms: SVGPath[] };
-  tail: { segments: SVGPath[] };
-  dragonBalls: { positions: SVGCircle[] };
-}
-
-export interface SVGPoint {
-  x: number;
-  y: number;
-  radius?: number;
-}
-
-export interface SVGRect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-export interface SVGPath {
-  d: string;
-  bounds: SVGRect;
-}
-
-export interface SVGCircle {
-  cx: number;
-  cy: number;
-  r: number;
-}
-
-export interface SVGInteractionEvents {
-  onDragonPartHover: (part: DragonPart, event: MouseEvent) => void;
-  onDragonPartClick: (part: DragonPart, event: MouseEvent) => void;
-  onDragonBallInteraction: (ballId: number, type: InteractionType) => void;
-  onGestureDetected: (gesture: TouchGesture) => void;
-  onKeyboardInteraction: (key: string, part: DragonPart) => void;
-}
-
+// Dragon part types for interaction
 export type DragonPart = 
   | 'head' 
   | 'left-eye' 
@@ -254,28 +213,15 @@ export type DragonPart =
   | 'wings' 
   | 'dragon-ball';
 
-export interface SVGInteractionState {
-  hoveredPart: DragonPart | null;
-  activePart: DragonPart | null;
-  focusedPart: DragonPart | null;
-  cursorPosition: { x: number; y: number };
-  eyeRotation: { left: { x: number; y: number }; right: { x: number; y: number } };
-  headRotation: { x: number; y: number };
-  isKeyboardNavigating: boolean;
-  touchTargets: Map<DragonPart, { x: number; y: number; width: number; height: number }>;
-}
-
 export interface EnhancedMouseTrackingReturn extends MouseTrackingHookReturn {
-  svgState: SVGInteractionState;
   getElementAtPosition: (x: number, y: number) => DragonPart | null;
   updateEyeTracking: (mousePosition: { x: number; y: number }) => void;
   updateHeadRotation: (mousePosition: { x: number; y: number }) => void;
 }
 
 export interface EnhancedTouchGestureReturn extends TouchGestureHookReturn {
-  svgTouchTargets: Map<DragonPart, { x: number; y: number; width: number; height: number }>;
   expandTouchTarget: (part: DragonPart, expansion: number) => void;
-  handleSVGTouch: (part: DragonPart, event: React.TouchEvent) => void;
+  handleTouch: (part: DragonPart, event: React.TouchEvent) => void;
 }
 
 export interface KeyboardNavigationConfig {
@@ -285,13 +231,3 @@ export interface KeyboardNavigationConfig {
   keyBindings: Record<string, (part: DragonPart) => void>;
 }
 
-export interface SVGAccessibilityProps {
-  role: string;
-  'aria-label': string;
-  'aria-describedby'?: string;
-  'aria-live'?: 'polite' | 'assertive';
-  tabIndex?: number;
-  onKeyDown?: (event: React.KeyboardEvent) => void;
-  onFocus?: (event: React.FocusEvent) => void;
-  onBlur?: (event: React.FocusEvent) => void;
-}

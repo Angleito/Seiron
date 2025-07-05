@@ -5,6 +5,7 @@ import { PrivyProvider } from '@privy-io/react-auth'
 import { WagmiProvider, createConfig } from '@privy-io/wagmi'
 import { http } from 'viem'
 import { privyConfig, seiMainnet } from '@/config/privy'
+import { DragonInteractionProvider } from '@/components/dragon/DragonInteractionController'
 
 const queryClient = new QueryClient()
 
@@ -21,6 +22,22 @@ export function Providers({
 }: {
   children: React.ReactNode
 }) {
+  // Check if Privy app ID is valid
+  const isValidAppId = privyConfig.appId && privyConfig.appId.length > 0 && privyConfig.appId !== 'your_privy_app_id_here';
+  
+  if (!isValidAppId) {
+    console.error('Invalid or missing Privy App ID. Please set NEXT_PUBLIC_PRIVY_APP_ID in your .env file');
+    return (
+      <QueryClientProvider client={queryClient}>
+        <div style={{ padding: '20px', color: 'red' }}>
+          <h2>Configuration Error</h2>
+          <p>Privy App ID is missing or invalid. Please set NEXT_PUBLIC_PRIVY_APP_ID in your .env file</p>
+          <p>Current value: {privyConfig.appId || '(empty)'}</p>
+        </div>
+      </QueryClientProvider>
+    );
+  }
+
   return (
     <PrivyProvider
       appId={privyConfig.appId}
@@ -29,7 +46,9 @@ export function Providers({
     >
       <QueryClientProvider client={queryClient}>
         <WagmiProvider config={wagmiConfig}>
-          {children}
+          <DragonInteractionProvider>
+            {children}
+          </DragonInteractionProvider>
         </WagmiProvider>
       </QueryClientProvider>
     </PrivyProvider>

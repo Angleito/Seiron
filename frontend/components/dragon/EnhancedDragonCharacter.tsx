@@ -6,8 +6,7 @@ import { useDragonStateMachine } from './hooks/useDragonStateMachine'
 import { useMouseTracking } from './hooks/useMouseTracking'
 import { useTouchGestures } from './hooks/useTouchGestures'
 import { useAnimationPerformance, useReducedMotion } from './hooks/useAnimationPerformance'
-import { DragonSVG } from './svg/DragonSVG'
-import { EnhancedSVGDragonBalls } from './svg/EnhancedSVGDragonBalls'
+// Dragon components will be imported here when needed
 import type { EnhancedDragonCharacterProps, DragonState, InteractionType } from './types'
 import { 
   DRAGON_SIZE_CONFIG, 
@@ -228,21 +227,6 @@ export function EnhancedDragonCharacter({
     }
   }
 
-  // SVG Support Detection
-  const [svgSupported, setSvgSupported] = useState(true)
-  
-  useEffect(() => {
-    // Check SVG support
-    const checkSVGSupport = () => {
-      try {
-        return !!(document.createElementNS && document.createElementNS('http://www.w3.org/2000/svg', 'svg').createSVGRect)
-      } catch (e) {
-        return false
-      }
-    }
-    
-    setSvgSupported(checkSVGSupport())
-  }, [])
   
   // Legacy Dragon Ball orbital animation (fallback)
   const LegacyDragonBalls = ({ count = 7 }: { count?: number }) => {
@@ -377,27 +361,8 @@ export function EnhancedDragonCharacter({
       {/* Dragon Aura */}
       <DragonAura />
 
-      {/* Enhanced SVG Dragon Balls Orbital System or Legacy Fallback */}
-      {svgSupported && showDragonBalls ? (
-        <EnhancedSVGDragonBalls
-          radius={sizeConfig.orbitRadius}
-          ballSize={sizeConfig.dragonBallSize}
-          className="absolute inset-0"
-          orbitalMode={dragonBallConfig.orbitPattern || 'elliptical'}
-          interactive={interactive && config.interactionEnabled}
-          config={{
-            count: dragonBallConfig.count || 7,
-            orbitSpeed: dragon.state === 'powering-up' ? 2.5 : (dragonBallConfig.orbitSpeed || 1.0),
-            orbitRadius: sizeConfig.orbitRadius,
-            individualAnimation: true,
-            interactionEnabled: interactive && (config.interactionEnabled !== false),
-            ...dragonBallConfig
-          }}
-          dragonState={dragon.state}
-          useNativeAnimations={!reducedMotion}
-          onWishGranted={() => dragon.actions.triggerSpecialAnimation('roar')}
-        />
-      ) : (
+      {/* Dragon Balls Orbital System */}
+      {showDragonBalls && (
         <LegacyDragonBalls count={dragonBallConfig.count || 7} />
       )}
 
@@ -414,12 +379,10 @@ export function EnhancedDragonCharacter({
             : 'brightness(1) contrast(1)'
         }}
       >
-        <DragonSVG
-          size={sizeConfig.width < 200 ? 'sm' : sizeConfig.width < 300 ? 'md' : sizeConfig.width < 400 ? 'lg' : 'xl'}
-          state={dragon.state}
-          mood={dragon.mood}
-          powerLevel={dragon.powerLevel}
-          armsVariant={armsVariant}
+        {/* Dragon Image Placeholder */}
+        <img
+          src="/images/dragon.png"
+          alt="Dragon"
           className={`object-contain filter drop-shadow-2xl ${
             qualityLevel > 75 ? 'quality-high' : 
             qualityLevel > 40 ? 'quality-medium' : 'quality-low'
@@ -428,30 +391,8 @@ export function EnhancedDragonCharacter({
           } ${
             dragon.state === 'awakening' ? 'dragon-awakening' : ''
           }`}
-          enableAnimations={!reducedMotion && config.enableBreathing}
-          attentionTarget={enableCursorTracking && eyePosition ? {
-            x: eyePosition.x + sizeConfig.width / 2,
-            y: eyePosition.y + sizeConfig.height / 2
-          } : undefined}
-          onInteraction={(type) => {
-            if (type === 'click') handleInteraction('click')
-            else if (type === 'hover') handleInteraction('hover')
-            else if (type === 'leave') handleInteraction('leave')
-          }}
         />
 
-        {/* Enhanced SVG Dragon with complete modular architecture */}
-        {/* All dragon parts (head, body, limbs, tail, eyes) are now integrated */}
-        {/* Fallback to legacy PNG dragon for unsupported browsers */}
-        {!svgSupported && (
-          <div className="absolute inset-0 flex items-center justify-center text-orange-300 text-sm">
-            <div className="text-center">
-              <div className="mb-2">🐉</div>
-              <div>SVG not supported</div>
-              <div className="text-xs opacity-70">Using fallback display</div>
-            </div>
-          </div>
-        )}
       </motion.div>
 
       {/* Particle Effects */}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import type { PerformanceMetrics, PerformanceMode, PerformanceHookReturn } from '../types'
 import { PERFORMANCE_THRESHOLDS } from '../constants'
 
@@ -120,21 +120,21 @@ export function useAnimationPerformance(
   }, [])
 
   // Actions
-  const actions = {
-    setPerformanceMode: useCallback((mode: PerformanceMode) => {
+  const actions = useMemo(() => ({
+    setPerformanceMode: (mode: PerformanceMode) => {
       setPerformanceMode(mode)
       autoOptimizationRef.current = false // Disable auto when manually set
-    }, []),
+    },
 
-    enableAutoOptimization: useCallback(() => {
+    enableAutoOptimization: () => {
       autoOptimizationRef.current = true
-    }, []),
+    },
 
-    disableAutoOptimization: useCallback(() => {
+    disableAutoOptimization: () => {
       autoOptimizationRef.current = false
-    }, []),
+    },
 
-    resetMetrics: useCallback(() => {
+    resetMetrics: () => {
       frameCountRef.current = 0
       frameTimesRef.current = []
       setMetrics({
@@ -148,14 +148,14 @@ export function useAnimationPerformance(
         networkLatency: 0
       })
       setQualityLevel(100)
-    }, [])
-  }
+    }
+  }), [])
 
-  // Initialize monitoring
+  // Initialize monitoring - using empty deps to prevent re-renders
   useEffect(() => {
     startMonitoring()
-    return stopMonitoring
-  }, [startMonitoring, stopMonitoring])
+    return () => stopMonitoring()
+  }, [])
 
   // Update auto-optimization ref
   useEffect(() => {
@@ -176,7 +176,7 @@ export function useAnimationPerformance(
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [startMonitoring, stopMonitoring])
 
-  return {
+  return useMemo(() => ({
     performanceMode,
     metrics,
     isOptimizing,
@@ -188,9 +188,8 @@ export function useAnimationPerformance(
     isLowPerformance: qualityLevel < 30,
     startMonitoring,
     stopMonitoring,
-    forceQualityLevel: (level: number) => setQualityLevel(level),
-    resetMetrics
-  }
+    forceQualityLevel: (level: number) => setQualityLevel(level)
+  }), [performanceMode, metrics, isOptimizing, qualityLevel, actions, startMonitoring, stopMonitoring])
 }
 
 // Helper hook for reduced motion preference

@@ -5,6 +5,10 @@ import { WebSocketServer } from 'ws';
 import { createOrchestrator, Orchestrator } from '../orchestrator';
 import { AIPortfolioManagerEnhanced } from '../AIPortfolioManagerEnhanced';
 import { UserIntent, TaskResult } from '../orchestrator/types';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
 const server = createServer(app);
@@ -15,12 +19,29 @@ app.use(cors());
 app.use(express.json());
 
 // Initialize enhanced portfolio manager
-const portfolioManager = new AIPortfolioManagerEnhanced({
-  network: 'sei-mainnet',
-  wallet: process.env.WALLET_ADDRESS || '',
-  aiModel: 'balanced-defi',
-  autoExecute: true
-});
+let portfolioManager: AIPortfolioManagerEnhanced | null = null;
+
+// Initialize portfolio manager when wallet is available
+const initializePortfolioManager = () => {
+  if (process.env.WALLET_ADDRESS && process.env.PRIVATE_KEY) {
+    try {
+      portfolioManager = new AIPortfolioManagerEnhanced({
+        network: 'sei-mainnet',
+        wallet: process.env.WALLET_ADDRESS,
+        aiModel: 'balanced-defi',
+        autoExecute: false // Set to false for now to avoid execution errors
+      });
+      console.log('Portfolio manager initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize portfolio manager:', error);
+    }
+  } else {
+    console.warn('Portfolio manager not initialized: Missing WALLET_ADDRESS or PRIVATE_KEY');
+  }
+};
+
+// Try to initialize on startup
+initializePortfolioManager();
 
 // WebSocket connections
 const clients = new Map<string, any>();
@@ -64,8 +85,25 @@ app.post('/api/process-intent', async (req, res) => {
       timestamp: Date.now()
     });
     
+    // Check if portfolio manager is initialized
+    if (!portfolioManager) {
+      return res.status(503).json({ 
+        success: false,
+        error: 'Portfolio manager not initialized',
+        message: 'Please configure wallet credentials' 
+      });
+    }
+    
     // Get orchestrator from portfolio manager
     const orchestrator = (portfolioManager as any).orchestrator as Orchestrator;
+    
+    if (!orchestrator) {
+      return res.status(503).json({ 
+        success: false,
+        error: 'Orchestrator not available',
+        message: 'System not fully initialized' 
+      });
+    }
     
     // Process intent
     const result = await orchestrator.processIntent(intent);
@@ -114,6 +152,12 @@ app.post('/api/process-intent', async (req, res) => {
 // Get portfolio status
 app.get('/api/portfolio/status', async (req, res) => {
   try {
+    if (!portfolioManager) {
+      return res.status(503).json({ 
+        error: 'Portfolio manager not initialized',
+        message: 'Please configure wallet credentials' 
+      });
+    }
     const status = await portfolioManager.getCachedPortfolioSummary();
     res.json(status);
   } catch (error) {
@@ -124,6 +168,12 @@ app.get('/api/portfolio/status', async (req, res) => {
 // Get performance metrics
 app.get('/api/metrics', async (req, res) => {
   try {
+    if (!portfolioManager) {
+      return res.status(503).json({ 
+        error: 'Portfolio manager not initialized',
+        message: 'Please configure wallet credentials' 
+      });
+    }
     const metrics = portfolioManager.getPerformanceMetrics();
     res.json(metrics);
   } catch (error) {
@@ -141,12 +191,21 @@ const PORT = process.env.API_PORT || 3001;
 
 async function startServer() {
   try {
-    // Warm cache on startup
-    await portfolioManager.warmCache();
+    // Warm cache on startup if portfolio manager is available
+    if (portfolioManager) {
+      console.log('Warming cache...');
+      await portfolioManager.warmCache();
+    } else {
+      console.warn('Skipping cache warm-up: Portfolio manager not initialized');
+    }
     
     server.listen(PORT, () => {
       console.log(`API server running on http://localhost:${PORT}`);
       console.log(`WebSocket server running on ws://localhost:${PORT}`);
+      if (!portfolioManager) {
+        console.warn('⚠️  Running in limited mode without portfolio manager');
+        console.warn('⚠️  Set WALLET_ADDRESS and PRIVATE_KEY environment variables for full functionality');
+      }
     });
   } catch (error) {
     console.error('Failed to start server:', error);

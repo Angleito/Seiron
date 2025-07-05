@@ -64,25 +64,38 @@ export function useAnimationPerformance(options: UseAnimationPerformanceOptions 
       const fps = (frameCountRef.current / deltaTime) * 1000
       const frameTime = deltaTime / frameCountRef.current
       
-      setMetrics(prev => ({
-        ...prev,
-        fps: Math.round(fps),
-        frameTime: Math.round(frameTime * 100) / 100,
-        droppedFrames: droppedFramesRef.current
-      }))
-
-      // Auto-adjust performance mode
-      if (autoAdjust) {
-        if (fps < targetFPS * 0.5) {
-          setPerformanceMode('minimal')
-          setIsLowPerformance(true)
-        } else if (fps < targetFPS * 0.8) {
-          setPerformanceMode('reduced')
-          setIsLowPerformance(true)
-        } else {
-          setPerformanceMode('full')
-          setIsLowPerformance(false)
+      // Only update if values have changed significantly
+      setMetrics(prev => {
+        const newFps = Math.round(fps)
+        const newFrameTime = Math.round(frameTime * 100) / 100
+        
+        if (prev.fps === newFps && prev.frameTime === newFrameTime && prev.droppedFrames === droppedFramesRef.current) {
+          return prev // No update needed
         }
+        
+        return {
+          ...prev,
+          fps: newFps,
+          frameTime: newFrameTime,
+          droppedFrames: droppedFramesRef.current
+        }
+      })
+
+      // Auto-adjust performance mode with state change prevention
+      if (autoAdjust) {
+        setPerformanceMode(prev => {
+          if (fps < targetFPS * 0.5 && prev !== 'minimal') {
+            setIsLowPerformance(true)
+            return 'minimal'
+          } else if (fps < targetFPS * 0.8 && prev !== 'reduced') {
+            setIsLowPerformance(true)
+            return 'reduced'
+          } else if (fps >= targetFPS * 0.8 && prev !== 'full') {
+            setIsLowPerformance(false)
+            return 'full'
+          }
+          return prev // No change needed
+        })
       }
 
       // Reset counters
@@ -148,6 +161,17 @@ export function useAnimationPerformance(options: UseAnimationPerformanceOptions 
 
   // Device capabilities detection
   const getDeviceCapabilities = useCallback(() => {
+    if (typeof window === 'undefined') {
+      return {
+        hardwareConcurrency: 4,
+        deviceMemory: 4,
+        connection: 'unknown',
+        reducedMotion: false,
+        colorGamut: 'srgb',
+        hdr: false
+      }
+    }
+    
     const capabilities = {
       hardwareConcurrency: navigator.hardwareConcurrency || 1,
       deviceMemory: (navigator as any).deviceMemory || 4,

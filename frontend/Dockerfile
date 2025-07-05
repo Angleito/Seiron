@@ -1,6 +1,9 @@
 # Frontend Dockerfile
 FROM node:20-alpine AS builder
 
+# Install build dependencies
+RUN apk add --no-cache python3 make g++ py3-pip
+
 WORKDIR /app
 
 # Copy package files

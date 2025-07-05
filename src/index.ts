@@ -13,16 +13,35 @@ export * from './collectors/chain';
 export * from './collectors/defi';
 export * from './collectors/oracle';
 
-// AI model training utilities
-export * from './training/prepare';
+// AI model training utilities - excluding types that are re-exported from types/index.ts
+export { 
+  prepareTrainingData,
+  validateDataset,
+  DataPreparationConfig,
+  DataPreparationResult
+} from './training/prepare';
 export * from './training/openai';
 
-// Utilities
+// Utilities - excluding types that are re-exported from types/index.ts
 export * from './utils/math';
-export * from './utils/time';
+export {
+  formatDate,
+  parseDate,
+  getTimestamp,
+  getISOString,
+  addDays,
+  addHours,
+  addMinutes,
+  startOfDay,
+  endOfDay,
+  isWithinRange,
+  getDurationMs,
+  formatDuration,
+  createTimeRange
+} from './utils/time';
 export * from './utils/sei';
 
-// Types
+// Types - this includes TrainingDataset and TimeRange
 export * from './types';
 
 // Configuration

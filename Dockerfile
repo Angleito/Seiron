@@ -14,9 +14,9 @@ COPY frontend/package*.json ./frontend/
 COPY package-loc[k].json* ./
 COPY frontend/package-loc[k].json* ./frontend/
 
-# Install dependencies (use npm install if no lock file exists)
-RUN if [ -f package-lock.json ]; then npm ci --omit=dev; else npm install --omit=dev; fi
-RUN if [ -f frontend/package-lock.json ]; then npm ci --prefix frontend --omit=dev; else npm install --prefix frontend --omit=dev; fi
+# Install dependencies with legacy peer deps to handle version conflicts
+RUN if [ -f package-lock.json ]; then npm ci --legacy-peer-deps --omit=dev; else npm install --legacy-peer-deps --omit=dev; fi
+RUN if [ -f frontend/package-lock.json ]; then npm ci --prefix frontend --legacy-peer-deps --omit=dev; else npm install --prefix frontend --legacy-peer-deps --omit=dev; fi
 
 # Copy source code
 COPY . .
