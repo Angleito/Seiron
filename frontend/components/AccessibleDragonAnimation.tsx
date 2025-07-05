@@ -72,7 +72,7 @@ export function AccessibleDragonAnimation({
           break
       }
     }
-  }, [announceStateChanges, announce])
+  }, [announceStateChanges])
 
   // Cleanup
   useEffect(() => {

@@ -67,12 +67,12 @@ const openIndexedDB = (): TE.TaskEither<Error, IDBDatabase> =>
           }
         }
       }),
-    (error) => new Error(`Failed to open IndexedDB: ${error}`)
+    (error) => createTTSError('AUDIO_ERROR', `Failed to open IndexedDB: ${error}`)
   )
 
 const getCachedAudio = (
   text: string
-): TE.TaskEither<Error, O.Option<ArrayBuffer>> =>
+): TE.TaskEither<TTSError, O.Option<ArrayBuffer>> =>
   pipe(
     openIndexedDB(),
     TE.chain((db) =>
@@ -94,7 +94,7 @@ const getCachedAudio = (
             
             request.onerror = () => resolve(O.none)
           }),
-        (error) => new Error(`Failed to get cached audio: ${error}`)
+        (error) => createTTSError('AUDIO_ERROR', `Failed to get cached audio: ${error}`)
       )
     )
   )
@@ -102,7 +102,7 @@ const getCachedAudio = (
 const setCachedAudio = (
   text: string,
   buffer: ArrayBuffer
-): TE.TaskEither<Error, void> =>
+): TE.TaskEither<TTSError, void> =>
   pipe(
     openIndexedDB(),
     TE.chain((db) =>
@@ -132,7 +132,7 @@ const setCachedAudio = (
             timestamp: Date.now()
           })
         },
-        (error) => new Error(`Failed to cache audio: ${error}`)
+        (error) => createTTSError('AUDIO_ERROR', `Failed to cache audio: ${error}`)
       )
     )
   )

@@ -39,7 +39,7 @@ export const privyConfig = {
   clientId,
   config: {
     appearance: {
-      theme: 'dark',
+      theme: 'dark' as const,
       accentColor: '#ef4444', // Red to match Dragon Ball theme
       logo: '/dragon-logo.png', // Add your logo path
       showWalletLoginFirst: true,
@@ -50,11 +50,11 @@ export const privyConfig = {
       'google',
       'discord',
       'twitter',
-    ],
+    ] as const,
     walletConnectProjectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID,
     // Embedded wallet configuration
     embeddedWallets: {
-      createOnLogin: 'users-without-wallets',
+      createOnLogin: 'users-without-wallets' as const,
       requireUserPasswordOnCreate: true,
       noPromptOnSignature: false,
     },

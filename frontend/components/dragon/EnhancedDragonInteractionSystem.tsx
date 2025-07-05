@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SeironDragon } from './SeironDragon'
+// Enhanced hooks commented out due to type errors - can be re-enabled after fixes
 // import { useEnhancedMouseTracking } from './hooks/useEnhancedMouseTracking'
 // import { useEnhancedTouchGestures } from './hooks/useEnhancedTouchGestures'
 // import { useKeyboardNavigation } from './hooks/useKeyboardNavigation'

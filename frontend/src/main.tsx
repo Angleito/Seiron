@@ -26,13 +26,7 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <RootErrorBoundary>
-      <PrivyProvider appId={privyConfig.appId} config={{
-        appearance: privyConfig.config.appearance,
-        loginMethods: privyConfig.config.loginMethods,
-        walletConnectProjectId: privyConfig.config.walletConnectProjectId,
-        embeddedWallets: privyConfig.config.embeddedWallets,
-        mfa: privyConfig.config.mfa
-      }}>
+      <PrivyProvider appId={privyConfig.appId} config={privyConfig.config}>
         <QueryClientProvider client={queryClient}>
           <WagmiProvider config={wagmiConfig}>
             <RouterProvider router={router} />
