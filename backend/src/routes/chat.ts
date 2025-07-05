@@ -356,7 +356,7 @@ router.post('/mcp-subscribe-events', [
  */
 router.post('/enhanced-analysis', [
   body('walletAddress').isEthereumAddress().withMessage('Valid wallet address required'),
-  body('analysisType').optional().isIn(['comprehensive', 'risk', 'yield', 'market']).withMessage('Invalid analysis type'),
+  body('analysisType').optional().isIn(['comprehensive', 'risk', 'yield', 'market']).withMessage('Invalid analysis type'), // TODO: REMOVE_MOCK - Hard-coded array literals
   body('includeHiveInsights').optional().isBoolean().withMessage('includeHiveInsights must be boolean'),
   body('includeSAKData').optional().isBoolean().withMessage('includeSAKData must be boolean'),
   body('includeMCPRealtime').optional().isBoolean().withMessage('includeMCPRealtime must be boolean')

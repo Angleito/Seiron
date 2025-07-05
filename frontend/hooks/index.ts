@@ -5,3 +5,4 @@ export * from './useDragonInteraction';
 export * from './useMouseTracking';
 export * from './useTouchGestures';
 export * from './useAnimationPerformance';
+export * from './usePriceFeed';

@@ -1,6 +1,6 @@
 /**
  * Jest test setup file
- * Configures test environment and global mocks
+ * Configures test environment and global mocks // TODO: REMOVE_MOCK - Mock-related keywords
  */
 
 import { jest } from '@jest/globals';
@@ -14,7 +14,7 @@ process.env.PORT = '0'; // Let system assign port for tests
 // Global test timeout
 jest.setTimeout(30000);
 
-// Mock console methods to reduce noise in tests
+// Mock console methods to reduce noise in tests // TODO: REMOVE_MOCK - Mock-related keywords
 const originalConsole = global.console;
 global.console = {
   ...originalConsole,
@@ -25,8 +25,8 @@ global.console = {
   debug: jest.fn()
 };
 
-// Mock Winston logger
-jest.mock('../src/utils/logger', () => ({
+// Mock Winston logger // TODO: REMOVE_MOCK - Mock-related keywords
+jest.mock('../src/utils/logger', () => ({ // TODO: REMOVE_MOCK - Mock-related keywords
   default: {
     info: jest.fn(),
     error: jest.fn(),
@@ -36,9 +36,9 @@ jest.mock('../src/utils/logger', () => ({
   }
 }));
 
-// Mock Redis/IORedis
-jest.mock('ioredis', () => {
-  const mockRedis = {
+// Mock Redis/IORedis // TODO: REMOVE_MOCK - Mock-related keywords
+jest.mock('ioredis', () => { // TODO: REMOVE_MOCK - Mock-related keywords
+  const mockRedis = { // TODO: REMOVE_MOCK - Mock-related keywords
     get: jest.fn(),
     set: jest.fn(),
     del: jest.fn(),
@@ -56,11 +56,11 @@ jest.mock('ioredis', () => {
     status: 'ready'
   };
   
-  return jest.fn(() => mockRedis);
+  return jest.fn(() => mockRedis); // TODO: REMOVE_MOCK - Mock-related keywords
 });
 
-// Mock Viem blockchain client
-jest.mock('viem', () => ({
+// Mock Viem blockchain client // TODO: REMOVE_MOCK - Mock-related keywords
+jest.mock('viem', () => ({ // TODO: REMOVE_MOCK - Mock-related keywords
   createPublicClient: jest.fn(() => ({
     getBalance: jest.fn(),
     getBlockNumber: jest.fn(),
@@ -74,10 +74,10 @@ jest.mock('viem', () => ({
   isAddress: jest.fn()
 }));
 
-// Mock OpenAI
-jest.mock('openai', () => {
+// Mock OpenAI // TODO: REMOVE_MOCK - Mock-related keywords
+jest.mock('openai', () => { // TODO: REMOVE_MOCK - Mock-related keywords
   return {
-    default: jest.fn().mockImplementation(() => ({
+    default: jest.fn().mockImplementation(() => ({ // TODO: REMOVE_MOCK - Mock-related keywords
       chat: {
         completions: {
           create: jest.fn()
@@ -87,9 +87,9 @@ jest.mock('openai', () => {
   };
 });
 
-// Mock Socket.IO
-jest.mock('socket.io', () => ({
-  Server: jest.fn().mockImplementation(() => ({
+// Mock Socket.IO // TODO: REMOVE_MOCK - Mock-related keywords
+jest.mock('socket.io', () => ({ // TODO: REMOVE_MOCK - Mock-related keywords
+  Server: jest.fn().mockImplementation(() => ({ // TODO: REMOVE_MOCK - Mock-related keywords
     on: jest.fn(),
     emit: jest.fn(),
     sockets: {
@@ -100,23 +100,23 @@ jest.mock('socket.io', () => ({
 
 // Global test utilities
 global.testUtils = {
-  // Create mock wallet address
-  createMockWallet: () => '0x1234567890123456789012345678901234567890',
+  // Create mock wallet address // TODO: REMOVE_MOCK - Mock-related keywords
+  createMockWallet: () => '0x1234567890123456789012345678901234567890', // TODO: REMOVE_MOCK - Mock-related keywords
   
-  // Create mock token address
-  createMockToken: () => '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
+  // Create mock token address // TODO: REMOVE_MOCK - Mock-related keywords
+  createMockToken: () => '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd', // TODO: REMOVE_MOCK - Mock-related keywords
   
-  // Create mock timestamp
-  createMockTimestamp: () => new Date().toISOString(),
+  // Create mock timestamp // TODO: REMOVE_MOCK - Mock-related keywords
+  createMockTimestamp: () => new Date().toISOString(), // TODO: REMOVE_MOCK - Mock-related keywords
   
   // Wait for promises to resolve
   flushPromises: () => new Promise(resolve => setImmediate(resolve)),
   
-  // Mock BigInt values
-  mockBigInt: (value: string) => BigInt(value),
+  // Mock BigInt values // TODO: REMOVE_MOCK - Mock-related keywords
+  mockBigInt: (value: string) => BigInt(value), // TODO: REMOVE_MOCK - Mock-related keywords
   
   // Generate test portfolio data
-  generateMockPortfolioData: () => ({
+  generateMockPortfolioData: () => ({ // TODO: REMOVE_MOCK - Mock-related keywords
     walletAddress: '0x1234567890123456789012345678901234567890',
     totalValueUSD: 10000,
     totalSuppliedUSD: 8000,
@@ -133,17 +133,17 @@ global.testUtils = {
 
 // Clean up after each test
 afterEach(() => {
-  jest.clearAllMocks();
+  jest.clearAllMocks(); // TODO: REMOVE_MOCK - Mock-related keywords
 });
 
 // Type augmentation for global test utilities
 declare global {
   var testUtils: {
-    createMockWallet(): string;
-    createMockToken(): string;
-    createMockTimestamp(): string;
+    createMockWallet(): string; // TODO: REMOVE_MOCK - Mock-related keywords
+    createMockToken(): string; // TODO: REMOVE_MOCK - Mock-related keywords
+    createMockTimestamp(): string; // TODO: REMOVE_MOCK - Mock-related keywords
     flushPromises(): Promise<void>;
-    mockBigInt(value: string): bigint;
-    generateMockPortfolioData(): any;
+    mockBigInt(value: string): bigint; // TODO: REMOVE_MOCK - Mock-related keywords
+    generateMockPortfolioData(): any; // TODO: REMOVE_MOCK - Mock-related keywords
   };
 }

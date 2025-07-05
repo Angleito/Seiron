@@ -261,8 +261,8 @@ describe('Risk Calculations', () => {
     test('should always return value between 0 and 1', () => {
       forAll(
         () => {
-          const count = Math.floor(Math.random() * 10) + 1;
-          const weights = Array.from({ length: count }, () => Math.random());
+          const count = Math.floor(Math.random() * 10) + 1; // TODO: REMOVE_MOCK - Random value generation
+          const weights = Array.from({ length: count }, () => Math.random()); // TODO: REMOVE_MOCK - Random value generation
           const sum = weights.reduce((a, b) => a + b, 0);
           return weights.map(w => ({ weight: w / sum }));
         },
@@ -301,7 +301,7 @@ describe('Risk Calculations', () => {
 
   describe('Correlation Matrix', () => {
     test('should build correlation matrix correctly', () => {
-      const assets = ['ETH', 'BTC', 'USDC'];
+      const assets = ['ETH', 'BTC', 'USDC']; // TODO: REMOVE_MOCK - Hard-coded array literals
       const correlationData = [
         generateCorrelationData('ETH', 'BTC', { correlation: 0.8 }),
         generateCorrelationData('ETH', 'USDC', { correlation: -0.1 }),
@@ -536,8 +536,8 @@ describe('Risk Calculations', () => {
       forAll(
         () => {
           const allocations = [
-            generateAssetAllocation({ weight: 0.6, volatility: Math.random() * 0.5 }),
-            generateAssetAllocation({ weight: 0.4, volatility: Math.random() * 0.5 })
+            generateAssetAllocation({ weight: 0.6, volatility: Math.random() * 0.5 }), // TODO: REMOVE_MOCK - Random value generation
+            generateAssetAllocation({ weight: 0.4, volatility: Math.random() * 0.5 }) // TODO: REMOVE_MOCK - Random value generation
           ];
           const matrix = buildCorrelationMatrix(['A', 'B'], []);
           return { allocations, matrix };

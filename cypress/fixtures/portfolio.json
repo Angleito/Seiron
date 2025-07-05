@@ -1,0 +1,56 @@
+{
+  "testWallet": {
+    "address": "0x742d35Cc6634C0532925a3b8D48C37Fc48c4e8D9",
+    "totalValue": "1000000",
+    "positions": [
+      {
+        "token": "SEI",
+        "symbol": "SEI",
+        "amount": "500",
+        "value": "500000",
+        "price": "1000",
+        "decimals": 18
+      },
+      {
+        "token": "USDC",
+        "symbol": "USDC",
+        "amount": "500000",
+        "value": "500000",
+        "price": "1",
+        "decimals": 6
+      }
+    ],
+    "defiPositions": [
+      {
+        "protocol": "Silo",
+        "type": "lending",
+        "supplied": [
+          {
+            "token": "USDC",
+            "amount": "100000",
+            "apy": "5.2"
+          }
+        ]
+      }
+    ]
+  },
+  "emptyWallet": {
+    "address": "0x0000000000000000000000000000000000000001",
+    "totalValue": "0",
+    "positions": []
+  },
+  "prices": {
+    "SEI": {
+      "usd": 1000,
+      "change24h": 2.5
+    },
+    "USDC": {
+      "usd": 1,
+      "change24h": 0
+    },
+    "ETH": {
+      "usd": 3000,
+      "change24h": -1.2
+    }
+  }
+}

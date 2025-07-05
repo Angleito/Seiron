@@ -120,7 +120,7 @@ export const validateEnvWithDefault = <T>(field: string, defaultValue: T, valida
  * Validates environment variable as Environment enum
  */
 export const validateEnvironment = (field: string): Either<ConfigError, Environment> => {
-  const environments: readonly Environment[] = ['development', 'test', 'staging', 'production'];
+  const environments: readonly Environment[] = ['development', 'test', 'staging', 'production']; // TODO: REMOVE_MOCK - Hard-coded array literals
   return pipe(
     validateEnvWithDefault(field, 'development' as Environment, (value) => 
       validateEnum(field, environments)(value)

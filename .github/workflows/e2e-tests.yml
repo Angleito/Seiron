@@ -1,0 +1,139 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    strategy:
+      matrix:
+        browser: [chrome, edge, electron]
+        
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build frontend
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm run build
+          
+      - name: Build backend
+        working-directory: ./backend
+        run: |
+          npm ci
+          npm run build
+          
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Start services
+        run: |
+          docker-compose -f docker-compose.e2e.yml up -d --build
+          # Wait for services to be healthy
+          timeout 300 bash -c 'until docker-compose -f docker-compose.e2e.yml ps | grep -E "healthy|running" | grep -v "unhealthy" | wc -l | grep -q "6"; do sleep 5; done'
+          
+      - name: Run Cypress tests
+        uses: cypress-io/github-action@v6
+        with:
+          browser: ${{ matrix.browser }}
+          config-file: cypress.config.ts
+          wait-on: 'http://localhost:3000, http://localhost:3001/health'
+          wait-on-timeout: 120
+          record: true
+          parallel: true
+          group: 'E2E - ${{ matrix.browser }}'
+        env:
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Upload screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots-${{ matrix.browser }}
+          path: cypress/screenshots
+          retention-days: 7
+          
+      - name: Upload videos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-videos-${{ matrix.browser }}
+          path: cypress/videos
+          retention-days: 7
+          
+      - name: Generate test report
+        if: always()
+        run: |
+          mkdir -p test-results
+          docker-compose -f docker-compose.e2e.yml logs > test-results/docker-logs.txt
+          
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.browser }}
+          path: test-results/
+          retention-days: 7
+          
+      - name: Stop services
+        if: always()
+        run: docker-compose -f docker-compose.e2e.yml down -v
+        
+  e2e-report:
+    needs: e2e-tests
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        
+      - name: Merge test results
+        run: |
+          mkdir -p merged-results
+          cp -r cypress-videos-*/* merged-results/ 2>/dev/null || true
+          cp -r cypress-screenshots-*/* merged-results/ 2>/dev/null || true
+          cp -r test-results-*/* merged-results/ 2>/dev/null || true
+          
+      - name: Upload merged results
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results-all
+          path: merged-results/
+          retention-days: 30
+          
+      - name: Comment PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const testResults = 'E2E tests completed. Check artifacts for details.';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: testResults
+            });

@@ -93,7 +93,7 @@ export class PortfolioErrorHandler extends EventEmitter {
     this.riskThresholds = {
       healthFactorCritical: 1.2,
       healthFactorWarning: 1.5,
-      valueChangeThreshold: 1000, // $1000
+      valueChangeThreshold: 1000, // $1000 // TODO: REMOVE_MOCK - Hard-coded currency values
       liquidationRiskThreshold: 85, // 85%
       concentrationRiskThreshold: 70, // 70%
       impermanentLossThreshold: 10, // 10%
@@ -618,7 +618,7 @@ export class PortfolioErrorHandler extends EventEmitter {
   };
 
   private generateId = (): string => {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`; // TODO: REMOVE_MOCK - Random value generation
   };
 }
 

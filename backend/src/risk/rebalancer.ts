@@ -182,7 +182,7 @@ const estimateRebalanceCost = (
   );
 
   // Simplified cost estimation
-  const gasCost = targets.length * 50; // $50 per trade
+  const gasCost = targets.length * 50; // $50 per trade // TODO: REMOVE_MOCK - Hard-coded currency values
   const slippageCost = totalTradeValue * constraints.maxSlippage;
   const totalCost = gasCost + slippageCost;
 
@@ -334,7 +334,7 @@ export const generateEmergencyRebalance = (
   assessment: RiskAssessmentResult
 ): E.Either<RiskCalculationError, RebalancePlan> => {
   // Emergency rebalancing to reduce risk immediately
-  const safeAssets = ['USDC', 'USDT', 'DAI']; // Stable coins
+  const safeAssets = ['USDC', 'USDT', 'DAI']; // Stable coins // TODO: REMOVE_MOCK - Hard-coded array literals
   const currentAllocations = calculateAssetAllocations(snapshot, new Map());
   
   // Target: 50% stable coins, rest equally distributed

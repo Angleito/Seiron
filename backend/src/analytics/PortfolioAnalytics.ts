@@ -98,7 +98,7 @@ export class PortfolioAnalytics {
     config: Partial<AnalyticsConfig> = {}
   ) {
     this.config = {
-      performancePeriods: ['1d', '7d', '30d', '90d'],
+      performancePeriods: ['1d', '7d', '30d', '90d'], // TODO: REMOVE_MOCK - Hard-coded array literals
       riskFreeRate: 0.045, // 4.5% risk-free rate
       enableDetailedMetrics: true,
       cacheTTL: 300, // 5 minutes

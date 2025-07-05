@@ -104,7 +104,7 @@ export const retryAsync = async <T>(
  */
 export const generateId = (prefix?: string): string => {
   const timestamp = Date.now().toString(36);
-  const randomPart = Math.random().toString(36).substr(2, 9);
+  const randomPart = Math.random().toString(36).substr(2, 9); // TODO: REMOVE_MOCK - Random value generation
   return prefix ? `${prefix}_${timestamp}_${randomPart}` : `${timestamp}_${randomPart}`;
 };
 

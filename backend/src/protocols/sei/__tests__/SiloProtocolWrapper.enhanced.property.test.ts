@@ -27,20 +27,20 @@ import {
   checkInvariant
 } from '../../__tests__/utils/functional-test-helpers';
 
-// Mock clients for testing
-const mockPublicClient = createPublicClient({
+// Mock clients for testing // TODO: REMOVE_MOCK - Mock-related keywords
+const mockPublicClient = createPublicClient({ // TODO: REMOVE_MOCK - Mock-related keywords
   chain: sei,
   transport: http('https://evm-rpc.sei-apis.com'),
 }) as any;
 
-const mockWalletClient = createWalletClient({
+const mockWalletClient = createWalletClient({ // TODO: REMOVE_MOCK - Mock-related keywords
   chain: sei,
   transport: http('https://evm-rpc.sei-apis.com'),
   account: privateKeyToAccount('0x0000000000000000000000000000000000000000000000000000000000000001'),
 }) as any;
 
-// Mock protocol config
-const mockProtocolConfig = {
+// Mock protocol config // TODO: REMOVE_MOCK - Mock-related keywords
+const mockProtocolConfig = { // TODO: REMOVE_MOCK - Mock-related keywords
   network: 'mainnet',
   contractAddresses: {
     silo: {
@@ -86,9 +86,9 @@ describe('Silo Protocol Wrapper - Property-Based Tests', () => {
 
   beforeEach(() => {
     siloWrapper = createSiloProtocolWrapper(
-      mockPublicClient,
-      mockWalletClient,
-      mockProtocolConfig
+      mockPublicClient, // TODO: REMOVE_MOCK - Mock-related keywords
+      mockWalletClient, // TODO: REMOVE_MOCK - Mock-related keywords
+      mockProtocolConfig // TODO: REMOVE_MOCK - Mock-related keywords
     );
   });
 

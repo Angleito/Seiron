@@ -36,13 +36,13 @@ export const generateTimestamp = (offset: number = 0): string =>
   new Date(Date.now() + offset).toISOString();
 
 export const generatePositiveNumber = (max: number = 1000000): number =>
-  Math.floor(Math.random() * max) + 1;
+  Math.floor(Math.random() * max) + 1; // TODO: REMOVE_MOCK - Random value generation
 
 export const generatePrice = (base: number = 100): number =>
-  base + (Math.random() - 0.5) * base * 0.2; // ±20% variation
+  base + (Math.random() - 0.5) * base * 0.2; // ±20% variation // TODO: REMOVE_MOCK - Random value generation
 
 export const generateVolatility = (): number =>
-  Math.random() * 0.8 + 0.1; // 0.1 to 0.9
+  Math.random() * 0.8 + 0.1; // 0.1 to 0.9 // TODO: REMOVE_MOCK - Random value generation
 
 // ===================== Portfolio Data Generators =====================
 
@@ -56,7 +56,7 @@ export const generateTokenBalance = (overrides: Partial<TokenBalance> = {}): Tok
 });
 
 export const generateLendingPosition = (overrides: Partial<LendingPosition> = {}): LendingPosition => ({
-  platform: 'MockLender',
+  platform: 'MockLender', // TODO: REMOVE_MOCK - Mock-related keywords
   tokenAddress: generateTokenAddress(overrides.tokenSymbol || 'TEST'),
   tokenSymbol: 'TEST',
   supplied: '1000000000000000000',
@@ -70,7 +70,7 @@ export const generateLendingPosition = (overrides: Partial<LendingPosition> = {}
 });
 
 export const generateLiquidityPosition = (overrides: Partial<LiquidityPosition> = {}): LiquidityPosition => ({
-  platform: 'MockDEX',
+  platform: 'MockDEX', // TODO: REMOVE_MOCK - Mock-related keywords
   poolAddress: generateTokenAddress('POOL'),
   token0Address: generateTokenAddress(overrides.token0Symbol || 'TOKEN0'),
   token1Address: generateTokenAddress(overrides.token1Symbol || 'TOKEN1'),
@@ -142,7 +142,7 @@ export const generateRiskThresholds = (overrides: Partial<RiskThresholds> = {}):
 export const generatePriceData = (symbol: string, overrides: Partial<PriceData> = {}): PriceData => ({
   symbol,
   price: generatePrice(),
-  change24h: (Math.random() - 0.5) * 0.2, // ±20%
+  change24h: (Math.random() - 0.5) * 0.2, // ±20% // TODO: REMOVE_MOCK - Random value generation
   volatility: generateVolatility(),
   timestamp: Date.now(),
   ...overrides
@@ -154,7 +154,7 @@ export const generateCorrelationData = (
   overrides: Partial<CorrelationData> = {}
 ): CorrelationData => ({
   pair: [asset1, asset2] as const,
-  correlation: (Math.random() - 0.5) * 2, // -1 to 1
+  correlation: (Math.random() - 0.5) * 2, // -1 to 1 // TODO: REMOVE_MOCK - Random value generation
   period: 30,
   confidence: 0.95,
   ...overrides
@@ -169,10 +169,10 @@ export const generateAssetAllocation = (overrides: Partial<AssetAllocation> = {}
 });
 
 export const generateProtocolAllocation = (overrides: Partial<ProtocolAllocation> = {}): ProtocolAllocation => ({
-  protocol: 'MockProtocol',
+  protocol: 'MockProtocol', // TODO: REMOVE_MOCK - Mock-related keywords
   weight: 0.3,
   valueUSD: 3000,
-  riskScore: Math.random() * 0.5, // 0 to 0.5
+  riskScore: Math.random() * 0.5, // 0 to 0.5 // TODO: REMOVE_MOCK - Random value generation
   ...overrides
 });
 
@@ -191,7 +191,7 @@ export const generateRiskCalculationContext = (
   overrides: Partial<RiskCalculationContext> = {}
 ): RiskCalculationContext => {
   const snapshot = overrides.snapshot || generatePortfolioSnapshot();
-  const symbols = ['ETH', 'BTC', 'USDC', 'USDT'];
+  const symbols = ['ETH', 'BTC', 'USDC', 'USDT']; // TODO: REMOVE_MOCK - Hard-coded array literals
   
   const priceDataEntries: Array<[string, PriceData]> = symbols.map(symbol => [
     symbol, 
@@ -218,7 +218,7 @@ export const generateRiskCalculationContext = (
 // ===================== Array Generators =====================
 
 export const generateAssetAllocations = (count: number = 4): ReadonlyArray<AssetAllocation> => {
-  const symbols = ['ETH', 'BTC', 'USDC', 'USDT'];
+  const symbols = ['ETH', 'BTC', 'USDC', 'USDT']; // TODO: REMOVE_MOCK - Hard-coded array literals
   const totalValue = 10000;
   
   return pipe(
@@ -238,7 +238,7 @@ export const generateAssetAllocations = (count: number = 4): ReadonlyArray<Asset
 };
 
 export const generateProtocolAllocations = (count: number = 3): ReadonlyArray<ProtocolAllocation> => {
-  const protocols = ['Uniswap', 'Aave', 'Compound'];
+  const protocols = ['Uniswap', 'Aave', 'Compound']; // TODO: REMOVE_MOCK - Hard-coded array literals
   const totalValue = 10000;
   
   return pipe(

@@ -17,10 +17,10 @@ import {
   expectValidRiskScore,
   expectRight,
   expectTaskRight,
-  mockBlockchainService,
-  setMockPortfolio,
+  mockBlockchainService, // TODO: REMOVE_MOCK - Mock-related keywords
+  setMockPortfolio, // TODO: REMOVE_MOCK - Mock-related keywords
   createHighRiskScenario,
-  resetMockState,
+  resetMockState, // TODO: REMOVE_MOCK - Mock-related keywords
   quickCheck,
   generateRiskMetrics,
   generatePortfolioValue,
@@ -33,7 +33,7 @@ import {
 
 describe('Comprehensive Functional Testing', () => {
   beforeEach(() => {
-    resetMockState();
+    resetMockState(); // TODO: REMOVE_MOCK - Mock-related keywords
   });
 
   describe('Pure Function Testing', () => {
@@ -109,9 +109,9 @@ describe('Comprehensive Functional Testing', () => {
     test('should handle successful blockchain operations', async () => {
       const walletAddress = '0x1234567890123456789012345678901234567890';
       const portfolio = generatePortfolioSnapshot({ walletAddress });
-      setMockPortfolio(walletAddress, portfolio);
+      setMockPortfolio(walletAddress, portfolio); // TODO: REMOVE_MOCK - Mock-related keywords
 
-      const result = await mockBlockchainService.getPortfolioSnapshot(walletAddress)();
+      const result = await mockBlockchainService.getPortfolioSnapshot(walletAddress)(); // TODO: REMOVE_MOCK - Mock-related keywords
       
       expectRight(result);
       if (E.isRight(result)) {
@@ -122,7 +122,7 @@ describe('Comprehensive Functional Testing', () => {
     test('should handle blockchain operation errors', async () => {
       const invalidAddress = 'invalid-address';
       
-      const result = await mockBlockchainService.getPortfolioSnapshot(invalidAddress)();
+      const result = await mockBlockchainService.getPortfolioSnapshot(invalidAddress)(); // TODO: REMOVE_MOCK - Mock-related keywords
       
       expect(E.isLeft(result)).toBe(true);
       if (E.isLeft(result)) {
@@ -133,10 +133,10 @@ describe('Comprehensive Functional Testing', () => {
     test('should chain TaskEither operations', async () => {
       const walletAddress = '0x1234567890123456789012345678901234567890';
       const portfolio = generatePortfolioSnapshot({ walletAddress });
-      setMockPortfolio(walletAddress, portfolio);
+      setMockPortfolio(walletAddress, portfolio); // TODO: REMOVE_MOCK - Mock-related keywords
 
       const chainedOperation = pipe(
-        mockBlockchainService.getPortfolioSnapshot(walletAddress),
+        mockBlockchainService.getPortfolioSnapshot(walletAddress), // TODO: REMOVE_MOCK - Mock-related keywords
         TE.chain(portfolio => {
           // Simulate additional processing
           if (portfolio.totalValueUSD > 0) {
@@ -181,7 +181,7 @@ describe('Comprehensive Functional Testing', () => {
       const result = quickCheck(
         () => ({
           portfolio: generatePortfolioSnapshot(),
-          scaleFactor: Math.random() * 10 + 0.1 // 0.1 to 10.1
+          scaleFactor: Math.random() * 10 + 0.1 // 0.1 to 10.1 // TODO: REMOVE_MOCK - Random value generation
         }),
         ({ portfolio, scaleFactor }) => {
           const scaledPortfolio = generatePortfolioSnapshot({
@@ -222,7 +222,7 @@ describe('Comprehensive Functional Testing', () => {
         () => ({
           value1: generatePortfolioValue()(),
           value2: generatePortfolioValue()(),
-          ratio: Math.random() * 0.8 + 0.1 // 0.1 to 0.9
+          ratio: Math.random() * 0.8 + 0.1 // 0.1 to 0.9 // TODO: REMOVE_MOCK - Random value generation
         }),
         ({ value1, value2, ratio }) => {
           // Property: interpolation should stay within bounds
@@ -239,13 +239,13 @@ describe('Comprehensive Functional Testing', () => {
     });
   });
 
-  describe('Mock Service Integration', () => {
+  describe('Mock Service Integration', () => { // TODO: REMOVE_MOCK - Mock-related keywords
     test('should simulate high-risk scenario', async () => {
       const walletAddress = '0x1234567890123456789012345678901234567890';
       createHighRiskScenario(walletAddress);
 
       const portfolio = await expectTaskRight(
-        mockBlockchainService.getPortfolioSnapshot(walletAddress)
+        mockBlockchainService.getPortfolioSnapshot(walletAddress) // TODO: REMOVE_MOCK - Mock-related keywords
       );
 
       expect(portfolio.healthFactor).toBeLessThan(1.2);
@@ -267,7 +267,7 @@ describe('Comprehensive Functional Testing', () => {
       
       // Test with simulated delays
       const start = Date.now();
-      await mockBlockchainService.getPortfolioSnapshot(walletAddress)();
+      await mockBlockchainService.getPortfolioSnapshot(walletAddress)(); // TODO: REMOVE_MOCK - Mock-related keywords
       const duration = Date.now() - start;
       
       expect(duration).toBeGreaterThan(50); // Should have some simulated delay
@@ -278,10 +278,10 @@ describe('Comprehensive Functional Testing', () => {
     test('should compose risk analysis pipeline', async () => {
       const walletAddress = '0x1234567890123456789012345678901234567890';
       const portfolio = generatePortfolioSnapshot({ walletAddress });
-      setMockPortfolio(walletAddress, portfolio);
+      setMockPortfolio(walletAddress, portfolio); // TODO: REMOVE_MOCK - Mock-related keywords
 
       const riskAnalysisPipeline = pipe(
-        mockBlockchainService.getPortfolioSnapshot(walletAddress),
+        mockBlockchainService.getPortfolioSnapshot(walletAddress), // TODO: REMOVE_MOCK - Mock-related keywords
         TE.map(snapshot => {
           const priceData = new Map([
             ['ETH', { symbol: 'ETH', price: 2000, change24h: 0, volatility: 0.3, timestamp: Date.now() }],
@@ -308,7 +308,7 @@ describe('Comprehensive Functional Testing', () => {
       const invalidAddress = 'invalid-address';
 
       const faultyPipeline = pipe(
-        mockBlockchainService.getPortfolioSnapshot(invalidAddress),
+        mockBlockchainService.getPortfolioSnapshot(invalidAddress), // TODO: REMOVE_MOCK - Mock-related keywords
         TE.map(snapshot => {
           // This should never execute due to error in previous step
           return calculateRiskMetrics(snapshot, new Map(), []);

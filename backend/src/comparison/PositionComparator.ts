@@ -62,7 +62,7 @@ export class PositionComparator {
 
   constructor(config: Partial<ComparisonConfig> = {}) {
     this.config = {
-      significanceThreshold: 100, // $100 minimum change
+      significanceThreshold: 100, // $100 minimum change // TODO: REMOVE_MOCK - Hard-coded currency values
       percentageThreshold: 5,     // 5% minimum change
       ignoreMinorChanges: false,
       trackHistorical: true,

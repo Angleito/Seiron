@@ -130,7 +130,7 @@ export const expectValidRiskScore = (score: RiskScore): void => {
   expect(score.correlation).toBeLessThanOrEqual(100);
   expect(score.volatility).toBeGreaterThanOrEqual(0);
   expect(score.volatility).toBeLessThanOrEqual(100);
-  expect(['low', 'medium', 'high', 'critical']).toContain(score.level);
+  expect(['low', 'medium', 'high', 'critical']).toContain(score.level); // TODO: REMOVE_MOCK - Hard-coded array literals
 };
 
 export const expectRiskLevel = (score: RiskScore, expectedLevel: RiskLevel): void => {
@@ -195,8 +195,8 @@ export const expectValidVolatilityAnalysis = (analysis: VolatilityAnalysis): voi
 export const expectValidRiskAlert = (alert: RiskAlert): void => {
   expect(alert.id).toBeTruthy();
   expect(alert.walletAddress).toMatch(/^0x[a-fA-F0-9]{40}$/);
-  expect(['liquidation', 'concentration', 'correlation', 'volatility']).toContain(alert.category);
-  expect(['info', 'warning', 'critical']).toContain(alert.severity);
+  expect(['liquidation', 'concentration', 'correlation', 'volatility']).toContain(alert.category); // TODO: REMOVE_MOCK - Hard-coded array literals
+  expect(['info', 'warning', 'critical']).toContain(alert.severity); // TODO: REMOVE_MOCK - Hard-coded array literals
   expect(alert.message).toBeTruthy();
   expect(typeof alert.value).toBe('number');
   expect(typeof alert.threshold).toBe('number');

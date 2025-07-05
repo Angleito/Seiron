@@ -16,20 +16,20 @@ import {
 } from '../types';
 import { createSiloProtocolWrapper } from '../adapters/SiloProtocolWrapper';
 
-// ===================== Mock Setup =====================
+// ===================== Mock Setup ===================== // TODO: REMOVE_MOCK - Mock-related keywords
 
-const mockPublicClient = {
+const mockPublicClient = { // TODO: REMOVE_MOCK - Mock-related keywords
   getChainId: jest.fn(),
   readContract: jest.fn(),
   simulateContract: jest.fn(),
 } as unknown as PublicClient;
 
-const mockWalletClient = {
+const mockWalletClient = { // TODO: REMOVE_MOCK - Mock-related keywords
   writeContract: jest.fn(),
   account: { address: 'sei1test1wallet2address' }
 } as unknown as WalletClient;
 
-const mockConfig: SeiProtocolConfig = {
+const mockConfig: SeiProtocolConfig = { // TODO: REMOVE_MOCK - Mock-related keywords
   network: 'testnet',
   rpcUrl: 'https://evm-rpc-testnet.sei-apis.com',
   contractAddresses: {
@@ -56,7 +56,7 @@ const mockConfig: SeiProtocolConfig = {
 const testWalletAddress = 'sei1test1wallet2address3here4for5testing6purposes7only8';
 const testTokenAddress = 'sei1test1token2address3here4for5sei5testnet6deployment7only';
 
-const mockStakeParams: SiloStakeParams = {
+const mockStakeParams: SiloStakeParams = { // TODO: REMOVE_MOCK - Mock-related keywords
   walletAddress: testWalletAddress,
   token: testTokenAddress,
   amount: '1000000000000000000000', // 1000 tokens
@@ -64,14 +64,14 @@ const mockStakeParams: SiloStakeParams = {
   acceptSlashingRisk: true
 };
 
-const mockUnstakeParams: SiloUnstakeParams = {
+const mockUnstakeParams: SiloUnstakeParams = { // TODO: REMOVE_MOCK - Mock-related keywords
   walletAddress: testWalletAddress,
   positionId: 'silo-pos-1',
   amount: '500000000000000000000', // 500 tokens
   acceptPenalty: true
 };
 
-const mockClaimParams: SiloClaimRewardsParams = {
+const mockClaimParams: SiloClaimRewardsParams = { // TODO: REMOVE_MOCK - Mock-related keywords
   walletAddress: testWalletAddress,
   positionId: 'silo-pos-1'
 };
@@ -82,29 +82,29 @@ describe('SiloProtocolWrapper', () => {
   let siloWrapper: SiloProtocolWrapper;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    siloWrapper = createSiloProtocolWrapper(mockPublicClient, mockWalletClient, mockConfig);
+    jest.clearAllMocks(); // TODO: REMOVE_MOCK - Mock-related keywords
+    siloWrapper = createSiloProtocolWrapper(mockPublicClient, mockWalletClient, mockConfig); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    jest.restoreAllMocks(); // TODO: REMOVE_MOCK - Mock-related keywords
   });
 
   // ===================== Initialization Tests =====================
 
   describe('Initialization', () => {
     it('should initialize successfully on Sei testnet', async () => {
-      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715);
+      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
 
       const result = await siloWrapper.initialize()();
 
       expect(result._tag).toBe('Right');
       expect(siloWrapper.isInitialized).toBe(true);
-      expect(mockPublicClient.getChainId).toHaveBeenCalled();
+      expect(mockPublicClient.getChainId).toHaveBeenCalled(); // TODO: REMOVE_MOCK - Mock-related keywords
     });
 
     it('should fail initialization on wrong network', async () => {
-      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(1); // Ethereum mainnet
+      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(1); // Ethereum mainnet // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
 
       const result = await siloWrapper.initialize()();
 
@@ -114,7 +114,7 @@ describe('SiloProtocolWrapper', () => {
     });
 
     it('should handle initialization errors gracefully', async () => {
-      (mockPublicClient.getChainId as jest.Mock).mockRejectedValue(new Error('Network error'));
+      (mockPublicClient.getChainId as jest.Mock).mockRejectedValue(new Error('Network error')); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
 
       const result = await siloWrapper.initialize()();
 
@@ -127,7 +127,7 @@ describe('SiloProtocolWrapper', () => {
 
   describe('Staking Pool Information', () => {
     beforeEach(async () => {
-      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715);
+      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
       await siloWrapper.initialize()();
     });
 
@@ -146,8 +146,8 @@ describe('SiloProtocolWrapper', () => {
     });
 
     it('should handle pool info retrieval errors', async () => {
-      // Mock internal method to throw error
-      jest.spyOn(siloWrapper as any, 'fetchStakingPoolData').mockRejectedValue(new Error('Contract error'));
+      // Mock internal method to throw error // TODO: REMOVE_MOCK - Mock-related keywords
+      jest.spyOn(siloWrapper as any, 'fetchStakingPoolData').mockRejectedValue(new Error('Contract error')); // TODO: REMOVE_MOCK - Mock-related keywords
 
       const result = await siloWrapper.getStakingPoolInfo(testTokenAddress)();
 
@@ -159,12 +159,12 @@ describe('SiloProtocolWrapper', () => {
 
   describe('Staking Operations', () => {
     beforeEach(async () => {
-      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715);
+      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
       await siloWrapper.initialize()();
     });
 
     it('should stake tokens successfully', async () => {
-      const result = await siloWrapper.stake(mockStakeParams)();
+      const result = await siloWrapper.stake(mockStakeParams)(); // TODO: REMOVE_MOCK - Mock-related keywords
 
       expect(result._tag).toBe('Right');
       if (result._tag === 'Right') {
@@ -174,7 +174,7 @@ describe('SiloProtocolWrapper', () => {
 
     it('should validate stake parameters', async () => {
       const invalidParams = {
-        ...mockStakeParams,
+        ...mockStakeParams, // TODO: REMOVE_MOCK - Mock-related keywords
         amount: '0' // Invalid amount
       };
 
@@ -188,7 +188,7 @@ describe('SiloProtocolWrapper', () => {
 
     it('should handle staking with maximum amount', async () => {
       const maxStakeParams = {
-        ...mockStakeParams,
+        ...mockStakeParams, // TODO: REMOVE_MOCK - Mock-related keywords
         amount: '1000000000000000000000000', // 1M tokens
         useMaxAmount: true
       };
@@ -200,7 +200,7 @@ describe('SiloProtocolWrapper', () => {
 
     it('should reject stake amount above maximum', async () => {
       const excessiveParams = {
-        ...mockStakeParams,
+        ...mockStakeParams, // TODO: REMOVE_MOCK - Mock-related keywords
         amount: '10000000000000000000000000' // 10M tokens (above max)
       };
 
@@ -217,12 +217,12 @@ describe('SiloProtocolWrapper', () => {
 
   describe('Unstaking Operations', () => {
     beforeEach(async () => {
-      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715);
+      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
       await siloWrapper.initialize()();
     });
 
     it('should unstake tokens successfully', async () => {
-      const result = await siloWrapper.unstake(mockUnstakeParams)();
+      const result = await siloWrapper.unstake(mockUnstakeParams)(); // TODO: REMOVE_MOCK - Mock-related keywords
 
       expect(result._tag).toBe('Right');
       if (result._tag === 'Right') {
@@ -248,7 +248,7 @@ describe('SiloProtocolWrapper', () => {
 
     it('should handle emergency unstake', async () => {
       const emergencyParams = {
-        ...mockUnstakeParams,
+        ...mockUnstakeParams, // TODO: REMOVE_MOCK - Mock-related keywords
         emergencyUnstake: true
       };
 
@@ -259,12 +259,12 @@ describe('SiloProtocolWrapper', () => {
 
     it('should reject unstaking non-existent position', async () => {
       const invalidParams = {
-        ...mockUnstakeParams,
+        ...mockUnstakeParams, // TODO: REMOVE_MOCK - Mock-related keywords
         positionId: 'non-existent-position'
       };
 
-      // Mock getStakingPositionById to throw error
-      jest.spyOn(siloWrapper as any, 'getStakingPositionById').mockImplementation(() =>
+      // Mock getStakingPositionById to throw error // TODO: REMOVE_MOCK - Mock-related keywords
+      jest.spyOn(siloWrapper as any, 'getStakingPositionById').mockImplementation(() => // TODO: REMOVE_MOCK - Mock-related keywords
         TE.left(new SiloProtocolError('Position not found', 'POSITION_NOT_FOUND'))
       );
 
@@ -278,12 +278,12 @@ describe('SiloProtocolWrapper', () => {
 
   describe('Rewards Operations', () => {
     beforeEach(async () => {
-      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715);
+      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
       await siloWrapper.initialize()();
     });
 
     it('should claim rewards successfully', async () => {
-      const result = await siloWrapper.claimRewards(mockClaimParams)();
+      const result = await siloWrapper.claimRewards(mockClaimParams)(); // TODO: REMOVE_MOCK - Mock-related keywords
 
       expect(result._tag).toBe('Right');
       if (result._tag === 'Right') {
@@ -318,12 +318,12 @@ describe('SiloProtocolWrapper', () => {
 
     it('should handle claiming rewards for non-existent position', async () => {
       const invalidParams = {
-        ...mockClaimParams,
+        ...mockClaimParams, // TODO: REMOVE_MOCK - Mock-related keywords
         positionId: 'non-existent'
       };
 
-      // Mock to return empty rewards
-      jest.spyOn(siloWrapper as any, 'calculateRewards').mockImplementation(() =>
+      // Mock to return empty rewards // TODO: REMOVE_MOCK - Mock-related keywords
+      jest.spyOn(siloWrapper as any, 'calculateRewards').mockImplementation(() => // TODO: REMOVE_MOCK - Mock-related keywords
         TE.right([])
       );
 
@@ -337,7 +337,7 @@ describe('SiloProtocolWrapper', () => {
 
   describe('Position Management', () => {
     beforeEach(async () => {
-      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715);
+      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
       await siloWrapper.initialize()();
     });
 
@@ -371,8 +371,8 @@ describe('SiloProtocolWrapper', () => {
     });
 
     it('should handle empty positions gracefully', async () => {
-      // Mock to return empty positions
-      jest.spyOn(siloWrapper as any, 'getUserStakingPositionIds').mockImplementation(() =>
+      // Mock to return empty positions // TODO: REMOVE_MOCK - Mock-related keywords
+      jest.spyOn(siloWrapper as any, 'getUserStakingPositionIds').mockImplementation(() => // TODO: REMOVE_MOCK - Mock-related keywords
         TE.right([])
       );
 
@@ -389,12 +389,12 @@ describe('SiloProtocolWrapper', () => {
 
   describe('Return Estimation', () => {
     beforeEach(async () => {
-      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715);
+      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
       await siloWrapper.initialize()();
     });
 
     it('should estimate staking returns accurately', async () => {
-      const result = await siloWrapper.estimateStakingReturns(mockStakeParams)();
+      const result = await siloWrapper.estimateStakingReturns(mockStakeParams)(); // TODO: REMOVE_MOCK - Mock-related keywords
 
       expect(result._tag).toBe('Right');
       if (result._tag === 'Right') {
@@ -411,8 +411,8 @@ describe('SiloProtocolWrapper', () => {
     });
 
     it('should estimate returns for different staking periods', async () => {
-      const shortTermParams = { ...mockStakeParams, stakingPeriod: 604800 }; // 1 week
-      const longTermParams = { ...mockStakeParams, stakingPeriod: 31536000 }; // 1 year
+      const shortTermParams = { ...mockStakeParams, stakingPeriod: 604800 }; // 1 week // TODO: REMOVE_MOCK - Mock-related keywords
+      const longTermParams = { ...mockStakeParams, stakingPeriod: 31536000 }; // 1 year // TODO: REMOVE_MOCK - Mock-related keywords
 
       const shortResult = await siloWrapper.estimateStakingReturns(shortTermParams)();
       const longResult = await siloWrapper.estimateStakingReturns(longTermParams)();
@@ -427,7 +427,7 @@ describe('SiloProtocolWrapper', () => {
     });
 
     it('should handle flexible staking (no lockup)', async () => {
-      const flexibleParams = { ...mockStakeParams, stakingPeriod: 0 };
+      const flexibleParams = { ...mockStakeParams, stakingPeriod: 0 }; // TODO: REMOVE_MOCK - Mock-related keywords
 
       const result = await siloWrapper.estimateStakingReturns(flexibleParams)();
 
@@ -442,15 +442,15 @@ describe('SiloProtocolWrapper', () => {
 
   describe('Error Handling', () => {
     beforeEach(async () => {
-      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715);
+      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
       await siloWrapper.initialize()();
     });
 
     it('should handle network errors gracefully', async () => {
-      // Mock network failure
-      jest.spyOn(siloWrapper as any, 'simulateTransaction').mockRejectedValue(new Error('Network timeout'));
+      // Mock network failure // TODO: REMOVE_MOCK - Mock-related keywords
+      jest.spyOn(siloWrapper as any, 'simulateTransaction').mockRejectedValue(new Error('Network timeout')); // TODO: REMOVE_MOCK - Mock-related keywords
 
-      const result = await siloWrapper.stake(mockStakeParams)();
+      const result = await siloWrapper.stake(mockStakeParams)(); // TODO: REMOVE_MOCK - Mock-related keywords
 
       expect(result._tag).toBe('Left');
       if (result._tag === 'Left') {
@@ -461,13 +461,13 @@ describe('SiloProtocolWrapper', () => {
     it('should validate wallet connection', async () => {
       // Create wrapper without wallet client
       const noWalletWrapper = new SiloProtocolWrapper(
-        mockPublicClient,
+        mockPublicClient, // TODO: REMOVE_MOCK - Mock-related keywords
         null as any,
-        mockConfig
+        mockConfig // TODO: REMOVE_MOCK - Mock-related keywords
       );
       await noWalletWrapper.initialize()();
 
-      const result = await noWalletWrapper.stake(mockStakeParams)();
+      const result = await noWalletWrapper.stake(mockStakeParams)(); // TODO: REMOVE_MOCK - Mock-related keywords
 
       expect(result._tag).toBe('Left');
       if (result._tag === 'Left') {
@@ -476,8 +476,8 @@ describe('SiloProtocolWrapper', () => {
     });
 
     it('should handle contract call failures', async () => {
-      // Mock contract call failure
-      jest.spyOn(siloWrapper as any, 'fetchPositionData').mockRejectedValue(new Error('Contract reverted'));
+      // Mock contract call failure // TODO: REMOVE_MOCK - Mock-related keywords
+      jest.spyOn(siloWrapper as any, 'fetchPositionData').mockRejectedValue(new Error('Contract reverted')); // TODO: REMOVE_MOCK - Mock-related keywords
 
       const result = await siloWrapper.getStakingPositions(testWalletAddress)();
 
@@ -506,17 +506,17 @@ describe('SiloProtocolWrapper', () => {
 
   describe('Integration Scenarios', () => {
     beforeEach(async () => {
-      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715);
+      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
       await siloWrapper.initialize()();
     });
 
     it('should handle complete staking lifecycle', async () => {
       // 1. Estimate returns
-      const estimateResult = await siloWrapper.estimateStakingReturns(mockStakeParams)();
+      const estimateResult = await siloWrapper.estimateStakingReturns(mockStakeParams)(); // TODO: REMOVE_MOCK - Mock-related keywords
       expect(estimateResult._tag).toBe('Right');
 
       // 2. Stake tokens
-      const stakeResult = await siloWrapper.stake(mockStakeParams)();
+      const stakeResult = await siloWrapper.stake(mockStakeParams)(); // TODO: REMOVE_MOCK - Mock-related keywords
       expect(stakeResult._tag).toBe('Right');
 
       // 3. Check positions
@@ -528,11 +528,11 @@ describe('SiloProtocolWrapper', () => {
       expect(rewardsResult._tag).toBe('Right');
 
       // 5. Claim rewards
-      const claimResult = await siloWrapper.claimRewards(mockClaimParams)();
+      const claimResult = await siloWrapper.claimRewards(mockClaimParams)(); // TODO: REMOVE_MOCK - Mock-related keywords
       expect(claimResult._tag).toBe('Right');
 
       // 6. Unstake tokens
-      const unstakeResult = await siloWrapper.unstake(mockUnstakeParams)();
+      const unstakeResult = await siloWrapper.unstake(mockUnstakeParams)(); // TODO: REMOVE_MOCK - Mock-related keywords
       expect(unstakeResult._tag).toBe('Right');
     });
 
@@ -555,7 +555,7 @@ describe('SiloProtocolWrapper', () => {
 
   describe('Performance', () => {
     beforeEach(async () => {
-      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715);
+      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
       await siloWrapper.initialize()();
     });
 
@@ -572,9 +572,9 @@ describe('SiloProtocolWrapper', () => {
     });
 
     it('should handle large position sets efficiently', async () => {
-      // Mock large number of positions
+      // Mock large number of positions // TODO: REMOVE_MOCK - Mock-related keywords
       const manyPositionIds = Array.from({ length: 100 }, (_, i) => `pos-${i}`);
-      jest.spyOn(siloWrapper as any, 'getUserStakingPositionIds').mockImplementation(() =>
+      jest.spyOn(siloWrapper as any, 'getUserStakingPositionIds').mockImplementation(() => // TODO: REMOVE_MOCK - Mock-related keywords
         TE.right(manyPositionIds)
       );
 

@@ -365,7 +365,7 @@ export class HealthMonitoringService extends EventEmitter {
         responseTime,
         errorRate: 0,
         lastSuccessfulCall: new Date(),
-        apiCreditRemaining: 1000 // Mock value
+        apiCreditRemaining: 1000 // Mock value // TODO: REMOVE_MOCK - Mock-related keywords
       };
     } catch (error) {
       return {
@@ -434,7 +434,7 @@ export class HealthMonitoringService extends EventEmitter {
     return {
       cpu: {
         usage: process.cpuUsage().user / 1000000, // Convert to milliseconds
-        loadAverage: [0.1, 0.2, 0.3] // Mock values - would use os.loadavg() in real implementation
+        loadAverage: [0.1, 0.2, 0.3] // Mock values - would use os.loadavg() in real implementation // TODO: REMOVE_MOCK - Mock-related keywords
       },
       memory: {
         used: memoryUsage.heapUsed,
@@ -442,12 +442,12 @@ export class HealthMonitoringService extends EventEmitter {
         percentage: memoryUsage.heapUsed / memoryUsage.heapTotal
       },
       network: {
-        connections: 10, // Mock value
-        throughput: 1024 // Mock value
+        connections: 10, // Mock value // TODO: REMOVE_MOCK - Mock-related keywords
+        throughput: 1024 // Mock value // TODO: REMOVE_MOCK - Mock-related keywords
       },
       database: {
-        connections: 5, // Mock value
-        responseTime: 50 // Mock value
+        connections: 5, // Mock value // TODO: REMOVE_MOCK - Mock-related keywords
+        responseTime: 50 // Mock value // TODO: REMOVE_MOCK - Mock-related keywords
       }
     };
   };
@@ -637,7 +637,7 @@ export class HealthMonitoringService extends EventEmitter {
     adapter?: string,
     dragonTheme?: HealthAlert['dragonTheme']
   ): HealthAlert => ({
-    id: `alert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    id: `alert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // TODO: REMOVE_MOCK - Random value generation
     type,
     message,
     timestamp: new Date(),

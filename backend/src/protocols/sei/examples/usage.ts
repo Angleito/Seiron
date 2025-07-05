@@ -238,7 +238,7 @@ export async function citrexTradingExample(): Promise<void> {
         'open_position',
         openParams,
         currentPositions.right,
-        1000 // $1000 portfolio value
+        1000 // $1000 portfolio value // TODO: REMOVE_MOCK - Hard-coded currency values
       )();
       
       if (validationResult._tag === 'Right') {
@@ -382,7 +382,7 @@ export async function riskManagementExample(): Promise<void> {
     
     if (allPositions._tag === 'Right') {
       const positions = allPositions.right;
-      const portfolioValue = 5000; // $5000 portfolio
+      const portfolioValue = 5000; // $5000 portfolio // TODO: REMOVE_MOCK - Hard-coded currency values
       
       // 3. Analyze comprehensive risk
       console.log('🔍 Analyzing portfolio risk...');
@@ -432,8 +432,8 @@ export async function riskManagementExample(): Promise<void> {
       
       riskManager.startMonitoring(
         walletAddress,
-        async () => positions, // Mock function to get current positions
-        async () => portfolioValue, // Mock function to get portfolio value
+        async () => positions, // Mock function to get current positions // TODO: REMOVE_MOCK - Mock-related keywords
+        async () => portfolioValue, // Mock function to get portfolio value // TODO: REMOVE_MOCK - Mock-related keywords
         (alert) => {
           console.log(`🚨 RISK ALERT: ${alert.message} (${alert.severity})`);
           logger.warn('Risk alert generated', { alert });

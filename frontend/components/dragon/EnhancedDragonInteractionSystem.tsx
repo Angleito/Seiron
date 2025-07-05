@@ -2,8 +2,8 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { SVGDragonCharacter } from './SVGDragonCharacter'
-import { useSVGInteraction, SVGAccessibilityAnnouncer } from './hooks/useSVGInteraction'
+// import { SVGDragonCharacter } from './SVGDragonCharacter'
+// import { useSVGInteraction, SVGAccessibilityAnnouncer } from './hooks/useSVGInteraction'
 import { useEnhancedMouseTracking } from './hooks/useEnhancedMouseTracking'
 import { useEnhancedTouchGestures } from './hooks/useEnhancedTouchGestures'
 import { useKeyboardNavigation } from './hooks/useKeyboardNavigation'

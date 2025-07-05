@@ -26,32 +26,32 @@ export const defaultConfig: PropertyTestConfig = {
 // ===================== Basic Generators =====================
 
 export const generateInteger = (min: number = -1000, max: number = 1000): Generator<number> =>
-  () => Math.floor(Math.random() * (max - min + 1)) + min;
+  () => Math.floor(Math.random() * (max - min + 1)) + min; // TODO: REMOVE_MOCK - Random value generation
 
 export const generatePositiveInteger = (max: number = 1000): Generator<number> =>
-  () => Math.floor(Math.random() * max) + 1;
+  () => Math.floor(Math.random() * max) + 1; // TODO: REMOVE_MOCK - Random value generation
 
 export const generateFloat = (min: number = -1000, max: number = 1000): Generator<number> =>
-  () => Math.random() * (max - min) + min;
+  () => Math.random() * (max - min) + min; // TODO: REMOVE_MOCK - Random value generation
 
 export const generatePositiveFloat = (max: number = 1000): Generator<number> =>
-  () => Math.random() * max;
+  () => Math.random() * max; // TODO: REMOVE_MOCK - Random value generation
 
 export const generateProbability = (): Generator<number> =>
-  () => Math.random();
+  () => Math.random(); // TODO: REMOVE_MOCK - Random value generation
 
 export const generatePercentage = (): Generator<number> =>
-  () => Math.random() * 100;
+  () => Math.random() * 100; // TODO: REMOVE_MOCK - Random value generation
 
 export const generateBoolean = (): Generator<boolean> =>
-  () => Math.random() < 0.5;
+  () => Math.random() < 0.5; // TODO: REMOVE_MOCK - Random value generation
 
 export const generateString = (length: number = 10): Generator<string> =>
   () => {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let result = '';
     for (let i = 0; i < length; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
+      result += chars.charAt(Math.floor(Math.random() * chars.length)); // TODO: REMOVE_MOCK - Random value generation
     }
     return result;
   };
@@ -61,7 +61,7 @@ export const generateHexString = (length: number = 40): Generator<string> =>
     const chars = '0123456789abcdef';
     let result = '0x';
     for (let i = 0; i < length; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
+      result += chars.charAt(Math.floor(Math.random() * chars.length)); // TODO: REMOVE_MOCK - Random value generation
     }
     return result;
   };
@@ -74,7 +74,7 @@ export const generateArray = <T>(
   maxLength: number = 10
 ): Generator<ReadonlyArray<T>> =>
   () => {
-    const length = Math.floor(Math.random() * (maxLength - minLength + 1)) + minLength;
+    const length = Math.floor(Math.random() * (maxLength - minLength + 1)) + minLength; // TODO: REMOVE_MOCK - Random value generation
     return pipe(
       A.makeBy(length, generator),
       A.map(gen => gen())
@@ -92,7 +92,7 @@ export const generateSortedArray = (
   ascending: boolean = true
 ): Generator<ReadonlyArray<number>> =>
   () => {
-    const arr = Array.from({ length }, () => Math.random() * 1000);
+    const arr = Array.from({ length }, () => Math.random() * 1000); // TODO: REMOVE_MOCK - Random value generation
     return ascending ? arr.sort((a, b) => a - b) : arr.sort((a, b) => b - a);
   };
 
@@ -100,14 +100,14 @@ export const generateSortedArray = (
 
 export const oneOf = <T>(...generators: ReadonlyArray<Generator<T>>): Generator<T> =>
   () => {
-    const index = Math.floor(Math.random() * generators.length);
+    const index = Math.floor(Math.random() * generators.length); // TODO: REMOVE_MOCK - Random value generation
     return generators[index]();
   };
 
 export const frequency = <T>(...weightedGenerators: ReadonlyArray<[number, Generator<T>]>): Generator<T> =>
   () => {
     const totalWeight = weightedGenerators.reduce((sum, [weight]) => sum + weight, 0);
-    let random = Math.random() * totalWeight;
+    let random = Math.random() * totalWeight; // TODO: REMOVE_MOCK - Random value generation
     
     for (const [weight, generator] of weightedGenerators) {
       random -= weight;
@@ -221,7 +221,7 @@ export const generateRiskMetrics = (): Generator<{
 
 export const generateWeights = (count: number): Generator<ReadonlyArray<number>> =>
   () => {
-    const rawWeights = Array.from({ length: count }, () => Math.random());
+    const rawWeights = Array.from({ length: count }, () => Math.random()); // TODO: REMOVE_MOCK - Random value generation
     const sum = rawWeights.reduce((a, b) => a + b, 0);
     return rawWeights.map(w => w / sum);
   };
@@ -229,13 +229,13 @@ export const generateWeights = (count: number): Generator<ReadonlyArray<number>>
 export const generateConcentratedWeights = (count: number): Generator<ReadonlyArray<number>> =>
   () => {
     const weights = new Array(count).fill(0);
-    const dominantIndex = Math.floor(Math.random() * count);
-    weights[dominantIndex] = 0.7 + Math.random() * 0.3; // 70-100%
+    const dominantIndex = Math.floor(Math.random() * count); // TODO: REMOVE_MOCK - Random value generation
+    weights[dominantIndex] = 0.7 + Math.random() * 0.3; // 70-100% // TODO: REMOVE_MOCK - Random value generation
     
     const remaining = 1 - weights[dominantIndex];
     for (let i = 0; i < count; i++) {
       if (i !== dominantIndex) {
-        weights[i] = (Math.random() * remaining) / (count - 1);
+        weights[i] = (Math.random() * remaining) / (count - 1); // TODO: REMOVE_MOCK - Random value generation
       }
     }
     

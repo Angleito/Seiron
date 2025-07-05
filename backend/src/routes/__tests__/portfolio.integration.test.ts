@@ -1,6 +1,6 @@
 /**
  * Portfolio Routes Integration Tests
- * Tests API endpoints with functional patterns and mock services
+ * Tests API endpoints with functional patterns and mock services // TODO: REMOVE_MOCK - Mock-related keywords
  */
 
 import request from 'supertest';
@@ -14,15 +14,15 @@ import {
   generateWalletAddress,
   expectTaskRight,
   expectTaskLeft,
-  mockBlockchainService,
-  setMockPortfolio,
+  mockBlockchainService, // TODO: REMOVE_MOCK - Mock-related keywords
+  setMockPortfolio, // TODO: REMOVE_MOCK - Mock-related keywords
   createHighRiskScenario,
   createEmptyPortfolioScenario,
-  resetMockState
+  resetMockState // TODO: REMOVE_MOCK - Mock-related keywords
 } from '@/test-utils';
 
-// Mock services type
-interface MockServices {
+// Mock services type // TODO: REMOVE_MOCK - Mock-related keywords
+interface MockServices { // TODO: REMOVE_MOCK - Mock-related keywords
   portfolio: {
     getPortfolioData: (walletAddress: string) => TE.TaskEither<Error, any>;
     getPortfolioSummary: (walletAddress: string) => TE.TaskEither<Error, any>;
@@ -34,14 +34,14 @@ interface MockServices {
   };
 }
 
-// Create test app with mocked services
-const createTestApp = (mockServices: MockServices) => {
+// Create test app with mocked services // TODO: REMOVE_MOCK - Mock-related keywords
+const createTestApp = (mockServices: MockServices) => { // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
   const app = express();
   app.use(express.json());
   
-  // Inject mock services into request
+  // Inject mock services into request // TODO: REMOVE_MOCK - Mock-related keywords
   app.use((req, _res, next) => {
-    (req as any).services = mockServices;
+    (req as any).services = mockServices; // TODO: REMOVE_MOCK - Mock-related keywords
     next();
   });
   
@@ -56,13 +56,13 @@ const createTestApp = (mockServices: MockServices) => {
 };
 
 describe('Portfolio Routes Integration', () => {
-  let mockServices: MockServices;
+  let mockServices: MockServices; // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
   let app: express.Application;
   
   beforeEach(() => {
-    resetMockState();
+    resetMockState(); // TODO: REMOVE_MOCK - Mock-related keywords
     
-    mockServices = {
+    mockServices = { // TODO: REMOVE_MOCK - Mock-related keywords
       portfolio: {
         getPortfolioData: jest.fn(),
         getPortfolioSummary: jest.fn(),
@@ -74,7 +74,7 @@ describe('Portfolio Routes Integration', () => {
       }
     };
     
-    app = createTestApp(mockServices);
+    app = createTestApp(mockServices); // TODO: REMOVE_MOCK - Mock-related keywords
   });
 
   describe('GET /api/portfolio/data', () => {
@@ -82,8 +82,8 @@ describe('Portfolio Routes Integration', () => {
     const portfolioData = generatePortfolioSnapshot({ walletAddress: validWallet });
 
     test('should return portfolio data for valid wallet', async () => {
-      // Setup mock to return successful result
-      (mockServices.portfolio.getPortfolioData as jest.Mock).mockReturnValue(
+      // Setup mock to return successful result // TODO: REMOVE_MOCK - Mock-related keywords
+      (mockServices.portfolio.getPortfolioData as jest.Mock).mockReturnValue( // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
         TE.right(portfolioData)
       );
 
@@ -97,12 +97,12 @@ describe('Portfolio Routes Integration', () => {
         data: portfolioData
       });
 
-      expect(mockServices.portfolio.getPortfolioData).toHaveBeenCalledWith(validWallet);
+      expect(mockServices.portfolio.getPortfolioData).toHaveBeenCalledWith(validWallet); // TODO: REMOVE_MOCK - Mock-related keywords
     });
 
     test('should handle service errors gracefully', async () => {
       const errorMessage = 'Blockchain connection failed';
-      (mockServices.portfolio.getPortfolioData as jest.Mock).mockReturnValue(
+      (mockServices.portfolio.getPortfolioData as jest.Mock).mockReturnValue( // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
         TE.left(new Error(errorMessage))
       );
 
@@ -147,7 +147,7 @@ describe('Portfolio Routes Integration', () => {
         tokenBalances: []
       });
 
-      (mockServices.portfolio.getPortfolioData as jest.Mock).mockReturnValue(
+      (mockServices.portfolio.getPortfolioData as jest.Mock).mockReturnValue( // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
         TE.right(emptyPortfolio)
       );
 
@@ -173,7 +173,7 @@ describe('Portfolio Routes Integration', () => {
     };
 
     test('should return portfolio summary for valid wallet', async () => {
-      (mockServices.portfolio.getPortfolioSummary as jest.Mock).mockReturnValue(
+      (mockServices.portfolio.getPortfolioSummary as jest.Mock).mockReturnValue( // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
         TE.right(summaryData)
       );
 
@@ -195,7 +195,7 @@ describe('Portfolio Routes Integration', () => {
         riskLevel: 'critical' as const
       };
 
-      (mockServices.portfolio.getPortfolioSummary as jest.Mock).mockReturnValue(
+      (mockServices.portfolio.getPortfolioSummary as jest.Mock).mockReturnValue( // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
         TE.right(highRiskSummary)
       );
 
@@ -226,7 +226,7 @@ describe('Portfolio Routes Integration', () => {
         gasUsed: '21000'
       };
 
-      (mockServices.portfolio.executeLendingOperation as jest.Mock).mockReturnValue(
+      (mockServices.portfolio.executeLendingOperation as jest.Mock).mockReturnValue( // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
         TE.right(txResult)
       );
 
@@ -240,7 +240,7 @@ describe('Portfolio Routes Integration', () => {
         data: txResult
       });
 
-      expect(mockServices.portfolio.executeLendingOperation).toHaveBeenCalledWith(
+      expect(mockServices.portfolio.executeLendingOperation).toHaveBeenCalledWith( // TODO: REMOVE_MOCK - Mock-related keywords
         'supply',
         expect.objectContaining({
           asset: 'ETH',
@@ -249,7 +249,7 @@ describe('Portfolio Routes Integration', () => {
         })
       );
 
-      expect(mockServices.socket.sendTransactionUpdate).toHaveBeenCalledWith(
+      expect(mockServices.socket.sendTransactionUpdate).toHaveBeenCalledWith( // TODO: REMOVE_MOCK - Mock-related keywords
         validWallet,
         txResult.txHash,
         'pending'
@@ -274,7 +274,7 @@ describe('Portfolio Routes Integration', () => {
 
     test('should handle lending operation failures', async () => {
       const errorMessage = 'Insufficient balance';
-      (mockServices.portfolio.executeLendingOperation as jest.Mock).mockReturnValue(
+      (mockServices.portfolio.executeLendingOperation as jest.Mock).mockReturnValue( // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
         TE.left(new Error(errorMessage))
       );
 
@@ -296,7 +296,7 @@ describe('Portfolio Routes Integration', () => {
         amount: '1.0'
       };
 
-      (mockServices.portfolio.executeLendingOperation as jest.Mock).mockReturnValue(
+      (mockServices.portfolio.executeLendingOperation as jest.Mock).mockReturnValue( // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
         TE.right({ txHash: '0xabc' })
       );
 
@@ -305,7 +305,7 @@ describe('Portfolio Routes Integration', () => {
         .send(paramsWithoutOnBehalfOf)
         .expect(200);
 
-      expect(mockServices.portfolio.executeLendingOperation).toHaveBeenCalledWith(
+      expect(mockServices.portfolio.executeLendingOperation).toHaveBeenCalledWith( // TODO: REMOVE_MOCK - Mock-related keywords
         'supply',
         expect.objectContaining({
           onBehalfOf: validWallet
@@ -330,7 +330,7 @@ describe('Portfolio Routes Integration', () => {
         gasUsed: '25000'
       };
 
-      (mockServices.portfolio.executeLendingOperation as jest.Mock).mockReturnValue(
+      (mockServices.portfolio.executeLendingOperation as jest.Mock).mockReturnValue( // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
         TE.right(txResult)
       );
 
@@ -344,7 +344,7 @@ describe('Portfolio Routes Integration', () => {
         data: txResult
       });
 
-      expect(mockServices.portfolio.executeLendingOperation).toHaveBeenCalledWith(
+      expect(mockServices.portfolio.executeLendingOperation).toHaveBeenCalledWith( // TODO: REMOVE_MOCK - Mock-related keywords
         'withdraw',
         expect.objectContaining({
           asset: 'USDC',
@@ -361,7 +361,7 @@ describe('Portfolio Routes Integration', () => {
         amount: '1000'
       };
 
-      (mockServices.portfolio.executeLendingOperation as jest.Mock).mockReturnValue(
+      (mockServices.portfolio.executeLendingOperation as jest.Mock).mockReturnValue( // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
         TE.right({ txHash: '0xdef' })
       );
 
@@ -370,7 +370,7 @@ describe('Portfolio Routes Integration', () => {
         .send(paramsWithoutTo)
         .expect(200);
 
-      expect(mockServices.portfolio.executeLendingOperation).toHaveBeenCalledWith(
+      expect(mockServices.portfolio.executeLendingOperation).toHaveBeenCalledWith( // TODO: REMOVE_MOCK - Mock-related keywords
         'withdraw',
         expect.objectContaining({
           to: validWallet
@@ -402,7 +402,7 @@ describe('Portfolio Routes Integration', () => {
         liquidity: '1000000000000000000'
       };
 
-      (mockServices.portfolio.executeLiquidityOperation as jest.Mock).mockReturnValue(
+      (mockServices.portfolio.executeLiquidityOperation as jest.Mock).mockReturnValue( // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
         TE.right(txResult)
       );
 
@@ -416,7 +416,7 @@ describe('Portfolio Routes Integration', () => {
         data: txResult
       });
 
-      expect(mockServices.portfolio.executeLiquidityOperation).toHaveBeenCalledWith(
+      expect(mockServices.portfolio.executeLiquidityOperation).toHaveBeenCalledWith( // TODO: REMOVE_MOCK - Mock-related keywords
         'addLiquidity',
         expect.objectContaining({
           token0,
@@ -453,7 +453,7 @@ describe('Portfolio Routes Integration', () => {
 
     test('should handle liquidity operation failures', async () => {
       const errorMessage = 'Pool does not exist';
-      (mockServices.portfolio.executeLiquidityOperation as jest.Mock).mockReturnValue(
+      (mockServices.portfolio.executeLiquidityOperation as jest.Mock).mockReturnValue( // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
         TE.left(new Error(errorMessage))
       );
 
@@ -471,7 +471,7 @@ describe('Portfolio Routes Integration', () => {
     test('should set deadline parameter automatically', async () => {
       const beforeTime = Math.floor(Date.now() / 1000);
       
-      (mockServices.portfolio.executeLiquidityOperation as jest.Mock).mockReturnValue(
+      (mockServices.portfolio.executeLiquidityOperation as jest.Mock).mockReturnValue( // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
         TE.right({ txHash: '0x123' })
       );
 
@@ -481,7 +481,7 @@ describe('Portfolio Routes Integration', () => {
         .expect(200);
 
       const afterTime = Math.floor(Date.now() / 1000);
-      const callArgs = (mockServices.portfolio.executeLiquidityOperation as jest.Mock).mock.calls[0];
+      const callArgs = (mockServices.portfolio.executeLiquidityOperation as jest.Mock).mock.calls[0]; // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
       const deadline = callArgs[1].deadline;
 
       expect(deadline).toBeGreaterThan(beforeTime + 200); // At least 200 seconds from now
@@ -504,7 +504,7 @@ describe('Portfolio Routes Integration', () => {
         amount1: '1000000000000000000000'
       };
 
-      (mockServices.portfolio.executeLiquidityOperation as jest.Mock).mockReturnValue(
+      (mockServices.portfolio.executeLiquidityOperation as jest.Mock).mockReturnValue( // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
         TE.right(txResult)
       );
 
@@ -518,7 +518,7 @@ describe('Portfolio Routes Integration', () => {
         data: txResult
       });
 
-      expect(mockServices.portfolio.executeLiquidityOperation).toHaveBeenCalledWith(
+      expect(mockServices.portfolio.executeLiquidityOperation).toHaveBeenCalledWith( // TODO: REMOVE_MOCK - Mock-related keywords
         'removeLiquidity',
         expect.objectContaining({
           positionId: '123',
@@ -559,7 +559,7 @@ describe('Portfolio Routes Integration', () => {
         amount1: '100000000000000000000'
       };
 
-      (mockServices.portfolio.executeLiquidityOperation as jest.Mock).mockReturnValue(
+      (mockServices.portfolio.executeLiquidityOperation as jest.Mock).mockReturnValue( // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
         TE.right(txResult)
       );
 
@@ -573,7 +573,7 @@ describe('Portfolio Routes Integration', () => {
         data: txResult
       });
 
-      expect(mockServices.portfolio.executeLiquidityOperation).toHaveBeenCalledWith(
+      expect(mockServices.portfolio.executeLiquidityOperation).toHaveBeenCalledWith( // TODO: REMOVE_MOCK - Mock-related keywords
         'collectFees',
         expect.objectContaining({
           positionId: '456',
@@ -584,7 +584,7 @@ describe('Portfolio Routes Integration', () => {
     });
 
     test('should use maximum uint128 values for collection', async () => {
-      (mockServices.portfolio.executeLiquidityOperation as jest.Mock).mockReturnValue(
+      (mockServices.portfolio.executeLiquidityOperation as jest.Mock).mockReturnValue( // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
         TE.right({ txHash: '0x555' })
       );
 
@@ -593,7 +593,7 @@ describe('Portfolio Routes Integration', () => {
         .send(collectParams)
         .expect(200);
 
-      const callArgs = (mockServices.portfolio.executeLiquidityOperation as jest.Mock).mock.calls[0];
+      const callArgs = (mockServices.portfolio.executeLiquidityOperation as jest.Mock).mock.calls[0]; // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
       const params = callArgs[1];
 
       expect(params.amount0Max).toBe(2n ** 128n - 1n);
@@ -632,7 +632,7 @@ describe('Portfolio Routes Integration', () => {
         amount: '999999999999999999999999999999999999999'
       };
 
-      (mockServices.portfolio.executeLendingOperation as jest.Mock).mockReturnValue(
+      (mockServices.portfolio.executeLendingOperation as jest.Mock).mockReturnValue( // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
         TE.left(new Error('Amount too large'))
       );
 
@@ -651,8 +651,8 @@ describe('Portfolio Routes Integration', () => {
       const validWallet = generateWalletAddress();
       let executionOrder: string[] = [];
 
-      // Mock service that logs execution order
-      (mockServices.portfolio.getPortfolioData as jest.Mock).mockImplementation(() =>
+      // Mock service that logs execution order // TODO: REMOVE_MOCK - Mock-related keywords
+      (mockServices.portfolio.getPortfolioData as jest.Mock).mockImplementation(() => // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
         pipe(
           TE.of('step1'),
           TE.chainFirst(() => {
@@ -678,7 +678,7 @@ describe('Portfolio Routes Integration', () => {
       const validWallet = generateWalletAddress();
       
       // Test left path
-      (mockServices.portfolio.getPortfolioData as jest.Mock).mockReturnValue(
+      (mockServices.portfolio.getPortfolioData as jest.Mock).mockReturnValue( // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
         TE.left(new Error('Network error'))
       );
 
@@ -690,7 +690,7 @@ describe('Portfolio Routes Integration', () => {
       expect(errorResponse.body.success).toBe(false);
 
       // Test right path
-      (mockServices.portfolio.getPortfolioData as jest.Mock).mockReturnValue(
+      (mockServices.portfolio.getPortfolioData as jest.Mock).mockReturnValue( // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
         TE.right(generatePortfolioSnapshot())
       );
 

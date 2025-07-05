@@ -15,11 +15,11 @@ export class TestDataGenerator {
   }
   
   static createWalletAddress(): string {
-    return `0x${Math.random().toString(16).slice(2, 42).padEnd(40, '0')}`;
+    return `0x${Math.random().toString(16).slice(2, 42).padEnd(40, '0')}`; // TODO: REMOVE_MOCK - Random value generation
   }
   
   static createTokenAddress(): string {
-    return `0x${Math.random().toString(16).slice(2, 42).padEnd(40, '0')}`;
+    return `0x${Math.random().toString(16).slice(2, 42).padEnd(40, '0')}`; // TODO: REMOVE_MOCK - Random value generation
   }
   
   static createPortfolioSnapshot(walletAddress?: string): PortfolioSnapshot {
@@ -174,13 +174,13 @@ export class TaskEitherTestUtils {
   }
 }
 
-// Mock service factory
-export class MockServiceFactory {
-  static createMockPortfolioService() {
+// Mock service factory // TODO: REMOVE_MOCK - Mock-related keywords
+export class MockServiceFactory { // TODO: REMOVE_MOCK - Mock-related keywords
+  static createMockPortfolioService() { // TODO: REMOVE_MOCK - Mock-related keywords
     return {
-      initializeUser: jest.fn().mockReturnValue(TE.right(undefined)),
-      getPortfolioData: jest.fn().mockReturnValue(TE.right(TestDataGenerator.createPortfolioSnapshot())),
-      getPortfolioSummary: jest.fn().mockReturnValue(TE.right({
+      initializeUser: jest.fn().mockReturnValue(TE.right(undefined)), // TODO: REMOVE_MOCK - Mock-related keywords
+      getPortfolioData: jest.fn().mockReturnValue(TE.right(TestDataGenerator.createPortfolioSnapshot())), // TODO: REMOVE_MOCK - Mock-related keywords
+      getPortfolioSummary: jest.fn().mockReturnValue(TE.right({ // TODO: REMOVE_MOCK - Mock-related keywords
         totalValue: 10000,
         totalSupplied: 8000,
         totalBorrowed: 2000,
@@ -188,44 +188,44 @@ export class MockServiceFactory {
         healthFactor: 2.5,
         apy: { lending: 5.5, liquidity: 12.3, total: 8.5 }
       })),
-      refreshPortfolio: jest.fn().mockReturnValue(TE.right(TestDataGenerator.createPortfolioSnapshot())),
-      executeLendingOperation: jest.fn().mockReturnValue(TE.right({
+      refreshPortfolio: jest.fn().mockReturnValue(TE.right(TestDataGenerator.createPortfolioSnapshot())), // TODO: REMOVE_MOCK - Mock-related keywords
+      executeLendingOperation: jest.fn().mockReturnValue(TE.right({ // TODO: REMOVE_MOCK - Mock-related keywords
         txHash: '0xabc123',
         newSnapshot: TestDataGenerator.createPortfolioSnapshot()
       })),
-      executeLiquidityOperation: jest.fn().mockReturnValue(TE.right({
+      executeLiquidityOperation: jest.fn().mockReturnValue(TE.right({ // TODO: REMOVE_MOCK - Mock-related keywords
         txHash: '0xdef456',
         newSnapshot: TestDataGenerator.createPortfolioSnapshot()
       })),
-      cleanupUser: jest.fn().mockReturnValue(TE.right(undefined))
+      cleanupUser: jest.fn().mockReturnValue(TE.right(undefined)) // TODO: REMOVE_MOCK - Mock-related keywords
     };
   }
   
-  static createMockAIService() {
+  static createMockAIService() { // TODO: REMOVE_MOCK - Mock-related keywords
     return {
-      processMessage: jest.fn().mockReturnValue(TE.right({
+      processMessage: jest.fn().mockReturnValue(TE.right({ // TODO: REMOVE_MOCK - Mock-related keywords
         message: 'I can help you with your portfolio.',
         suggestions: ['Show portfolio', 'Check positions'],
         confidence: 0.8
       })),
-      generatePortfolioAnalysis: jest.fn().mockReturnValue(TE.right(
+      generatePortfolioAnalysis: jest.fn().mockReturnValue(TE.right( // TODO: REMOVE_MOCK - Mock-related keywords
         'Your portfolio is well-balanced with good diversification.'
       )),
-      getConversationHistory: jest.fn().mockReturnValue([]),
-      clearConversationHistory: jest.fn().mockReturnValue(TE.right(undefined))
+      getConversationHistory: jest.fn().mockReturnValue([]), // TODO: REMOVE_MOCK - Mock-related keywords
+      clearConversationHistory: jest.fn().mockReturnValue(TE.right(undefined)) // TODO: REMOVE_MOCK - Mock-related keywords
     };
   }
   
-  static createMockSocketService() {
+  static createMockSocketService() { // TODO: REMOVE_MOCK - Mock-related keywords
     return {
       addUserSocket: jest.fn(),
       removeUserSocket: jest.fn(),
-      sendPortfolioUpdate: jest.fn().mockReturnValue(TE.right(undefined)),
-      sendChatResponse: jest.fn().mockReturnValue(TE.right(undefined)),
-      sendTransactionUpdate: jest.fn().mockReturnValue(TE.right(undefined)),
-      sendError: jest.fn().mockReturnValue(TE.right(undefined)),
-      isUserConnected: jest.fn().mockReturnValue(true),
-      getUserSocketCount: jest.fn().mockReturnValue(1)
+      sendPortfolioUpdate: jest.fn().mockReturnValue(TE.right(undefined)), // TODO: REMOVE_MOCK - Mock-related keywords
+      sendChatResponse: jest.fn().mockReturnValue(TE.right(undefined)), // TODO: REMOVE_MOCK - Mock-related keywords
+      sendTransactionUpdate: jest.fn().mockReturnValue(TE.right(undefined)), // TODO: REMOVE_MOCK - Mock-related keywords
+      sendError: jest.fn().mockReturnValue(TE.right(undefined)), // TODO: REMOVE_MOCK - Mock-related keywords
+      isUserConnected: jest.fn().mockReturnValue(true), // TODO: REMOVE_MOCK - Mock-related keywords
+      getUserSocketCount: jest.fn().mockReturnValue(1) // TODO: REMOVE_MOCK - Mock-related keywords
     };
   }
 }
@@ -236,13 +236,13 @@ export class TimeUtils {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
   
-  static mockDate(dateString: string): jest.SpyInstance {
-    const mockDate = new Date(dateString);
-    return jest.spyOn(global, 'Date').mockImplementation(() => mockDate);
+  static mockDate(dateString: string): jest.SpyInstance { // TODO: REMOVE_MOCK - Mock-related keywords
+    const mockDate = new Date(dateString); // TODO: REMOVE_MOCK - Mock-related keywords
+    return jest.spyOn(global, 'Date').mockImplementation(() => mockDate); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
   }
   
   static restoreDate(spy: jest.SpyInstance): void {
-    spy.mockRestore();
+    spy.mockRestore(); // TODO: REMOVE_MOCK - Mock-related keywords
   }
 }
 
@@ -301,7 +301,7 @@ export class TestAssertions {
 export {
   TestDataGenerator as DataGen,
   TaskEitherTestUtils as TEUtils,
-  MockServiceFactory as MockServices,
+  MockServiceFactory as MockServices, // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
   TimeUtils,
   ErrorUtils,
   TestAssertions as Assert

@@ -18,8 +18,8 @@ import {
 
 // Example usage of the risk management system
 export const exampleRiskAssessment = async () => {
-  // Mock portfolio snapshot
-  const mockSnapshot: PortfolioSnapshot = {
+  // Mock portfolio snapshot // TODO: REMOVE_MOCK - Mock-related keywords
+  const mockSnapshot: PortfolioSnapshot = { // TODO: REMOVE_MOCK - Mock-related keywords
     walletAddress: '0x1234567890abcdef',
     totalValueUSD: 100000,
     totalSuppliedUSD: 80000,
@@ -107,7 +107,7 @@ export const exampleRiskAssessment = async () => {
     blockNumber: 123456
   };
 
-  // Mock user risk profile
+  // Mock user risk profile // TODO: REMOVE_MOCK - Mock-related keywords
   const userProfile = {
     walletAddress: '0x1234567890abcdef' as const,
     riskTolerance: 'moderate' as const,
@@ -117,13 +117,13 @@ export const exampleRiskAssessment = async () => {
     }
   };
 
-  // Mock price data
+  // Mock price data // TODO: REMOVE_MOCK - Mock-related keywords
   const priceData = new Map([
     ['ETH', { symbol: 'ETH', price: 3000, change24h: 0.05, volatility: 0.04, timestamp: Date.now() }],
     ['USDC', { symbol: 'USDC', price: 1, change24h: 0.001, volatility: 0.001, timestamp: Date.now() }]
   ]);
 
-  // Mock correlation data
+  // Mock correlation data // TODO: REMOVE_MOCK - Mock-related keywords
   const correlationData = [
     { pair: ['ETH', 'USDC'] as const, correlation: 0.1, period: 30, confidence: 0.95 }
   ];
@@ -131,7 +131,7 @@ export const exampleRiskAssessment = async () => {
   // Example 1: Simple risk assessment
   console.log('=== Example 1: Simple Risk Assessment ===');
   const simpleAssessment = await pipe(
-    assessRisk(mockSnapshot, DEFAULT_RISK_THRESHOLDS.MODERATE, priceData, correlationData),
+    assessRisk(mockSnapshot, DEFAULT_RISK_THRESHOLDS.MODERATE, priceData, correlationData), // TODO: REMOVE_MOCK - Mock-related keywords
     TE.match(
       error => {
         console.error('Risk assessment failed:', error);
@@ -156,11 +156,11 @@ export const exampleRiskAssessment = async () => {
     minTradeSize: 100,
     maxSlippage: 0.02,
     maxGasCost: 100,
-    allowedTokens: new Set(['ETH', 'USDC', 'DAI'])
+    allowedTokens: new Set(['ETH', 'USDC', 'DAI']) // TODO: REMOVE_MOCK - Hard-coded array literals
   };
 
   const completeAnalysis = await pipe(
-    completeRiskAnalysis(mockSnapshot, userProfile, priceData, correlationData, rebalanceConstraints),
+    completeRiskAnalysis(mockSnapshot, userProfile, priceData, correlationData, rebalanceConstraints), // TODO: REMOVE_MOCK - Mock-related keywords
     TE.match(
       error => {
         console.error('Complete analysis failed:', error);

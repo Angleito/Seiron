@@ -214,10 +214,10 @@ export interface AlertProcessingError {
 // ===================== Type Guards =====================
 
 export const isValidRiskLevel = (level: string): level is RiskLevel =>
-  ['low', 'medium', 'high', 'critical'].includes(level);
+  ['low', 'medium', 'high', 'critical'].includes(level); // TODO: REMOVE_MOCK - Hard-coded array literals
 
 export const isValidAlertSeverity = (severity: string): severity is AlertSeverity =>
-  ['info', 'warning', 'critical'].includes(severity);
+  ['info', 'warning', 'critical'].includes(severity); // TODO: REMOVE_MOCK - Hard-coded array literals
 
 export const isValidRiskCategory = (category: string): category is RiskCategory =>
-  ['liquidation', 'concentration', 'correlation', 'volatility'].includes(category);
+  ['liquidation', 'concentration', 'correlation', 'volatility'].includes(category); // TODO: REMOVE_MOCK - Hard-coded array literals

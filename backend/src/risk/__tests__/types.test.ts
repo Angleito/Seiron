@@ -209,7 +209,7 @@ describe('Risk Types', () => {
 
   describe('Exhaustiveness Tests', () => {
     test('should cover all valid risk levels', () => {
-      const validRiskLevels: RiskLevel[] = ['low', 'medium', 'high', 'critical'];
+      const validRiskLevels: RiskLevel[] = ['low', 'medium', 'high', 'critical']; // TODO: REMOVE_MOCK - Hard-coded array literals
       
       validRiskLevels.forEach(level => {
         expect(isValidRiskLevel(level)).toBe(true);
@@ -217,7 +217,7 @@ describe('Risk Types', () => {
     });
 
     test('should cover all valid alert severities', () => {
-      const validAlertSeverities: AlertSeverity[] = ['info', 'warning', 'critical'];
+      const validAlertSeverities: AlertSeverity[] = ['info', 'warning', 'critical']; // TODO: REMOVE_MOCK - Hard-coded array literals
       
       validAlertSeverities.forEach(severity => {
         expect(isValidAlertSeverity(severity)).toBe(true);
@@ -225,7 +225,7 @@ describe('Risk Types', () => {
     });
 
     test('should cover all valid risk categories', () => {
-      const validRiskCategories: RiskCategory[] = ['liquidation', 'concentration', 'correlation', 'volatility'];
+      const validRiskCategories: RiskCategory[] = ['liquidation', 'concentration', 'correlation', 'volatility']; // TODO: REMOVE_MOCK - Hard-coded array literals
       
       validRiskCategories.forEach(category => {
         expect(isValidRiskCategory(category)).toBe(true);
@@ -238,8 +238,8 @@ describe('Risk Types', () => {
       const generateRandomString = (): string => {
         const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
         let result = '';
-        for (let i = 0; i < Math.floor(Math.random() * 20) + 1; i++) {
-          result += chars.charAt(Math.floor(Math.random() * chars.length));
+        for (let i = 0; i < Math.floor(Math.random() * 20) + 1; i++) { // TODO: REMOVE_MOCK - Random value generation
+          result += chars.charAt(Math.floor(Math.random() * chars.length)); // TODO: REMOVE_MOCK - Random value generation
         }
         return result;
       };
@@ -247,7 +247,7 @@ describe('Risk Types', () => {
       forAll(
         generateRandomString,
         (randomString) => {
-          const validLevels = ['low', 'medium', 'high', 'critical'];
+          const validLevels = ['low', 'medium', 'high', 'critical']; // TODO: REMOVE_MOCK - Hard-coded array literals
           if (validLevels.includes(randomString)) {
             return isValidRiskLevel(randomString);
           } else {
@@ -262,8 +262,8 @@ describe('Risk Types', () => {
       const generateRandomString = (): string => {
         const chars = 'abcdefghijklmnopqrstuvwxyz';
         let result = '';
-        for (let i = 0; i < Math.floor(Math.random() * 15) + 1; i++) {
-          result += chars.charAt(Math.floor(Math.random() * chars.length));
+        for (let i = 0; i < Math.floor(Math.random() * 15) + 1; i++) { // TODO: REMOVE_MOCK - Random value generation
+          result += chars.charAt(Math.floor(Math.random() * chars.length)); // TODO: REMOVE_MOCK - Random value generation
         }
         return result;
       };
@@ -271,7 +271,7 @@ describe('Risk Types', () => {
       forAll(
         generateRandomString,
         (randomString) => {
-          const validSeverities = ['info', 'warning', 'critical'];
+          const validSeverities = ['info', 'warning', 'critical']; // TODO: REMOVE_MOCK - Hard-coded array literals
           if (validSeverities.includes(randomString)) {
             return isValidAlertSeverity(randomString);
           } else {
@@ -286,8 +286,8 @@ describe('Risk Types', () => {
       const generateRandomString = (): string => {
         const chars = 'abcdefghijklmnopqrstuvwxyz';
         let result = '';
-        for (let i = 0; i < Math.floor(Math.random() * 20) + 1; i++) {
-          result += chars.charAt(Math.floor(Math.random() * chars.length));
+        for (let i = 0; i < Math.floor(Math.random() * 20) + 1; i++) { // TODO: REMOVE_MOCK - Random value generation
+          result += chars.charAt(Math.floor(Math.random() * chars.length)); // TODO: REMOVE_MOCK - Random value generation
         }
         return result;
       };
@@ -295,7 +295,7 @@ describe('Risk Types', () => {
       forAll(
         generateRandomString,
         (randomString) => {
-          const validCategories = ['liquidation', 'concentration', 'correlation', 'volatility'];
+          const validCategories = ['liquidation', 'concentration', 'correlation', 'volatility']; // TODO: REMOVE_MOCK - Hard-coded array literals
           if (validCategories.includes(randomString)) {
             return isValidRiskCategory(randomString);
           } else {
@@ -310,7 +310,7 @@ describe('Risk Types', () => {
   describe('Performance Tests', () => {
     test('type guards should be performant', () => {
       const iterations = 10000;
-      const testStrings = ['low', 'medium', 'high', 'critical', 'invalid', '', 'random'];
+      const testStrings = ['low', 'medium', 'high', 'critical', 'invalid', '', 'random']; // TODO: REMOVE_MOCK - Hard-coded array literals
       
       const start = performance.now();
       
@@ -331,7 +331,7 @@ describe('Risk Types', () => {
 
   describe('Edge Cases', () => {
     test('should handle special characters', () => {
-      const specialChars = ['low-', 'medium!', 'high@', 'critical#', 'low$', 'medium%'];
+      const specialChars = ['low-', 'medium!', 'high@', 'critical#', 'low$', 'medium%']; // TODO: REMOVE_MOCK - Hard-coded array literals
       
       specialChars.forEach(char => {
         expect(isValidRiskLevel(char)).toBe(false);
@@ -341,7 +341,7 @@ describe('Risk Types', () => {
     });
 
     test('should handle numeric strings', () => {
-      const numericStrings = ['1', '2', '3', '4', '0'];
+      const numericStrings = ['1', '2', '3', '4', '0']; // TODO: REMOVE_MOCK - Hard-coded array literals
       
       numericStrings.forEach(num => {
         expect(isValidRiskLevel(num)).toBe(false);
@@ -365,7 +365,7 @@ describe('Risk Types', () => {
     });
 
     test('should handle unicode characters', () => {
-      const unicodeStrings = ['löw', 'medíum', 'hìgh', 'critícal'];
+      const unicodeStrings = ['löw', 'medíum', 'hìgh', 'critícal']; // TODO: REMOVE_MOCK - Hard-coded array literals
       
       unicodeStrings.forEach(unicode => {
         expect(isValidRiskLevel(unicode)).toBe(false);

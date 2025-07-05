@@ -259,7 +259,7 @@ export class ErrorHandlingService extends EventEmitter {
     }
     
     if (config.jitter) {
-      delay = delay * (0.5 + Math.random() * 0.5);
+      delay = delay * (0.5 + Math.random() * 0.5); // TODO: REMOVE_MOCK - Random value generation
     }
     
     return Math.floor(delay);
@@ -590,7 +590,7 @@ export class ErrorHandlingService extends EventEmitter {
         maxDelay: 10000,
         exponentialBackoff: true,
         jitter: true,
-        retryableErrors: ['blockchain_error', 'network_error', 'timeout_error']
+        retryableErrors: ['blockchain_error', 'network_error', 'timeout_error'] // TODO: REMOVE_MOCK - Hard-coded array literals
       }
     });
   };

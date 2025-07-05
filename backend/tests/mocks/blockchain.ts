@@ -1,12 +1,12 @@
 /**
- * Mock blockchain interactions for testing
+ * Mock blockchain interactions for testing // TODO: REMOVE_MOCK - Mock-related keywords
  */
 
 import * as TE from 'fp-ts/TaskEither';
 import { LendingPosition, LiquidityPosition, TokenBalance } from '../../src/types/portfolio';
 
-// Mock blockchain client
-export const mockBlockchainClient = {
+// Mock blockchain client // TODO: REMOVE_MOCK - Mock-related keywords
+export const mockBlockchainClient = { // TODO: REMOVE_MOCK - Mock-related keywords
   getBalance: jest.fn(),
   getBlockNumber: jest.fn(),
   readContract: jest.fn(),
@@ -16,8 +16,8 @@ export const mockBlockchainClient = {
   writeContract: jest.fn()
 };
 
-// Mock wallet client
-export const mockWalletClient = {
+// Mock wallet client // TODO: REMOVE_MOCK - Mock-related keywords
+export const mockWalletClient = { // TODO: REMOVE_MOCK - Mock-related keywords
   account: {
     address: '0x1234567890123456789012345678901234567890'
   },
@@ -26,11 +26,11 @@ export const mockWalletClient = {
   sendTransaction: jest.fn()
 };
 
-// Mock transaction hash
-export const MOCK_TX_HASH = '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890';
+// Mock transaction hash // TODO: REMOVE_MOCK - Mock-related keywords
+export const MOCK_TX_HASH = '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'; // TODO: REMOVE_MOCK - Mock-related keywords
 
-// Mock contract addresses
-export const MOCK_CONTRACTS = {
+// Mock contract addresses // TODO: REMOVE_MOCK - Mock-related keywords
+export const MOCK_CONTRACTS = { // TODO: REMOVE_MOCK - Mock-related keywords
   YEI_POOL: '0x1111111111111111111111111111111111111111',
   DRAGON_SWAP_ROUTER: '0x2222222222222222222222222222222222222222',
   DRAGON_SWAP_FACTORY: '0x3333333333333333333333333333333333333333',
@@ -38,15 +38,15 @@ export const MOCK_CONTRACTS = {
   SEI: '0x0000000000000000000000000000000000000000'
 };
 
-// Mock lending positions data
-export const createMockLendingPosition = (overrides?: Partial<LendingPosition>): LendingPosition => ({
+// Mock lending positions data // TODO: REMOVE_MOCK - Mock-related keywords
+export const createMockLendingPosition = (overrides?: Partial<LendingPosition>): LendingPosition => ({ // TODO: REMOVE_MOCK - Mock-related keywords
   id: 'lending-pos-1',
   walletAddress: '0x1234567890123456789012345678901234567890',
   platform: 'YeiFinance',
   createdAt: '2024-01-01T00:00:00Z',
   lastUpdated: '2024-01-01T00:00:00Z',
   type: 'supply',
-  token: MOCK_CONTRACTS.USDC,
+  token: MOCK_CONTRACTS.USDC, // TODO: REMOVE_MOCK - Mock-related keywords
   tokenSymbol: 'USDC',
   amount: '1000000000000000000000',
   amountFormatted: '1000.0000',
@@ -58,16 +58,16 @@ export const createMockLendingPosition = (overrides?: Partial<LendingPosition>):
   ...overrides
 });
 
-// Mock liquidity positions data
-export const createMockLiquidityPosition = (overrides?: Partial<LiquidityPosition>): LiquidityPosition => ({
+// Mock liquidity positions data // TODO: REMOVE_MOCK - Mock-related keywords
+export const createMockLiquidityPosition = (overrides?: Partial<LiquidityPosition>): LiquidityPosition => ({ // TODO: REMOVE_MOCK - Mock-related keywords
   id: 'liquidity-pos-1',
   walletAddress: '0x1234567890123456789012345678901234567890',
   platform: 'DragonSwap',
   createdAt: '2024-01-01T00:00:00Z',
   lastUpdated: '2024-01-01T00:00:00Z',
   poolId: 'SEI-USDC-3000',
-  token0: MOCK_CONTRACTS.SEI,
-  token1: MOCK_CONTRACTS.USDC,
+  token0: MOCK_CONTRACTS.SEI, // TODO: REMOVE_MOCK - Mock-related keywords
+  token1: MOCK_CONTRACTS.USDC, // TODO: REMOVE_MOCK - Mock-related keywords
   token0Symbol: 'SEI',
   token1Symbol: 'USDC',
   liquidity: '1000000000000000000',
@@ -90,9 +90,9 @@ export const createMockLiquidityPosition = (overrides?: Partial<LiquidityPositio
   ...overrides
 });
 
-// Mock token balance data
-export const createMockTokenBalance = (overrides?: Partial<TokenBalance>): TokenBalance => ({
-  token: MOCK_CONTRACTS.SEI,
+// Mock token balance data // TODO: REMOVE_MOCK - Mock-related keywords
+export const createMockTokenBalance = (overrides?: Partial<TokenBalance>): TokenBalance => ({ // TODO: REMOVE_MOCK - Mock-related keywords
+  token: MOCK_CONTRACTS.SEI, // TODO: REMOVE_MOCK - Mock-related keywords
   symbol: 'SEI',
   name: 'Sei',
   decimals: 18,
@@ -104,42 +104,42 @@ export const createMockTokenBalance = (overrides?: Partial<TokenBalance>): Token
   ...overrides
 });
 
-// Mock YeiFinance adapter
-export const createMockYeiFinanceAdapter = () => ({
+// Mock YeiFinance adapter // TODO: REMOVE_MOCK - Mock-related keywords
+export const createMockYeiFinanceAdapter = () => ({ // TODO: REMOVE_MOCK - Mock-related keywords
   name: 'YeiFinance',
   version: '1.0.0',
   isInitialized: true,
-  initialize: jest.fn().mockReturnValue(TE.right(undefined)),
-  getUserPositions: jest.fn().mockReturnValue(
+  initialize: jest.fn().mockReturnValue(TE.right(undefined)), // TODO: REMOVE_MOCK - Mock-related keywords
+  getUserPositions: jest.fn().mockReturnValue( // TODO: REMOVE_MOCK - Mock-related keywords
     TE.right([
-      createMockLendingPosition(),
-      createMockLendingPosition({ type: 'borrow', apy: 8.5, valueUSD: 500 })
+      createMockLendingPosition(), // TODO: REMOVE_MOCK - Mock-related keywords
+      createMockLendingPosition({ type: 'borrow', apy: 8.5, valueUSD: 500 }) // TODO: REMOVE_MOCK - Mock-related keywords
     ])
   ),
-  supply: jest.fn().mockReturnValue(TE.right(MOCK_TX_HASH)),
-  withdraw: jest.fn().mockReturnValue(TE.right(MOCK_TX_HASH)),
-  borrow: jest.fn().mockReturnValue(TE.right(MOCK_TX_HASH)),
-  repay: jest.fn().mockReturnValue(TE.right(MOCK_TX_HASH)),
-  getHealthFactor: jest.fn().mockReturnValue(TE.right(2.5))
+  supply: jest.fn().mockReturnValue(TE.right(MOCK_TX_HASH)), // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
+  withdraw: jest.fn().mockReturnValue(TE.right(MOCK_TX_HASH)), // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
+  borrow: jest.fn().mockReturnValue(TE.right(MOCK_TX_HASH)), // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
+  repay: jest.fn().mockReturnValue(TE.right(MOCK_TX_HASH)), // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
+  getHealthFactor: jest.fn().mockReturnValue(TE.right(2.5)) // TODO: REMOVE_MOCK - Mock-related keywords
 });
 
-// Mock DragonSwap adapter
-export const createMockDragonSwapAdapter = () => ({
+// Mock DragonSwap adapter // TODO: REMOVE_MOCK - Mock-related keywords
+export const createMockDragonSwapAdapter = () => ({ // TODO: REMOVE_MOCK - Mock-related keywords
   name: 'DragonSwap',
   version: '2.0.0',
   isInitialized: true,
-  initialize: jest.fn().mockReturnValue(TE.right(undefined)),
-  getPositions: jest.fn().mockReturnValue(
-    TE.right([createMockLiquidityPosition()])
+  initialize: jest.fn().mockReturnValue(TE.right(undefined)), // TODO: REMOVE_MOCK - Mock-related keywords
+  getPositions: jest.fn().mockReturnValue( // TODO: REMOVE_MOCK - Mock-related keywords
+    TE.right([createMockLiquidityPosition()]) // TODO: REMOVE_MOCK - Mock-related keywords
   ),
-  addLiquidity: jest.fn().mockReturnValue(TE.right(MOCK_TX_HASH)),
-  removeLiquidity: jest.fn().mockReturnValue(TE.right(MOCK_TX_HASH)),
-  collectFees: jest.fn().mockReturnValue(TE.right(MOCK_TX_HASH)),
-  getPoolInfo: jest.fn().mockReturnValue(
+  addLiquidity: jest.fn().mockReturnValue(TE.right(MOCK_TX_HASH)), // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
+  removeLiquidity: jest.fn().mockReturnValue(TE.right(MOCK_TX_HASH)), // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
+  collectFees: jest.fn().mockReturnValue(TE.right(MOCK_TX_HASH)), // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
+  getPoolInfo: jest.fn().mockReturnValue( // TODO: REMOVE_MOCK - Mock-related keywords
     TE.right({
       poolId: 'SEI-USDC-3000',
-      token0: MOCK_CONTRACTS.SEI,
-      token1: MOCK_CONTRACTS.USDC,
+      token0: MOCK_CONTRACTS.SEI, // TODO: REMOVE_MOCK - Mock-related keywords
+      token1: MOCK_CONTRACTS.USDC, // TODO: REMOVE_MOCK - Mock-related keywords
       fee: 3000,
       liquidity: '1000000000000000000000',
       tick: 123456,
@@ -151,8 +151,8 @@ export const createMockDragonSwapAdapter = () => ({
   )
 });
 
-// Mock Redis cache
-export const createMockRedisClient = () => ({
+// Mock Redis cache // TODO: REMOVE_MOCK - Mock-related keywords
+export const createMockRedisClient = () => ({ // TODO: REMOVE_MOCK - Mock-related keywords
   get: jest.fn(),
   set: jest.fn(),
   del: jest.fn(),
@@ -170,8 +170,8 @@ export const createMockRedisClient = () => ({
   status: 'ready'
 });
 
-// Mock blockchain responses
-export const mockBlockchainResponses = {
+// Mock blockchain responses // TODO: REMOVE_MOCK - Mock-related keywords
+export const mockBlockchainResponses = { // TODO: REMOVE_MOCK - Mock-related keywords
   // Balance responses
   getBalance: {
     success: BigInt('5000000000000000000000'), // 5000 SEI
@@ -205,14 +205,14 @@ export const mockBlockchainResponses = {
   
   // Transaction responses
   writeContract: {
-    success: MOCK_TX_HASH,
+    success: MOCK_TX_HASH, // TODO: REMOVE_MOCK - Mock-related keywords
     failure: new Error('Transaction failed')
   },
   
   // Transaction receipt
   getTransactionReceipt: {
     success: {
-      transactionHash: MOCK_TX_HASH,
+      transactionHash: MOCK_TX_HASH, // TODO: REMOVE_MOCK - Mock-related keywords
       status: 'success',
       blockNumber: 12345,
       gasUsed: BigInt('21000'),
@@ -222,23 +222,23 @@ export const mockBlockchainResponses = {
   }
 };
 
-// Setup blockchain mocks
-export const setupBlockchainMocks = () => {
-  // Reset all mocks
-  jest.clearAllMocks();
+// Setup blockchain mocks // TODO: REMOVE_MOCK - Mock-related keywords
+export const setupBlockchainMocks = () => { // TODO: REMOVE_MOCK - Mock-related keywords
+  // Reset all mocks // TODO: REMOVE_MOCK - Mock-related keywords
+  jest.clearAllMocks(); // TODO: REMOVE_MOCK - Mock-related keywords
   
-  // Configure default mock behaviors
-  mockBlockchainClient.getBalance.mockResolvedValue(mockBlockchainResponses.getBalance.success);
-  mockBlockchainClient.getBlockNumber.mockResolvedValue(12345);
-  mockBlockchainClient.readContract.mockResolvedValue(mockBlockchainResponses.readContract.userAccountData);
-  mockBlockchainClient.getTransactionReceipt.mockResolvedValue(mockBlockchainResponses.getTransactionReceipt.success);
+  // Configure default mock behaviors // TODO: REMOVE_MOCK - Mock-related keywords
+  mockBlockchainClient.getBalance.mockResolvedValue(mockBlockchainResponses.getBalance.success); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
+  mockBlockchainClient.getBlockNumber.mockResolvedValue(12345); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
+  mockBlockchainClient.readContract.mockResolvedValue(mockBlockchainResponses.readContract.userAccountData); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
+  mockBlockchainClient.getTransactionReceipt.mockResolvedValue(mockBlockchainResponses.getTransactionReceipt.success); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
   
-  mockWalletClient.writeContract.mockResolvedValue(MOCK_TX_HASH);
-  mockWalletClient.sendTransaction.mockResolvedValue(MOCK_TX_HASH);
+  mockWalletClient.writeContract.mockResolvedValue(MOCK_TX_HASH); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
+  mockWalletClient.sendTransaction.mockResolvedValue(MOCK_TX_HASH); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
   
   return {
-    blockchainClient: mockBlockchainClient,
-    walletClient: mockWalletClient
+    blockchainClient: mockBlockchainClient, // TODO: REMOVE_MOCK - Mock-related keywords
+    walletClient: mockWalletClient // TODO: REMOVE_MOCK - Mock-related keywords
   };
 };
 
@@ -246,21 +246,21 @@ export const setupBlockchainMocks = () => {
 export const simulateBlockchainError = (method: string, error: Error) => {
   switch (method) {
     case 'getBalance':
-      mockBlockchainClient.getBalance.mockRejectedValue(error);
+      mockBlockchainClient.getBalance.mockRejectedValue(error); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
       break;
     case 'writeContract':
-      mockWalletClient.writeContract.mockRejectedValue(error);
+      mockWalletClient.writeContract.mockRejectedValue(error); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
       break;
     case 'readContract':
-      mockBlockchainClient.readContract.mockRejectedValue(error);
+      mockBlockchainClient.readContract.mockRejectedValue(error); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
       break;
     default:
       throw new Error(`Unknown method: ${method}`);
   }
 };
 
-// Utility to reset blockchain mocks
-export const resetBlockchainMocks = () => {
-  jest.clearAllMocks();
-  setupBlockchainMocks();
+// Utility to reset blockchain mocks // TODO: REMOVE_MOCK - Mock-related keywords
+export const resetBlockchainMocks = () => { // TODO: REMOVE_MOCK - Mock-related keywords
+  jest.clearAllMocks(); // TODO: REMOVE_MOCK - Mock-related keywords
+  setupBlockchainMocks(); // TODO: REMOVE_MOCK - Mock-related keywords
 };

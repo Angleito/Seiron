@@ -150,4 +150,4 @@ export const SEI_TESTNET_CONFIG: SeiProtocolConfig = {
 
 export const SEI_PROTOCOL_VERSION = '1.0.0';
 export const SUPPORTED_PROTOCOLS = ['silo', 'citrex'] as const;
-export const SUPPORTED_NETWORKS = ['mainnet', 'testnet', 'devnet'] as const;
+export const SUPPORTED_NETWORKS = ['mainnet', 'testnet', 'devnet'] as const; // TODO: REMOVE_MOCK - Hard-coded array literals

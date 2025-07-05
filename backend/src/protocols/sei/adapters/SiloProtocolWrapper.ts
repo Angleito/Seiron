@@ -134,7 +134,7 @@ export class SiloProtocolWrapper implements SiloProtocolAdapter {
   public getStakingPoolInfo = (token: TokenAddress): AsyncResult<SiloStakingPoolInfo> =>
     TE.tryCatch(
       async () => {
-        // Mock implementation - would query staking contract
+        // Mock implementation - would query staking contract // TODO: REMOVE_MOCK - Mock-related keywords
         const poolData = await this.fetchStakingPoolData(token);
         
         return {
@@ -306,7 +306,7 @@ export class SiloProtocolWrapper implements SiloProtocolAdapter {
   // ===================== Private Helper Methods =====================
 
   private verifyContractDeployments = async (): Promise<void> => {
-    // Mock implementation - would verify contract bytecode
+    // Mock implementation - would verify contract bytecode // TODO: REMOVE_MOCK - Mock-related keywords
     const contracts = Object.values(this.config.contracts);
     for (const contract of contracts) {
       if (!contract.startsWith('sei1')) {
@@ -322,7 +322,7 @@ export class SiloProtocolWrapper implements SiloProtocolAdapter {
   private getUserStakingPositionIds = (walletAddress: WalletAddress): AsyncResult<string[]> =>
     TE.tryCatch(
       async () => {
-        // Mock implementation - would query staking contract
+        // Mock implementation - would query staking contract // TODO: REMOVE_MOCK - Mock-related keywords
         return ['silo-pos-1', 'silo-pos-2'];
       },
       (error) => new SiloProtocolError(
@@ -338,7 +338,7 @@ export class SiloProtocolWrapper implements SiloProtocolAdapter {
   ): AsyncResult<SiloStakingPosition> =>
     TE.tryCatch(
       async () => {
-        // Mock position data - would fetch from staking contract
+        // Mock position data - would fetch from staking contract // TODO: REMOVE_MOCK - Mock-related keywords
         const positionData = await this.fetchPositionData(positionId);
         const currentTime = new Date().toISOString();
         
@@ -386,7 +386,7 @@ export class SiloProtocolWrapper implements SiloProtocolAdapter {
   private getStakingPositionById = (positionId: string): AsyncResult<SiloStakingPosition> =>
     TE.tryCatch(
       async () => {
-        // Mock implementation - would fetch specific position
+        // Mock implementation - would fetch specific position // TODO: REMOVE_MOCK - Mock-related keywords
         const positionData = await this.fetchPositionData(positionId);
         return this.mapToStakingPosition(positionData);
       },
@@ -398,16 +398,16 @@ export class SiloProtocolWrapper implements SiloProtocolAdapter {
     );
 
   private fetchPositionData = async (positionId: string): Promise<any> => {
-    // Mock position data - would call staking contract
+    // Mock position data - would call staking contract // TODO: REMOVE_MOCK - Mock-related keywords
     return {
       id: positionId,
       createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
       stakedToken: 'sei1native0token1address2here3for4sei5mainnet6deployment7only',
       stakedAmount: '100000000000000000000', // 100 tokens
-      valueUSD: 50.0, // $50 USD
+      valueUSD: 50.0, // $50 USD // TODO: REMOVE_MOCK - Hard-coded currency values
       rewardToken: 'sei1reward1token1address2here3for4sei5mainnet6deployment7only',
       pendingRewards: '5000000000000000000', // 5 tokens
-      pendingRewardsUSD: 2.5, // $2.50 USD
+      pendingRewardsUSD: 2.5, // $2.50 USD // TODO: REMOVE_MOCK - Hard-coded currency values
       stakingPeriod: {
         startTime: new Date(Date.now() - 86400000).toISOString(),
         endTime: new Date(Date.now() + 86400000 * 30).toISOString(), // 30 days
@@ -421,10 +421,10 @@ export class SiloProtocolWrapper implements SiloProtocolAdapter {
   };
 
   private fetchStakingPoolData = async (token: TokenAddress): Promise<any> => {
-    // Mock pool data - would fetch from staking contract
+    // Mock pool data - would fetch from staking contract // TODO: REMOVE_MOCK - Mock-related keywords
     return {
       totalStaked: '1000000000000000000000000', // 1M tokens
-      totalStakedUSD: 500000, // $500k USD
+      totalStakedUSD: 500000, // $500k USD // TODO: REMOVE_MOCK - Hard-coded currency values
       rewardRate: '100000000000000000000', // 100 tokens per day
       apr: 0.15, // 15% APR
       isActive: true,
@@ -468,7 +468,7 @@ export class SiloProtocolWrapper implements SiloProtocolAdapter {
     params: SiloStakeParams,
     poolInfo: SiloStakingPoolInfo
   ): Promise<TransactionHash> => {
-    // Mock implementation - would prepare and send staking transaction
+    // Mock implementation - would prepare and send staking transaction // TODO: REMOVE_MOCK - Mock-related keywords
     logger.info('Executing stake transaction', {
       walletAddress: params.walletAddress,
       token: params.token,
@@ -484,7 +484,7 @@ export class SiloProtocolWrapper implements SiloProtocolAdapter {
     position: SiloStakingPosition,
     penalty: { penalty: number; penaltyAmount: string; netAmount: string }
   ): Promise<TransactionHash> => {
-    // Mock implementation - would prepare and send unstaking transaction
+    // Mock implementation - would prepare and send unstaking transaction // TODO: REMOVE_MOCK - Mock-related keywords
     logger.info('Executing unstake transaction', {
       walletAddress: params.walletAddress,
       positionId: params.positionId,
@@ -500,7 +500,7 @@ export class SiloProtocolWrapper implements SiloProtocolAdapter {
     params: SiloClaimRewardsParams,
     rewards: SiloRewardInfo[]
   ): Promise<TransactionHash> => {
-    // Mock implementation - would prepare and send claim rewards transaction
+    // Mock implementation - would prepare and send claim rewards transaction // TODO: REMOVE_MOCK - Mock-related keywords
     logger.info('Executing claim rewards transaction', {
       walletAddress: params.walletAddress,
       positionId: params.positionId,
@@ -526,9 +526,9 @@ export class SiloProtocolWrapper implements SiloProtocolAdapter {
     ]);
 
   private simulateTransaction = async (operation: string, params: any): Promise<TransactionHash> => {
-    // Mock transaction simulation
+    // Mock transaction simulation // TODO: REMOVE_MOCK - Mock-related keywords
     await new Promise(resolve => setTimeout(resolve, 100));
-    return `0x${Date.now().toString(16)}${Math.random().toString(16).slice(2, 8)}`;
+    return `0x${Date.now().toString(16)}${Math.random().toString(16).slice(2, 8)}`; // TODO: REMOVE_MOCK - Random value generation
   };
 
   private mapToStakingPosition = (data: any): SiloStakingPosition => {

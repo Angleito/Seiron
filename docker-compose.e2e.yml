@@ -1,13 +1,41 @@
 version: '3.8'
 
 services:
-  # LangChain API Server for E2E testing
-  langchain-api:
+  # Frontend Next.js application
+  frontend:
     build:
-      context: .
+      context: ./frontend
       dockerfile: Dockerfile
-      target: production
-    container_name: e2e-langchain-api
+    container_name: e2e-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=test
+      - NEXT_PUBLIC_API_URL=http://backend:3001
+      - NEXT_PUBLIC_PRIVY_APP_ID=${NEXT_PUBLIC_PRIVY_APP_ID:-test-privy-id}
+      - NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=${NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID:-test-wallet-connect}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - e2e-network
+
+  # Backend API Server
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: e2e-backend
     ports:
       - "3001:3001"
     environment:
@@ -22,12 +50,12 @@ services:
       - ENABLE_EXTERNAL_APIS=false
       - ENABLE_BLOCKCHAIN_CALLS=false
       - ENABLE_METRICS=true
-      - ENABLE_PERFORMANCE_MONITORING=true
       - LOG_LEVEL=info
       - DEBUG=ai-portfolio:*
     volumes:
+      - ./backend:/app
+      - /app/node_modules
       - ./test-results/e2e:/app/logs
-      - ./test/e2e/fixtures:/app/fixtures
     depends_on:
       redis:
         condition: service_healthy
@@ -39,11 +67,65 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    restart: unless-stopped
     networks:
       - e2e-network
 
-  # Redis for memory and caching
+  # Cypress E2E Test Runner
+  cypress:
+    image: cypress/included:13.6.1
+    container_name: e2e-cypress
+    environment:
+      - CYPRESS_baseUrl=http://frontend:3000
+      - CYPRESS_apiUrl=http://backend:3001
+      - CYPRESS_video=true
+      - CYPRESS_screenshotOnRunFailure=true
+      - CYPRESS_videosFolder=/app/cypress/videos
+      - CYPRESS_screenshotsFolder=/app/cypress/screenshots
+      - CYPRESS_supportFolder=/app/cypress/support
+      - CYPRESS_fixturesFolder=/app/cypress/fixtures
+      - CYPRESS_specPattern=/app/cypress/e2e/**/*.cy.{js,jsx,ts,tsx}
+      - ELECTRON_EXTRA_LAUNCH_ARGS=--disable-gpu
+    volumes:
+      - ./cypress:/app/cypress
+      - ./cypress.config.ts:/app/cypress.config.ts
+      - ./test-results/e2e/cypress:/app/cypress/screenshots
+      - ./test-results/e2e/cypress:/app/cypress/videos
+    depends_on:
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+      msw-server:
+        condition: service_healthy
+    command: cypress run --browser chrome
+    networks:
+      - e2e-network
+
+  # Mock Service Worker (MSW) Server for API mocking
+  msw-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.msw
+    container_name: e2e-msw-server
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=test
+      - PORT=8080
+      - MOCK_ELEVENLABS=true
+      - MOCK_OPENAI=true
+    volumes:
+      - ./test/mocks:/app/mocks
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks:
+      - e2e-network
+
+  # Redis for caching and session management
   redis:
     image: redis:7-alpine
     container_name: e2e-redis
@@ -57,11 +139,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
     networks:
       - e2e-network
 
-  # Protocol Simulator for DeFi operations
+  # Protocol Simulator for blockchain operations
   protocol-simulator:
     build:
       context: .
@@ -75,174 +156,20 @@ services:
       - BLOCK_TIME=1000
       - ACCOUNTS=10
       - MNEMONIC=test test test test test test test test test test test junk
-      - FORK_URL=${SEI_RPC_URL:-https://evm-rpc.sei-apis.com}
       - ENABLE_LOGGING=true
-    volumes:
-      - ./test/e2e/fixtures:/app/fixtures
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8545"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 20s
-    restart: unless-stopped
-    networks:
-      - e2e-network
-
-  # Conversation Tester Service
-  conversation-tester:
-    build:
-      context: .
-      dockerfile: Dockerfile.conversation-tester
-    container_name: e2e-conversation-tester
-    environment:
-      - API_URL=http://langchain-api:3001
-      - REDIS_URL=redis://redis:6379
-      - CONCURRENT_USERS=${E2E_CONCURRENT_USERS:-10}
-      - TEST_DURATION=${E2E_LOAD_DURATION:-300000}
-      - PERFORMANCE_MONITORING=true
-      - CONVERSATION_TIMEOUT=30000
-      - MEMORY_PERSISTENCE_TIMEOUT=10000
-    volumes:
-      - ./test-results/e2e:/app/results
-      - ./test/e2e/fixtures:/app/fixtures
-    depends_on:
-      langchain-api:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - e2e-network
-
-  # Memory Store for conversation persistence
-  memory-store:
-    image: postgres:15-alpine
-    container_name: e2e-memory-store
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_DB=e2e_memory
-      - POSTGRES_USER=e2e_user
-      - POSTGRES_PASSWORD=e2e_password
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./test/e2e/fixtures/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U e2e_user -d e2e_memory"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-    networks:
-      - e2e-network
-
-  # Performance Monitor
-  performance-monitor:
-    build:
-      context: .
-      dockerfile: Dockerfile.performance-monitor
-    container_name: e2e-performance-monitor
-    ports:
-      - "9090:9090"
-    environment:
-      - TARGETS=langchain-api:3001,redis:6379,protocol-simulator:8545
-      - SCRAPE_INTERVAL=5s
-      - EVALUATION_INTERVAL=10s
-    volumes:
-      - ./test-results/e2e:/app/metrics
-      - ./test/e2e/fixtures/prometheus.yml:/etc/prometheus/prometheus.yml
-    depends_on:
-      - langchain-api
-      - redis
-      - protocol-simulator
-    networks:
-      - e2e-network
-
-  # Grafana for metrics visualization
-  grafana:
-    image: grafana/grafana:latest
-    container_name: e2e-grafana
-    ports:
-      - "3000:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_SECURITY_ADMIN_USER=admin
-    volumes:
-      - grafana-data:/var/lib/grafana
-      - ./test/e2e/fixtures/grafana-dashboards:/etc/grafana/provisioning/dashboards
-      - ./test/e2e/fixtures/grafana-datasources:/etc/grafana/provisioning/datasources
-    depends_on:
-      - performance-monitor
-    networks:
-      - e2e-network
-
-  # Load Testing Service
-  load-tester:
-    build:
-      context: .
-      dockerfile: Dockerfile.load-tester
-    container_name: e2e-load-tester
-    environment:
-      - TARGET_URL=http://langchain-api:3001
-      - CONCURRENT_USERS=${E2E_CONCURRENT_USERS:-10}
-      - DURATION=${E2E_LOAD_DURATION:-300000}
-      - RAMP_UP_TIME=30000
-      - SCENARIOS=single-turn,multi-turn,memory-persistence
-    volumes:
-      - ./test-results/e2e:/app/results
-      - ./test/e2e/fixtures:/app/scenarios
-    depends_on:
-      langchain-api:
-        condition: service_healthy
-    networks:
-      - e2e-network
-
-  # Test Results Aggregator
-  results-aggregator:
-    build:
-      context: .
-      dockerfile: Dockerfile.results-aggregator
-    container_name: e2e-results-aggregator
-    environment:
-      - RESULTS_DIR=/app/results
-      - OUTPUT_FORMAT=json,html,csv
-      - INCLUDE_PERFORMANCE_METRICS=true
-      - INCLUDE_CONVERSATION_LOGS=true
-    volumes:
-      - ./test-results/e2e:/app/results
-    depends_on:
-      - conversation-tester
-      - load-tester
-      - performance-monitor
     networks:
       - e2e-network
 
 volumes:
   redis-data:
     driver: local
-  postgres-data:
-    driver: local
-  grafana-data:
-    driver: local
 
 networks:
   e2e-network:
     driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.20.0.0/16
-
-# Health check configuration
-x-healthcheck-defaults: &healthcheck-defaults
-  interval: 10s
-  timeout: 5s
-  retries: 5
-  start_period: 30s
-
-# Logging configuration
-x-logging-defaults: &logging-defaults
-  driver: json-file
-  options:
-    max-size: "10m"
-    max-file: "3"

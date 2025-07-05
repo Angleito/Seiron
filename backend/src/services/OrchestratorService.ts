@@ -449,7 +449,7 @@ export class OrchestratorService extends EventEmitter {
         }
         
         // Priority validation
-        if (!['low', 'medium', 'high', 'urgent'].includes(intent.priority)) {
+        if (!['low', 'medium', 'high', 'urgent'].includes(intent.priority)) { // TODO: REMOVE_MOCK - Hard-coded array literals
           throw new Error('Invalid priority level');
         }
         
@@ -471,7 +471,7 @@ export class OrchestratorService extends EventEmitter {
   ): TE.TaskEither<OrchestrationError, TaskPipeline> =>
     TE.tryCatch(
       async () => {
-        const pipelineId = `pipeline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const pipelineId = `pipeline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`; // TODO: REMOVE_MOCK - Random value generation
         const steps = await this.generateTaskSteps(intent);
         
         const pipeline: TaskPipeline = {
@@ -998,7 +998,7 @@ export class OrchestratorService extends EventEmitter {
   }
 
   private isRetryableError(error: any): boolean {
-    const retryableErrors = ['NETWORK_ERROR', 'TIMEOUT', 'RATE_LIMIT_EXCEEDED', 'TEMPORARY_UNAVAILABLE'];
+    const retryableErrors = ['NETWORK_ERROR', 'TIMEOUT', 'RATE_LIMIT_EXCEEDED', 'TEMPORARY_UNAVAILABLE']; // TODO: REMOVE_MOCK - Hard-coded array literals
     const errorMessage = error instanceof Error ? error.message : String(error);
     return retryableErrors.some(retryable => errorMessage.includes(retryable));
   }
@@ -1192,7 +1192,7 @@ export class OrchestratorService extends EventEmitter {
   }
 
   private isRecoverableError(code: string): boolean {
-    const recoverableErrors = ['NETWORK_ERROR', 'TIMEOUT', 'RATE_LIMIT_EXCEEDED'];
+    const recoverableErrors = ['NETWORK_ERROR', 'TIMEOUT', 'RATE_LIMIT_EXCEEDED']; // TODO: REMOVE_MOCK - Hard-coded array literals
     return recoverableErrors.includes(code);
   }
 
@@ -1232,7 +1232,7 @@ export class OrchestratorService extends EventEmitter {
       },
       realTime: {
         enabled: true,
-        streamTypes: ['blockchain', 'wallet', 'portfolio'],
+        streamTypes: ['blockchain', 'wallet', 'portfolio'], // TODO: REMOVE_MOCK - Hard-coded array literals
         batchSize: 10,
         maxDelay: 5000
       },

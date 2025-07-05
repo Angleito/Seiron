@@ -901,7 +901,7 @@ export class SeiIntegrationService extends EventEmitter {
       adapter,
       details,
       timestamp: new Date(),
-      recoverable: ['RATE_LIMIT_EXCEEDED', 'NETWORK_ERROR', 'TIMEOUT'].includes(code)
+      recoverable: ['RATE_LIMIT_EXCEEDED', 'NETWORK_ERROR', 'TIMEOUT'].includes(code) // TODO: REMOVE_MOCK - Hard-coded array literals
     };
   }
 
@@ -969,7 +969,7 @@ export class SeiIntegrationService extends EventEmitter {
       .filter(op => op.success && op.data)
       .map(op => ({
         protocol: 'Sei Network',
-        apy: Math.random() * 20 + 5, // Placeholder
+        apy: Math.random() * 20 + 5, // Placeholder // TODO: REMOVE_MOCK - Random value generation // TODO: REMOVE_MOCK - Mock-related keywords
         risk: 'medium' as const,
         description: 'DeFi yield opportunity detected'
       }))

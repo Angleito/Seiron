@@ -436,7 +436,7 @@ export class ConfirmationService {
       token: parameters.asset || parameters.token || parameters.tokenIn,
       protocol: parameters.protocol || 'Seiron',
       estimatedGas: parameters.estimatedGas || 500000,
-      estimatedCost: '$2.50', // Mock - would calculate based on gas price
+      estimatedCost: '$2.50', // Mock - would calculate based on gas price // TODO: REMOVE_MOCK - Hard-coded currency values // TODO: REMOVE_MOCK - Mock-related keywords
       expectedOutcome,
       risks: risks.map(r => r.message)
     };

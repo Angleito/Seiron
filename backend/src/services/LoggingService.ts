@@ -99,7 +99,7 @@ export class LoggingService extends EventEmitter {
       enableConsoleOutput: true,
       enableMetrics: true,
       enableDragonTheming: true,
-      logLevels: ['debug', 'info', 'warn', 'error', 'fatal'],
+      logLevels: ['debug', 'info', 'warn', 'error', 'fatal'], // TODO: REMOVE_MOCK - Hard-coded array literals
       ...config
     };
 
@@ -478,7 +478,7 @@ export class LoggingService extends EventEmitter {
 
   private updateMetrics = (entry: LogEntry): void => {
     // Update total errors
-    if (['warn', 'error', 'fatal'].includes(entry.level)) {
+    if (['warn', 'error', 'fatal'].includes(entry.level)) { // TODO: REMOVE_MOCK - Hard-coded array literals
       this.metrics.totalErrors++;
     }
 

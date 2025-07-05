@@ -1,0 +1,60 @@
+{
+  "commands": {
+    "portfolio": [
+      "Show my portfolio",
+      "What's my balance?",
+      "Display my holdings",
+      "How much SEI do I have?"
+    ],
+    "supply": [
+      "Supply 10 SEI",
+      "Lend 100 USDC",
+      "Deposit 50 SEI to lending",
+      "Add 200 USDC to Silo"
+    ],
+    "withdraw": [
+      "Withdraw 5 SEI",
+      "Remove 50 USDC from lending",
+      "Take out my SEI from Silo"
+    ],
+    "swap": [
+      "Swap 100 USDC for SEI",
+      "Exchange 10 SEI for USDC",
+      "Convert all my USDC to SEI"
+    ],
+    "info": [
+      "What are the current APYs?",
+      "Show me the best yields",
+      "What's the SEI price?",
+      "How much can I earn on USDC?"
+    ]
+  },
+  "aiResponses": {
+    "portfolio": "Your portfolio is worth $1,000,000. You have 500 SEI ($500,000) and 500,000 USDC ($500,000). You're currently earning 5.2% APY on 100,000 USDC supplied to Silo.",
+    "supply": "I'll help you supply {amount} {token} to the lending protocol. This transaction will earn you approximately {apy}% APY.",
+    "withdraw": "I'll withdraw {amount} {token} from the lending protocol. This will be available in your wallet immediately.",
+    "swap": "I'll swap {fromAmount} {fromToken} for approximately {toAmount} {toToken} at the current market rate.",
+    "info": "Current lending APYs: SEI - 4.8%, USDC - 5.2%. The SEI price is $1,000, up 2.5% in the last 24 hours."
+  },
+  "transactionTemplates": {
+    "supply": {
+      "action": "supply",
+      "protocol": "Silo",
+      "gasEstimate": "100000",
+      "estimatedTime": "30 seconds"
+    },
+    "withdraw": {
+      "action": "withdraw",
+      "protocol": "Silo",
+      "gasEstimate": "120000",
+      "estimatedTime": "30 seconds"
+    },
+    "swap": {
+      "action": "swap",
+      "protocol": "DragonSwap",
+      "gasEstimate": "150000",
+      "estimatedTime": "15 seconds",
+      "slippage": 0.5
+    }
+  }
+}

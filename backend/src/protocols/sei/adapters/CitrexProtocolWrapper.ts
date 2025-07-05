@@ -80,8 +80,8 @@ const CITREX_CONSTANTS = {
   },
   LIQUIDATION_BUFFER: 0.02, // 2% buffer before liquidation
   FUNDING_INTERVAL: 28800,  // 8 hours in seconds
-  MAX_POSITION_SIZE: 10000000, // $10M max position size
-  MIN_COLLATERAL: 10 // $10 minimum collateral
+  MAX_POSITION_SIZE: 10000000, // $10M max position size // TODO: REMOVE_MOCK - Hard-coded currency values
+  MIN_COLLATERAL: 10 // $10 minimum collateral // TODO: REMOVE_MOCK - Hard-coded currency values
 };
 
 export class CitrexProtocolWrapper implements CitrexProtocolAdapter {
@@ -471,14 +471,14 @@ export class CitrexProtocolWrapper implements CitrexProtocolAdapter {
   };
 
   private initializeMarketData = async (): Promise<void> => {
-    // Mock initialization of market data
+    // Mock initialization of market data // TODO: REMOVE_MOCK - Mock-related keywords
     logger.info('Initializing market data for Citrex protocol');
   };
 
   private getUserPositionIds = (walletAddress: WalletAddress): AsyncResult<string[]> =>
     TE.tryCatch(
       async () => {
-        // Mock implementation - would query perpetual trading contract
+        // Mock implementation - would query perpetual trading contract // TODO: REMOVE_MOCK - Mock-related keywords
         return ['citrex-pos-1', 'citrex-pos-2'];
       },
       (error) => new CitrexProtocolError(
@@ -489,7 +489,7 @@ export class CitrexProtocolWrapper implements CitrexProtocolAdapter {
     );
 
   private fetchPositionData = async (positionId: string): Promise<any> => {
-    // Mock position data - would fetch from perpetual trading contract
+    // Mock position data - would fetch from perpetual trading contract // TODO: REMOVE_MOCK - Mock-related keywords
     return {
       id: positionId,
       walletAddress: 'sei1example1wallet2address3here4for5testing6purposes7only8',
@@ -498,21 +498,21 @@ export class CitrexProtocolWrapper implements CitrexProtocolAdapter {
       marketSymbol: 'SEI-USDC',
       side: 'long',
       size: '1000', // 1000 SEI
-      notionalValue: 500, // $500 notional
-      entryPrice: 0.5, // $0.50 entry price
+      notionalValue: 500, // $500 notional // TODO: REMOVE_MOCK - Hard-coded currency values
+      entryPrice: 0.5, // $0.50 entry price // TODO: REMOVE_MOCK - Hard-coded currency values
       collateral: '100', // 100 USDC collateral
       collateralUSD: 100,
       leverage: 5,
       margin: {
-        initial: 20, // $20 initial margin
-        maintenance: 10, // $10 maintenance margin
-        available: 80 // $80 available margin
+        initial: 20, // $20 initial margin // TODO: REMOVE_MOCK - Hard-coded currency values
+        maintenance: 10, // $10 maintenance margin // TODO: REMOVE_MOCK - Hard-coded currency values
+        available: 80 // $80 available margin // TODO: REMOVE_MOCK - Hard-coded currency values
       }
     };
   };
 
   private fetchMarketData = async (market: string): Promise<any> => {
-    // Mock market data - would fetch from price oracle and market contracts
+    // Mock market data - would fetch from price oracle and market contracts // TODO: REMOVE_MOCK - Mock-related keywords
     const marketConfig = CITREX_CONSTANTS.MARKETS[market];
     if (!marketConfig) {
       throw new CitrexProtocolError(
@@ -531,9 +531,9 @@ export class CitrexProtocolWrapper implements CitrexProtocolAdapter {
       indexPrice: 0.521, // Index price
       fundingRate: 0.0001, // 0.01% funding rate
       nextFundingTime: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
-      openInterest: 1000000, // $1M open interest
-      volume24h: 5000000, // $5M 24h volume
-      priceChange24h: 0.02, // $0.02 price change
+      openInterest: 1000000, // $1M open interest // TODO: REMOVE_MOCK - Hard-coded currency values
+      volume24h: 5000000, // $5M 24h volume // TODO: REMOVE_MOCK - Hard-coded currency values
+      priceChange24h: 0.02, // $0.02 price change // TODO: REMOVE_MOCK - Hard-coded currency values
       priceChangePercent24h: 4.0, // 4% price change
       high24h: 0.53,
       low24h: 0.48,
@@ -565,7 +565,7 @@ export class CitrexProtocolWrapper implements CitrexProtocolAdapter {
     
     const unrealizedPnL = size * priceDiff;
     const tradingFees = positionData.notionalValue * CITREX_CONSTANTS.TRADING_FEES.TAKER;
-    const fundingPayment = positionData.notionalValue * 0.0001; // Mock funding payment
+    const fundingPayment = positionData.notionalValue * 0.0001; // Mock funding payment // TODO: REMOVE_MOCK - Mock-related keywords
 
     return {
       unrealized: unrealizedPnL,
@@ -601,7 +601,7 @@ export class CitrexProtocolWrapper implements CitrexProtocolAdapter {
   };
 
   private estimateTimeToLiquidation = (positionData: any, marketData: any): number => {
-    // Mock calculation - would use volatility and price movement to estimate
+    // Mock calculation - would use volatility and price movement to estimate // TODO: REMOVE_MOCK - Mock-related keywords
     const volatility = 0.02; // 2% daily volatility
     const priceDistance = Math.abs(marketData.markPrice - positionData.entryPrice);
     const liquidationDistance = Math.abs(marketData.markPrice - this.calculateLiquidationInfo(positionData, marketData).liquidationPrice);
@@ -750,9 +750,9 @@ export class CitrexProtocolWrapper implements CitrexProtocolAdapter {
   };
 
   private simulateTransaction = async (operation: string, params: any): Promise<TransactionHash> => {
-    // Mock transaction simulation
+    // Mock transaction simulation // TODO: REMOVE_MOCK - Mock-related keywords
     await new Promise(resolve => setTimeout(resolve, 150));
-    return `0x${Date.now().toString(16)}${Math.random().toString(16).slice(2, 8)}`;
+    return `0x${Date.now().toString(16)}${Math.random().toString(16).slice(2, 8)}`; // TODO: REMOVE_MOCK - Random value generation
   };
 
   private formatNumber = (value: number, decimals: number): string => {

@@ -1,6 +1,6 @@
 /**
- * Blockchain Service Mocks
- * Functional mock implementations using Either/Option patterns
+ * Blockchain Service Mocks // TODO: REMOVE_MOCK - Mock-related keywords
+ * Functional mock implementations using Either/Option patterns // TODO: REMOVE_MOCK - Mock-related keywords
  */
 
 import * as E from 'fp-ts/Either';
@@ -51,9 +51,9 @@ export const createTimeoutError = (operation: string): BlockchainError => ({
   operation
 });
 
-// ===================== Mock State Management =====================
+// ===================== Mock State Management ===================== // TODO: REMOVE_MOCK - Mock-related keywords
 
-interface MockBlockchainState {
+interface MockBlockchainState { // TODO: REMOVE_MOCK - Mock-related keywords
   readonly portfolios: ReadonlyMap<string, PortfolioSnapshot>;
   readonly tokenBalances: ReadonlyMap<string, ReadonlyArray<TokenBalance>>;
   readonly lendingPositions: ReadonlyMap<string, ReadonlyArray<LendingPosition>>;
@@ -64,7 +64,7 @@ interface MockBlockchainState {
   readonly shouldSimulateTimeout: boolean;
 }
 
-let mockState: MockBlockchainState = {
+let mockState: MockBlockchainState = { // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
   portfolios: new Map(),
   tokenBalances: new Map(),
   lendingPositions: new Map(),
@@ -77,34 +77,34 @@ let mockState: MockBlockchainState = {
 
 // ===================== State Management Functions =====================
 
-export const setMockPortfolio = (walletAddress: string, portfolio: PortfolioSnapshot): void => {
-  mockState = {
-    ...mockState,
-    portfolios: new Map(mockState.portfolios).set(walletAddress, portfolio),
-    tokenBalances: new Map(mockState.tokenBalances).set(walletAddress, portfolio.tokenBalances),
-    lendingPositions: new Map(mockState.lendingPositions).set(walletAddress, portfolio.lendingPositions),
-    liquidityPositions: new Map(mockState.liquidityPositions).set(walletAddress, portfolio.liquidityPositions)
+export const setMockPortfolio = (walletAddress: string, portfolio: PortfolioSnapshot): void => { // TODO: REMOVE_MOCK - Mock-related keywords
+  mockState = { // TODO: REMOVE_MOCK - Mock-related keywords
+    ...mockState, // TODO: REMOVE_MOCK - Mock-related keywords
+    portfolios: new Map(mockState.portfolios).set(walletAddress, portfolio), // TODO: REMOVE_MOCK - Mock-related keywords
+    tokenBalances: new Map(mockState.tokenBalances).set(walletAddress, portfolio.tokenBalances), // TODO: REMOVE_MOCK - Mock-related keywords
+    lendingPositions: new Map(mockState.lendingPositions).set(walletAddress, portfolio.lendingPositions), // TODO: REMOVE_MOCK - Mock-related keywords
+    liquidityPositions: new Map(mockState.liquidityPositions).set(walletAddress, portfolio.liquidityPositions) // TODO: REMOVE_MOCK - Mock-related keywords
   };
 };
 
 export const setNetworkDelay = (delay: number): void => {
-  mockState = { ...mockState, networkDelay: delay };
+  mockState = { ...mockState, networkDelay: delay }; // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
 };
 
 export const setFailureRate = (rate: number): void => {
-  mockState = { ...mockState, failureRate: Math.max(0, Math.min(1, rate)) };
+  mockState = { ...mockState, failureRate: Math.max(0, Math.min(1, rate)) }; // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
 };
 
 export const simulateRateLimit = (enable: boolean): void => {
-  mockState = { ...mockState, shouldSimulateRateLimit: enable };
+  mockState = { ...mockState, shouldSimulateRateLimit: enable }; // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
 };
 
 export const simulateTimeout = (enable: boolean): void => {
-  mockState = { ...mockState, shouldSimulateTimeout: enable };
+  mockState = { ...mockState, shouldSimulateTimeout: enable }; // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
 };
 
-export const resetMockState = (): void => {
-  mockState = {
+export const resetMockState = (): void => { // TODO: REMOVE_MOCK - Mock-related keywords
+  mockState = { // TODO: REMOVE_MOCK - Mock-related keywords
     portfolios: new Map(),
     tokenBalances: new Map(),
     lendingPositions: new Map(),
@@ -132,20 +132,20 @@ const simulateNetworkCall = <T>(operation: () => T): TE.TaskEither<BlockchainErr
   TE.tryCatch(
     async () => {
       // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, mockState.networkDelay));
+      await new Promise(resolve => setTimeout(resolve, mockState.networkDelay)); // TODO: REMOVE_MOCK - Mock-related keywords
       
       // Simulate timeout
-      if (mockState.shouldSimulateTimeout) {
+      if (mockState.shouldSimulateTimeout) { // TODO: REMOVE_MOCK - Mock-related keywords
         throw new Error('Request timeout');
       }
       
       // Simulate rate limiting
-      if (mockState.shouldSimulateRateLimit) {
+      if (mockState.shouldSimulateRateLimit) { // TODO: REMOVE_MOCK - Mock-related keywords
         throw new Error('Rate limit exceeded');
       }
       
       // Simulate random failures
-      if (Math.random() < mockState.failureRate) {
+      if (Math.random() < mockState.failureRate) { // TODO: REMOVE_MOCK - Random value generation // TODO: REMOVE_MOCK - Mock-related keywords
         throw new Error('Random network failure');
       }
       
@@ -166,15 +166,15 @@ const simulateNetworkCall = <T>(operation: () => T): TE.TaskEither<BlockchainErr
     }
   );
 
-// ===================== Mock Blockchain Service =====================
+// ===================== Mock Blockchain Service ===================== // TODO: REMOVE_MOCK - Mock-related keywords
 
-export const mockGetTokenBalances = (walletAddress: string): TE.TaskEither<BlockchainError, ReadonlyArray<TokenBalance>> =>
+export const mockGetTokenBalances = (walletAddress: string): TE.TaskEither<BlockchainError, ReadonlyArray<TokenBalance>> => // TODO: REMOVE_MOCK - Mock-related keywords
   pipe(
     validateAddress(walletAddress),
     E.fold(
       error => TE.left(error),
       address => simulateNetworkCall(() => {
-        const balances = mockState.tokenBalances.get(address);
+        const balances = mockState.tokenBalances.get(address); // TODO: REMOVE_MOCK - Mock-related keywords
         
         if (!balances) {
           // Generate default balances if none set
@@ -190,13 +190,13 @@ export const mockGetTokenBalances = (walletAddress: string): TE.TaskEither<Block
     )
   );
 
-export const mockGetLendingPositions = (walletAddress: string): TE.TaskEither<BlockchainError, ReadonlyArray<LendingPosition>> =>
+export const mockGetLendingPositions = (walletAddress: string): TE.TaskEither<BlockchainError, ReadonlyArray<LendingPosition>> => // TODO: REMOVE_MOCK - Mock-related keywords
   pipe(
     validateAddress(walletAddress),
     E.fold(
       error => TE.left(error),
       address => simulateNetworkCall(() => {
-        const positions = mockState.lendingPositions.get(address);
+        const positions = mockState.lendingPositions.get(address); // TODO: REMOVE_MOCK - Mock-related keywords
         
         if (!positions) {
           // Generate default positions if none set
@@ -223,13 +223,13 @@ export const mockGetLendingPositions = (walletAddress: string): TE.TaskEither<Bl
     )
   );
 
-export const mockGetLiquidityPositions = (walletAddress: string): TE.TaskEither<BlockchainError, ReadonlyArray<LiquidityPosition>> =>
+export const mockGetLiquidityPositions = (walletAddress: string): TE.TaskEither<BlockchainError, ReadonlyArray<LiquidityPosition>> => // TODO: REMOVE_MOCK - Mock-related keywords
   pipe(
     validateAddress(walletAddress),
     E.fold(
       error => TE.left(error),
       address => simulateNetworkCall(() => {
-        const positions = mockState.liquidityPositions.get(address);
+        const positions = mockState.liquidityPositions.get(address); // TODO: REMOVE_MOCK - Mock-related keywords
         
         if (!positions) {
           // Generate default positions if none set
@@ -256,22 +256,22 @@ export const mockGetLiquidityPositions = (walletAddress: string): TE.TaskEither<
     )
   );
 
-export const mockGetPortfolioSnapshot = (walletAddress: string): TE.TaskEither<BlockchainError, PortfolioSnapshot> =>
+export const mockGetPortfolioSnapshot = (walletAddress: string): TE.TaskEither<BlockchainError, PortfolioSnapshot> => // TODO: REMOVE_MOCK - Mock-related keywords
   pipe(
     validateAddress(walletAddress),
     E.fold(
       error => TE.left(error),
       address => simulateNetworkCall(() => {
-        const portfolio = mockState.portfolios.get(address);
+        const portfolio = mockState.portfolios.get(address); // TODO: REMOVE_MOCK - Mock-related keywords
         
         if (portfolio) {
           return portfolio;
         }
         
         // Generate portfolio from individual components if available
-        const tokenBalances = mockState.tokenBalances.get(address) || [];
-        const lendingPositions = mockState.lendingPositions.get(address) || [];
-        const liquidityPositions = mockState.liquidityPositions.get(address) || [];
+        const tokenBalances = mockState.tokenBalances.get(address) || []; // TODO: REMOVE_MOCK - Mock-related keywords
+        const lendingPositions = mockState.lendingPositions.get(address) || []; // TODO: REMOVE_MOCK - Mock-related keywords
+        const liquidityPositions = mockState.liquidityPositions.get(address) || []; // TODO: REMOVE_MOCK - Mock-related keywords
         
         if (tokenBalances.length === 0 && lendingPositions.length === 0 && liquidityPositions.length === 0) {
           return generatePortfolioSnapshot({ walletAddress: address });
@@ -302,55 +302,55 @@ export const mockGetPortfolioSnapshot = (walletAddress: string): TE.TaskEither<B
     )
   );
 
-export const mockGetTokenPrice = (tokenAddress: string): TE.TaskEither<BlockchainError, number> =>
+export const mockGetTokenPrice = (tokenAddress: string): TE.TaskEither<BlockchainError, number> => // TODO: REMOVE_MOCK - Mock-related keywords
   pipe(
     validateAddress(tokenAddress),
     E.fold(
       error => TE.left(error),
       address => simulateNetworkCall(() => {
-        // Mock token prices
-        const mockPrices: Record<string, number> = {
+        // Mock token prices // TODO: REMOVE_MOCK - Mock-related keywords
+        const mockPrices: Record<string, number> = { // TODO: REMOVE_MOCK - Mock-related keywords
           '0x0000000000000000000000000000000000000000': 2500, // ETH
           '0xa0b86991c31e31c31e31c31e31c31e31c31e31c31': 1.0,  // USDC
           '0xdac17f958d2ee523a2206206994597c13d831ec7': 1.0,  // USDT
           '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599': 45000 // WBTC
         };
         
-        return mockPrices[address] || 100; // Default price
+        return mockPrices[address] || 100; // Default price // TODO: REMOVE_MOCK - Mock-related keywords
       })
     )
   );
 
-export const mockGetBlockNumber = (): TE.TaskEither<BlockchainError, number> =>
+export const mockGetBlockNumber = (): TE.TaskEither<BlockchainError, number> => // TODO: REMOVE_MOCK - Mock-related keywords
   simulateNetworkCall(() => Math.floor(Date.now() / 1000) + 18000000);
 
-export const mockGetGasPrice = (): TE.TaskEither<BlockchainError, bigint> =>
-  simulateNetworkCall(() => BigInt(Math.floor(Math.random() * 50 + 10) * 1e9)); // 10-60 gwei
+export const mockGetGasPrice = (): TE.TaskEither<BlockchainError, bigint> => // TODO: REMOVE_MOCK - Mock-related keywords
+  simulateNetworkCall(() => BigInt(Math.floor(Math.random() * 50 + 10) * 1e9)); // 10-60 gwei // TODO: REMOVE_MOCK - Random value generation
 
 // ===================== Batch Operations =====================
 
-export const mockBatchGetTokenBalances = (
+export const mockBatchGetTokenBalances = ( // TODO: REMOVE_MOCK - Mock-related keywords
   walletAddresses: ReadonlyArray<string>
 ): TE.TaskEither<BlockchainError, ReadonlyMap<string, ReadonlyArray<TokenBalance>>> =>
   pipe(
     walletAddresses,
     TE.traverseArray(address => 
       pipe(
-        mockGetTokenBalances(address),
+        mockGetTokenBalances(address), // TODO: REMOVE_MOCK - Mock-related keywords
         TE.map(balances => [address, balances] as const)
       )
     ),
     TE.map(entries => new Map(entries))
   );
 
-export const mockBatchGetPortfolioSnapshots = (
+export const mockBatchGetPortfolioSnapshots = ( // TODO: REMOVE_MOCK - Mock-related keywords
   walletAddresses: ReadonlyArray<string>
 ): TE.TaskEither<BlockchainError, ReadonlyMap<string, PortfolioSnapshot>> =>
   pipe(
     walletAddresses,
     TE.traverseArray(address => 
       pipe(
-        mockGetPortfolioSnapshot(address),
+        mockGetPortfolioSnapshot(address), // TODO: REMOVE_MOCK - Mock-related keywords
         TE.map(snapshot => [address, snapshot] as const)
       )
     ),
@@ -375,7 +375,7 @@ export const createHighRiskScenario = (walletAddress: string): void => {
     ]
   });
   
-  setMockPortfolio(walletAddress, highRiskPortfolio);
+  setMockPortfolio(walletAddress, highRiskPortfolio); // TODO: REMOVE_MOCK - Mock-related keywords
 };
 
 export const createConcentratedPortfolioScenario = (walletAddress: string): void => {
@@ -395,7 +395,7 @@ export const createConcentratedPortfolioScenario = (walletAddress: string): void
     ]
   });
   
-  setMockPortfolio(walletAddress, concentratedPortfolio);
+  setMockPortfolio(walletAddress, concentratedPortfolio); // TODO: REMOVE_MOCK - Mock-related keywords
 };
 
 export const createEmptyPortfolioScenario = (walletAddress: string): void => {
@@ -411,19 +411,19 @@ export const createEmptyPortfolioScenario = (walletAddress: string): void => {
     tokenBalances: []
   });
   
-  setMockPortfolio(walletAddress, emptyPortfolio);
+  setMockPortfolio(walletAddress, emptyPortfolio); // TODO: REMOVE_MOCK - Mock-related keywords
 };
 
-// ===================== Export Mock Service =====================
+// ===================== Export Mock Service ===================== // TODO: REMOVE_MOCK - Mock-related keywords
 
-export const mockBlockchainService = {
-  getTokenBalances: mockGetTokenBalances,
-  getLendingPositions: mockGetLendingPositions,
-  getLiquidityPositions: mockGetLiquidityPositions,
-  getPortfolioSnapshot: mockGetPortfolioSnapshot,
-  getTokenPrice: mockGetTokenPrice,
-  getBlockNumber: mockGetBlockNumber,
-  getGasPrice: mockGetGasPrice,
-  batchGetTokenBalances: mockBatchGetTokenBalances,
-  batchGetPortfolioSnapshots: mockBatchGetPortfolioSnapshots
+export const mockBlockchainService = { // TODO: REMOVE_MOCK - Mock-related keywords
+  getTokenBalances: mockGetTokenBalances, // TODO: REMOVE_MOCK - Mock-related keywords
+  getLendingPositions: mockGetLendingPositions, // TODO: REMOVE_MOCK - Mock-related keywords
+  getLiquidityPositions: mockGetLiquidityPositions, // TODO: REMOVE_MOCK - Mock-related keywords
+  getPortfolioSnapshot: mockGetPortfolioSnapshot, // TODO: REMOVE_MOCK - Mock-related keywords
+  getTokenPrice: mockGetTokenPrice, // TODO: REMOVE_MOCK - Mock-related keywords
+  getBlockNumber: mockGetBlockNumber, // TODO: REMOVE_MOCK - Mock-related keywords
+  getGasPrice: mockGetGasPrice, // TODO: REMOVE_MOCK - Mock-related keywords
+  batchGetTokenBalances: mockBatchGetTokenBalances, // TODO: REMOVE_MOCK - Mock-related keywords
+  batchGetPortfolioSnapshots: mockBatchGetPortfolioSnapshots // TODO: REMOVE_MOCK - Mock-related keywords
 };

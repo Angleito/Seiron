@@ -21,7 +21,7 @@ import logger from '../utils/logger';
 
 // Yei Finance contract addresses on Sei Network
 const YEI_CONTRACTS = {
-  LENDING_POOL: '0x1234567890123456789012345678901234567890', // Mock address
+  LENDING_POOL: '0x1234567890123456789012345678901234567890', // Mock address // TODO: REMOVE_MOCK - Mock-related keywords
   PRICE_ORACLE: '0x2345678901234567890123456789012345678901',
   LENDING_POOL_DATA_PROVIDER: '0x3456789012345678901234567890123456789012'
 };
@@ -136,7 +136,7 @@ export class YeiFinanceAdapter implements LendingAdapter {
           throw new Error('Wallet client not available');
         }
 
-        // Mock implementation - would interact with actual contract
+        // Mock implementation - would interact with actual contract // TODO: REMOVE_MOCK - Mock-related keywords
         const txHash = await this.simulateTransaction('supply', params);
         
         logger.info(`Supply transaction initiated: ${txHash}`, {
@@ -160,7 +160,7 @@ export class YeiFinanceAdapter implements LendingAdapter {
           throw new Error('Wallet client not available');
         }
 
-        // Mock implementation - would interact with actual contract
+        // Mock implementation - would interact with actual contract // TODO: REMOVE_MOCK - Mock-related keywords
         const txHash = await this.simulateTransaction('withdraw', params);
         
         logger.info(`Withdraw transaction initiated: ${txHash}`, {
@@ -184,7 +184,7 @@ export class YeiFinanceAdapter implements LendingAdapter {
           throw new Error('Wallet client not available');
         }
 
-        // Mock implementation - would interact with actual contract
+        // Mock implementation - would interact with actual contract // TODO: REMOVE_MOCK - Mock-related keywords
         const txHash = await this.simulateTransaction('borrow', params);
         
         logger.info(`Borrow transaction initiated: ${txHash}`, {
@@ -208,7 +208,7 @@ export class YeiFinanceAdapter implements LendingAdapter {
           throw new Error('Wallet client not available');
         }
 
-        // Mock implementation - would interact with actual contract
+        // Mock implementation - would interact with actual contract // TODO: REMOVE_MOCK - Mock-related keywords
         const txHash = await this.simulateTransaction('repay', params);
         
         logger.info(`Repay transaction initiated: ${txHash}`, {
@@ -228,7 +228,7 @@ export class YeiFinanceAdapter implements LendingAdapter {
   public getHealthFactor = (walletAddress: WalletAddress): AsyncResult<number> =>
     TE.tryCatch(
       async () => {
-        // Mock implementation - would call contract method
+        // Mock implementation - would call contract method // TODO: REMOVE_MOCK - Mock-related keywords
         const healthFactor = await this.calculateUserHealthFactor(walletAddress);
         return healthFactor;
       },
@@ -240,7 +240,7 @@ export class YeiFinanceAdapter implements LendingAdapter {
   private getReserveData = (): AsyncResult<any[]> =>
     TE.tryCatch(
       async () => {
-        // Mock reserve data - would fetch from contract
+        // Mock reserve data - would fetch from contract // TODO: REMOVE_MOCK - Mock-related keywords
         return [
           {
             asset: SUPPORTED_TOKENS.SEI,
@@ -249,7 +249,7 @@ export class YeiFinanceAdapter implements LendingAdapter {
             liquidationThreshold: 8500, // 85%
             liquidityRate: '550000000000000000000000000', // 5.5%
             variableBorrowRate: '750000000000000000000000000', // 7.5%
-            priceInUSD: '500000000000000000' // $0.5
+            priceInUSD: '500000000000000000' // $0.5 // TODO: REMOVE_MOCK - Hard-coded currency values
           },
           {
             asset: SUPPORTED_TOKENS.USDC,
@@ -258,7 +258,7 @@ export class YeiFinanceAdapter implements LendingAdapter {
             liquidationThreshold: 9300, // 93%
             liquidityRate: '350000000000000000000000000', // 3.5%
             variableBorrowRate: '450000000000000000000000000', // 4.5%
-            priceInUSD: '1000000000000000000' // $1.0
+            priceInUSD: '1000000000000000000' // $1.0 // TODO: REMOVE_MOCK - Hard-coded currency values
           }
         ];
       },
@@ -268,7 +268,7 @@ export class YeiFinanceAdapter implements LendingAdapter {
   private getUserReserveData = (walletAddress: WalletAddress): AsyncResult<any[]> =>
     TE.tryCatch(
       async () => {
-        // Mock user reserve data - would fetch from contract
+        // Mock user reserve data - would fetch from contract // TODO: REMOVE_MOCK - Mock-related keywords
         return [
           {
             currentATokenBalance: '1000000000000000000000', // 1000 tokens
@@ -284,7 +284,7 @@ export class YeiFinanceAdapter implements LendingAdapter {
     );
 
   private calculateUserHealthFactor = async (walletAddress: WalletAddress): Promise<number> => {
-    // Mock health factor calculation
+    // Mock health factor calculation // TODO: REMOVE_MOCK - Mock-related keywords
     // In real implementation, would call contract method
     const positions = await this.getUserPositions(walletAddress)();
     
@@ -304,11 +304,11 @@ export class YeiFinanceAdapter implements LendingAdapter {
   };
 
   private simulateTransaction = async (operation: string, params: any): Promise<TransactionHash> => {
-    // Mock transaction simulation
+    // Mock transaction simulation // TODO: REMOVE_MOCK - Mock-related keywords
     // In real implementation, would prepare and send transaction
     await new Promise(resolve => setTimeout(resolve, 100)); // Simulate network delay
     
-    return `0x${'0'.repeat(40)}${Date.now().toString(16)}${Math.random().toString(16).slice(2, 8)}`;
+    return `0x${'0'.repeat(40)}${Date.now().toString(16)}${Math.random().toString(16).slice(2, 8)}`; // TODO: REMOVE_MOCK - Random value generation
   };
 
   private getTokenSymbol = (tokenAddress: string): string => {

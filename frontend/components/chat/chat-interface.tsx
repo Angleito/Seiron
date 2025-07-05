@@ -1,10 +1,13 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Send, Bot, Loader2, Sparkles, Search, TrendingUp, Activity, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AgentMessage, AgentStreamEvent } from '@/types/agent'
 import { getOrchestrator } from '@/lib/orchestrator-client'
+import { ChatStreamService, StreamMessage, TypingIndicator, ConnectionStatus } from './ChatStreamService'
+import { Subscription } from 'rxjs'
+import * as E from 'fp-ts/Either'
 
 // New adapter-related types
 interface HiveInsight {
@@ -35,36 +38,87 @@ interface AdapterAction {
 const generateSessionId = () => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
 export function ChatInterface() {
-  const [messages, setMessages] = useState<AgentMessage[]>([
-    {
-      id: '1',
-      type: 'agent',
-      agentType: 'portfolio_agent',
-      content: 'Greetings, mortal! I am Seiron, the Dragon of Financial Wisdom. Enhanced with the power of Sei Agent Kit, Hive Intelligence, and real-time MCP protocols, I now possess legendary abilities to manage your digital treasures, execute mystical trades, provide ancient market insights, and grant your investing wishes with Saiyan-level precision. What fortune do you seek today?',
-      timestamp: new Date(),
-    },
-  ])
   const [input, setInput] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
   const [sessionId] = useState(generateSessionId())
-  const [connectedAgents, setConnectedAgents] = useState<Set<string>>(new Set())
   const [hiveInsights, setHiveInsights] = useState<HiveInsight[]>([])
   const [networkStatus, setNetworkStatus] = useState<SeiNetworkStatus | null>(null)
   const [powerLevel, setPowerLevel] = useState<number>(9000)
   const [adapterActions, setAdapterActions] = useState<AdapterAction[]>([])
   const [showAdapterActions, setShowAdapterActions] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  // Initialize WebSocket connection
-  useEffect(() => {
-    const orchestrator = getOrchestrator({
+  
+  // Stream-based state
+  const [messages, setMessages] = useState<StreamMessage[]>([])
+  const [typingIndicators, setTypingIndicators] = useState<TypingIndicator[]>([])
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
+    isConnected: false,
+    lastHeartbeat: Date.now(),
+    reconnectAttempts: 0
+  })
+  const [isLoading, setIsLoading] = useState(false)
+  
+  // Initialize chat stream service
+  const chatService = useMemo(() => {
+    return new ChatStreamService({
       apiEndpoint: process.env.NEXT_PUBLIC_ORCHESTRATOR_API || '/api',
       wsEndpoint: process.env.NEXT_PUBLIC_ORCHESTRATOR_WS || 'ws://localhost:3001',
+      sessionId,
+      maxRetries: 3,
+      retryDelay: 1000,
+      heartbeatInterval: 30000,
+      messageTimeout: 30000,
+      bufferSize: 100,
+      throttleTime: 100
     })
+  }, [sessionId])
+  
+  // Add initial welcome message
+  useEffect(() => {
+    const welcomeMessage: StreamMessage = {
+      id: '1',
+      type: 'agent',
+      agentType: 'portfolio_agent',
+      content: 'Greetings, mortal! I am Seiron, the Dragon of Financial Wisdom. Enhanced with the power of Sei Agent Kit, Hive Intelligence, and real-time MCP protocols, I now possess legendary abilities to manage your digital treasures, execute mystical trades, provide ancient market insights, and grant your investing wishes with Saiyan-level precision. What fortune do you seek today?',
+      timestamp: new Date(),
+      status: 'delivered'
+    }
+    setMessages([welcomeMessage])
+  }, [])
 
-    // Connect WebSocket for real-time updates
-    orchestrator.connectWebSocket(sessionId)
-
+  // Subscribe to chat streams
+  useEffect(() => {
+    const subscriptions: Subscription[] = []
+    
+    // Subscribe to message stream
+    subscriptions.push(
+      chatService.messages$.subscribe(message => {
+        setMessages(prev => {
+          const existing = prev.findIndex(m => m.id === message.id)
+          if (existing >= 0) {
+            // Update existing message
+            const updated = [...prev]
+            updated[existing] = message
+            return updated
+          }
+          return [...prev, message]
+        })
+      })
+    )
+    
+    // Subscribe to typing indicators
+    subscriptions.push(
+      chatService.typingIndicators$.subscribe(indicators => {
+        setTypingIndicators(indicators)
+      })
+    )
+    
+    // Subscribe to connection status
+    subscriptions.push(
+      chatService.connectionStatus.subscribe(status => {
+        setConnectionStatus(status)
+      })
+    )
+    
     // Initialize adapter actions
     setAdapterActions([
       { type: 'hive', action: 'search', params: {}, description: 'Search blockchain data with AI' },
@@ -74,32 +128,20 @@ export function ChatInterface() {
       { type: 'mcp', action: 'get_blockchain_state', params: {}, description: 'Get real-time network status' },
       { type: 'mcp', action: 'get_wallet_balance', params: {}, description: 'Get live wallet balance' },
     ])
-
-    // Subscribe to agent events
-    const unsubscribeStatus = orchestrator.on('status', (event: AgentStreamEvent) => {
-      if (event.type === 'status' && event.data) {
-        const statusData = event.data as { status: string; message?: string }
-        if (statusData.message) {
-          addSystemMessage(`🐉 ${event.agentType?.replace('_', ' ').replace('agent', 'dragon')}: ${statusData.message}`)
-        }
-        if (statusData.status === 'connected') {
-          setConnectedAgents(prev => new Set(prev).add(event.agentId))
-        }
-      }
+    
+    // Legacy orchestrator events (will be migrated to streams)
+    const orchestrator = getOrchestrator({
+      apiEndpoint: process.env.NEXT_PUBLIC_ORCHESTRATOR_API || '/api',
+      wsEndpoint: process.env.NEXT_PUBLIC_ORCHESTRATOR_WS || 'ws://localhost:3001',
     })
-
-    const unsubscribeProgress = orchestrator.on('progress', (event: AgentStreamEvent) => {
-      if (event.type === 'progress' && event.data) {
-        const progressData = event.data as { message: string }
-        addSystemMessage(`🐉 ${event.agentType?.replace('_', ' ').replace('agent', 'dragon')} is conjuring magic: ${progressData.message}`)
-      }
-    })
-
+    
     // Subscribe to Hive Intelligence events
     const unsubscribeHive = orchestrator.on('hive:insights', (event: AgentStreamEvent) => {
-      if (event.data && Array.isArray(event.data.insights)) {
-        setHiveInsights(event.data.insights)
-        addSystemMessage(`🔮 Hive Intelligence: ${event.data.insights.length} new insights discovered!`)
+      if (event.data && typeof event.data === 'object' && 'insights' in event.data) {
+        const data = event.data as { insights: unknown }
+        if (Array.isArray(data.insights)) {
+          setHiveInsights(data.insights)
+        }
       }
     })
 
@@ -107,189 +149,83 @@ export function ChatInterface() {
     const unsubscribeMCP = orchestrator.on('mcp:network_status', (event: AgentStreamEvent) => {
       if (event.data) {
         setNetworkStatus(event.data as SeiNetworkStatus)
-        const status = event.data as SeiNetworkStatus
-        addSystemMessage(`⚡ Sei Network Update: Block ${status.blockNumber}, Status: ${status.networkStatus.toUpperCase()}`)
       }
     })
 
     // Subscribe to power level updates
     const unsubscribePowerLevel = orchestrator.on('portfolio:power_level', (event: AgentStreamEvent) => {
-      if (event.data && typeof event.data.powerLevel === 'number') {
-        setPowerLevel(event.data.powerLevel)
-        const level = event.data.powerLevel
-        if (level > 50000) {
-          addSystemMessage(`🔥 INCREDIBLE! Your power level has exceeded ${level}! You've achieved legendary status!`)
-        } else if (level > 20000) {
-          addSystemMessage(`💪 Your power level has grown to ${level}! You're becoming a true warrior!`)
-        }
+      if (event.data && typeof (event.data as any).powerLevel === 'number') {
+        setPowerLevel((event.data as any).powerLevel)
       }
     })
-
+    
     return () => {
-      unsubscribeStatus()
-      unsubscribeProgress()
+      // Unsubscribe from all streams
+      subscriptions.forEach(sub => sub.unsubscribe())
+      
+      // Clean up legacy subscriptions
       unsubscribeHive()
       unsubscribeMCP()
       unsubscribePowerLevel()
-      orchestrator.disconnectWebSocket()
+      
+      // Destroy chat service
+      chatService.destroy()
     }
-  }, [sessionId])
+  }, [chatService])
 
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const addSystemMessage = (content: string) => {
-    const systemMessage: AgentMessage = {
-      id: Date.now().toString(),
-      type: 'system',
-      content,
-      timestamp: new Date(),
-    }
-    setMessages(prev => [...prev, systemMessage])
-  }
-
   const executeAdapterAction = async (action: AdapterAction) => {
     if (isLoading) return
-
-    const actionMessage: AgentMessage = {
-      id: Date.now().toString(),
-      type: 'user',
-      content: `🔧 Executing ${action.type.toUpperCase()} action: ${action.description}`,
-      timestamp: new Date(),
-    }
-
-    setMessages(prev => [...prev, actionMessage])
+    
     setIsLoading(true)
 
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: `Execute ${action.type} action: ${action.action}`,
-          sessionId,
-          adapterAction: action,
-        }),
-      })
-
-      const data = await response.json()
-
-      const assistantMessage: AgentMessage = {
-        id: (Date.now() + 1).toString(),
-        type: 'agent',
-        agentType: `${action.type}_agent`,
-        content: data.message || `${action.type.toUpperCase()} action executed successfully!`,
-        timestamp: new Date(),
-        metadata: {
-          adapterType: action.type,
-          action: action.action,
-          confidence: data.metadata?.confidence || 0.9,
-          taskId: data.taskId,
-          executionTime: data.executionTime,
-        },
+    chatService.sendAdapterAction(action).subscribe({
+      next: (result) => {
+        if (E.isLeft(result)) {
+          console.error('Failed to send adapter action:', result.left)
+        }
+      },
+      error: (error) => {
+        console.error('Error executing adapter action:', error)
+        setIsLoading(false)
+      },
+      complete: () => {
+        setIsLoading(false)
       }
-      setMessages(prev => [...prev, assistantMessage])
-    } catch (error) {
-      const errorMessage: AgentMessage = {
-        id: (Date.now() + 1).toString(),
-        type: 'agent',
-        content: `Failed to execute ${action.type.toUpperCase()} action. The mystical energies are unstable.`,
-        timestamp: new Date(),
-        metadata: {
-          error: true,
-        },
-      }
-      setMessages(prev => [...prev, errorMessage])
-    } finally {
-      setIsLoading(false)
-    }
+    })
   }
 
-  const handleSend = async () => {
+  const handleSend = () => {
     if (!input.trim() || isLoading) return
 
-    const userMessage: AgentMessage = {
-      id: Date.now().toString(),
-      type: 'user',
-      content: input,
-      timestamp: new Date(),
+    const messageContent = input
+    const metadata = {
+      powerLevel,
+      hiveInsights,
+      networkStatus,
     }
-
-    setMessages(prev => [...prev, userMessage])
+    
     setInput('')
     setIsLoading(true)
 
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: input,
-          sessionId,
-          powerLevel,
-          hiveInsights,
-          networkStatus,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (data.error) {
-        const errorMessage: AgentMessage = {
-          id: (Date.now() + 1).toString(),
-          type: 'agent',
-          agentType: 'portfolio_agent',
-          content: data.message || 'The mystical energies are disrupted. Allow me to recalibrate and try again.',
-          timestamp: new Date(),
-          metadata: {
-            error: true,
-          },
+    chatService.sendMessage(messageContent, metadata).subscribe({
+      next: (result) => {
+        if (E.isLeft(result)) {
+          console.error('Failed to send message:', result.left)
         }
-        setMessages(prev => [...prev, errorMessage])
-      } else {
-        const assistantMessage: AgentMessage = {
-          id: (Date.now() + 1).toString(),
-          type: 'agent',
-          agentType: data.agentType,
-          content: data.message,
-          timestamp: new Date(),
-          metadata: {
-            intent: data.metadata?.intent,
-            action: data.metadata?.action,
-            confidence: data.metadata?.confidence,
-            taskId: data.taskId,
-            executionTime: data.executionTime,
-            powerLevel: data.metadata?.powerLevel || powerLevel,
-            dragonBallMessage: data.metadata?.dragonBallMessage,
-          },
-        }
-        setMessages(prev => [...prev, assistantMessage])
-
-        // Update power level if provided
-        if (data.metadata?.powerLevel) {
-          setPowerLevel(data.metadata.powerLevel)
-        }
+      },
+      error: (error) => {
+        console.error('Error sending message:', error)
+        setIsLoading(false)
+      },
+      complete: () => {
+        setIsLoading(false)
       }
-    } catch (error) {
-      const errorMessage: AgentMessage = {
-        id: (Date.now() + 1).toString(),
-        type: 'agent',
-        content: 'The connection to the Dragon Realm has been severed. Check your mystical conduits and try summoning again.',
-        timestamp: new Date(),
-        metadata: {
-          error: true,
-        },
-      }
-      setMessages(prev => [...prev, errorMessage])
-    } finally {
-      setIsLoading(false)
-    }
+    })
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -353,15 +289,19 @@ export function ChatInterface() {
       {/* Enhanced Status Bar */}
       <div className="px-4 py-2 bg-gradient-to-r from-red-50 to-orange-50 border-b border-red-200">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          {/* Connected Dragons Indicator */}
-          {connectedAgents.size > 0 && (
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-red-600" />
-              <span className="text-sm text-red-700">
-                Dragon Legion Active: {Array.from(connectedAgents).map(agent => agent.replace('_', ' ').replace('agent', 'dragon')).join(', ')}
-              </span>
-            </div>
-          )}
+          {/* Connection Status Indicator */}
+          <div className="flex items-center gap-2">
+            <div className={cn(
+              "h-2 w-2 rounded-full",
+              connectionStatus.isConnected ? "bg-green-500" : "bg-red-500"
+            )} />
+            <span className="text-sm text-red-700">
+              {connectionStatus.isConnected ? 'Connected to Dragon Realm' : 'Connecting...'}
+            </span>
+            {connectionStatus.error && (
+              <span className="text-xs text-red-600">({connectionStatus.error})</span>
+            )}
+          </div>
           
           {/* Power Level Display */}
           <div className="flex items-center gap-4">
@@ -498,6 +438,23 @@ export function ChatInterface() {
                 >
                   {message.timestamp.toLocaleTimeString()}
                 </p>
+                {/* Message status indicator */}
+                {message.status && message.type === 'user' && (
+                  <span className={cn(
+                    'text-xs',
+                    message.status === 'pending' && 'text-gray-400',
+                    message.status === 'sending' && 'text-yellow-400',
+                    message.status === 'sent' && 'text-blue-400',
+                    message.status === 'delivered' && 'text-green-400',
+                    message.status === 'failed' && 'text-red-400'
+                  )}>
+                    {message.status === 'pending' && '○'}
+                    {message.status === 'sending' && '◐'}
+                    {message.status === 'sent' && '◑'}
+                    {message.status === 'delivered' && '●'}
+                    {message.status === 'failed' && '✗'}
+                  </span>
+                )}
                 {message.metadata?.executionTime && (
                   <p className="text-xs text-red-400">
                     ⚡ {(message.metadata.executionTime / 1000).toFixed(2)}s
@@ -527,7 +484,27 @@ export function ChatInterface() {
             </div>
           </div>
         ))}
-        {isLoading && (
+        {/* Typing Indicators */}
+        {typingIndicators.length > 0 && (
+          <div className="space-y-2">
+            {typingIndicators.map((indicator) => (
+              <div key={indicator.agentId} className="flex justify-start">
+                <div className="bg-gradient-to-r from-gray-900 to-black rounded-lg px-4 py-2 border border-red-800 shadow-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="text-2xl animate-bounce">{getAgentIcon(indicator.agentType)}</div>
+                    <Sparkles className="h-4 w-4 animate-spin text-red-400" />
+                    <span className="text-sm text-red-300 font-medium">
+                      {indicator.agentType.replace('_', ' ').replace('agent', 'Dragon')} is conjuring magic...
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {/* Legacy loading indicator */}
+        {isLoading && typingIndicators.length === 0 && (
           <div className="flex justify-start">
             <div className="bg-gradient-to-r from-gray-900 to-black rounded-lg px-4 py-2 border border-red-800 shadow-lg">
               <div className="flex items-center gap-2">

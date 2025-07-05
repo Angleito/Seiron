@@ -22,7 +22,7 @@ import logger from '../utils/logger';
 
 // DragonSwap V2 contract addresses on Sei Network
 const DRAGONSWAP_CONTRACTS = {
-  FACTORY: '0x7890123456789012345678901234567890123456', // Mock address
+  FACTORY: '0x7890123456789012345678901234567890123456', // Mock address // TODO: REMOVE_MOCK - Mock-related keywords
   ROUTER: '0x8901234567890123456789012345678901234567',
   POSITION_MANAGER: '0x9012345678901234567890123456789012345678',
   QUOTER: '0xa123456789012345678901234567890123456789'
@@ -85,7 +85,7 @@ export class DragonSwapAdapter implements LiquidityAdapter {
           throw new Error('Wallet client not available');
         }
 
-        // Mock implementation - would interact with position manager
+        // Mock implementation - would interact with position manager // TODO: REMOVE_MOCK - Mock-related keywords
         const txHash = await this.simulateTransaction('addLiquidity', params);
         
         logger.info(`Add liquidity transaction initiated: ${txHash}`, {
@@ -111,7 +111,7 @@ export class DragonSwapAdapter implements LiquidityAdapter {
           throw new Error('Wallet client not available');
         }
 
-        // Mock implementation - would interact with position manager
+        // Mock implementation - would interact with position manager // TODO: REMOVE_MOCK - Mock-related keywords
         const txHash = await this.simulateTransaction('removeLiquidity', params);
         
         logger.info(`Remove liquidity transaction initiated: ${txHash}`, {
@@ -135,7 +135,7 @@ export class DragonSwapAdapter implements LiquidityAdapter {
           throw new Error('Wallet client not available');
         }
 
-        // Mock implementation - would interact with position manager
+        // Mock implementation - would interact with position manager // TODO: REMOVE_MOCK - Mock-related keywords
         const txHash = await this.simulateTransaction('collectFees', params);
         
         logger.info(`Collect fees transaction initiated: ${txHash}`, {
@@ -154,7 +154,7 @@ export class DragonSwapAdapter implements LiquidityAdapter {
   public getPoolInfo = (poolId: PoolId): AsyncResult<PoolInfo> =>
     TE.tryCatch(
       async () => {
-        // Mock implementation - would fetch from contract
+        // Mock implementation - would fetch from contract // TODO: REMOVE_MOCK - Mock-related keywords
         const poolInfo = await this.fetchPoolData(poolId);
         return poolInfo;
       },
@@ -166,9 +166,9 @@ export class DragonSwapAdapter implements LiquidityAdapter {
   private getUserPositionIds = (walletAddress: WalletAddress): AsyncResult<string[]> =>
     TE.tryCatch(
       async () => {
-        // Mock implementation - would query position manager
+        // Mock implementation - would query position manager // TODO: REMOVE_MOCK - Mock-related keywords
         // In real implementation, would call balanceOf and tokenOfOwnerByIndex
-        return ['1', '2', '3']; // Mock position IDs
+        return ['1', '2', '3']; // Mock position IDs // TODO: REMOVE_MOCK - Hard-coded array literals // TODO: REMOVE_MOCK - Mock-related keywords
       },
       (error) => new Error(`Failed to get user position IDs: ${error}`)
     );
@@ -176,7 +176,7 @@ export class DragonSwapAdapter implements LiquidityAdapter {
   private getPositionDetails = (positionId: string, walletAddress: WalletAddress): AsyncResult<LiquidityPosition> =>
     TE.tryCatch(
       async () => {
-        // Mock position data - would fetch from position manager contract
+        // Mock position data - would fetch from position manager contract // TODO: REMOVE_MOCK - Mock-related keywords
         const position = await this.fetchPositionData(positionId);
         const poolInfo = await this.fetchPoolData(position.poolId);
         const uncollectedFees = await this.calculateUncollectedFees(positionId);
@@ -211,7 +211,7 @@ export class DragonSwapAdapter implements LiquidityAdapter {
     );
 
   private fetchPositionData = async (positionId: string): Promise<any> => {
-    // Mock position data - would call position manager contract
+    // Mock position data - would call position manager contract // TODO: REMOVE_MOCK - Mock-related keywords
     return {
       poolId: `0x${'1'.repeat(40)}`,
       token0: '0x0000000000000000000000000000000000000000', // SEI
@@ -226,7 +226,7 @@ export class DragonSwapAdapter implements LiquidityAdapter {
   };
 
   private fetchPoolData = async (poolId: PoolId): Promise<PoolInfo> => {
-    // Mock pool data - would fetch from factory/pool contract
+    // Mock pool data - would fetch from factory/pool contract // TODO: REMOVE_MOCK - Mock-related keywords
     return {
       poolId,
       token0: '0x0000000000000000000000000000000000000000',
@@ -236,8 +236,8 @@ export class DragonSwapAdapter implements LiquidityAdapter {
       tick: 0,
       price: 0.5, // 1 SEI = 0.5 USDC
       apr: 15.5, // 15.5% APR
-      volume24h: 1000000, // $1M daily volume
-      tvl: 5000000 // $5M TVL
+      volume24h: 1000000, // $1M daily volume // TODO: REMOVE_MOCK - Hard-coded currency values
+      tvl: 5000000 // $5M TVL // TODO: REMOVE_MOCK - Hard-coded currency values
     };
   };
 
@@ -246,11 +246,11 @@ export class DragonSwapAdapter implements LiquidityAdapter {
     token1: string;
     valueUSD: number;
   }> => {
-    // Mock fee calculation - would call position manager
+    // Mock fee calculation - would call position manager // TODO: REMOVE_MOCK - Mock-related keywords
     return {
       token0: '1000000000000000000', // 1 SEI
       token1: '500000', // 0.5 USDC
-      valueUSD: 1.0 // $1 in fees
+      valueUSD: 1.0 // $1 in fees // TODO: REMOVE_MOCK - Hard-coded currency values
     };
   };
 
@@ -271,11 +271,11 @@ export class DragonSwapAdapter implements LiquidityAdapter {
   };
 
   private simulateTransaction = async (operation: string, params: any): Promise<TransactionHash> => {
-    // Mock transaction simulation
+    // Mock transaction simulation // TODO: REMOVE_MOCK - Mock-related keywords
     // In real implementation, would prepare and send transaction
     await new Promise(resolve => setTimeout(resolve, 100)); // Simulate network delay
     
-    return `0x${'1'.repeat(40)}${Date.now().toString(16)}${Math.random().toString(16).slice(2, 8)}`;
+    return `0x${'1'.repeat(40)}${Date.now().toString(16)}${Math.random().toString(16).slice(2, 8)}`; // TODO: REMOVE_MOCK - Random value generation
   };
 
   private getTokenSymbol = (tokenAddress: string): string => {

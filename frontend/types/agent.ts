@@ -54,6 +54,11 @@ export interface AgentMessage {
     taskId?: string
     executionTime?: number
     error?: boolean
+    powerLevel?: number
+    dragonBallMessage?: string
+    adapterType?: string
+    agentId?: string
+    [key: string]: any
   }
 }
 

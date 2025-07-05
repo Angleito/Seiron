@@ -91,6 +91,40 @@ cd frontend
 npm run dev
 ```
 
+### Environment Configuration
+
+Create your `.env` files with the following mystical configurations:
+
+#### Frontend Environment Variables
+```bash
+# Privy Configuration (Required)
+NEXT_PUBLIC_PRIVY_APP_ID=your_privy_app_id_here
+NEXT_PUBLIC_PRIVY_CLIENT_ID=your_privy_client_id_here
+
+# Voice Interface (Optional but recommended)
+NEXT_PUBLIC_ELEVENLABS_API_KEY=your-elevenlabs-api-key
+NEXT_PUBLIC_ELEVENLABS_VOICE_ID=your-voice-id
+NEXT_PUBLIC_VOICE_ENABLED=true
+
+# Sei Network
+NEXT_PUBLIC_SEI_RPC_URL=https://evm-rpc.sei-apis.com
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_walletconnect_project_id_here
+```
+
+#### Backend Environment Variables
+```bash
+# OpenAI Configuration (Required)
+OPENAI_API_KEY=sk-your-openai-api-key-here
+OPENAI_MODEL=gpt-4-turbo-preview
+
+# Server Configuration
+PORT=8000
+NODE_ENV=development
+FRONTEND_URL=http://localhost:3000
+
+# Additional configurations in backend/.env.example
+```
+
 ### Dragon Summoning Examples
 
 ```typescript
@@ -123,6 +157,36 @@ import { ChatInterface } from '@/components/chat/chat-interface';
 🐉 "Channeling aggressive dragon energy... 
     Recommended allocation: 60% High-Yield LPs, 40% Leveraged Lending
     Expected power level: Over 9000! 🔥"
+```
+
+### 🎤 Voice Interface Features
+
+Seiron now includes a mystical voice interface that allows you to command the dragon through speech:
+
+- **🎤 Voice Commands**: Speak your investment wishes naturally
+- **🔊 Dragon's Voice**: Hear Seiron's responses through high-quality text-to-speech powered by ElevenLabs
+- **🐉 Real-time Animation**: Watch the dragon breathe fire while speaking
+- **♿ Accessibility**: Full ARIA support and keyboard navigation
+
+#### Voice Setup
+
+```bash
+# Configure ElevenLabs for dragon voice powers
+NEXT_PUBLIC_ELEVENLABS_API_KEY=your-elevenlabs-api-key
+NEXT_PUBLIC_ELEVENLABS_VOICE_ID=your-voice-id
+NEXT_PUBLIC_VOICE_ENABLED=true
+```
+
+#### Voice Commands Example
+
+```typescript
+// Voice-enabled chat interface
+import { VoiceEnabledChat } from '@/components/chat/VoiceEnabledChat';
+
+// Simply speak commands like:
+"Hey Seiron, show me my portfolio balance"
+"Find the best yield opportunities on Sei"
+"Execute a lending strategy with 1000 USDC"
 ```
 
 ## 🏗️ Dragon Architecture
@@ -284,6 +348,32 @@ npm run test:dragon-powers
 
 # Deploy to Sei testnet
 npm run deploy:testnet
+```
+
+### 🐋 Docker Test Setup
+
+Seiron includes a comprehensive Docker-based testing environment:
+
+```bash
+# Run all tests in Docker containers
+npm run docker:test
+
+# Run specific test suites
+npm run docker:test:unit
+npm run docker:test:integration
+npm run docker:test:property
+
+# Audit and verify mock implementations
+npm run audit:mocks
+
+# Clean up Docker test environment
+npm run docker:test:clean
+```
+
+#### Test Coverage Dashboard
+```bash
+# Launch coverage dashboard on http://localhost:8080
+npm run docker:coverage:serve
 ```
 
 ### Contributing to the Dragon Realm

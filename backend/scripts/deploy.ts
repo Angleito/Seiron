@@ -64,7 +64,7 @@ const validateDeploymentConfig = (
     ));
   }
 
-  if (!['rolling', 'blue-green', 'recreate'].includes(strategy)) {
+  if (!['rolling', 'blue-green', 'recreate'].includes(strategy)) { // TODO: REMOVE_MOCK - Hard-coded array literals
     return E.left(createDeploymentError(
       'validation',
       `Invalid strategy: ${strategy}. Must be 'rolling', 'blue-green', or 'recreate'`

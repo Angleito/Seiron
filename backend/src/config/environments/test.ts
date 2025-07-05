@@ -43,19 +43,19 @@ const testOverrides = (config: AppConfig): AppConfig => ({
     ...config.blockchain,
     sei: {
       ...config.blockchain.sei,
-      rpcUrl: 'http://localhost:8545', // Mock RPC for tests
+      rpcUrl: 'http://localhost:8545', // Mock RPC for tests // TODO: REMOVE_MOCK - Mock-related keywords
       chainId: 31337 // Hardhat chain ID
     },
     providers: {
       ...config.blockchain.providers,
       dragonSwap: {
         ...config.blockchain.providers.dragonSwap,
-        apiUrl: 'http://localhost:3001/mock/dragonswap',
+        apiUrl: 'http://localhost:3001/mock/dragonswap', // TODO: REMOVE_MOCK - Mock-related keywords
         timeout: 1000
       },
       yeiFinance: {
         ...config.blockchain.providers.yeiFinance,
-        apiUrl: 'http://localhost:3001/mock/yeifinance',
+        apiUrl: 'http://localhost:3001/mock/yeifinance', // TODO: REMOVE_MOCK - Mock-related keywords
         timeout: 1000
       }
     }
@@ -110,9 +110,9 @@ export const testDefaults = {
   SEI_RPC_URL: 'http://localhost:8545',
   SEI_CHAIN_ID: '31337',
   SEI_BLOCK_TIME: '100',
-  DRAGONSWAP_API_URL: 'http://localhost:3001/mock/dragonswap',
+  DRAGONSWAP_API_URL: 'http://localhost:3001/mock/dragonswap', // TODO: REMOVE_MOCK - Mock-related keywords
   DRAGONSWAP_TIMEOUT: '1000',
-  YEIFINANCE_API_URL: 'http://localhost:3001/mock/yeifinance',
+  YEIFINANCE_API_URL: 'http://localhost:3001/mock/yeifinance', // TODO: REMOVE_MOCK - Mock-related keywords
   YEIFINANCE_TIMEOUT: '1000',
   OPENAI_API_KEY: 'test-api-key',
   OPENAI_MODEL: 'gpt-3.5-turbo',

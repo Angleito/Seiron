@@ -1,9 +1,9 @@
 /**
- * Mock OpenAI API for testing
+ * Mock OpenAI API for testing // TODO: REMOVE_MOCK - Mock-related keywords
  */
 
-// Mock OpenAI responses
-export const mockOpenAIResponses = {
+// Mock OpenAI responses // TODO: REMOVE_MOCK - Mock-related keywords
+export const mockOpenAIResponses = { // TODO: REMOVE_MOCK - Mock-related keywords
   chat: {
     success: {
       choices: [{
@@ -74,38 +74,38 @@ export const mockOpenAIResponses = {
   }
 };
 
-// Mock OpenAI client
-export const createMockOpenAIClient = () => ({
+// Mock OpenAI client // TODO: REMOVE_MOCK - Mock-related keywords
+export const createMockOpenAIClient = () => ({ // TODO: REMOVE_MOCK - Mock-related keywords
   chat: {
     completions: {
-      create: jest.fn().mockResolvedValue(mockOpenAIResponses.chat.success)
+      create: jest.fn().mockResolvedValue(mockOpenAIResponses.chat.success) // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
     }
   }
 });
 
-// Setup OpenAI mocks
-export const setupOpenAIMocks = () => {
-  const mockClient = createMockOpenAIClient();
+// Setup OpenAI mocks // TODO: REMOVE_MOCK - Mock-related keywords
+export const setupOpenAIMocks = () => { // TODO: REMOVE_MOCK - Mock-related keywords
+  const mockClient = createMockOpenAIClient(); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
   
   // Configure default successful responses
-  mockClient.chat.completions.create.mockResolvedValue(mockOpenAIResponses.chat.success);
+  mockClient.chat.completions.create.mockResolvedValue(mockOpenAIResponses.chat.success); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
   
-  return mockClient;
+  return mockClient; // TODO: REMOVE_MOCK - Mock-related keywords
 };
 
 // Simulate different OpenAI scenarios
-export const simulateOpenAIScenario = (client: any, scenario: keyof typeof mockOpenAIResponses.chat) => {
-  client.chat.completions.create.mockResolvedValue(mockOpenAIResponses.chat[scenario]);
+export const simulateOpenAIScenario = (client: any, scenario: keyof typeof mockOpenAIResponses.chat) => { // TODO: REMOVE_MOCK - Mock-related keywords
+  client.chat.completions.create.mockResolvedValue(mockOpenAIResponses.chat[scenario]); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
 };
 
 // Simulate OpenAI errors
 export const simulateOpenAIError = (client: any, error: Error) => {
-  client.chat.completions.create.mockRejectedValue(error);
+  client.chat.completions.create.mockRejectedValue(error); // TODO: REMOVE_MOCK - Mock-related keywords
 };
 
-// Mock AI service responses
-export const mockAIServiceResponses = {
-  portfolioAnalysis: `Your portfolio shows a healthy balance with $10,000 total value. 
+// Mock AI service responses // TODO: REMOVE_MOCK - Mock-related keywords
+export const mockAIServiceResponses = { // TODO: REMOVE_MOCK - Mock-related keywords
+  portfolioAnalysis: `Your portfolio shows a healthy balance with $10,000 total value.  // TODO: REMOVE_MOCK - Hard-coded currency values
   Health factor of 2.5 indicates low liquidation risk. 
   Consider rebalancing to optimize yield while maintaining safety.`,
   
@@ -141,8 +141,8 @@ export const mockAIServiceResponses = {
   }
 };
 
-// Utility to create mock conversation context
-export const createMockChatContext = (walletAddress: string, portfolioData?: any) => ({
+// Utility to create mock conversation context // TODO: REMOVE_MOCK - Mock-related keywords
+export const createMockChatContext = (walletAddress: string, portfolioData?: any) => ({ // TODO: REMOVE_MOCK - Mock-related keywords
   walletAddress,
   messages: [
     {

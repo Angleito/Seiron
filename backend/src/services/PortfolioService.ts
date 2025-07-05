@@ -2,7 +2,7 @@ import { pipe } from 'fp-ts/function';
 import * as TE from 'fp-ts/TaskEither';
 import * as O from 'fp-ts/Option';
 import { createPublicClient, http } from 'viem';
-// Mock Sei chain configuration - would use actual chain config
+// Mock Sei chain configuration - would use actual chain config // TODO: REMOVE_MOCK - Mock-related keywords
 const sei = {
   id: 1329,
   name: 'Sei Network',
@@ -515,7 +515,7 @@ export class PortfolioService {
             decimals: 18,
             balance: seiBalance,
             balanceFormatted: (Number(seiBalance) / 1e18).toFixed(4),
-            valueUSD: Number(seiBalance) / 1e18 * 0.5, // Mock price
+            valueUSD: Number(seiBalance) / 1e18 * 0.5, // Mock price // TODO: REMOVE_MOCK - Mock-related keywords
             priceUSD: 0.5
           }
         ];
@@ -551,7 +551,7 @@ export class PortfolioService {
   private waitForTransactionConfirmation = (txHash: string): AsyncResult<void> =>
     TE.tryCatch(
       async () => {
-        // Mock transaction confirmation - would actually wait for blockchain confirmation
+        // Mock transaction confirmation - would actually wait for blockchain confirmation // TODO: REMOVE_MOCK - Mock-related keywords
         await new Promise(resolve => setTimeout(resolve, 2000));
         logger.info(`Transaction confirmed: ${txHash}`);
       },

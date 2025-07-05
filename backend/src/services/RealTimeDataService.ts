@@ -255,7 +255,7 @@ export class RealTimeDataService extends EventEmitter {
     walletAddress: string,
     streamTypes?: Array<'blockchain' | 'wallet' | 'market' | 'portfolio' | 'transactions'>
   ): TE.TaskEither<RealTimeError, DataStream[]> => {
-    const types = streamTypes || ['blockchain', 'wallet', 'portfolio', 'transactions'];
+    const types = streamTypes || ['blockchain', 'wallet', 'portfolio', 'transactions']; // TODO: REMOVE_MOCK - Hard-coded array literals
     
     return pipe(
       TE.Do,
@@ -408,7 +408,7 @@ export class RealTimeDataService extends EventEmitter {
     updateTypes: string[],
     callback: (update: RealTimeUpdate) => void
   ): TE.TaskEither<RealTimeError, string> => {
-    const subscriptionId = `sub-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const subscriptionId = `sub-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`; // TODO: REMOVE_MOCK - Random value generation
     
     return TE.tryCatch(
       async () => {
@@ -1118,17 +1118,17 @@ export class RealTimeDataService extends EventEmitter {
 
   // Data synchronization helper methods
   private async synchronizeBlockchainData(data: any): Promise<{ points: number; conflicts: number }> {
-    // Placeholder implementation
+    // Placeholder implementation // TODO: REMOVE_MOCK - Mock-related keywords
     return { points: 1, conflicts: 0 };
   }
 
   private async synchronizeWalletData(walletAddress: string, data: any): Promise<{ points: number; conflicts: number }> {
-    // Placeholder implementation
+    // Placeholder implementation // TODO: REMOVE_MOCK - Mock-related keywords
     return { points: data.balances?.length || 0, conflicts: 0 };
   }
 
   private async synchronizePortfolioData(walletAddress: string, data: any): Promise<{ points: number; conflicts: number }> {
-    // Placeholder implementation
+    // Placeholder implementation // TODO: REMOVE_MOCK - Mock-related keywords
     return { points: 1, conflicts: 0 };
   }
 
@@ -1276,7 +1276,7 @@ export class RealTimeDataService extends EventEmitter {
       severity: this.determineSeverity(code),
       details,
       timestamp: new Date(),
-      recoverable: ['NETWORK_ERROR', 'TIMEOUT', 'RATE_LIMIT'].includes(code)
+      recoverable: ['NETWORK_ERROR', 'TIMEOUT', 'RATE_LIMIT'].includes(code) // TODO: REMOVE_MOCK - Hard-coded array literals
     };
   }
 

@@ -69,7 +69,7 @@ export const messageValidation = [
 export const portfolioAnalysisValidation = [
   body('timeframe')
     .optional()
-    .isIn(['1h', '24h', '7d', '30d', '90d', '1y'])
+    .isIn(['1h', '24h', '7d', '30d', '90d', '1y']) // TODO: REMOVE_MOCK - Hard-coded array literals
     .withMessage('Invalid timeframe. Must be one of: 1h, 24h, 7d, 30d, 90d, 1y'),
   body('includeRecommendations')
     .optional()
@@ -77,7 +77,7 @@ export const portfolioAnalysisValidation = [
     .withMessage('includeRecommendations must be a boolean'),
   body('riskTolerance')
     .optional()
-    .isIn(['conservative', 'moderate', 'aggressive'])
+    .isIn(['conservative', 'moderate', 'aggressive']) // TODO: REMOVE_MOCK - Hard-coded array literals
     .withMessage('Invalid risk tolerance. Must be one of: conservative, moderate, aggressive')
 ];
 
@@ -170,7 +170,7 @@ export const aiParametersValidation = [
     .withMessage('Max tokens must be between 1 and 8000'),
   body('model')
     .optional()
-    .isIn(['gpt-3.5-turbo', 'gpt-4', 'gpt-4-turbo-preview'])
+    .isIn(['gpt-3.5-turbo', 'gpt-4', 'gpt-4-turbo-preview']) // TODO: REMOVE_MOCK - Hard-coded array literals
     .withMessage('Invalid AI model specified')
 ];
 
@@ -183,7 +183,7 @@ export const fileUploadValidation = [
     .withMessage('File name must be between 1 and 255 characters'),
   body('fileType')
     .optional()
-    .isIn(['csv', 'json', 'xlsx'])
+    .isIn(['csv', 'json', 'xlsx']) // TODO: REMOVE_MOCK - Hard-coded array literals
     .withMessage('File type must be csv, json, or xlsx')
 ];
 

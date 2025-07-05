@@ -401,7 +401,7 @@ export class SeiRiskManager {
   };
 
   private calculateRewardVolatility = (positions: SiloStakingPosition[]): number => {
-    // Mock calculation - would use historical reward data
+    // Mock calculation - would use historical reward data // TODO: REMOVE_MOCK - Mock-related keywords
     const aprValues = positions.map(pos => pos.apr);
     if (aprValues.length === 0) return 0;
     
@@ -468,7 +468,7 @@ export class SeiRiskManager {
   };
 
   private calculateMarketRisk = (positions: CitrexPerpetualPosition[]): number => {
-    // Mock calculation based on position concentration and market volatility
+    // Mock calculation based on position concentration and market volatility // TODO: REMOVE_MOCK - Mock-related keywords
     const marketExposure = new Map<string, number>();
     
     positions.forEach(pos => {
@@ -529,7 +529,7 @@ export class SeiRiskManager {
     siloPositions: SiloStakingPosition[],
     citrexPositions: CitrexPerpetualPosition[]
   ): number => {
-    // Mock correlation calculation - would use actual price correlation data
+    // Mock correlation calculation - would use actual price correlation data // TODO: REMOVE_MOCK - Mock-related keywords
     const assets = new Set([
       ...siloPositions.map(pos => pos.stakedTokenSymbol),
       ...citrexPositions.map(pos => pos.market.split('-')[0])
@@ -563,7 +563,7 @@ export class SeiRiskManager {
     siloPositions: SiloStakingPosition[],
     citrexPositions: CitrexPerpetualPosition[]
   ): number => {
-    // Mock volatility calculation based on leverage and position types
+    // Mock volatility calculation based on leverage and position types // TODO: REMOVE_MOCK - Mock-related keywords
     const stakingVolatility = 10; // 10% base volatility for staking
     const tradingVolatility = citrexPositions.length > 0
       ? citrexPositions.reduce((sum, pos) => sum + pos.leverage * 2, 0) / citrexPositions.length
@@ -705,7 +705,7 @@ export class SeiRiskManager {
     params: any,
     currentPositions: SeiProtocolPosition[]
   ): SeiProtocolPosition[] => {
-    // Mock simulation - would implement actual position changes
+    // Mock simulation - would implement actual position changes // TODO: REMOVE_MOCK - Mock-related keywords
     return currentPositions;
   };
 

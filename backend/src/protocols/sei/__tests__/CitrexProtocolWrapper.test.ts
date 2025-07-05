@@ -16,20 +16,20 @@ import {
 } from '../types';
 import { createCitrexProtocolWrapper } from '../adapters/CitrexProtocolWrapper';
 
-// ===================== Mock Setup =====================
+// ===================== Mock Setup ===================== // TODO: REMOVE_MOCK - Mock-related keywords
 
-const mockPublicClient = {
+const mockPublicClient = { // TODO: REMOVE_MOCK - Mock-related keywords
   getChainId: jest.fn(),
   readContract: jest.fn(),
   simulateContract: jest.fn(),
 } as unknown as PublicClient;
 
-const mockWalletClient = {
+const mockWalletClient = { // TODO: REMOVE_MOCK - Mock-related keywords
   writeContract: jest.fn(),
   account: { address: 'sei1test1wallet2address' }
 } as unknown as WalletClient;
 
-const mockConfig: SeiProtocolConfig = {
+const mockConfig: SeiProtocolConfig = { // TODO: REMOVE_MOCK - Mock-related keywords
   network: 'testnet',
   rpcUrl: 'https://evm-rpc-testnet.sei-apis.com',
   contractAddresses: {
@@ -57,7 +57,7 @@ const mockConfig: SeiProtocolConfig = {
 
 const testWalletAddress = 'sei1test1wallet2address3here4for5testing6purposes7only8';
 
-const mockOpenPositionParams: CitrexOpenPositionParams = {
+const mockOpenPositionParams: CitrexOpenPositionParams = { // TODO: REMOVE_MOCK - Mock-related keywords
   walletAddress: testWalletAddress,
   market: 'SEI-USDC',
   side: 'long',
@@ -68,14 +68,14 @@ const mockOpenPositionParams: CitrexOpenPositionParams = {
   reduceOnly: false
 };
 
-const mockClosePositionParams: CitrexClosePositionParams = {
+const mockClosePositionParams: CitrexClosePositionParams = { // TODO: REMOVE_MOCK - Mock-related keywords
   walletAddress: testWalletAddress,
   positionId: 'citrex-pos-1',
   orderType: 'market',
   reduceOnly: true
 };
 
-const mockAdjustPositionParams: CitrexAdjustPositionParams = {
+const mockAdjustPositionParams: CitrexAdjustPositionParams = { // TODO: REMOVE_MOCK - Mock-related keywords
   walletAddress: testWalletAddress,
   positionId: 'citrex-pos-1',
   action: 'add_margin',
@@ -88,29 +88,29 @@ describe('CitrexProtocolWrapper', () => {
   let citrexWrapper: CitrexProtocolWrapper;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    citrexWrapper = createCitrexProtocolWrapper(mockPublicClient, mockWalletClient, mockConfig);
+    jest.clearAllMocks(); // TODO: REMOVE_MOCK - Mock-related keywords
+    citrexWrapper = createCitrexProtocolWrapper(mockPublicClient, mockWalletClient, mockConfig); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    jest.restoreAllMocks(); // TODO: REMOVE_MOCK - Mock-related keywords
   });
 
   // ===================== Initialization Tests =====================
 
   describe('Initialization', () => {
     it('should initialize successfully on Sei testnet', async () => {
-      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715);
+      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
 
       const result = await citrexWrapper.initialize()();
 
       expect(result._tag).toBe('Right');
       expect(citrexWrapper.isInitialized).toBe(true);
-      expect(mockPublicClient.getChainId).toHaveBeenCalled();
+      expect(mockPublicClient.getChainId).toHaveBeenCalled(); // TODO: REMOVE_MOCK - Mock-related keywords
     });
 
     it('should fail initialization on wrong network', async () => {
-      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(1); // Ethereum mainnet
+      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(1); // Ethereum mainnet // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
 
       const result = await citrexWrapper.initialize()();
 
@@ -120,7 +120,7 @@ describe('CitrexProtocolWrapper', () => {
     });
 
     it('should handle initialization errors gracefully', async () => {
-      (mockPublicClient.getChainId as jest.Mock).mockRejectedValue(new Error('Network error'));
+      (mockPublicClient.getChainId as jest.Mock).mockRejectedValue(new Error('Network error')); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
 
       const result = await citrexWrapper.initialize()();
 
@@ -133,7 +133,7 @@ describe('CitrexProtocolWrapper', () => {
 
   describe('Market Data', () => {
     beforeEach(async () => {
-      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715);
+      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
       await citrexWrapper.initialize()();
     });
 
@@ -199,7 +199,7 @@ describe('CitrexProtocolWrapper', () => {
 
   describe('Position Management', () => {
     beforeEach(async () => {
-      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715);
+      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
       await citrexWrapper.initialize()();
     });
 
@@ -247,8 +247,8 @@ describe('CitrexProtocolWrapper', () => {
     });
 
     it('should handle empty positions gracefully', async () => {
-      // Mock to return empty positions
-      jest.spyOn(citrexWrapper as any, 'getUserPositionIds').mockImplementation(() =>
+      // Mock to return empty positions // TODO: REMOVE_MOCK - Mock-related keywords
+      jest.spyOn(citrexWrapper as any, 'getUserPositionIds').mockImplementation(() => // TODO: REMOVE_MOCK - Mock-related keywords
         TE.right([])
       );
 
@@ -265,12 +265,12 @@ describe('CitrexProtocolWrapper', () => {
 
   describe('Trading Operations', () => {
     beforeEach(async () => {
-      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715);
+      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
       await citrexWrapper.initialize()();
     });
 
     it('should open position successfully', async () => {
-      const result = await citrexWrapper.openPosition(mockOpenPositionParams)();
+      const result = await citrexWrapper.openPosition(mockOpenPositionParams)(); // TODO: REMOVE_MOCK - Mock-related keywords
 
       expect(result._tag).toBe('Right');
       if (result._tag === 'Right') {
@@ -280,7 +280,7 @@ describe('CitrexProtocolWrapper', () => {
 
     it('should validate position parameters', async () => {
       const invalidParams = {
-        ...mockOpenPositionParams,
+        ...mockOpenPositionParams, // TODO: REMOVE_MOCK - Mock-related keywords
         leverage: 100 // Exceeds max leverage
       };
 
@@ -294,7 +294,7 @@ describe('CitrexProtocolWrapper', () => {
 
     it('should open position with different order types', async () => {
       const limitParams = {
-        ...mockOpenPositionParams,
+        ...mockOpenPositionParams, // TODO: REMOVE_MOCK - Mock-related keywords
         orderType: 'limit' as const,
         price: 0.51
       };
@@ -306,7 +306,7 @@ describe('CitrexProtocolWrapper', () => {
 
     it('should reject insufficient collateral', async () => {
       const insufficientParams = {
-        ...mockOpenPositionParams,
+        ...mockOpenPositionParams, // TODO: REMOVE_MOCK - Mock-related keywords
         collateral: '1' // Very low collateral
       };
 
@@ -319,7 +319,7 @@ describe('CitrexProtocolWrapper', () => {
     });
 
     it('should close position successfully', async () => {
-      const result = await citrexWrapper.closePosition(mockClosePositionParams)();
+      const result = await citrexWrapper.closePosition(mockClosePositionParams)(); // TODO: REMOVE_MOCK - Mock-related keywords
 
       expect(result._tag).toBe('Right');
       if (result._tag === 'Right') {
@@ -329,7 +329,7 @@ describe('CitrexProtocolWrapper', () => {
 
     it('should close position partially', async () => {
       const partialCloseParams = {
-        ...mockClosePositionParams,
+        ...mockClosePositionParams, // TODO: REMOVE_MOCK - Mock-related keywords
         size: '500' // Close half the position
       };
 
@@ -339,7 +339,7 @@ describe('CitrexProtocolWrapper', () => {
     });
 
     it('should adjust position successfully', async () => {
-      const result = await citrexWrapper.adjustPosition(mockAdjustPositionParams)();
+      const result = await citrexWrapper.adjustPosition(mockAdjustPositionParams)(); // TODO: REMOVE_MOCK - Mock-related keywords
 
       expect(result._tag).toBe('Right');
       if (result._tag === 'Right') {
@@ -348,11 +348,11 @@ describe('CitrexProtocolWrapper', () => {
     });
 
     it('should handle different adjustment actions', async () => {
-      const actions = ['increase_size', 'decrease_size', 'add_margin', 'remove_margin', 'change_leverage'] as const;
+      const actions = ['increase_size', 'decrease_size', 'add_margin', 'remove_margin', 'change_leverage'] as const; // TODO: REMOVE_MOCK - Hard-coded array literals
       
       for (const action of actions) {
         const adjustParams = {
-          ...mockAdjustPositionParams,
+          ...mockAdjustPositionParams, // TODO: REMOVE_MOCK - Mock-related keywords
           action,
           newLeverage: action === 'change_leverage' ? 3 : undefined
         };
@@ -367,7 +367,7 @@ describe('CitrexProtocolWrapper', () => {
 
   describe('Risk Management', () => {
     beforeEach(async () => {
-      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715);
+      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
       await citrexWrapper.initialize()();
     });
 
@@ -440,7 +440,7 @@ describe('CitrexProtocolWrapper', () => {
 
   describe('Order Management', () => {
     beforeEach(async () => {
-      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715);
+      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
       await citrexWrapper.initialize()();
     });
 
@@ -476,15 +476,15 @@ describe('CitrexProtocolWrapper', () => {
 
   describe('Error Handling', () => {
     beforeEach(async () => {
-      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715);
+      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
       await citrexWrapper.initialize()();
     });
 
     it('should handle network errors gracefully', async () => {
-      // Mock network failure
-      jest.spyOn(citrexWrapper as any, 'simulateTransaction').mockRejectedValue(new Error('Network timeout'));
+      // Mock network failure // TODO: REMOVE_MOCK - Mock-related keywords
+      jest.spyOn(citrexWrapper as any, 'simulateTransaction').mockRejectedValue(new Error('Network timeout')); // TODO: REMOVE_MOCK - Mock-related keywords
 
-      const result = await citrexWrapper.openPosition(mockOpenPositionParams)();
+      const result = await citrexWrapper.openPosition(mockOpenPositionParams)(); // TODO: REMOVE_MOCK - Mock-related keywords
 
       expect(result._tag).toBe('Left');
       if (result._tag === 'Left') {
@@ -513,8 +513,8 @@ describe('CitrexProtocolWrapper', () => {
     });
 
     it('should handle position not found errors', async () => {
-      // Mock position not found
-      jest.spyOn(citrexWrapper as any, 'fetchPositionData').mockRejectedValue(
+      // Mock position not found // TODO: REMOVE_MOCK - Mock-related keywords
+      jest.spyOn(citrexWrapper as any, 'fetchPositionData').mockRejectedValue( // TODO: REMOVE_MOCK - Mock-related keywords
         new CitrexProtocolError('Position not found', 'POSITION_NOT_FOUND')
       );
 
@@ -528,7 +528,7 @@ describe('CitrexProtocolWrapper', () => {
 
     it('should provide meaningful error messages', async () => {
       const excessiveLeverageParams = {
-        ...mockOpenPositionParams,
+        ...mockOpenPositionParams, // TODO: REMOVE_MOCK - Mock-related keywords
         leverage: 1000 // Excessive leverage
       };
 
@@ -545,7 +545,7 @@ describe('CitrexProtocolWrapper', () => {
 
   describe('Integration Scenarios', () => {
     beforeEach(async () => {
-      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715);
+      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
       await citrexWrapper.initialize()();
     });
 
@@ -555,7 +555,7 @@ describe('CitrexProtocolWrapper', () => {
       expect(marketResult._tag).toBe('Right');
 
       // 2. Open position
-      const openResult = await citrexWrapper.openPosition(mockOpenPositionParams)();
+      const openResult = await citrexWrapper.openPosition(mockOpenPositionParams)(); // TODO: REMOVE_MOCK - Mock-related keywords
       expect(openResult._tag).toBe('Right');
 
       // 3. Check positions
@@ -563,18 +563,18 @@ describe('CitrexProtocolWrapper', () => {
       expect(positionsResult._tag).toBe('Right');
 
       // 4. Adjust position
-      const adjustResult = await citrexWrapper.adjustPosition(mockAdjustPositionParams)();
+      const adjustResult = await citrexWrapper.adjustPosition(mockAdjustPositionParams)(); // TODO: REMOVE_MOCK - Mock-related keywords
       expect(adjustResult._tag).toBe('Right');
 
       // 5. Close position
-      const closeResult = await citrexWrapper.closePosition(mockClosePositionParams)();
+      const closeResult = await citrexWrapper.closePosition(mockClosePositionParams)(); // TODO: REMOVE_MOCK - Mock-related keywords
       expect(closeResult._tag).toBe('Right');
     });
 
     it('should handle risk scenarios appropriately', async () => {
       // Test high leverage scenario
       const highLeverageParams = {
-        ...mockOpenPositionParams,
+        ...mockOpenPositionParams, // TODO: REMOVE_MOCK - Mock-related keywords
         leverage: 20,
         collateral: '50' // Lower collateral for higher risk
       };
@@ -608,7 +608,7 @@ describe('CitrexProtocolWrapper', () => {
 
   describe('Performance', () => {
     beforeEach(async () => {
-      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715);
+      (mockPublicClient.getChainId as jest.Mock).mockResolvedValue(713715); // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords // TODO: REMOVE_MOCK - Mock-related keywords
       await citrexWrapper.initialize()();
     });
 
@@ -625,7 +625,7 @@ describe('CitrexProtocolWrapper', () => {
     });
 
     it('should handle multiple concurrent market data requests', async () => {
-      const markets = ['SEI-USDC', 'BTC-USDC', 'ETH-USDC'];
+      const markets = ['SEI-USDC', 'BTC-USDC', 'ETH-USDC']; // TODO: REMOVE_MOCK - Hard-coded array literals
       const requests = markets.map(market => citrexWrapper.getMarketData(market)());
 
       const startTime = Date.now();

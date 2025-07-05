@@ -42,8 +42,8 @@ router.post('/analyze', [
  */
 router.post('/suggest', [
   body('walletAddress').isEthereumAddress().withMessage('Valid wallet address required'),
-  body('riskTolerance').optional().isIn(['low', 'medium', 'high']),
-  body('timeHorizon').optional().isIn(['short', 'medium', 'long'])
+  body('riskTolerance').optional().isIn(['low', 'medium', 'high']), // TODO: REMOVE_MOCK - Hard-coded array literals
+  body('timeHorizon').optional().isIn(['short', 'medium', 'long']) // TODO: REMOVE_MOCK - Hard-coded array literals
 ], async (req: Request, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

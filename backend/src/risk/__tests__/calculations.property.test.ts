@@ -278,7 +278,7 @@ describe('Risk Calculations - Property Tests', () => {
   describe('Herfindahl Index Properties', () => {
     test('HHI should be between 0 and 1', () => {
       const result = quickCheck(
-        () => generateWeights(Math.floor(Math.random() * 10) + 1),
+        () => generateWeights(Math.floor(Math.random() * 10) + 1), // TODO: REMOVE_MOCK - Random value generation
         (weights) => {
           const allocations = weights.map(weight => ({ weight }));
           const hhi = calculateHerfindahlIndex(allocations);
@@ -292,7 +292,7 @@ describe('Risk Calculations - Property Tests', () => {
 
     test('HHI should equal 1 for fully concentrated portfolio', () => {
       const result = quickCheck(
-        () => Math.floor(Math.random() * 10) + 1, // number of assets
+        () => Math.floor(Math.random() * 10) + 1, // number of assets // TODO: REMOVE_MOCK - Random value generation
         (numAssets) => {
           const allocations = Array(numAssets).fill(0).map((_, i) => ({
             weight: i === 0 ? 1.0 : 0.0
@@ -309,7 +309,7 @@ describe('Risk Calculations - Property Tests', () => {
 
     test('HHI should equal 1/n for equally weighted portfolio', () => {
       const result = quickCheck(
-        () => Math.floor(Math.random() * 10) + 2, // 2-11 assets
+        () => Math.floor(Math.random() * 10) + 2, // 2-11 assets // TODO: REMOVE_MOCK - Random value generation
         (numAssets) => {
           const weight = 1.0 / numAssets;
           const allocations = Array(numAssets).fill(0).map(() => ({ weight }));
@@ -327,7 +327,7 @@ describe('Risk Calculations - Property Tests', () => {
 
     test('HHI should increase with concentration', () => {
       const result = quickCheck(
-        () => Math.floor(Math.random() * 5) + 3, // 3-7 assets
+        () => Math.floor(Math.random() * 5) + 3, // 3-7 assets // TODO: REMOVE_MOCK - Random value generation
         (numAssets) => {
           // Generate normal weights
           const normalWeights = generateWeights(numAssets)();
@@ -353,7 +353,7 @@ describe('Risk Calculations - Property Tests', () => {
     test('correlation matrix should be symmetric', () => {
       const result = quickCheck(
         () => {
-          const numAssets = Math.floor(Math.random() * 5) + 2; // 2-6 assets
+          const numAssets = Math.floor(Math.random() * 5) + 2; // 2-6 assets // TODO: REMOVE_MOCK - Random value generation
           const assets = Array.from({ length: numAssets }, (_, i) => `ASSET${i}`);
           
           const correlationData = [];
@@ -388,7 +388,7 @@ describe('Risk Calculations - Property Tests', () => {
     test('correlation matrix diagonal should be 1', () => {
       const result = quickCheck(
         () => {
-          const numAssets = Math.floor(Math.random() * 5) + 2;
+          const numAssets = Math.floor(Math.random() * 5) + 2; // TODO: REMOVE_MOCK - Random value generation
           const assets = Array.from({ length: numAssets }, (_, i) => `ASSET${i}`);
           return { assets, correlationData: [] }; // Empty correlation data
         },
@@ -413,7 +413,7 @@ describe('Risk Calculations - Property Tests', () => {
     test('correlation values should be between -1 and 1', () => {
       const result = quickCheck(
         () => {
-          const numAssets = Math.floor(Math.random() * 4) + 2;
+          const numAssets = Math.floor(Math.random() * 4) + 2; // TODO: REMOVE_MOCK - Random value generation
           const assets = Array.from({ length: numAssets }, (_, i) => `ASSET${i}`);
           
           const correlationData = [];
@@ -450,7 +450,7 @@ describe('Risk Calculations - Property Tests', () => {
     test('portfolio volatility should be non-negative', () => {
       const result = quickCheck(
         () => {
-          const numAssets = Math.floor(Math.random() * 5) + 2;
+          const numAssets = Math.floor(Math.random() * 5) + 2; // TODO: REMOVE_MOCK - Random value generation
           const assets = Array.from({ length: numAssets }, (_, i) => `ASSET${i}`);
           const weights = generateWeights(numAssets)();
           
@@ -478,7 +478,7 @@ describe('Risk Calculations - Property Tests', () => {
 
     test('portfolio volatility should be zero for zero weights', () => {
       const result = quickCheck(
-        () => Math.floor(Math.random() * 5) + 2, // numAssets
+        () => Math.floor(Math.random() * 5) + 2, // numAssets // TODO: REMOVE_MOCK - Random value generation
         (numAssets) => {
           const assets = Array.from({ length: numAssets }, (_, i) => `ASSET${i}`);
           const allocations = Array(numAssets).fill(0).map((_, i) => 
@@ -710,9 +710,9 @@ describe('Risk Calculations - Property Tests', () => {
     test('calculations should handle very small values', () => {
       const result = quickCheck(
         () => generatePortfolioSnapshot({
-          totalValueUSD: Math.random() * 1e-10,
-          totalSuppliedUSD: Math.random() * 1e-10,
-          totalBorrowedUSD: Math.random() * 1e-10
+          totalValueUSD: Math.random() * 1e-10, // TODO: REMOVE_MOCK - Random value generation
+          totalSuppliedUSD: Math.random() * 1e-10, // TODO: REMOVE_MOCK - Random value generation
+          totalBorrowedUSD: Math.random() * 1e-10 // TODO: REMOVE_MOCK - Random value generation
         }),
         (portfolio) => {
           const hf = calculateHealthFactor(portfolio);
@@ -729,9 +729,9 @@ describe('Risk Calculations - Property Tests', () => {
     test('calculations should handle very large values', () => {
       const result = quickCheck(
         () => generatePortfolioSnapshot({
-          totalValueUSD: Math.random() * 1e15,
-          totalSuppliedUSD: Math.random() * 1e15,
-          totalBorrowedUSD: Math.random() * 1e15
+          totalValueUSD: Math.random() * 1e15, // TODO: REMOVE_MOCK - Random value generation
+          totalSuppliedUSD: Math.random() * 1e15, // TODO: REMOVE_MOCK - Random value generation
+          totalBorrowedUSD: Math.random() * 1e15 // TODO: REMOVE_MOCK - Random value generation
         }),
         (portfolio) => {
           const hf = calculateHealthFactor(portfolio);
@@ -750,7 +750,7 @@ describe('Risk Calculations - Property Tests', () => {
     test('should demonstrate property test failure detection', () => {
       // This should fail - testing the testing framework itself
       const result = verboseCheck(
-        () => Math.random() * 100,
+        () => Math.random() * 100, // TODO: REMOVE_MOCK - Random value generation
         (x) => x < 50, // This will fail for ~50% of cases
         20
       );

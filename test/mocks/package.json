@@ -1,0 +1,17 @@
+{
+  "name": "msw-mock-server",
+  "version": "1.0.0",
+  "description": "Mock Service Worker server for E2E tests",
+  "main": "msw-server.js",
+  "scripts": {
+    "start": "node msw-server.js",
+    "dev": "nodemon msw-server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  }
+}

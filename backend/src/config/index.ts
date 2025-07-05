@@ -38,7 +38,7 @@ const environmentDefaults = {
  */
 const getCurrentEnvironment = (): Environment => {
   const env = process.env.NODE_ENV as Environment;
-  return ['development', 'test', 'staging', 'production'].includes(env) ? env : 'development';
+  return ['development', 'test', 'staging', 'production'].includes(env) ? env : 'development'; // TODO: REMOVE_MOCK - Hard-coded array literals
 };
 
 /**

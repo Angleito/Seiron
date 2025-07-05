@@ -141,8 +141,8 @@ export const SUCCESS_MESSAGES = {
 // File upload limits
 export const FILE_LIMITS = {
   MAX_SIZE: 10 * 1024 * 1024, // 10MB
-  ALLOWED_TYPES: ['text/csv', 'application/json', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-  ALLOWED_EXTENSIONS: ['.csv', '.json', '.xlsx']
+  ALLOWED_TYPES: ['text/csv', 'application/json', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'], // TODO: REMOVE_MOCK - Hard-coded array literals
+  ALLOWED_EXTENSIONS: ['.csv', '.json', '.xlsx'] // TODO: REMOVE_MOCK - Hard-coded array literals
 } as const;
 
 // Supported tokens (can be expanded)

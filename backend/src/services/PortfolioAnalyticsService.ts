@@ -1265,7 +1265,7 @@ export class PortfolioAnalyticsService extends EventEmitter {
     );
 
   private analyzeYieldOpportunities(yieldData: any): Array<any> {
-    // Placeholder implementation - would analyze actual yield data
+    // Placeholder implementation - would analyze actual yield data // TODO: REMOVE_MOCK - Mock-related keywords
     return [
       {
         protocol: 'Takara Finance',
@@ -1289,7 +1289,7 @@ export class PortfolioAnalyticsService extends EventEmitter {
   }
 
   private analyzeMarketAlignment(marketData: any): any {
-    // Placeholder implementation - would analyze market trends
+    // Placeholder implementation - would analyze market trends // TODO: REMOVE_MOCK - Mock-related keywords
     return {
       trends: [
         { asset: 'SEI', trend: 'bullish' as const, strength: 75, timeframe: '7d' },
@@ -1324,7 +1324,7 @@ export class PortfolioAnalyticsService extends EventEmitter {
   private calculateLiquidityMetrics(mcpData: any): any {
     return {
       totalLiquidity: mcpData.walletBalance?.totalValueUSD || 0,
-      liquidAssetRatio: 0.75, // Placeholder calculation
+      liquidAssetRatio: 0.75, // Placeholder calculation // TODO: REMOVE_MOCK - Mock-related keywords
       avgSlippage: 0.5
     };
   }
@@ -1346,7 +1346,7 @@ export class PortfolioAnalyticsService extends EventEmitter {
       component: component as any,
       details,
       timestamp: new Date(),
-      recoverable: ['NETWORK_ERROR', 'TIMEOUT', 'RATE_LIMIT'].includes(code)
+      recoverable: ['NETWORK_ERROR', 'TIMEOUT', 'RATE_LIMIT'].includes(code) // TODO: REMOVE_MOCK - Hard-coded array literals
     };
   }
 
