@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getOrchestrator } from '@/lib/orchestrator-client'
+import { logger } from '@/lib/logger'
 
 interface ProtocolInfo {
   id: string
@@ -147,8 +148,8 @@ export function ProtocolIntegration({
 
   useEffect(() => {
     const orchestrator = getOrchestrator({
-      apiEndpoint: process.env.NEXT_PUBLIC_ORCHESTRATOR_API || '/api',
-      wsEndpoint: process.env.NEXT_PUBLIC_ORCHESTRATOR_WS || 'ws://localhost:3001',
+      apiEndpoint: import.meta.env.VITE_ORCHESTRATOR_API || '/api',
+      wsEndpoint: import.meta.env.VITE_ORCHESTRATOR_WS || 'ws://localhost:3001',
     })
 
     // Subscribe to protocol updates
@@ -246,7 +247,7 @@ export function ProtocolIntegration({
         setLastUpdate(new Date())
       }
     } catch (error) {
-      console.error('Failed to fetch protocol data:', error)
+      logger.error('Failed to fetch protocol data:', error)
     } finally {
       setIsLoading(false)
     }
@@ -281,7 +282,7 @@ export function ProtocolIntegration({
         alert(`Failed: ${data.message || 'Unknown error'}`)
       }
     } catch (error) {
-      console.error('Failed to execute action:', error)
+      logger.error('Failed to execute action:', error)
       alert('Transaction failed. The mystical energies are unstable.')
     } finally {
       setIsLoading(false)

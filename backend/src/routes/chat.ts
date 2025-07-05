@@ -3,8 +3,150 @@ import { body, validationResult } from 'express-validator';
 import { pipe } from 'fp-ts/function';
 import * as TE from 'fp-ts/TaskEither';
 import * as E from 'fp-ts/Either';
+import { EnhancedUserIntent, OrchestrationResult } from '../services/OrchestratorService';
 
 const router = Router();
+
+// Parse user message to extract intent
+function parseUserIntent(message: string, sessionId: string, walletAddress?: string): EnhancedUserIntent {
+  // Simple intent parsing - in production, use NLP
+  const lowerMessage = message.toLowerCase()
+  
+  let type: EnhancedUserIntent['type'] = 'info'
+  let action = 'general_query'
+  const parameters: Record<string, unknown> = {}
+
+  // Lending intents
+  if (lowerMessage.includes('lend') || lowerMessage.includes('supply')) {
+    type = 'lending'
+    action = 'supply'
+    // Extract amount and asset
+    const amountMatch = lowerMessage.match(/(\d+\.?\d*)\s*(usdc|eth|sei)?/i)
+    if (amountMatch) {
+      parameters.amount = parseFloat(amountMatch[1])
+      parameters.asset = amountMatch[2]?.toUpperCase() || 'USDC'
+    }
+  } else if (lowerMessage.includes('borrow')) {
+    type = 'lending'
+    action = 'borrow'
+  } else if (lowerMessage.includes('repay')) {
+    type = 'lending'
+    action = 'repay'
+  }
+  
+  // Liquidity intents
+  else if (lowerMessage.includes('liquidity') || lowerMessage.includes('pool')) {
+    type = 'liquidity'
+    action = lowerMessage.includes('remove') ? 'remove_liquidity' : 'add_liquidity'
+  } else if (lowerMessage.includes('swap')) {
+    type = 'liquidity'
+    action = 'swap'
+  }
+  
+  // Portfolio intents
+  else if (lowerMessage.includes('portfolio') || lowerMessage.includes('positions')) {
+    type = 'portfolio'
+    action = 'show_positions'
+  } else if (lowerMessage.includes('rebalance')) {
+    type = 'portfolio'
+    action = 'rebalance'
+  }
+  
+  // Trading intents
+  else if (lowerMessage.includes('buy')) {
+    type = 'trading'
+    action = 'buy'
+  } else if (lowerMessage.includes('sell')) {
+    type = 'trading'
+    action = 'sell'
+  }
+  
+  // Analysis intents
+  else if (lowerMessage.includes('analyze') || lowerMessage.includes('analysis')) {
+    type = 'analysis'
+    action = 'analyze_market'
+  }
+  
+  // Risk intents
+  else if (lowerMessage.includes('risk') || lowerMessage.includes('health')) {
+    type = 'risk'
+    action = 'assess_risk'
+  }
+
+  return {
+    id: `intent-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    userId: sessionId,
+    walletAddress: walletAddress || '0x0000000000000000000000000000000000000000',
+    type,
+    action,
+    parameters,
+    priority: 'medium',
+    context: {
+      sessionId,
+      timestamp: new Date(),
+      source: 'chat',
+    },
+  }
+}
+
+// Format agent response for chat
+function formatAgentResponse(result: OrchestrationResult, agentType?: string): string {
+  if (result.error) {
+    return `The dragon encountered turbulence: ${result.error.message}. ${
+      result.error.recoverable ? "Seiron will try a different mystical approach." : "Please speak your wish more clearly."
+    }`
+  }
+
+  // Format based on task result
+  const data = result.data as any
+  let response = ''
+
+  switch (agentType) {
+    case 'hive':
+    case 'lending_agent':
+      if (data?.action === 'supply') {
+        response = `🐉 Seiron has manifested your wish! Successfully supplied ${data.amount} ${data.asset} to ${data.protocol}.\n`
+        response += `✨ Dragon's Power Level: ${data.apy}%\n`
+        response += `💎 Your treasures now grow with mystical energy!`
+      } else if (data?.action === 'borrow') {
+        response = `🐉 The dragon has granted your borrowing wish! ${data.amount} ${data.asset} from ${data.protocol}.\n`
+        response += `⚡ Dragon's Demand: ${data.apr}%\n`
+        response += `🔮 Keep your power level high to maintain the dragon's favor.`
+      }
+      break
+
+    case 'sak':
+    case 'liquidity_agent':
+      if (data?.action === 'add_liquidity') {
+        response = `🐉 Seiron has channeled your energy into ${data.pool}!\n`
+        response += `💫 Mystical Liquidity: ${data.liquidityAmount}\n`
+        response += `✨ Dragon's Blessing: ${data.estimatedApr}%`
+      } else if (data?.action === 'swap') {
+        response = `🐉 The dragon has transformed your treasures!\n`
+        response += `⚡ ${data.fromAmount} ${data.fromToken} → ${data.toAmount} ${data.toToken}\n`
+        response += `🔮 Mystical Exchange Rate: ${data.executionPrice} ${data.toToken}/${data.fromToken}`
+      }
+      break
+
+    case 'mcp':
+    case 'portfolio_agent':
+      if (data?.positions) {
+        response = `🐉 Seiron's Vision of Your Treasure Vault:\n\n`
+        response += `Total Power Level: $${data.totalValue?.toLocaleString()}\n`
+        response += `Dragon's Favor: ${data.change24h > 0 ? '+' : ''}${data.change24h}%\n\n`
+        response += `Mystical Treasures:\n`
+        data.positions.forEach((pos: any) => {
+          response += `• ${pos.asset}: $${pos.value?.toLocaleString()} (${pos.allocation}%)\n`
+        })
+      }
+      break
+
+    default:
+      response = `🐉 Seiron has fulfilled your wish! ${JSON.stringify(data)}`
+  }
+
+  return response || `🐉 The dragon has completed your task successfully!`
+}
 
 /**
  * POST /api/chat/message
@@ -38,6 +180,65 @@ router.post('/message', [
   )();
 
   res.json(result);
+});
+
+/**
+ * POST /api/chat/orchestrate
+ * Process chat message through orchestrator (migrated from frontend API route)
+ */
+router.post('/orchestrate', [
+  body('message').notEmpty().withMessage('Message is required'),
+  body('sessionId').notEmpty().withMessage('Session ID is required')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { message, sessionId, walletAddress } = req.body;
+
+  try {
+    // Parse user intent
+    const intent = parseUserIntent(message, sessionId, walletAddress);
+
+    // Process intent through orchestrator
+    const result = await req.services.orchestrator.processIntent(intent)();
+
+    if (result._tag === 'Left') {
+      return res.json({
+        message: `Seiron could not understand your wish: ${result.left.message}. Please speak more clearly to the dragon.`,
+        timestamp: new Date().toISOString(),
+        agentType: 'orchestrator',
+        error: true,
+      });
+    }
+
+    // Format the response based on the agent that handled it
+    const orchestrationResult = result.right;
+    const agentType = orchestrationResult.metadata?.adaptersUsed?.[0] || 'orchestrator';
+
+    const response = {
+      message: formatAgentResponse(orchestrationResult, agentType),
+      timestamp: new Date().toISOString(),
+      agentType,
+      intentId: orchestrationResult.intentId,
+      executionTime: orchestrationResult.metadata.executionTime,
+      metadata: {
+        intent: intent.type,
+        action: intent.action,
+        confidence: orchestrationResult.metadata?.confidence,
+      }
+    };
+
+    return res.json(response);
+
+  } catch (error: any) {
+    console.error('Chat orchestrate API error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to process message',
+      message: 'The dragon encountered mystical interference. Please try summoning again.',
+    });
+  }
 });
 
 /**

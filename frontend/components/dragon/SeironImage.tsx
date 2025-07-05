@@ -1,6 +1,6 @@
 'use client'
 
-import Image from 'next/image'
+// Remove next/image import - using standard img tag for Vite
 import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
 
@@ -145,15 +145,13 @@ export function SeironImage({
           'transition-opacity duration-300'
         )}
       >
-        <Image
+        <img
           src="/images/seiron.png"
           alt="Seiron - The Eternal Dragon"
           width={config.width}
           height={config.height}
           className={cn(config.imageClass, config.blendMode)}
-          priority={variant === 'hero'}
           loading={variant === 'hero' ? 'eager' : 'lazy'}
-          quality={variant === 'hero' ? 95 : 75}
         />
         
         {/* Fire effect overlay for interactive variants */}

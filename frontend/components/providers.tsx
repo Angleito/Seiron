@@ -7,6 +7,7 @@ import { http } from 'viem'
 import { privyConfig, seiMainnet } from '@/config/privy'
 import { DragonInteractionProvider } from '@/components/dragon/DragonInteractionController'
 import { WalletProvider } from '@/contexts/WalletContext'
+import { logger } from '@/lib/logger'
 
 const queryClient = new QueryClient()
 
@@ -27,12 +28,12 @@ export function Providers({
   const isValidAppId = privyConfig.appId && privyConfig.appId.length > 0 && privyConfig.appId !== 'your_privy_app_id_here';
   
   if (!isValidAppId) {
-    console.error('Invalid or missing Privy App ID. Please set NEXT_PUBLIC_PRIVY_APP_ID in your .env file');
+    logger.error('Invalid or missing Privy App ID. Please set VITE_PRIVY_APP_ID in your .env file');
     return (
       <QueryClientProvider client={queryClient}>
         <div style={{ padding: '20px', color: 'red' }}>
           <h2>Configuration Error</h2>
-          <p>Privy App ID is missing or invalid. Please set NEXT_PUBLIC_PRIVY_APP_ID in your .env file</p>
+          <p>Privy App ID is missing or invalid. Please set VITE_PRIVY_APP_ID in your .env file</p>
           <p>Current value: {privyConfig.appId || '(empty)'}</p>
         </div>
       </QueryClientProvider>

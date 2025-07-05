@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useRef, useEffect, useState } from 'react'
-import Image from 'next/image'
 import { DragonInteractionProvider, useDragonInteraction, useDragonAnimationClasses } from './DragonInteractionController'
 import { useDragonState, useDragonOrientation, useDragonAnimation } from '@/hooks/useDragonInteraction'
 import { useAnimationPerformance } from '@/hooks/useAnimationPerformance'
@@ -98,13 +97,13 @@ function DragonCore({ size = 'lg', showDragonBalls = true, enableParticles = tru
             transform: headTransform
           }}
         >
-          <Image
+          <img
             src="/images/seiron.png"
             alt="Seiron - The Wish-Granting Dragon"
             width={config.width}
             height={config.height}
             className="object-contain filter drop-shadow-2xl"
-            priority
+            loading="eager"
           />
           
           {/* Dragon Eyes (track cursor) */}

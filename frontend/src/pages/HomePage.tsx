@@ -1,10 +1,8 @@
-'use client'
-
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 import { Bot, Shield, TrendingUp, Zap, Star, Eye, Sparkles } from 'lucide-react'
 import { SeironImage } from '@/components/dragon/SeironImage'
 
-export default function Home() {
+export default function HomePage() {
   return (
     <div className="min-h-screen bg-black">
       {/* Hero Section */}
@@ -47,14 +45,14 @@ export default function Home() {
             </p>
             <div className="flex justify-center gap-4">
               <Link
-                href="/dashboard"
+                to="/dashboard"
                 className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold rounded-lg hover:from-red-700 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 <Star className="mr-2 h-5 w-5" />
                 Summon Seiron
               </Link>
               <Link
-                href="/dragon-showcase"
+                to="/dragon-showcase"
                 className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-yellow-600 to-red-600 text-white font-medium rounded-lg hover:from-yellow-700 hover:to-red-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 <Sparkles className="mr-2 h-4 w-4" />
@@ -98,130 +96,113 @@ export default function Home() {
                 <Sparkles className="h-8 w-8" />
               </div>
               <h3 className="text-lg font-semibold text-orange-100 mb-2">
-                Wish Interpretation
+                Wish Fulfillment
               </h3>
-              <p className="text-orange-400">
-                Voice your wildest investment dreams. Seiron interprets your boldest wishes and brings them to life.
+              <p className="text-sm text-orange-200/60">
+                Speak your investment desires and watch Seiron grant your every trading wish
               </p>
             </div>
 
             {/* Dragon Power 2 */}
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-600 to-red-600 text-white rounded-lg mb-4 shadow-lg">
-                <TrendingUp className="h-8 w-8" />
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-red-600 to-orange-600 text-white rounded-lg mb-4 shadow-lg">
+                <Eye className="h-8 w-8" />
               </div>
               <h3 className="text-lg font-semibold text-orange-100 mb-2">
-                Dragon Ball Strategies
+                Dragon Vision
               </h3>
-              <p className="text-orange-400">
-                Investment strategies so wild and powerful, they shatter the boundaries of traditional finance. Power levels beyond imagination!
+              <p className="text-sm text-orange-200/60">
+                See through market chaos with Seiron's all-seeing mystical powers
               </p>
             </div>
 
             {/* Dragon Power 3 */}
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-red-700 to-orange-700 text-white rounded-lg mb-4 shadow-lg">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-red-600 to-orange-600 text-white rounded-lg mb-4 shadow-lg">
                 <Shield className="h-8 w-8" />
               </div>
               <h3 className="text-lg font-semibold text-orange-100 mb-2">
-                Dragon's Protection
+                Dragon Shield
               </h3>
-              <p className="text-orange-400">
-                Your treasure remains in your vault. The dragon guards without possessing.
+              <p className="text-sm text-orange-200/60">
+                Protected by ancient dragon magic for secure trading
               </p>
             </div>
 
             {/* Dragon Power 4 */}
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-600 to-red-600 text-white rounded-lg mb-4 shadow-lg">
-                <Eye className="h-8 w-8" />
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-red-600 to-orange-600 text-white rounded-lg mb-4 shadow-lg">
+                <Zap className="h-8 w-8" />
               </div>
               <h3 className="text-lg font-semibold text-orange-100 mb-2">
-                Dragon Sight
+                Dragon Speed
               </h3>
-              <p className="text-orange-400">
-                See through market illusions with the dragon's all-seeing eyes and eternal wisdom.
+              <p className="text-sm text-orange-200/60">
+                Execute trades at the speed of dragon fire
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* The Summoning Ritual Section */}
-      <div className="py-24 bg-gradient-to-b from-black via-red-950/20 to-black">
+      {/* Features Section */}
+      <div className="py-24 bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-transparent bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text mb-4">
-              The Summoning Ritual
-            </h2>
-            <p className="text-lg text-orange-300">
-              Three sacred steps to awaken the eternal dragon
-            </p>
-          </div>
-
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-gradient-to-br from-red-950/50 to-black rounded-lg p-8 shadow-xl border border-orange-500/20 backdrop-blur-sm">
-              <div className="text-3xl font-bold text-transparent bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text mb-4">1</div>
+            {/* Feature 1 */}
+            <div className="bg-gradient-to-br from-red-950/20 to-orange-950/20 p-8 rounded-lg border border-red-800/20">
+              <Bot className="h-12 w-12 text-orange-400 mb-4" />
               <h3 className="text-xl font-semibold text-orange-100 mb-2">
-                Prepare the Altar
+                AI-Powered Dragon Brain
               </h3>
-              <p className="text-orange-400">
-                Connect your sacred wallet (MetaMask or Keplr) to establish the summoning circle.
+              <p className="text-orange-200/60">
+                Powered by ancient dragon wisdom and cutting-edge AI to grant your investment wishes with supernatural precision
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-red-950/50 to-black rounded-lg p-8 shadow-xl border border-orange-500/20 backdrop-blur-sm">
-              <div className="text-3xl font-bold text-transparent bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text mb-4">2</div>
+            {/* Feature 2 */}
+            <div className="bg-gradient-to-br from-red-950/20 to-orange-950/20 p-8 rounded-lg border border-red-800/20">
+              <TrendingUp className="h-12 w-12 text-orange-400 mb-4" />
               <h3 className="text-xl font-semibold text-orange-100 mb-2">
-                Speak Your Wish
+                Dragon Market Mastery
               </h3>
-              <p className="text-orange-400">
-                Channel your desires: "Grant me $1000 of SEI" or "Balance my digital treasures."
+              <p className="text-orange-200/60">
+                Real-time analysis of Sei markets with the mystical power to see trends before they happen
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-red-950/50 to-black rounded-lg p-8 shadow-xl border border-orange-500/20 backdrop-blur-sm">
-              <div className="text-3xl font-bold text-transparent bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text mb-4">3</div>
+            {/* Feature 3 */}
+            <div className="bg-gradient-to-br from-red-950/20 to-orange-950/20 p-8 rounded-lg border border-red-800/20">
+              <Zap className="h-12 w-12 text-orange-400 mb-4" />
               <h3 className="text-xl font-semibold text-orange-100 mb-2">
-                Dragon's Manifestation
+                Lightning-Fast Wishes
               </h3>
-              <p className="text-orange-400">
-                Seiron awakens, scans the Sei realm, and grants your wish with mystical precision.
+              <p className="text-orange-200/60">
+                Your trading wishes are granted at dragon-fire speed with instant execution
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Final Summoning Section */}
-      <div className="py-24 bg-gradient-to-b from-black via-red-950/30 to-black">
+      {/* CTA Section */}
+      <div className="py-24 bg-gradient-to-t from-black via-red-950/20 to-black">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-orange-100 mb-4">
-            Ready to Make Your Wildest Investment Dreams Come True?
+          <h2 className="text-4xl font-bold text-transparent bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text mb-4">
+            Ready to Summon Seiron?
           </h2>
-          <p className="text-xl text-orange-100 mb-8">
-            Join the legendary investors who have already unleashed Seiron's power to fulfill their wildest Sei ecosystem fantasies.
+          <p className="text-xl text-orange-300 mb-8">
+            The eternal dragon awaits to grant your wildest investment wishes
           </p>
           <Link
-            href="/dashboard"
-            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-yellow-400 to-orange-400 text-red-900 font-bold rounded-lg hover:from-yellow-300 hover:to-orange-300 transition-all duration-300 shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-400/40 transform hover:scale-105 animate-power-pulse"
+            to="/dashboard"
+            className="inline-flex items-center px-10 py-5 bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold text-lg rounded-lg hover:from-red-700 hover:to-orange-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105"
           >
-            <Star className="mr-2 h-5 w-5" />
-            Summon Seiron
+            <Star className="mr-3 h-6 w-6" />
+            Summon the Dragon
           </Link>
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="bg-black text-orange-400 py-12 border-t border-red-900/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <p className="text-sm text-orange-300">
-              2024 Seiron - Granting your wildest Sei Investing Wishes. Powered by the eternal flames of Sei Network.
-            </p>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }

@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
 interface SeironDragonProps {
@@ -52,13 +51,13 @@ export function SeironDragon({
 
       {/* Seiron Dragon Image */}
       <div className="relative z-10">
-        <Image
+        <img
           src="/seiron.png"
           alt="Seiron - The Eternal Dragon"
           width={dimensions.width}
           height={dimensions.height}
           className="drop-shadow-[0_0_50px_rgba(255,100,0,0.5)] animate-subtle-float"
-          priority
+          loading="eager"
         />
         
         {/* Additional glow effect around the dragon */}

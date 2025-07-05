@@ -9,6 +9,7 @@ import { TransactionPreview, TransactionPreviewData } from './TransactionPreview
 import { RiskWarning, RiskAssessmentData } from './RiskWarning';
 import { useTransactionFlow } from '../../hooks/useTransactionFlow';
 import { useTransactionStatus } from '../../hooks/useTransactionStatus';
+import { logger } from '@/lib/logger';
 
 export function TransactionDemo() {
   const { address } = useAccount();
@@ -17,11 +18,11 @@ export function TransactionDemo() {
 
   const { state, execute, reset } = useTransactionFlow({
     onSuccess: (receipt) => {
-      console.log('Transaction successful:', receipt);
+      logger.info('Transaction successful:', receipt);
       setShowConfirmation(false);
     },
     onError: (error) => {
-      console.error('Transaction failed:', error);
+      logger.error('Transaction failed:', error);
     }
   });
 
@@ -219,7 +220,7 @@ export function TransactionDemo() {
 
   const handleConfirm = async () => {
     if (!address) {
-      console.error('No wallet connected');
+      logger.error('No wallet connected');
       return;
     }
 
@@ -232,11 +233,11 @@ export function TransactionDemo() {
 
     try {
       await execute(txRequest, {
-        onApprove: () => console.log('Transaction approved by user'),
-        onReject: () => console.log('Transaction rejected by user')
+        onApprove: () => logger.debug('Transaction approved by user'),
+        onReject: () => logger.debug('Transaction rejected by user')
       });
     } catch (error) {
-      console.error('Transaction execution failed:', error);
+      logger.error('Transaction execution failed:', error);
     }
   };
 

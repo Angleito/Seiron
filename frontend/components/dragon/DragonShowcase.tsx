@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { EnhancedDragonCharacter } from './EnhancedDragonCharacter'
 import { DragonPresets, createDragonConfig, detectDeviceType } from './index'
 import type { DragonState, DragonMood, PerformanceMode } from './types'
+import { logger } from '@/lib/logger'
 
 
 export function DragonShowcase() {
@@ -40,19 +41,19 @@ export function DragonShowcase() {
   }, [])
 
   const handleStateChange = (state: DragonState) => {
-    console.log('Dragon state changed to:', state)
+    logger.debug('Dragon state changed to:', state)
   }
 
   const handleMoodChange = (mood: DragonMood) => {
-    console.log('Dragon mood changed to:', mood)
+    logger.debug('Dragon mood changed to:', mood)
   }
 
   const handlePowerLevelChange = (level: number) => {
-    console.log('Dragon power level changed to:', level)
+    logger.debug('Dragon power level changed to:', level)
   }
 
   const handleInteraction = (type: string) => {
-    console.log('Dragon interaction:', type)
+    logger.debug('Dragon interaction:', type)
   }
 
   const dragonConfig = createDragonConfig(selectedPreset, {

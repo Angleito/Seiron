@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Send, Mic, MicOff, Sparkles, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useChatStream } from './useChatStream'
 import { StreamMessage } from './ChatStreamService'
-import { VoiceInterface } from '@/components/voice/VoiceInterface'
+import { VoiceInterface, useVoiceInterfaceAudio } from '@/components/voice'
+import { ElevenLabsConfig } from '@/hooks/voice/useElevenLabsTTS'
+import { logger } from '@/lib/logger'
 
 // Generate unique session ID
 const generateSessionId = () => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -15,7 +17,24 @@ export function VoiceEnabledChat() {
   const [sessionId] = useState(generateSessionId())
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(false)
   const [voiceTranscript, setVoiceTranscript] = useState('')
+  const [lastProcessedTranscript, setLastProcessedTranscript] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  
+  // ElevenLabs configuration
+  const elevenLabsConfig: ElevenLabsConfig = {
+    apiKey: process.env.ELEVENLABS_API_KEY || '',
+    voiceId: process.env.ELEVENLABS_VOICE_ID || 'seiron-dragon-voice',
+    modelId: 'eleven_monolingual_v1',
+    voiceSettings: {
+      stability: 0.5,
+      similarityBoost: 0.75,
+      style: 0.5,
+      useSpeakerBoost: true
+    }
+  }
+  
+  // Hook for programmatic audio playback
+  const { playResponse, isPlaying } = useVoiceInterfaceAudio(elevenLabsConfig)
   
   // Initialize chat stream
   const {
@@ -33,25 +52,24 @@ export function VoiceEnabledChat() {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     },
     onConnectionChange: (status) => {
-      console.log('Connection status:', status)
+      logger.debug('Connection status:', status)
     }
   })
   
-  // Handle voice transcript updates
-  const handleTranscriptUpdate = (transcript: string) => {
+  // Handle voice transcript updates with sentence completion detection
+  const handleTranscriptChange = useCallback((transcript: string) => {
     setVoiceTranscript(transcript)
-  }
-  
-  // Handle voice command completion
-  const handleVoiceCommand = (finalTranscript: string) => {
-    if (finalTranscript.trim()) {
-      sendVoiceMessage(finalTranscript, {
+    
+    // Check if the transcript is different from last processed and ends with sentence terminator
+    if (transcript !== lastProcessedTranscript && transcript.trim() && transcript.match(/[.!?]$/)) {
+      setLastProcessedTranscript(transcript)
+      sendVoiceMessage(transcript.trim(), {
         voiceEnabled: true,
         timestamp: Date.now()
       })
       setVoiceTranscript('')
     }
-  }
+  }, [lastProcessedTranscript, sendVoiceMessage])
   
   // Handle text input send
   const handleSend = () => {
@@ -67,6 +85,30 @@ export function VoiceEnabledChat() {
       handleSend()
     }
   }
+  
+  // Handle voice errors
+  const handleVoiceError = useCallback((error: Error) => {
+    logger.error('Voice interface error:', error)
+    // Could add toast notification here
+  }, [])
+  
+  // Auto-play AI responses when voice is enabled
+  useEffect(() => {
+    if (!isVoiceEnabled || messages.length === 0) return
+    
+    const lastMessage = messages[messages.length - 1]
+    
+    // Check if it's an AI response and not an error
+    if (lastMessage.type === 'agent' && 
+        !lastMessage.metadata?.error && 
+        lastMessage.status === 'delivered' &&
+        !isPlaying) {
+      // Play the AI response
+      playResponse(lastMessage.content).catch(error => {
+        logger.error('Failed to play audio response:', error)
+      })
+    }
+  }, [messages, isVoiceEnabled, isPlaying, playResponse])
   
   // Message status icon
   const getStatusIcon = (status?: StreamMessage['status']) => {
@@ -210,9 +252,11 @@ export function VoiceEnabledChat() {
       {isVoiceEnabled && (
         <div className="border-t border-gray-800 bg-gray-900 p-4">
           <VoiceInterface
-            onTranscriptUpdate={handleTranscriptUpdate}
-            onCommand={handleVoiceCommand}
-            isActive={isVoiceEnabled}
+            elevenLabsConfig={elevenLabsConfig}
+            onTranscriptChange={handleTranscriptChange}
+            onError={handleVoiceError}
+            autoReadResponses={true}
+            className="max-w-4xl mx-auto"
           />
         </div>
       )}

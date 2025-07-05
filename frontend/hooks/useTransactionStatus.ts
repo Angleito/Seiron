@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { usePublicClient, useBlockNumber } from 'wagmi';
 import { Hash, TransactionReceipt, Transaction } from 'viem';
+import { logger } from '@/lib/logger';
 
 export type TransactionStatus = 
   | 'pending'
@@ -102,7 +103,7 @@ export function useTransactionStatus(
         const block = await publicClient.getBlock({ blockNumber: receipt.blockNumber });
         timestamp = Number(block.timestamp) * 1000;
       } catch (error) {
-        console.error('Failed to fetch block timestamp:', error);
+        logger.error('Failed to fetch block timestamp:', error);
       }
 
       // Determine status based on receipt

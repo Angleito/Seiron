@@ -2,6 +2,7 @@ import { useWalletClient, usePublicClient } from '@privy-io/wagmi'
 import { usePrivy } from '@privy-io/react-auth'
 import { parseEther, encodeFunctionData, type Address } from 'viem'
 import { seiMainnet } from '@/config/privy'
+import { logger } from '@/lib/logger'
 
 export interface TransactionRequest {
   to: Address
@@ -28,7 +29,7 @@ export function useWalletOperations() {
     request: TransactionRequest
   ): Promise<PreparedTransaction | null> => {
     if (!walletClient || !publicClient) {
-      console.error('Wallet or public client not available')
+      logger.error('Wallet or public client not available')
       return null
     }
 
@@ -50,7 +51,7 @@ export function useWalletOperations() {
         chainId: seiMainnet.id,
       }
     } catch (error) {
-      console.error('Failed to prepare transaction:', error)
+      logger.error('Failed to prepare transaction:', error)
       return null
     }
   }
@@ -71,7 +72,7 @@ export function useWalletOperations() {
 
       return hash
     } catch (error) {
-      console.error('Failed to send transaction:', error)
+      logger.error('Failed to send transaction:', error)
       throw error
     }
   }
@@ -89,7 +90,7 @@ export function useWalletOperations() {
 
       return signature
     } catch (error) {
-      console.error('Failed to sign message:', error)
+      logger.error('Failed to sign message:', error)
       throw error
     }
   }
@@ -107,7 +108,7 @@ export function useWalletOperations() {
 
       return signature
     } catch (error) {
-      console.error('Failed to sign typed data:', error)
+      logger.error('Failed to sign typed data:', error)
       throw error
     }
   }
@@ -121,7 +122,7 @@ export function useWalletOperations() {
       const receipt = await publicClient.waitForTransactionReceipt({ hash })
       return receipt
     } catch (error) {
-      console.error('Failed to wait for transaction:', error)
+      logger.error('Failed to wait for transaction:', error)
       throw error
     }
   }

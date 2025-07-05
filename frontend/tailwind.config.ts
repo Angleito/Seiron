@@ -2,9 +2,10 @@ import type { Config } from "tailwindcss";
 
 const config: Config = {
   content: [
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./index.html",
   ],
   theme: {
     extend: {
@@ -191,6 +192,9 @@ const config: Config = {
         "sei-subtle": "0 4px 12px rgba(107, 114, 128, 0.1)",
       },
       fontFamily: {
+        // Geist fonts
+        "sans": ['Geist Sans', 'system-ui', 'sans-serif'],
+        "mono": ['Geist Mono', 'monospace'],
         // Dragon-themed typography
         "dragon": ["var(--font-dragon)", "serif"],
         "mystical": ["var(--font-mystical)", "fantasy"],

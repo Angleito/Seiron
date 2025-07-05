@@ -18,6 +18,7 @@ import * as O from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
 import * as A from 'fp-ts/Array';
 import { pipe } from 'fp-ts/function';
+import { logger } from '@/lib/logger';
 import { isDeepStrictEqual } from 'util';
 
 // Types
@@ -216,7 +217,7 @@ export function usePriceFeed(config: PriceFeedConfig) {
         a.source === b.source
       ),
       catchError((error) => {
-        console.error(`Price feed error for ${asset}:`, error);
+        logger.error(`Price feed error for ${asset}:`, error);
         return of<PriceData>({
           asset,
           price: 0,

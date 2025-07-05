@@ -1,12 +1,13 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import { logger } from '@/lib/logger'
 
 export function DragonInteractionDebug() {
   const [renderCount, setRenderCount] = useState(0)
   
   useEffect(() => {
-    console.log('DragonInteractionDebug rendered:', renderCount)
+    logger.debug('DragonInteractionDebug rendered:', renderCount)
     setRenderCount(prev => prev + 1)
   }, [])
   

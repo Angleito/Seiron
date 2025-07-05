@@ -428,7 +428,7 @@ export function EnhancedDragonCharacter({
       </AnimatePresence>
 
       {/* Debug Info (Development only) */}
-      {process.env.NODE_ENV === 'development' && (
+      {import.meta.env.DEV && (
         <div className="absolute -bottom-20 left-0 text-xs text-gray-400 space-y-1">
           <div>State: {dragon.state}</div>
           <div>Mood: {dragon.mood}</div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { logger } from '@/lib/logger'
 
 // Export types for compatibility
 export type QualityLevel = number; // 0-100 quality level
@@ -117,7 +118,7 @@ export function useAnimationPerformance(options: UseAnimationPerformanceOptions 
           setMetrics(prev => ({ ...prev, gpuMemory }))
         }
       } catch (error) {
-        console.debug('GPU memory check not available')
+        logger.debug('GPU memory check not available')
       }
     }
   }, [])

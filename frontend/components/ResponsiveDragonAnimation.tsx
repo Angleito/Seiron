@@ -214,7 +214,7 @@ export function ResponsiveDragonAnimation({
       aria-pressed={isPressed}
     >
       {/* Performance indicator for development */}
-      {process.env.NODE_ENV === 'development' && (
+      {import.meta.env.DEV && (
         <div className="absolute top-0 left-0 bg-black/50 text-white text-xs p-1 rounded z-50">
           {actualPerformanceMode} | {breakpoint} | {isPortrait ? 'P' : 'L'}
         </div>

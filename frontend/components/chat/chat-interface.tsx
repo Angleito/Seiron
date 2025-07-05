@@ -8,6 +8,7 @@ import { getOrchestrator } from '@/lib/orchestrator-client'
 import { ChatStreamService, StreamMessage, TypingIndicator, ConnectionStatus } from './ChatStreamService'
 import { Subscription } from 'rxjs'
 import * as E from 'fp-ts/Either'
+import { logger } from '@/lib/logger'
 import { SeironImage } from '@/components/SeironImage'
 
 // New adapter-related types
@@ -61,8 +62,8 @@ export function ChatInterface() {
   // Initialize chat stream service
   const chatService = useMemo(() => {
     return new ChatStreamService({
-      apiEndpoint: process.env.NEXT_PUBLIC_ORCHESTRATOR_API || '/api',
-      wsEndpoint: process.env.NEXT_PUBLIC_ORCHESTRATOR_WS || 'ws://localhost:3001',
+      apiEndpoint: import.meta.env.VITE_ORCHESTRATOR_API || '/api',
+      wsEndpoint: import.meta.env.VITE_ORCHESTRATOR_WS || 'ws://localhost:3001',
       sessionId,
       maxRetries: 3,
       retryDelay: 1000,
@@ -132,8 +133,8 @@ export function ChatInterface() {
     
     // Legacy orchestrator events (will be migrated to streams)
     const orchestrator = getOrchestrator({
-      apiEndpoint: process.env.NEXT_PUBLIC_ORCHESTRATOR_API || '/api',
-      wsEndpoint: process.env.NEXT_PUBLIC_ORCHESTRATOR_WS || 'ws://localhost:3001',
+      apiEndpoint: import.meta.env.VITE_ORCHESTRATOR_API || '/api',
+      wsEndpoint: import.meta.env.VITE_ORCHESTRATOR_WS || 'ws://localhost:3001',
     })
     
     // Subscribe to Hive Intelligence events
@@ -187,11 +188,11 @@ export function ChatInterface() {
     chatService.sendAdapterAction(action).subscribe({
       next: (result) => {
         if (E.isLeft(result)) {
-          console.error('Failed to send adapter action:', result.left)
+          logger.error('Failed to send adapter action:', result.left)
         }
       },
       error: (error) => {
-        console.error('Error executing adapter action:', error)
+        logger.error('Error executing adapter action:', error)
         setIsLoading(false)
       },
       complete: () => {
@@ -216,11 +217,11 @@ export function ChatInterface() {
     chatService.sendMessage(messageContent, metadata).subscribe({
       next: (result) => {
         if (E.isLeft(result)) {
-          console.error('Failed to send message:', result.left)
+          logger.error('Failed to send message:', result.left)
         }
       },
       error: (error) => {
-        console.error('Error sending message:', error)
+        logger.error('Error sending message:', error)
         setIsLoading(false)
       },
       complete: () => {

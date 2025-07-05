@@ -4,6 +4,7 @@ import { TrendingUp, TrendingDown, DollarSign, Coins, Activity, Zap, Search, Shi
 import { cn } from '@/lib/utils'
 import { useState, useEffect } from 'react'
 import { getOrchestrator } from '@/lib/orchestrator-client'
+import { logger } from '@/lib/logger'
 
 interface Asset {
   symbol: string
@@ -88,8 +89,8 @@ export function PortfolioSidebar() {
   // Initialize real-time connections
   useEffect(() => {
     const orchestrator = getOrchestrator({
-      apiEndpoint: process.env.NEXT_PUBLIC_ORCHESTRATOR_API || '/api',
-      wsEndpoint: process.env.NEXT_PUBLIC_ORCHESTRATOR_WS || 'ws://localhost:3001',
+      apiEndpoint: import.meta.env.VITE_ORCHESTRATOR_API || '/api',
+      wsEndpoint: import.meta.env.VITE_ORCHESTRATOR_WS || 'ws://localhost:3001',
     })
 
     // Subscribe to real-time balance updates
@@ -136,7 +137,7 @@ export function PortfolioSidebar() {
         setLastUpdate(new Date())
       }
     } catch (error) {
-      console.error('Failed to fetch real-time data:', error)
+      logger.error('Failed to fetch real-time data:', error)
     } finally {
       setIsLoading(false)
     }
@@ -159,7 +160,7 @@ export function PortfolioSidebar() {
         setHiveAnalytics(data.data)
       }
     } catch (error) {
-      console.error('Failed to get Hive analysis:', error)
+      logger.error('Failed to get Hive analysis:', error)
     } finally {
       setIsLoading(false)
     }

@@ -1,4 +1,5 @@
 import { UserIntent, TaskResult, AgentStreamEvent, Either } from '@/types/agent'
+import { logger } from './logger'
 
 // New adapter-related types
 export interface AdapterAction {
@@ -430,7 +431,7 @@ export class Orchestrator {
     this.ws = new WebSocket(`${this.config.wsEndpoint}/chat/${sessionId}`)
 
     this.ws.onopen = () => {
-      console.log('WebSocket connected to orchestrator')
+      logger.info('WebSocket connected to orchestrator')
     }
 
     this.ws.onmessage = (event) => {
@@ -438,16 +439,16 @@ export class Orchestrator {
         const streamEvent: AgentStreamEvent = JSON.parse(event.data)
         this.emitEvent(streamEvent.type, streamEvent)
       } catch (error) {
-        console.error('Failed to parse WebSocket message:', error)
+        logger.error('Failed to parse WebSocket message:', error)
       }
     }
 
     this.ws.onerror = (error) => {
-      console.error('WebSocket error:', error)
+      logger.error('WebSocket error:', error)
     }
 
     this.ws.onclose = () => {
-      console.log('WebSocket disconnected')
+      logger.info('WebSocket disconnected')
       // Attempt to reconnect after 5 seconds
       setTimeout(() => {
         if (sessionId) {
@@ -483,7 +484,7 @@ export class Orchestrator {
       try {
         handler(event)
       } catch (error) {
-        console.error('Event handler error:', error)
+        logger.error('Event handler error:', error)
       }
     })
   }

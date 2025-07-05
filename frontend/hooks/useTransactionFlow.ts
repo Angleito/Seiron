@@ -4,6 +4,7 @@ import { useState, useCallback, useRef } from 'react';
 import { useWalletClient, usePublicClient, useAccount } from 'wagmi';
 import { Hash, TransactionReceipt } from 'viem';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 export type TransactionStep = 
   | 'idle'
@@ -127,7 +128,7 @@ export function useTransactionFlow(options: UseTransactionFlowOptions = {}) {
         gasEstimate
       };
     } catch (error) {
-      console.error('Simulation error:', error);
+      logger.error('Simulation error:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown simulation error',

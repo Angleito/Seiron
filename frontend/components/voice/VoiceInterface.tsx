@@ -3,6 +3,7 @@ import { useSpeechRecognition } from '../../hooks/voice/useSpeechRecognition'
 import { useElevenLabsTTS, ElevenLabsConfig } from '../../hooks/voice/useElevenLabsTTS'
 import * as E from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
+import { logger } from '../../lib/logger'
 
 export interface VoiceInterfaceProps {
   onTranscriptChange?: (transcript: string) => void
@@ -83,7 +84,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
         result,
         E.fold(
           (error) => {
-            console.error('Failed to stop listening:', error)
+            logger.error('Failed to stop listening:', error)
             onError?.(new Error(error.message))
           },
           () => {
@@ -97,7 +98,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
         result,
         E.fold(
           (error) => {
-            console.error('Failed to start listening:', error)
+            logger.error('Failed to start listening:', error)
             onError?.(new Error(error.message))
           },
           () => {
@@ -120,11 +121,11 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
       result,
       E.fold(
         (error) => {
-          console.error('Failed to play audio:', error)
+          logger.error('Failed to play audio:', error)
           onError?.(new Error(error.message))
         },
         () => {
-          console.log('Audio playback completed')
+          logger.debug('Audio playback completed')
         }
       )
     )

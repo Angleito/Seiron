@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
 interface SeironImageProps {
@@ -45,7 +44,7 @@ export function SeironImage({
       )}
       style={{ opacity: variant === 'watermark' ? undefined : opacity }}
     >
-      <Image
+      <img
         src="/seiron.png"
         alt="Seiron Dragon"
         width={config.width}
@@ -53,7 +52,7 @@ export function SeironImage({
         className={cn(
           variant === 'watermark' && 'filter grayscale'
         )}
-        priority={variant !== 'watermark'}
+        loading={variant !== 'watermark' ? 'eager' : 'lazy'}
       />
     </div>
   )

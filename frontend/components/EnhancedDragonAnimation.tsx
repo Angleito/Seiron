@@ -2,7 +2,6 @@
 
 import { motion, useAnimation, useMotionValue, useTransform, AnimatePresence } from 'framer-motion'
 import { useEffect, useState, useRef } from 'react'
-import Image from 'next/image'
 
 interface EnhancedDragonAnimationProps {
   size?: 'sm' | 'md' | 'lg' | 'xl'
@@ -359,13 +358,13 @@ export function EnhancedDragonAnimation({
                 }}
               >
                 {/* Dragon Image */}
-                <Image
+                <img
                   src="/images/seiron.png"
                   alt="Seiron - The Wish-Granting Dragon"
                   width={config.width}
                   height={config.height}
                   className="object-contain filter drop-shadow-2xl"
-                  priority
+                  loading="eager"
                 />
                 
                 {/* Dragon Glow Overlay */}

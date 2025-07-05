@@ -43,7 +43,7 @@ export function AnimationPerformanceDebugger({
   
   // Auto-start monitoring in development
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
       startMonitoring()
     }
     return () => stopMonitoring()
@@ -80,7 +80,7 @@ export function AnimationPerformanceDebugger({
   }
   
   // Don't render in production unless explicitly enabled
-  if (process.env.NODE_ENV === 'production' && !window.location.search.includes('debug=true')) {
+  if (import.meta.env.PROD && !window.location.search.includes('debug=true')) {
     return null
   }
   

@@ -7,16 +7,16 @@ RUN apk add --no-cache python3 make g++ py3-pip
 WORKDIR /app
 
 # Copy package files
-COPY frontend/package*.json ./
+COPY package*.json ./
 
 # Install dependencies
 # Using npm install instead of npm ci due to lock file sync issues
 RUN npm install --legacy-peer-deps
 
-# Copy frontend source code only
-COPY frontend/ .
+# Copy frontend source code
+COPY . .
 
-# Build Next.js application (skip for dev)
+# Build Vite application (skip for dev)
 # RUN npm run build
 
 # Production stage

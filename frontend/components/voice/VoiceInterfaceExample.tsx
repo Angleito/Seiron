@@ -12,8 +12,8 @@ const VoiceInterfaceExample: React.FC = () => {
 
   // ElevenLabs configuration
   const elevenLabsConfig: ElevenLabsConfig = {
-    apiKey: process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY || '',
-    voiceId: process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID || 'default-voice',
+    apiKey: import.meta.env.VITE_ELEVENLABS_API_KEY || '',
+    voiceId: import.meta.env.VITE_ELEVENLABS_VOICE_ID || 'default-voice',
     modelId: 'eleven_monolingual_v1',
     voiceSettings: {
       stability: 0.5,

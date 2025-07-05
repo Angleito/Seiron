@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import { useState } from 'react'
 
 interface FloatingDragonLogoProps {
@@ -67,13 +66,13 @@ export function FloatingDragonLogo({
         transition-transform duration-300 
         ${isHovered ? 'scale-110' : 'scale-100'}
       `}>
-        <Image
+        <img
           src="/images/seiron.png"
           alt="Seiron - The Wish-Granting Dragon"
           width={config.width}
           height={config.height}
           className="object-contain filter drop-shadow-2xl"
-          priority
+          loading="eager"
         />
         
         {/* Dragon Glow Effect on Hover */}

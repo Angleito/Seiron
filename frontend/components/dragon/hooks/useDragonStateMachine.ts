@@ -3,6 +3,7 @@
 import { useReducer, useCallback, useEffect, useRef } from 'react'
 import type { DragonState, DragonMood, DragonAnimationHookReturn } from '../types'
 import { POWER_LEVELS, ANIMATION_TIMING } from '../constants'
+import { logger } from '@/lib/logger'
 
 type DragonAction = 
   | { type: 'SET_STATE'; state: DragonState }
@@ -92,7 +93,7 @@ const dragonReducer = (state: DragonStateData, action: DragonAction): DragonStat
     case 'SET_STATE': {
       const validTransitions = getValidTransitions(state.state)
       if (!validTransitions.includes(action.state)) {
-        console.warn(`Invalid transition from ${state.state} to ${action.state}`)
+        logger.warn(`Invalid transition from ${state.state} to ${action.state}`)
         return state
       }
       

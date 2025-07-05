@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Search, TrendingUp, AlertTriangle, Target, BarChart3, Brain, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getOrchestrator } from '@/lib/orchestrator-client'
+import { logger } from '@/lib/logger'
 
 interface HiveInsight {
   id: string
@@ -75,8 +76,8 @@ export function HiveInsights({
 
   useEffect(() => {
     const orchestrator = getOrchestrator({
-      apiEndpoint: process.env.NEXT_PUBLIC_ORCHESTRATOR_API || '/api',
-      wsEndpoint: process.env.NEXT_PUBLIC_ORCHESTRATOR_WS || 'ws://localhost:3001',
+      apiEndpoint: import.meta.env.VITE_ORCHESTRATOR_API || '/api',
+      wsEndpoint: import.meta.env.VITE_ORCHESTRATOR_WS || 'ws://localhost:3001',
     })
 
     // Subscribe to Hive Intelligence events
@@ -110,7 +111,7 @@ export function HiveInsights({
 
   const fetchAnalytics = async (analysisType: 'portfolio' | 'market' | 'risk' | 'performance' = 'portfolio') => {
     if (!walletAddress && analysisType === 'portfolio') {
-      console.warn('Wallet address required for portfolio analysis')
+      logger.warn('Wallet address required for portfolio analysis')
       return
     }
 
@@ -133,7 +134,7 @@ export function HiveInsights({
         setLastUpdate(new Date())
       }
     } catch (error) {
-      console.error('Failed to fetch Hive analytics:', error)
+      logger.error('Failed to fetch Hive analytics:', error)
     } finally {
       setIsLoading(false)
     }
@@ -147,7 +148,7 @@ export function HiveInsights({
         setCreditUsage(data.data)
       }
     } catch (error) {
-      console.error('Failed to fetch credit usage:', error)
+      logger.error('Failed to fetch credit usage:', error)
     }
   }
 

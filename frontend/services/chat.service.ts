@@ -1,11 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { Orchestrator } from '@/lib/orchestrator-client'
 import { UserIntent, UserIntentType, AgentMessage, TaskResult } from '@/types/agent'
 
 // Initialize orchestrator client
 const orchestrator = new Orchestrator({
-  apiEndpoint: process.env.ORCHESTRATOR_ENDPOINT || 'http://localhost:3001',
-  wsEndpoint: process.env.ORCHESTRATOR_WS_ENDPOINT || 'ws://localhost:3001',
+  apiEndpoint: import.meta.env.VITE_ORCHESTRATOR_ENDPOINT || 'http://localhost:3001',
+  wsEndpoint: import.meta.env.VITE_ORCHESTRATOR_WS_ENDPOINT || 'ws://localhost:3001',
 })
 
 // Parse user message to extract intent
@@ -143,15 +142,10 @@ function formatAgentResponse(result: TaskResult, agentType?: string): string {
   return response
 }
 
-export async function POST(request: NextRequest) {
+export async function processChat(message: string, sessionId: string) {
   try {
-    const { message, sessionId } = await request.json()
-
     if (!message || !sessionId) {
-      return NextResponse.json(
-        { error: 'The dragon requires both your wish and a summoning circle (sessionId)' },
-        { status: 400 }
-      )
+      throw new Error('The dragon requires both your wish and a summoning circle (sessionId)')
     }
 
     // Parse user intent
@@ -161,12 +155,12 @@ export async function POST(request: NextRequest) {
     const result = await orchestrator.processIntent(intent)
 
     if (result._tag === 'Left') {
-      return NextResponse.json({
+      return {
         message: `Seiron could not understand your wish: ${result.left}. Please speak more clearly to the dragon.`,
         timestamp: new Date().toISOString(),
         agentType: 'orchestrator',
         error: true,
-      })
+      }
     }
 
     // Format the response based on the agent that handled it
@@ -186,35 +180,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json(response)
+    return response
 
   } catch (error) {
     console.error('Chat API error:', error)
-    return NextResponse.json(
-      { 
-        error: 'Failed to process message',
-        message: 'The dragon encountered mystical interference. Please try summoning again.',
-      },
-      { status: 500 }
-    )
+    throw new Error('The dragon encountered mystical interference. Please try summoning again.')
   }
 }
 
-// WebSocket endpoint for real-time updates
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url)
-  const sessionId = searchParams.get('sessionId')
-
+export function getWebSocketEndpoint(sessionId: string) {
   if (!sessionId) {
-    return NextResponse.json(
-      { error: 'A summoning circle (sessionId) is required for the dragon connection' },
-      { status: 400 }
-    )
+    throw new Error('A summoning circle (sessionId) is required for the dragon connection')
   }
 
-  // Return WebSocket upgrade instructions
-  return NextResponse.json({
-    wsEndpoint: `${process.env.ORCHESTRATOR_WS_ENDPOINT}/chat/${sessionId}`,
+  return {
+    wsEndpoint: `${import.meta.env.VITE_ORCHESTRATOR_WS_ENDPOINT}/chat/${sessionId}`,
     protocol: 'agent-chat-v1',
-  })
+  }
 }

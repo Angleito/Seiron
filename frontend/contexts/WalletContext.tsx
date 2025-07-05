@@ -6,6 +6,7 @@ import { useAccount, useDisconnect } from 'wagmi'
 import * as E from 'fp-ts/Either'
 import * as O from 'fp-ts/Option'
 import { pipe } from 'fp-ts/function'
+import { logger } from '@/lib/logger'
 
 // ============================================================================
 // Types
@@ -58,7 +59,7 @@ const WALLET_STATE_KEY = 'seiron_wallet_state'
 
 const emitAnalyticsEvent = (event: AnalyticsEvent): void => {
   // In production, this would send to your analytics service
-  console.log('[Analytics]', event)
+  logger.debug('[Analytics]', event)
   
   // Emit custom event for other parts of the app
   if (typeof window !== 'undefined') {
@@ -76,7 +77,7 @@ const saveWalletState = (state: WalletState): void => {
       localStorage.setItem(WALLET_STATE_KEY, JSON.stringify(state))
     }
   } catch (error) {
-    console.error('Failed to save wallet state:', error)
+    logger.error('Failed to save wallet state:', error)
   }
 }
 
@@ -93,7 +94,7 @@ const loadWalletState = (): O.Option<WalletState> => {
       }
     }
   } catch (error) {
-    console.error('Failed to load wallet state:', error)
+    logger.error('Failed to load wallet state:', error)
   }
   return O.none
 }
@@ -104,7 +105,7 @@ const clearWalletState = (): void => {
       localStorage.removeItem(WALLET_STATE_KEY)
     }
   } catch (error) {
-    console.error('Failed to clear wallet state:', error)
+    logger.error('Failed to clear wallet state:', error)
   }
 }
 
@@ -296,7 +297,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       wagmiDisconnect()
       dispatch({ type: 'DISCONNECT' })
     } catch (error) {
-      console.error('Failed to disconnect:', error)
+      logger.error('Failed to disconnect:', error)
       // Force disconnect even on error
       dispatch({ type: 'DISCONNECT' })
     }

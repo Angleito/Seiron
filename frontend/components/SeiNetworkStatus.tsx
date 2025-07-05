@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Activity, TrendingUp, TrendingDown, Zap, Users, DollarSign } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getOrchestrator } from '@/lib/orchestrator-client'
+import { logger } from '@/lib/logger'
 
 interface NetworkStatus {
   blockNumber: number
@@ -52,8 +53,8 @@ export function SeiNetworkStatus({
 
   useEffect(() => {
     const orchestrator = getOrchestrator({
-      apiEndpoint: process.env.NEXT_PUBLIC_ORCHESTRATOR_API || '/api',
-      wsEndpoint: process.env.NEXT_PUBLIC_ORCHESTRATOR_WS || 'ws://localhost:3001',
+      apiEndpoint: import.meta.env.VITE_ORCHESTRATOR_API || '/api',
+      wsEndpoint: import.meta.env.VITE_ORCHESTRATOR_WS || 'ws://localhost:3001',
     })
 
     // Subscribe to real-time network status updates
@@ -91,7 +92,7 @@ export function SeiNetworkStatus({
           setLastUpdate(new Date())
         }
       } catch (error) {
-        console.error('Failed to fetch network status:', error)
+        logger.error('Failed to fetch network status:', error)
         setIsConnected(false)
       }
     }

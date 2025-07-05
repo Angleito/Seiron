@@ -26,6 +26,7 @@ import * as A from 'fp-ts/Array'
 import { pipe } from 'fp-ts/function'
 import { AgentMessage, AgentStreamEvent, AgentType } from '@/types/agent'
 import { getOrchestrator, AdapterAction } from '@/lib/orchestrator-client'
+import { logger } from '@/lib/logger'
 
 // Enhanced message types for streaming
 export interface StreamMessage extends AgentMessage {
@@ -433,12 +434,12 @@ export class ChatStreamService {
       retry({
         count: this.config.maxRetries,
         delay: (error, retryCount) => {
-          console.error(`Message send attempt ${retryCount} failed:`, error)
+          logger.error(`Message send attempt ${retryCount} failed:`, error)
           return timer(this.config.retryDelay * Math.pow(2, retryCount))
         }
       }),
       catchError(error => {
-        console.error('Failed to send message after retries:', error)
+        logger.error('Failed to send message after retries:', error)
         return EMPTY
       })
     )

@@ -1,5 +1,3 @@
-'use client'
-
 import { InteractiveDragon } from '@/components/dragon/InteractiveDragon'
 import { useState } from 'react'
 

@@ -1,6 +1,4 @@
-'use client'
-
-import { VoiceInterface } from '@/components/voice/VoiceInterface'
+import VoiceInterface from '@/components/voice/VoiceInterface'
 import { ChatInterface } from '@/components/chat/chat-interface'
 import { useState } from 'react'
 
@@ -29,8 +27,8 @@ export default function VoiceTestPage() {
           <VoiceInterface
             onTranscript={handleVoiceCommand}
             onAIResponse={handleAIResponse}
-            apiKey={process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY || ''}
-            voiceId={process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID || ''}
+            apiKey={import.meta.env.VITE_ELEVENLABS_API_KEY || ''}
+            voiceId={import.meta.env.VITE_ELEVENLABS_VOICE_ID || ''}
           />
         </div>
 
@@ -70,8 +68,8 @@ export default function VoiceTestPage() {
         </div>
 
         <div className="mt-8 text-center text-gray-500">
-          <p>ElevenLabs Voice ID: {process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID}</p>
-          <p>API Key: {process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY ? '✓ Configured' : '✗ Not configured'}</p>
+          <p>ElevenLabs Voice ID: {import.meta.env.VITE_ELEVENLABS_VOICE_ID}</p>
+          <p>API Key: {import.meta.env.VITE_ELEVENLABS_API_KEY ? '✓ Configured' : '✗ Not configured'}</p>
         </div>
       </div>
     </div>

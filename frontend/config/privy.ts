@@ -1,4 +1,5 @@
 import { defineChain } from 'viem'
+import { logger } from '@/lib/logger'
 
 // Sei Network chain configuration
 export const seiMainnet = defineChain({
@@ -25,13 +26,13 @@ export const seiMainnet = defineChain({
 })
 
 // Privy configuration
-const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID || '';
-const clientId = process.env.NEXT_PUBLIC_PRIVY_CLIENT_ID || '';
+const appId = import.meta.env.VITE_PRIVY_APP_ID || '';
+const clientId = import.meta.env.VITE_PRIVY_CLIENT_ID || '';
 
 // Debug logging
-console.log('Privy App ID:', appId);
-console.log('Privy App ID length:', appId.length);
-console.log('Privy App ID present:', !!appId);
+logger.debug('Privy App ID:', appId);
+logger.debug('Privy App ID length:', appId.length);
+logger.debug('Privy App ID present:', !!appId);
 
 export const privyConfig = {
   appId,
@@ -50,7 +51,7 @@ export const privyConfig = {
       'discord',
       'twitter',
     ],
-    walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID,
+    walletConnectProjectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID,
     // Embedded wallet configuration
     embeddedWallets: {
       createOnLogin: 'users-without-wallets',

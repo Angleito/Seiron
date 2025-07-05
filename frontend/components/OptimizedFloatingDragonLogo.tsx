@@ -1,6 +1,4 @@
-'use client'
 
-import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import { useAnimationPerformance, QUALITY_FEATURES } from '../hooks/useAnimationPerformance'
 
@@ -109,7 +107,7 @@ export function OptimizedFloatingDragonLogo({
       }}
     >
       {/* Performance Monitor (Development Only) */}
-      {process.env.NODE_ENV === 'development' && isMonitoring && (
+      {import.meta.env.DEV && isMonitoring && (
         <div className="absolute -top-20 left-0 z-50 bg-black/80 text-white p-2 rounded text-xs font-mono">
           <div>FPS: {metrics.fps}</div>
           <div>Quality: {qualityLevel}</div>
@@ -188,14 +186,13 @@ export function OptimizedFloatingDragonLogo({
       style={{
         willChange: features.dragonFloat ? 'transform' : 'auto',
       }}>
-        <Image
+        <img
           src="/images/seiron.png"
           alt="Seiron - The Wish-Granting Dragon"
           width={config.width}
           height={config.height}
           className={`object-contain ${features.shadowEffects ? 'filter drop-shadow-2xl' : ''}`}
-          priority
-          quality={qualityLevel === 'low' ? 75 : qualityLevel === 'medium' ? 85 : 100}
+          loading="eager"
         />
         
         {/* Dragon Glow Effect on Hover - only on high quality */}

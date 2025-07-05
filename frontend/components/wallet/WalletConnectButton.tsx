@@ -3,6 +3,7 @@
 import { usePrivy, useWallets } from '@privy-io/react-auth'
 import { Wallet, Power, LogOut } from 'lucide-react'
 import { useState } from 'react'
+import { logger } from '@/lib/logger'
 
 export function WalletConnectButton() {
   const { ready, authenticated, login, logout, user } = usePrivy()
@@ -21,7 +22,7 @@ export function WalletConnectButton() {
     try {
       await login()
     } catch (error) {
-      console.error('Failed to connect wallet:', error)
+      logger.error('Failed to connect wallet:', error)
     }
   }
 
@@ -30,7 +31,7 @@ export function WalletConnectButton() {
       await logout()
       setIsDropdownOpen(false)
     } catch (error) {
-      console.error('Failed to disconnect wallet:', error)
+      logger.error('Failed to disconnect wallet:', error)
     }
   }
 
@@ -87,13 +88,6 @@ export function WalletConnectButton() {
             <div>
               <div className="text-sm text-gray-400 mb-1">Wallet Address</div>
               <div className="text-white font-mono text-sm">{address}</div>
-            </div>
-
-            <div>
-              <div className="text-sm text-gray-400 mb-1">Wallet Type</div>
-              <div className="text-white font-medium">
-                {activeWallet?.walletClientType || 'Unknown'}
-              </div>
             </div>
 
             <div>

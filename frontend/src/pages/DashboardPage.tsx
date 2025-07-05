@@ -50,7 +50,7 @@ export default function DashboardPage() {
         {/* Floating Dragon in bottom right */}
         <div className="absolute bottom-4 right-4 z-10">
           <SeironImage 
-            variant="compact"
+            variant="corner"
             className="opacity-90 hover:opacity-100 transition-opacity"
           />
         </div>

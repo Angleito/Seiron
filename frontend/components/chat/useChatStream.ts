@@ -3,6 +3,7 @@ import { Subscription } from 'rxjs'
 import * as E from 'fp-ts/Either'
 import { ChatStreamService, StreamMessage, TypingIndicator, ConnectionStatus } from './ChatStreamService'
 import { AdapterAction } from '@/lib/orchestrator-client'
+import { logger } from '@/lib/logger'
 
 export interface UseChatStreamOptions {
   apiEndpoint?: string
@@ -47,8 +48,8 @@ export function useChatStream(options: UseChatStreamOptions): UseChatStreamResul
   // Initialize chat service
   useEffect(() => {
     const service = new ChatStreamService({
-      apiEndpoint: options.apiEndpoint || process.env.NEXT_PUBLIC_ORCHESTRATOR_API || '/api',
-      wsEndpoint: options.wsEndpoint || process.env.NEXT_PUBLIC_ORCHESTRATOR_WS || 'ws://localhost:3001',
+      apiEndpoint: options.apiEndpoint || import.meta.env.VITE_ORCHESTRATOR_API || '/api',
+      wsEndpoint: options.wsEndpoint || import.meta.env.VITE_ORCHESTRATOR_WS || 'ws://localhost:3001',
       sessionId: options.sessionId,
       maxRetries: options.maxRetries || 3,
       retryDelay: options.retryDelay || 1000,
@@ -133,12 +134,12 @@ export function useChatStream(options: UseChatStreamOptions): UseChatStreamResul
     chatServiceRef.current.sendMessage(content, metadata).subscribe({
       next: (result) => {
         if (E.isLeft(result)) {
-          console.error('Failed to send message:', result.left)
+          logger.error('Failed to send message:', result.left)
           setIsLoading(false)
         }
       },
       error: (error) => {
-        console.error('Error sending message:', error)
+        logger.error('Error sending message:', error)
         setIsLoading(false)
       }
     })
@@ -153,12 +154,12 @@ export function useChatStream(options: UseChatStreamOptions): UseChatStreamResul
     chatServiceRef.current.sendAdapterAction(action).subscribe({
       next: (result) => {
         if (E.isLeft(result)) {
-          console.error('Failed to send adapter action:', result.left)
+          logger.error('Failed to send adapter action:', result.left)
           setIsLoading(false)
         }
       },
       error: (error) => {
-        console.error('Error sending adapter action:', error)
+        logger.error('Error sending adapter action:', error)
         setIsLoading(false)
       }
     })
