@@ -4,10 +4,27 @@
  * Tracks which features are used and when to optimize preloading
  */
 
+interface FeatureUsageData {
+  count: number;
+  lastUsed: string | null;
+}
+
+interface FeatureInfo {
+  feature: string;
+  count: number;
+}
+
+interface UsageReport {
+  totalFeatures: number;
+  mostUsed: FeatureInfo | null;
+  leastUsed: FeatureInfo | null;
+  recommendations: string[];
+}
+
 export const FeatureAnalytics = {
-  usage: new Map(),
+  usage: new Map<string, FeatureUsageData>(),
   
-  trackFeatureUsage(featureName: string, route: string) {
+  trackFeatureUsage(featureName: string, route: string): void {
     const key = `${featureName}:${route}`
     const current = this.usage.get(key) || { count: 0, lastUsed: null }
     
@@ -22,12 +39,12 @@ export const FeatureAnalytics = {
     }
   },
   
-  getUsageReport() {
-    const report = {
+  getUsageReport(): UsageReport {
+    const report: UsageReport = {
       totalFeatures: this.usage.size,
-      mostUsed: null as { feature: string; count: number } | null,
-      leastUsed: null as { feature: string; count: number } | null,
-      recommendations: [] as string[]
+      mostUsed: null,
+      leastUsed: null,
+      recommendations: []
     }
     
     let maxCount = 0
@@ -47,7 +64,9 @@ export const FeatureAnalytics = {
     
     // Generate recommendations
     for (const [key, data] of this.usage.entries()) {
-      const [feature, route] = key.split(':')
+      const parts = key.split(':')
+      const feature = parts[0] || ''
+      const route = parts[1] || ''
       
       if (data.count > 5) {
         report.recommendations.push(`Consider preloading ${feature} for ${route}`)
@@ -59,12 +78,12 @@ export const FeatureAnalytics = {
     return report
   },
   
-  loadUsageData() {
+  loadUsageData(): void {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('feature-usage')
       if (stored) {
         try {
-          const data = JSON.parse(stored)
+          const data: [string, FeatureUsageData][] = JSON.parse(stored)
           this.usage = new Map(data)
         } catch (error) {
           console.error('Failed to load usage data:', error)

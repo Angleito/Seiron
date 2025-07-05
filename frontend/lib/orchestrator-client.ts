@@ -1,5 +1,5 @@
 import { UserIntent, TaskResult, AgentStreamEvent, Either } from '../types/agent'
-import { logger } from './logger'
+import { logger, logRequest, logResponse, time, timeEnd } from './logger'
 import { 
   AdapterAction, 
   AdapterActionResult, 
@@ -57,30 +57,151 @@ export class Orchestrator {
     })
   }
 
-  async processIntent(intent: UserIntent): Promise<Either<string, TaskResult>> {
+  /**
+   * Enhanced HTTP request wrapper with comprehensive logging
+   */
+  private async makeRequest<T>(
+    url: string,
+    options: RequestInit,
+    context?: string
+  ): Promise<Either<string, T>> {
+    const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+    const performanceLabel = `${context || 'HTTP'}_${options.method || 'GET'}_${url.split('/').pop()}`
+    
+    // Start performance timing
+    time(performanceLabel, { 
+      requestId, 
+      context,
+      url,
+      method: options.method || 'GET'
+    })
+    
+    // Log request initiation
+    logRequest({
+      requestId,
+      method: options.method || 'GET',
+      url,
+      headers: options.headers as Record<string, string>,
+      body: options.body ? JSON.parse(options.body as string) : undefined,
+      startTime: Date.now()
+    })
+    
     try {
-      const response = await fetch(`${this.config.apiEndpoint}/process-intent`, {
+      // Add request ID to headers
+      const enhancedOptions: RequestInit = {
+        ...options,
+        headers: {
+          ...options.headers,
+          'X-Request-ID': requestId,
+          'X-Client-Version': '1.0.0',
+          'X-Client-Type': 'frontend'
+        }
+      }
+      
+      logger.debug('Making HTTP request', {
+        requestId,
+        method: options.method || 'GET',
+        url,
+        timeout: this.config.timeout,
+        context
+      })
+      
+      const response = await fetch(url, {
+        ...enhancedOptions,
+        signal: AbortSignal.timeout(this.config.timeout!),
+      })
+      
+      const responseText = await response.text()
+      let responseData: T
+      
+      try {
+        responseData = responseText ? JSON.parse(responseText) : null
+      } catch (parseError) {
+        logger.warn('Failed to parse response as JSON', {
+          requestId,
+          responseText: responseText.substring(0, 500),
+          parseError
+        })
+        responseData = responseText as unknown as T
+      }
+      
+      // Log response
+      logResponse(requestId, {
+        status: response.status,
+        statusText: response.statusText,
+        response: responseData
+      })
+      
+      // End performance timing
+      const timer = timeEnd(performanceLabel, {
+        status: response.status,
+        success: response.ok
+      })
+      
+      if (!response.ok) {
+        const error = responseData as any
+        const errorMessage = error?.message || `HTTP ${response.status}: ${response.statusText}`
+        
+        logger.error('HTTP request failed', {
+          requestId,
+          status: response.status,
+          statusText: response.statusText,
+          error: errorMessage,
+          duration: timer?.duration,
+          context
+        })
+        
+        return { _tag: 'Left', left: errorMessage }
+      }
+      
+      logger.info('HTTP request successful', {
+        requestId,
+        status: response.status,
+        duration: timer?.duration,
+        responseSize: responseText.length,
+        context
+      })
+      
+      return { _tag: 'Right', right: responseData }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      
+      // Log error response
+      logResponse(requestId, {
+        error: error instanceof Error ? error : new Error(errorMessage)
+      })
+      
+      // End performance timing with error
+      const timer = timeEnd(performanceLabel, {
+        error: true,
+        errorType: error instanceof Error ? error.name : 'Unknown'
+      })
+      
+      logger.error('HTTP request error', {
+        requestId,
+        error: errorMessage,
+        duration: timer?.duration,
+        context,
+        url,
+        method: options.method || 'GET'
+      })
+      
+      return { _tag: 'Left', left: errorMessage }
+    }
+  }
+
+  async processIntent(intent: UserIntent): Promise<Either<string, TaskResult>> {
+    return this.makeRequest<TaskResult>(
+      `${this.config.apiEndpoint}/process-intent`,
+      {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ intent }),
-        signal: AbortSignal.timeout(this.config.timeout!),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        return { _tag: 'Left', left: error.message || 'Failed to process intent' }
-      }
-
-      const result = await response.json()
-      return { _tag: 'Right', right: result }
-    } catch (error) {
-      return { 
-        _tag: 'Left', 
-        left: error instanceof Error ? error.message : 'Unknown error occurred' 
-      }
-    }
+      },
+      'PROCESS_INTENT'
+    )
   }
 
   // ============================================================================
@@ -199,6 +320,71 @@ export class Orchestrator {
     }
   }
 
+  async getSeiNetworkData(): Promise<Either<string, HiveAnalyticsResult>> {
+    try {
+      await this.ensureAdapterConnected('hive')
+      const adapter = this.adapterFactory.getHiveAdapter()!
+      return await adapter.getSeiNetworkData()
+    } catch (error) {
+      return { 
+        _tag: 'Left', 
+        left: error instanceof Error ? error.message : 'Unknown error occurred' 
+      }
+    }
+  }
+
+  async getSeiTokenData(symbol: string): Promise<Either<string, HiveAnalyticsResult>> {
+    try {
+      await this.ensureAdapterConnected('hive')
+      const adapter = this.adapterFactory.getHiveAdapter()!
+      return await adapter.getSeiTokenData(symbol)
+    } catch (error) {
+      return { 
+        _tag: 'Left', 
+        left: error instanceof Error ? error.message : 'Unknown error occurred' 
+      }
+    }
+  }
+
+  async getCryptoMarketData(symbols: string[]): Promise<Either<string, HiveAnalyticsResult>> {
+    try {
+      await this.ensureAdapterConnected('hive')
+      const adapter = this.adapterFactory.getHiveAdapter()!
+      return await adapter.getCryptoMarketData(symbols)
+    } catch (error) {
+      return { 
+        _tag: 'Left', 
+        left: error instanceof Error ? error.message : 'Unknown error occurred' 
+      }
+    }
+  }
+
+  async getSeiDeFiData(): Promise<Either<string, HiveAnalyticsResult>> {
+    try {
+      await this.ensureAdapterConnected('hive')
+      const adapter = this.adapterFactory.getHiveAdapter()!
+      return await adapter.getSeiDeFiData()
+    } catch (error) {
+      return { 
+        _tag: 'Left', 
+        left: error instanceof Error ? error.message : 'Unknown error occurred' 
+      }
+    }
+  }
+
+  async getSeiWalletAnalysis(address: string): Promise<Either<string, HiveAnalyticsResult>> {
+    try {
+      await this.ensureAdapterConnected('hive')
+      const adapter = this.adapterFactory.getHiveAdapter()!
+      return await adapter.getSeiWalletAnalysis(address)
+    } catch (error) {
+      return { 
+        _tag: 'Left', 
+        left: error instanceof Error ? error.message : 'Unknown error occurred' 
+      }
+    }
+  }
+
   // ============================================================================
   // MCP Protocol Integration Methods
   // ============================================================================
@@ -283,6 +469,16 @@ export class Orchestrator {
             result = await this.getHivePortfolioAnalysis(action.params.walletAddress as string, action.params)
           } else if (action.action === 'credits') {
             result = await this.getHiveCreditUsage()
+          } else if (action.action === 'sei_network_data') {
+            result = await this.getSeiNetworkData()
+          } else if (action.action === 'sei_token_data') {
+            result = await this.getSeiTokenData(action.params.symbol as string)
+          } else if (action.action === 'crypto_market_data') {
+            result = await this.getCryptoMarketData(action.params.symbols as string[])
+          } else if (action.action === 'sei_defi_data') {
+            result = await this.getSeiDeFiData()
+          } else if (action.action === 'sei_wallet_analysis') {
+            result = await this.getSeiWalletAnalysis(action.params.address as string)
           } else {
             return { 
               _tag: 'Left', 

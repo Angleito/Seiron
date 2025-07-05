@@ -5,6 +5,8 @@ import * as O from 'fp-ts/Option'
 import { pipe } from 'fp-ts/function'
 import { fromEvent, merge, Subject } from 'rxjs'
 import { map, distinctUntilChanged, takeUntil } from 'rxjs/operators'
+import { logger } from '../../lib/logger'
+import { voiceLogger, logSpeech, logEnvironment, logPerformance } from '../../lib/voice-logger'
 
 // Import types from the centralized speech types file
 import type { 
@@ -55,47 +57,76 @@ export const speechRecognitionReducer = (
   state: SpeechRecognitionState,
   action: SpeechRecognitionAction
 ): SpeechRecognitionState => {
+  logger.debug('🎤 Speech Recognition Action', {
+    type: action.type,
+    payload: action.type === 'SET_TRANSCRIPT' ? {
+      transcriptLength: action.payload?.transcript?.length || 0,
+      interimTranscriptLength: action.payload?.interimTranscript?.length || 0
+    } : action.type === 'SET_ERROR' ? {
+      errorType: action.payload?.type,
+      errorMessage: action.payload?.message
+    } : action.type === 'SET_SUPPORT_STATUS' ? {
+      isSupported: action.payload
+    } : 'none'
+  })
+  
   switch (action.type) {
     case 'START_LISTENING':
+      logger.debug('🎤 Starting to listen')
       return {
         ...state,
         isListening: true,
         error: O.none
       }
     case 'STOP_LISTENING':
+      logger.debug('🎤 Stopping listening')
       return {
         ...state,
         isListening: false
       }
     case 'SET_TRANSCRIPT':
+      logger.debug('🎤 Setting transcript', {
+        newTranscript: action.payload.transcript,
+        interimTranscript: action.payload.interimTranscript,
+        currentTranscriptLength: state.transcript.length,
+        totalTranscriptLength: state.transcript.length + action.payload.transcript.length
+      })
       return {
         ...state,
         transcript: state.transcript + action.payload.transcript,
         interimTranscript: action.payload.interimTranscript
       }
     case 'SET_ERROR':
+      logger.error('🎤 Setting error state', {
+        errorType: action.payload.type,
+        errorMessage: action.payload.message
+      })
       return {
         ...state,
         isListening: false,
         error: O.some(action.payload)
       }
     case 'CLEAR_ERROR':
+      logger.debug('🎤 Clearing error state')
       return {
         ...state,
         error: O.none
       }
     case 'CLEAR_TRANSCRIPT':
+      logger.debug('🎤 Clearing transcript')
       return {
         ...state,
         transcript: '',
         interimTranscript: ''
       }
     case 'SET_SUPPORT_STATUS':
+      logger.debug('🎤 Setting support status', { isSupported: action.payload })
       return {
         ...state,
         isSupported: action.payload
       }
     default:
+      logger.warn('🎤 Unknown action type', { type: (action as any).type })
       return state
   }
 }
@@ -113,25 +144,47 @@ const createSpeechError = (
   type: SpeechError['type'],
   message: string,
   originalError?: unknown
-): SpeechError => ({
-  type,
-  message,
-  originalError
-})
+): SpeechError => {
+  const error = {
+    type,
+    message,
+    originalError
+  }
+  
+  logger.error('🎤 Speech Recognition Error Created', {
+    type,
+    message,
+    originalErrorType: originalError ? typeof originalError : 'none',
+    originalErrorMessage: originalError instanceof Error ? originalError.message : originalError
+  })
+  
+  return error
+}
 
 // Pure validation functions
-const validateSpeechRecognition = (recognition: ISpeechRecognition | null): E.Either<SpeechError, ISpeechRecognition> =>
-  recognition === null
-    ? E.left(createSpeechError('NO_SUPPORT', 'Speech recognition is not supported in this browser'))
-    : E.right(recognition)
+const validateSpeechRecognition = (recognition: ISpeechRecognition | null): E.Either<SpeechError, ISpeechRecognition> => {
+  if (recognition === null) {
+    logger.error('🎤 Speech recognition validation failed - not supported')
+    return E.left(createSpeechError('NO_SUPPORT', 'Speech recognition is not supported in this browser'))
+  }
+  
+  logger.debug('🎤 Speech recognition validation successful')
+  return E.right(recognition)
+}
 
 const validateListeningState = (isListening: boolean, operation: 'start' | 'stop'): E.Either<SpeechError, boolean> => {
+  logger.debug('🎤 Validating listening state', { isListening, operation })
+  
   if (operation === 'start' && isListening) {
+    logger.warn('🎤 Cannot start - already listening')
     return E.left(createSpeechError('UNKNOWN', 'Already listening'))
   }
   if (operation === 'stop' && !isListening) {
+    logger.warn('🎤 Cannot stop - not currently listening')
     return E.left(createSpeechError('UNKNOWN', 'Not currently listening'))
   }
+  
+  logger.debug('🎤 Listening state validation successful')
   return E.right(isListening)
 }
 
@@ -142,23 +195,51 @@ const extractTranscript = (event: ISpeechRecognitionEvent): {
 } => {
   let transcript = ''
   let interimTranscript = ''
+  
+  logger.debug('🎤 Extracting transcript from event', {
+    resultIndex: event.resultIndex,
+    resultsLength: event.results.length
+  })
 
   for (let i = event.resultIndex; i < event.results.length; i++) {
     const result = event.results[i]
     if (result && result.length > 0) {
+      const resultText = result[0]?.transcript || ''
+      const confidence = result[0]?.confidence || 0
+      
       if (result.isFinal) {
-        transcript += result[0]?.transcript || ''
+        transcript += resultText
+        logger.debug('🎤 Final transcript segment', {
+          text: resultText,
+          confidence,
+          index: i
+        })
       } else {
-        interimTranscript += result[0]?.transcript || ''
+        interimTranscript += resultText
+        logger.debug('🎤 Interim transcript segment', {
+          text: resultText,
+          confidence,
+          index: i
+        })
       }
     }
   }
+  
+  logger.debug('🎤 Transcript extraction complete', {
+    finalTranscript: transcript,
+    interimTranscript: interimTranscript
+  })
 
   return { transcript, interimTranscript }
 }
 
 // Pure error mapping
 const mapSpeechRecognitionError = (errorEvent: ISpeechRecognitionErrorEvent): SpeechError => {
+  logger.error('🎤 Mapping speech recognition error', {
+    error: errorEvent.error,
+    message: errorEvent.message
+  })
+  
   switch (errorEvent.error) {
     case 'not-allowed':
       return createSpeechError('PERMISSION_DENIED', 'Microphone permission denied')
@@ -195,38 +276,82 @@ const configureSpeechRecognition = (config: ReturnType<typeof createSpeechRecogn
   }
 
 // Pure stream creation functions
-const createResultStream = (recognition: ISpeechRecognition, stopSignal: Subject<void>) =>
-  fromEvent<ISpeechRecognitionEvent>(recognition as any, 'result').pipe(
+const createResultStream = (recognition: ISpeechRecognition, stopSignal: Subject<void>) => {
+  logger.debug('🎤 Creating result stream')
+  return fromEvent<ISpeechRecognitionEvent>(recognition as any, 'result').pipe(
     takeUntil(stopSignal),
-    map(extractTranscript),
+    map((event) => {
+      logger.debug('🎤 Raw result event received', {
+        resultIndex: event.resultIndex,
+        resultsLength: event.results.length
+      })
+      return extractTranscript(event)
+    }),
     distinctUntilChanged(
-      (a, b) => 
-        a.transcript === b.transcript && 
-        a.interimTranscript === b.interimTranscript
+      (a, b) => {
+        const same = a.transcript === b.transcript && a.interimTranscript === b.interimTranscript
+        if (!same) {
+          logger.debug('🎤 Transcript changed', { previous: a, current: b })
+        }
+        return same
+      }
     )
   )
+}
 
-const createErrorStream = (recognition: ISpeechRecognition, stopSignal: Subject<void>) =>
-  fromEvent<ISpeechRecognitionErrorEvent>(recognition as any, 'error').pipe(
+const createErrorStream = (recognition: ISpeechRecognition, stopSignal: Subject<void>) => {
+  logger.debug('🎤 Creating error stream')
+  return fromEvent<ISpeechRecognitionErrorEvent>(recognition as any, 'error').pipe(
     takeUntil(stopSignal),
-    map((event) => mapSpeechRecognitionError(event))
+    map((event) => {
+      logger.error('🎤 Raw error event received', {
+        error: event.error,
+        message: event.message
+      })
+      return mapSpeechRecognitionError(event)
+    })
   )
+}
 
-const createEndStream = (recognition: ISpeechRecognition, stopSignal: Subject<void>) =>
-  fromEvent(recognition as any, 'end').pipe(
+const createEndStream = (recognition: ISpeechRecognition, stopSignal: Subject<void>) => {
+  logger.debug('🎤 Creating end stream')
+  return fromEvent(recognition as any, 'end').pipe(
     takeUntil(stopSignal),
-    map(() => 'END' as const)
+    map(() => {
+      logger.debug('🎤 Raw end event received')
+      return 'END' as const
+    })
   )
+}
 
 export const useSpeechRecognition = () => {
+  logger.debug('🎤 Initializing speech recognition hook')
+  
+  // Enhanced voice logging
+  logSpeech.init(true, { component: 'useSpeechRecognition' })
+  
   const [state, dispatch] = useReducer(speechRecognitionReducer, initialSpeechState)
 
   const recognitionRef = useRef<ISpeechRecognition | null>(null)
   const stopSubject = useRef(new Subject<void>())
+  
+  // Log state changes
+  useEffect(() => {
+    logger.debug('🎤 Speech recognition state changed', {
+      isListening: state.isListening,
+      transcriptLength: state.transcript.length,
+      interimTranscriptLength: state.interimTranscript.length,
+      hasError: O.isSome(state.error),
+      isSupported: state.isSupported
+    })
+  }, [state])
 
   // Pure recognition instance creation
   const recognition = useMemo(() => {
+    logger.debug('🎤 Creating speech recognition instance')
+    
     if (typeof window === 'undefined') {
+      logger.warn('🎤 Window undefined - likely server-side rendering')
       dispatch({ type: 'SET_SUPPORT_STATUS', payload: false })
       return null
     }
@@ -234,7 +359,14 @@ export const useSpeechRecognition = () => {
     const SpeechRecognitionAPI = 
       window.SpeechRecognition || window.webkitSpeechRecognition
     
+    logger.debug('🎤 Speech Recognition API availability', {
+      SpeechRecognition: !!window.SpeechRecognition,
+      webkitSpeechRecognition: !!window.webkitSpeechRecognition,
+      hasAPI: !!SpeechRecognitionAPI
+    })
+    
     if (!SpeechRecognitionAPI) {
+      logger.error('🎤 Speech Recognition API not available')
       dispatch({ type: 'SET_SUPPORT_STATUS', payload: false })
       return null
     }
@@ -243,12 +375,20 @@ export const useSpeechRecognition = () => {
     const config = createSpeechRecognitionConfig()
     const configuredInstance = configureSpeechRecognition(config)(instance)
     
+    logger.debug('🎤 Speech recognition instance created', {
+      continuous: configuredInstance.continuous,
+      interimResults: configuredInstance.interimResults,
+      lang: configuredInstance.lang
+    })
+    
     dispatch({ type: 'SET_SUPPORT_STATUS', payload: true })
     return configuredInstance
   }, [])
 
   // Pure start listening function using TaskEither
   const startListening = useCallback((): TE.TaskEither<SpeechError, void> => {
+    logger.debug('🎤 Starting listening operation')
+    
     return pipe(
       validateSpeechRecognition(recognition),
       TE.fromEither,
@@ -256,10 +396,17 @@ export const useSpeechRecognition = () => {
       TE.chain(() =>
         TE.tryCatch(
           async () => {
+            logger.debug('🎤 Requesting microphone permission and starting recognition')
             recognition!.start()
             dispatch({ type: 'START_LISTENING' })
+            logger.debug('🎤 Speech recognition started successfully')
           },
-          (error) => createSpeechError('UNKNOWN', 'Failed to start', error)
+          (error) => {
+            logger.error('🎤 Failed to start speech recognition', {
+              error: error instanceof Error ? error.message : String(error)
+            })
+            return createSpeechError('UNKNOWN', 'Failed to start', error)
+          }
         )
       )
     )
@@ -267,6 +414,8 @@ export const useSpeechRecognition = () => {
 
   // Pure stop listening function using TaskEither
   const stopListening = useCallback((): TE.TaskEither<SpeechError, void> => {
+    logger.debug('🎤 Stopping listening operation')
+    
     return pipe(
       validateSpeechRecognition(recognition),
       TE.fromEither,
@@ -274,27 +423,40 @@ export const useSpeechRecognition = () => {
       TE.chain(() =>
         TE.tryCatch(
           async () => {
+            logger.debug('🎤 Stopping speech recognition')
             recognition!.stop()
             stopSubject.current.next()
             dispatch({ type: 'STOP_LISTENING' })
+            logger.debug('🎤 Speech recognition stopped successfully')
           },
-          (error) => createSpeechError('UNKNOWN', 'Failed to stop', error)
+          (error) => {
+            logger.error('🎤 Failed to stop speech recognition', {
+              error: error instanceof Error ? error.message : String(error)
+            })
+            return createSpeechError('UNKNOWN', 'Failed to stop', error)
+          }
         )
       )
     )
   }, [recognition, state.isListening])
 
   const clearTranscript = useCallback(() => {
+    logger.debug('🎤 Clearing transcript')
     dispatch({ type: 'CLEAR_TRANSCRIPT' })
   }, [])
 
   const clearError = useCallback(() => {
+    logger.debug('🎤 Clearing error')
     dispatch({ type: 'CLEAR_ERROR' })
   }, [])
 
   useEffect(() => {
-    if (!recognition) return
+    if (!recognition) {
+      logger.debug('🎤 No recognition instance available for effect setup')
+      return
+    }
 
+    logger.debug('🎤 Setting up speech recognition event streams')
     recognitionRef.current = recognition
 
     // Pure reactive streams
@@ -304,14 +466,24 @@ export const useSpeechRecognition = () => {
 
     const subscription = merge(
       result$.pipe(
-        map(({ transcript, interimTranscript }) => ({
-          type: 'TRANSCRIPT' as const,
-          payload: { transcript, interimTranscript }
-        }))
+        map(({ transcript, interimTranscript }) => {
+          logger.debug('🎤 Result stream event', { transcript, interimTranscript })
+          return {
+            type: 'TRANSCRIPT' as const,
+            payload: { transcript, interimTranscript }
+          }
+        })
       ),
-      error$.pipe(map(error => ({ type: 'ERROR' as const, payload: error }))),
-      end$.pipe(map(() => ({ type: 'END' as const })))
+      error$.pipe(map(error => {
+        logger.error('🎤 Error stream event', { error })
+        return { type: 'ERROR' as const, payload: error }
+      })),
+      end$.pipe(map(() => {
+        logger.debug('🎤 End stream event')
+        return { type: 'END' as const }
+      }))
     ).subscribe(update => {
+      logger.debug('🎤 Processing stream update', { type: update.type })
       switch (update.type) {
         case 'TRANSCRIPT':
           dispatch({ type: 'SET_TRANSCRIPT', payload: update.payload })
@@ -326,11 +498,12 @@ export const useSpeechRecognition = () => {
     })
 
     return () => {
+      logger.debug('🎤 Cleaning up speech recognition streams')
       subscription.unsubscribe()
     }
   }, [recognition, state.transcript])
 
-  return {
+  const hookReturn = {
     ...state,
     startListening,
     stopListening,
@@ -351,6 +524,15 @@ export const useSpeechRecognition = () => {
     getNormalizedTranscript: () => transcriptUtils.normalize(state.transcript),
     hasTranscript: () => state.transcript.length > 0
   }
+  
+  logger.debug('🎤 Speech recognition hook returning state', {
+    isListening: hookReturn.isListening,
+    isSupported: hookReturn.isSupported,
+    hasTranscript: hookReturn.hasTranscript(),
+    hasError: hookReturn.hasError()
+  })
+  
+  return hookReturn
 }
 
 // Pure command creation and processing

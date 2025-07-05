@@ -3,7 +3,7 @@ import { Subscription } from 'rxjs'
 import * as E from 'fp-ts/Either'
 import { ChatStreamService, StreamMessage, TypingIndicator, ConnectionStatus } from './ChatStreamService'
 import { AdapterAction } from '@lib/orchestrator-client'
-import { logger } from '@lib/logger'
+import { logger, safeDebug, safeInfo, safeWarn, safeError } from '@lib/logger'
 
 export interface UseChatStreamOptions {
   apiEndpoint?: string
@@ -44,6 +44,35 @@ export function useChatStream(options: UseChatStreamOptions): UseChatStreamResul
   
   const chatServiceRef = useRef<ChatStreamService | null>(null)
   const subscriptionsRef = useRef<Subscription[]>([])
+  const mountTimeRef = useRef<number>(Date.now())
+  const [performanceMetrics, setPerformanceMetrics] = useState({
+    messagesSent: 0,
+    messagesReceived: 0,
+    adapterActionsSent: 0,
+    connectionErrors: 0,
+    averageResponseTime: 0,
+    totalResponseTime: 0
+  })
+  
+  // Log hook initialization
+  useEffect(() => {
+    mountTimeRef.current = Date.now()
+    safeInfo('useChatStream hook initialized', {
+      sessionId: options.sessionId,
+      apiEndpoint: options.apiEndpoint,
+      wsEndpoint: options.wsEndpoint,
+      mountTime: mountTimeRef.current
+    })
+    
+    return () => {
+      const sessionDuration = Date.now() - mountTimeRef.current
+      safeInfo('useChatStream hook cleanup', {
+        sessionId: options.sessionId,
+        sessionDuration,
+        performanceMetrics
+      })
+    }
+  }, [])
 
   // Initialize chat service
   useEffect(() => {
@@ -127,23 +156,77 @@ export function useChatStream(options: UseChatStreamOptions): UseChatStreamResul
   
   // Send message
   const sendMessage = useCallback((content: string, metadata?: Record<string, any>) => {
-    if (!chatServiceRef.current || !content.trim()) return
+    if (!chatServiceRef.current || !content.trim()) {
+      safeWarn('Send message blocked', {
+        sessionId: options.sessionId,
+        reason: !chatServiceRef.current ? 'no service' : 'empty content',
+        contentLength: content.length
+      })
+      return
+    }
+    
+    const sendStartTime = Date.now()
+    
+    safeInfo('Sending message via hook', {
+      sessionId: options.sessionId,
+      contentLength: content.length,
+      hasMetadata: !!metadata,
+      performanceMetrics
+    })
     
     setIsLoading(true)
     
+    // Update performance metrics
+    setPerformanceMetrics(prev => ({
+      ...prev,
+      messagesSent: prev.messagesSent + 1
+    }))
+    
     chatServiceRef.current.sendMessage(content, metadata).subscribe({
       next: (result) => {
+        const sendDuration = Date.now() - sendStartTime
+        
         if (E.isLeft(result)) {
-          logger.error('Failed to send message:', result.left)
+          safeError('Failed to send message via hook', {
+            sessionId: options.sessionId,
+            error: result.left,
+            sendDuration,
+            contentLength: content.length
+          })
           setIsLoading(false)
+          
+          setPerformanceMetrics(prev => ({
+            ...prev,
+            connectionErrors: prev.connectionErrors + 1
+          }))
+        } else {
+          safeDebug('Message sent successfully via hook', {
+            sessionId: options.sessionId,
+            messageId: result.right.id,
+            sendDuration,
+            contentLength: content.length
+          })
         }
       },
       error: (error) => {
-        logger.error('Error sending message:', error)
+        const sendDuration = Date.now() - sendStartTime
+        
+        safeError('Error sending message via hook', {
+          sessionId: options.sessionId,
+          error,
+          sendDuration,
+          contentLength: content.length
+        })
+        
         setIsLoading(false)
+        
+        setPerformanceMetrics(prev => ({
+          ...prev,
+          connectionErrors: prev.connectionErrors + 1
+        }))
       }
     })
-  }, [])
+  }, [options.sessionId, performanceMetrics])
   
   // Send adapter action
   const sendAdapterAction = useCallback((action: AdapterAction) => {
@@ -201,6 +284,11 @@ export function useChatStream(options: UseChatStreamOptions): UseChatStreamResul
     sendAdapterAction,
     sendVoiceMessage,
     clearMessages,
-    retryFailedMessage
+    retryFailedMessage,
+    // Performance metrics for debugging
+    ...(process.env.NODE_ENV === 'development' && {
+      performanceMetrics,
+      sessionDuration: Date.now() - mountTimeRef.current
+    })
   }
 }

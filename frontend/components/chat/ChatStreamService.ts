@@ -22,7 +22,7 @@ import * as N from 'fp-ts/number'
 import { pipe } from 'fp-ts/function'
 import { AgentMessage, AgentStreamEvent, AgentType } from '../../types/agent'
 import { getOrchestrator, AdapterAction } from '@lib/orchestrator-client'
-import { logger } from '@lib/logger'
+import { logger, safeDebug, safeInfo, time, logRequest, logResponse, timeEnd } from '@lib/logger'
 
 // Enhanced message types for streaming
 export interface StreamMessage extends AgentMessage {
@@ -65,6 +65,8 @@ export interface ChatStreamConfig {
 export class ChatStreamService {
   private config: Required<ChatStreamConfig>
   private ws: WebSocket | null = null
+  private serviceId: string = `chat_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+  private messageCounter: number = 0
   
   // Stream subjects
   private messageSubject$ = new Subject<StreamMessage>()
@@ -94,7 +96,35 @@ export class ChatStreamService {
       ...config
     }
     
+    // Log service initialization
+    safeInfo('ChatStreamService initialized', {
+      sessionId: this.config.sessionId,
+      apiEndpoint: this.config.apiEndpoint,
+      wsEndpoint: this.config.wsEndpoint,
+      maxRetries: this.config.maxRetries,
+      retryDelay: this.config.retryDelay,
+      heartbeatInterval: this.config.heartbeatInterval,
+      messageTimeout: this.config.messageTimeout,
+      bufferSize: this.config.bufferSize,
+      throttleTime: this.config.throttleTime
+    })
+    
+    logger.info('ChatStreamService initialized', {
+      serviceId: this.serviceId,
+      sessionId: this.config.sessionId,
+      config: {
+        apiEndpoint: this.config.apiEndpoint,
+        wsEndpoint: this.config.wsEndpoint,
+        maxRetries: this.config.maxRetries,
+        heartbeatInterval: this.config.heartbeatInterval,
+        bufferSize: this.config.bufferSize
+      }
+    })
+    
     // Initialize observables
+    logger.time('ChatStreamService-Setup')
+    safeDebug('Setting up message streams', { sessionId: this.config.sessionId })
+    
     this.messages$ = this.setupMessageStream()
     this.typingIndicators$ = this.setupTypingStream()
     this.connectionStatus = this.connectionStatus$.asObservable()
@@ -104,6 +134,9 @@ export class ChatStreamService {
     this.initializeWebSocket()
     this.startHeartbeat()
     this.processMessageQueue()
+    
+    logger.timeEnd('ChatStreamService-Setup')
+    safeDebug('ChatStreamService setup completed', { sessionId: this.config.sessionId })
   }
   
   // ============================================================================
@@ -197,6 +230,12 @@ export class ChatStreamService {
   // ============================================================================
   
   private initializeWebSocket(): void {
+    logger.debug('Initializing WebSocket connection', {
+      serviceId: this.serviceId,
+      sessionId: this.config.sessionId,
+      wsEndpoint: this.config.wsEndpoint
+    })
+    
     const orchestrator = getOrchestrator({
       apiEndpoint: this.config.apiEndpoint,
       wsEndpoint: this.config.wsEndpoint
@@ -204,29 +243,93 @@ export class ChatStreamService {
     
     // Connect WebSocket
     orchestrator.connectWebSocket(this.config.sessionId)
+      .then(() => {
+        logger.info('WebSocket connected successfully through orchestrator', {
+          serviceId: this.serviceId,
+          sessionId: this.config.sessionId
+        })
+        
+        this.updateConnectionStatus({
+          isConnected: true,
+          lastHeartbeat: Date.now(),
+          reconnectAttempts: 0
+        })
+      })
+      .catch(error => {
+        logger.error('Failed to connect WebSocket through orchestrator', {
+          serviceId: this.serviceId,
+          sessionId: this.config.sessionId,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        })
+        
+        this.updateConnectionStatus({
+          isConnected: false,
+          error: error instanceof Error ? error.message : 'Connection failed',
+          reconnectAttempts: 1
+        })
+      })
     
     // Subscribe to orchestrator events
     this.subscribeToOrchestratorEvents(orchestrator)
   }
   
   private subscribeToOrchestratorEvents(orchestrator: any): void {
+    logger.debug('Subscribing to orchestrator events', {
+      serviceId: this.serviceId,
+      sessionId: this.config.sessionId
+    })
+    
     // Subscribe to status events
     orchestrator.on('status', (event: AgentStreamEvent) => {
+      logger.debug('Received status event', {
+        serviceId: this.serviceId,
+        sessionId: this.config.sessionId,
+        eventType: event.type,
+        agentId: event.agentId,
+        agentType: event.agentType,
+        timestamp: event.timestamp
+      })
       this.handleAgentEvent(event)
     })
     
     // Subscribe to progress events
     orchestrator.on('progress', (event: AgentStreamEvent) => {
+      logger.debug('Received progress event', {
+        serviceId: this.serviceId,
+        sessionId: this.config.sessionId,
+        eventType: event.type,
+        agentId: event.agentId,
+        agentType: event.agentType,
+        timestamp: event.timestamp
+      })
       this.handleProgressEvent(event)
     })
     
     // Subscribe to typing events
     orchestrator.on('typing', (event: AgentStreamEvent) => {
+      logger.debug('Received typing event', {
+        serviceId: this.serviceId,
+        sessionId: this.config.sessionId,
+        eventType: event.type,
+        agentId: event.agentId,
+        agentType: event.agentType,
+        isTyping: (event.data as any)?.isTyping,
+        timestamp: event.timestamp
+      })
       this.handleTypingEvent(event)
     })
     
     // Subscribe to message events
     orchestrator.on('message', (event: AgentStreamEvent) => {
+      logger.debug('Received message event', {
+        serviceId: this.serviceId,
+        sessionId: this.config.sessionId,
+        eventType: event.type,
+        agentId: event.agentId,
+        agentType: event.agentType,
+        messageLength: (event.data as any)?.content?.length || 0,
+        timestamp: event.timestamp
+      })
       this.handleMessageEvent(event)
     })
   }
@@ -389,24 +492,111 @@ export class ChatStreamService {
   private sendMessageInternal(message: StreamMessage): Observable<void> {
     return new Observable<void>(observer => {
       const sendRequest = async () => {
+        this.messageCounter++
+        const requestId = `chat_msg_${this.serviceId}_${this.messageCounter}`
+        const performanceLabel = `CHAT_MESSAGE_${this.messageCounter}`
+        
+        // Start performance timing
+        logger.time(performanceLabel, {
+          serviceId: this.serviceId,
+          sessionId: this.config.sessionId,
+          messageId: message.id,
+          requestId
+        })
+        
         try {
           const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+          const requestBody = {
+            message: message.content,
+            sessionId: this.config.sessionId,
+            walletAddress: message.metadata?.walletAddress,
+            metadata: message.metadata
+          }
+          
+          // Log request initiation
+          logger.logRequest({
+            requestId,
+            method: 'POST',
+            url: `${apiBaseUrl}/chat/orchestrate`,
+            headers: { 'Content-Type': 'application/json' },
+            body: requestBody,
+            startTime: Date.now()
+          })
+          
+          logger.debug('Sending chat message', {
+            serviceId: this.serviceId,
+            sessionId: this.config.sessionId,
+            messageId: message.id,
+            requestId,
+            messageLength: message.content.length,
+            retryCount: message.retryCount || 0,
+            messageCounter: this.messageCounter
+          })
+          
           const response = await fetch(`${apiBaseUrl}/chat/orchestrate`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              message: message.content,
-              sessionId: this.config.sessionId,
-              walletAddress: message.metadata?.walletAddress,
-              metadata: message.metadata
+            headers: { 
+              'Content-Type': 'application/json',
+              'X-Request-ID': requestId,
+              'X-Service-ID': this.serviceId,
+              'X-Session-ID': this.config.sessionId
+            },
+            body: JSON.stringify(requestBody)
+          })
+          
+          const responseText = await response.text()
+          let data
+          
+          try {
+            data = responseText ? JSON.parse(responseText) : {}
+          } catch (parseError) {
+            logger.warn('Failed to parse chat response as JSON', {
+              serviceId: this.serviceId,
+              requestId,
+              responseText: responseText.substring(0, 500),
+              parseError
             })
+            throw new Error('Invalid response format from server')
+          }
+          
+          // Log response
+          logger.logResponse(requestId, {
+            status: response.status,
+            statusText: response.statusText,
+            response: data
+          })
+          
+          // End performance timing
+          const timer = logger.timeEnd(performanceLabel, {
+            status: response.status,
+            success: response.ok,
+            responseSize: responseText.length
           })
           
           if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
+            const errorMessage = data?.error || `HTTP ${response.status}: ${response.statusText}`
+            
+            logger.error('Chat message request failed', {
+              serviceId: this.serviceId,
+              requestId,
+              messageId: message.id,
+              status: response.status,
+              error: errorMessage,
+              duration: timer?.duration
+            })
+            
+            throw new Error(errorMessage)
           }
           
-          const data = await response.json()
+          logger.info('Chat message sent successfully', {
+            serviceId: this.serviceId,
+            requestId,
+            messageId: message.id,
+            status: response.status,
+            duration: timer?.duration,
+            responseSize: responseText.length,
+            agentType: data.agentType
+          })
           
           // Update message status to sent
           this.messageSubject$.next({
@@ -423,8 +613,22 @@ export class ChatStreamService {
               content: data.message,
               timestamp: new Date(),
               status: 'delivered',
-              metadata: data.metadata
+              metadata: {
+                ...data.metadata,
+                requestId,
+                executionTime: data.executionTime,
+                intentId: data.intentId
+              }
             }
+            
+            logger.debug('Received agent response', {
+              serviceId: this.serviceId,
+              requestId,
+              responseMessageId: responseMessage.id,
+              agentType: data.agentType,
+              responseLength: data.message.length,
+              executionTime: data.executionTime
+            })
             
             this.messageSubject$.next(responseMessage)
           }
@@ -432,12 +636,41 @@ export class ChatStreamService {
           observer.next()
           observer.complete()
         } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+          
+          // Log error response
+          logger.logResponse(requestId, {
+            error: error instanceof Error ? error : new Error(errorMessage)
+          })
+          
+          // End performance timing with error
+          const timer = logger.timeEnd(performanceLabel, {
+            error: true,
+            errorType: error instanceof Error ? error.name : 'Unknown'
+          })
+          
+          logger.error('Chat message request error', {
+            serviceId: this.serviceId,
+            requestId,
+            messageId: message.id,
+            error: errorMessage,
+            duration: timer?.duration,
+            retryCount: message.retryCount || 0
+          })
+          
           // Update message status to failed
           this.messageSubject$.next({
             ...message,
             status: 'failed',
-            metadata: { ...message.metadata, error: true }
+            metadata: { 
+              ...message.metadata, 
+              error: true,
+              errorMessage,
+              requestId,
+              lastFailedAt: Date.now()
+            }
           })
+          
           observer.error(error)
         }
       }
@@ -447,7 +680,14 @@ export class ChatStreamService {
       timeout(this.config.messageTimeout),
       retry(this.config.maxRetries),
       catchError(error => {
-        logger.error('Failed to send message after retries:', error)
+        logger.error('Failed to send message after retries:', {
+          serviceId: this.serviceId,
+          sessionId: this.config.sessionId,
+          messageId: message.id,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          maxRetries: this.config.maxRetries,
+          timeout: this.config.messageTimeout
+        })
         return EMPTY
       })
     )
@@ -554,6 +794,12 @@ export class ChatStreamService {
   // ============================================================================
   
   public destroy(): void {
+    logger.info('Destroying ChatStreamService', {
+      serviceId: this.serviceId,
+      sessionId: this.config.sessionId,
+      messageCount: this.messageCounter
+    })
+    
     this.destroy$.next()
     this.destroy$.complete()
     
@@ -561,8 +807,18 @@ export class ChatStreamService {
     pipe(
       O.fromNullable(this.ws),
       O.fold(
-        () => {},
+        () => {
+          logger.debug('No WebSocket to close', {
+            serviceId: this.serviceId,
+            sessionId: this.config.sessionId
+          })
+        },
         (ws) => {
+          logger.debug('Closing WebSocket connection', {
+            serviceId: this.serviceId,
+            sessionId: this.config.sessionId,
+            readyState: ws.readyState
+          })
           ws.close()
           this.ws = null
         }
@@ -570,8 +826,27 @@ export class ChatStreamService {
     )
     
     // Disconnect orchestrator
-    const orchestrator = getOrchestrator()
-    orchestrator.disconnectWebSocket()
+    try {
+      const orchestrator = getOrchestrator()
+      orchestrator.disconnectWebSocket()
+      
+      logger.debug('Orchestrator WebSocket disconnected', {
+        serviceId: this.serviceId,
+        sessionId: this.config.sessionId
+      })
+    } catch (error) {
+      logger.warn('Error disconnecting orchestrator WebSocket', {
+        serviceId: this.serviceId,
+        sessionId: this.config.sessionId,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      })
+    }
+    
+    logger.info('ChatStreamService destroyed successfully', {
+      serviceId: this.serviceId,
+      sessionId: this.config.sessionId,
+      finalMessageCount: this.messageCounter
+    })
   }
 }
 

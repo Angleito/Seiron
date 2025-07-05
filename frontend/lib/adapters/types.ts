@@ -120,6 +120,207 @@ export interface HiveCreditUsage {
   }>
 }
 
+// ============================================================================
+// SEI/Crypto Data Interfaces
+// ============================================================================
+
+export interface SeiNetworkData {
+  networkId: string
+  chainId: string
+  status: 'active' | 'maintenance' | 'degraded'
+  blockHeight: number
+  blockTime: number
+  totalValidators: number
+  activeValidators: number
+  bondedTokens: string
+  stakingRatio: number
+  inflation: number
+  communityPool: string
+  governance: {
+    activeProposals: number
+    votingPeriod: number
+    depositPeriod: number
+  }
+  metrics: {
+    tps: number
+    avgBlockTime: number
+    avgGasPrice: string
+    networkHashRate?: string
+  }
+}
+
+export interface SeiTokenData {
+  symbol: string
+  name: string
+  address?: string
+  decimals: number
+  totalSupply: string
+  circulatingSupply: string
+  price: {
+    usd: number
+    change24h: number
+    change7d: number
+    marketCap: number
+    volume24h: number
+    rank?: number
+  }
+  metadata: {
+    logoUrl?: string
+    description?: string
+    website?: string
+    twitter?: string
+    coingeckoId?: string
+    isNative: boolean
+    isVerified: boolean
+  }
+}
+
+export interface CryptoMarketData {
+  timestamp: number
+  tokens: SeiTokenData[]
+  marketSummary: {
+    totalMarketCap: number
+    totalVolume24h: number
+    btcDominance: number
+    ethDominance: number
+    defiTvl: number
+    fearGreedIndex?: number
+  }
+  trending: {
+    gainers: Array<{
+      symbol: string
+      change24h: number
+      volume24h: number
+    }>
+    losers: Array<{
+      symbol: string
+      change24h: number
+      volume24h: number
+    }>
+    mostActive: Array<{
+      symbol: string
+      volume24h: number
+      volumeChange24h: number
+    }>
+  }
+}
+
+export interface SeiDeFiData {
+  protocols: Array<{
+    name: string
+    category: string
+    tvl: number
+    tvlChange24h: number
+    volume24h: number
+    fees24h: number
+    users24h: number
+    chains: string[]
+    token?: {
+      symbol: string
+      price: number
+      change24h: number
+    }
+  }>
+  opportunities: Array<{
+    id: string
+    protocol: string
+    type: 'lending' | 'farming' | 'staking' | 'liquidity' | 'arbitrage'
+    apr: number
+    apy: number
+    tvl: number
+    risk: 'low' | 'medium' | 'high'
+    requirements: {
+      minAmount: string
+      tokens: string[]
+      lockPeriod?: number
+    }
+    description: string
+  }>
+  aggregatedMetrics: {
+    totalTvl: number
+    totalVolume24h: number
+    totalFees24h: number
+    protocolCount: number
+    avgApr: number
+    topCategory: string
+  }
+}
+
+export interface SeiWalletAnalysis {
+  address: string
+  totalValue: {
+    usd: number
+    native: string
+  }
+  holdings: Array<{
+    token: SeiTokenData
+    amount: string
+    value: number
+    percentage: number
+    costBasis?: number
+    pnl?: {
+      realized: number
+      unrealized: number
+      percentage: number
+    }
+  }>
+  performance: {
+    totalReturn: number
+    totalReturnPercentage: number
+    bestAsset: {
+      symbol: string
+      return: number
+      returnPercentage: number
+    }
+    worstAsset: {
+      symbol: string
+      return: number
+      returnPercentage: number
+    }
+    riskMetrics: {
+      volatility: number
+      sharpeRatio: number
+      maxDrawdown: number
+      beta: number
+    }
+  }
+  recommendations: Array<{
+    id: string
+    type: 'diversification' | 'rebalancing' | 'opportunity' | 'risk'
+    priority: 'high' | 'medium' | 'low'
+    title: string
+    description: string
+    actionItems: string[]
+    expectedImpact: {
+      type: 'return' | 'risk' | 'efficiency'
+      value: number
+      timeframe: string
+    }
+  }>
+  defiPositions: Array<{
+    protocol: string
+    type: 'lending' | 'farming' | 'staking' | 'liquidity'
+    tokens: string[]
+    value: number
+    apr: number
+    rewards: {
+      pending: number
+      claimed: number
+    }
+    riskLevel: 'low' | 'medium' | 'high'
+  }>
+  transactionHistory: {
+    totalTransactions: number
+    avgGasSpent: number
+    mostUsedProtocols: string[]
+    tradingPairs: Array<{
+      pair: string
+      volume: number
+      frequency: number
+    }>
+  }
+}
+
 export interface HiveIntelligenceAdapter extends BaseAdapter {
   search(
     query: string,
@@ -137,6 +338,17 @@ export interface HiveIntelligenceAdapter extends BaseAdapter {
   ): Promise<Either<string, HiveAnalyticsResult>>
   
   getCreditUsage(): Promise<Either<string, HiveCreditUsage>>
+  
+  // SEI blockchain and crypto data access methods
+  getSeiNetworkData(): Promise<Either<string, HiveAnalyticsResult>>
+  
+  getSeiTokenData(symbol: string): Promise<Either<string, HiveAnalyticsResult>>
+  
+  getCryptoMarketData(symbols: string[]): Promise<Either<string, HiveAnalyticsResult>>
+  
+  getSeiDeFiData(): Promise<Either<string, HiveAnalyticsResult>>
+  
+  getSeiWalletAnalysis(address: string): Promise<Either<string, HiveAnalyticsResult>>
 }
 
 // ============================================================================

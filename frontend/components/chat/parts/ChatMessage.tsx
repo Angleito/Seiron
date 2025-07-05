@@ -1,15 +1,16 @@
 'use client'
 
-import React, { useCallback } from 'react'
-import { Mic, AlertCircle } from 'lucide-react'
+import React, { useCallback, useEffect, useState } from 'react'
+import { Mic, AlertCircle, Copy, Check } from 'lucide-react'
 import { cn } from '@lib/utils'
 import { StreamMessage } from '../ChatStreamService'
 import { useSanitizedContent, SANITIZE_CONFIGS } from '@lib/sanitize'
-import { logger } from '@lib/logger'
+import { logger, safeDebug, safeInfo, safeWarn } from '@lib/logger'
 
 interface ChatMessageProps {
   message: StreamMessage
   onRetry: (messageId: string) => void
+  sessionId?: string
 }
 
 // Safe message content renderer - memoized
@@ -44,8 +45,43 @@ const SafeMessageContent = React.memo(function SafeMessageContent({
 
 export const ChatMessage = React.memo(function ChatMessage({
   message,
-  onRetry
+  onRetry,
+  sessionId
 }: ChatMessageProps) {
+  const [renderStartTime] = useState(Date.now())
+  const [isHovered, setIsHovered] = useState(false)
+  const [isCopied, setIsCopied] = useState(false)
+  const [interactionCount, setInteractionCount] = useState(0)
+  
+  // Log message render
+  useEffect(() => {
+    const renderTime = Date.now() - renderStartTime
+    
+    safeDebug('ChatMessage rendered', {
+      sessionId,
+      messageId: message.id,
+      messageType: message.type,
+      agentType: message.agentType,
+      status: message.status,
+      contentLength: message.content.length,
+      renderTime,
+      hasMetadata: !!message.metadata,
+      timestamp: message.timestamp
+    })
+  }, [sessionId, message, renderStartTime])
+  
+  // Log status changes
+  useEffect(() => {
+    if (message.status) {
+      safeDebug('Message status changed', {
+        sessionId,
+        messageId: message.id,
+        status: message.status,
+        messageType: message.type,
+        timestamp: Date.now()
+      })
+    }
+  }, [message.status, sessionId, message.id, message.type])
   // Message status icon - memoized
   const getStatusIcon = useCallback((status?: StreamMessage['status']): string | null => {
     if (!status) return null
@@ -59,6 +95,83 @@ export const ChatMessage = React.memo(function ChatMessage({
       default: return null
     }
   }, [])
+  
+  // Handle copy to clipboard
+  const handleCopyMessage = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(message.content)
+      setIsCopied(true)
+      setInteractionCount(prev => prev + 1)
+      
+      safeInfo('Message copied to clipboard', {
+        sessionId,
+        messageId: message.id,
+        messageType: message.type,
+        contentLength: message.content.length,
+        interactionCount: interactionCount + 1
+      })
+      
+      // Reset copied state after 2 seconds
+      setTimeout(() => setIsCopied(false), 2000)
+    } catch (error) {
+      safeWarn('Failed to copy message to clipboard', {
+        sessionId,
+        messageId: message.id,
+        error
+      })
+    }
+  }, [message.content, message.id, message.type, sessionId, interactionCount])
+  
+  // Handle retry action
+  const handleRetry = useCallback(() => {
+    setInteractionCount(prev => prev + 1)
+    
+    safeInfo('User triggered message retry', {
+      sessionId,
+      messageId: message.id,
+      messageType: message.type,
+      status: message.status,
+      retryCount: message.retryCount || 0,
+      interactionCount: interactionCount + 1
+    })
+    
+    onRetry(message.id)
+  }, [onRetry, message.id, message.type, message.status, message.retryCount, sessionId, interactionCount])
+  
+  // Handle message hover
+  const handleMouseEnter = useCallback(() => {
+    setIsHovered(true)
+    setInteractionCount(prev => prev + 1)
+    
+    safeDebug('Message hovered', {
+      sessionId,
+      messageId: message.id,
+      messageType: message.type,
+      interactionCount: interactionCount + 1
+    })
+  }, [sessionId, message.id, message.type, interactionCount])
+  
+  const handleMouseLeave = useCallback(() => {
+    setIsHovered(false)
+    
+    safeDebug('Message hover ended', {
+      sessionId,
+      messageId: message.id,
+      messageType: message.type
+    })
+  }, [sessionId, message.id, message.type])
+  
+  // Handle message click
+  const handleMessageClick = useCallback(() => {
+    setInteractionCount(prev => prev + 1)
+    
+    safeDebug('Message clicked', {
+      sessionId,
+      messageId: message.id,
+      messageType: message.type,
+      interactionCount: interactionCount + 1
+    })
+  }, [sessionId, message.id, message.type, interactionCount])
 
   return (
     <div
@@ -66,19 +179,43 @@ export const ChatMessage = React.memo(function ChatMessage({
         'flex',
         message.type === 'user' ? 'justify-end' : 'justify-start'
       )}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={handleMessageClick}
     >
       <div
         className={cn(
-          'max-w-[70%] rounded-lg px-4 py-2',
+          'max-w-[70%] rounded-lg px-4 py-2 relative group transition-all duration-200',
           message.type === 'user'
             ? 'bg-gradient-to-r from-red-600 to-red-700 text-white'
             : message.type === 'system'
             ? 'bg-gray-800 text-gray-300 italic'
             : message.metadata?.error
             ? 'bg-red-100 text-red-900'
-            : 'bg-gray-900 text-red-100'
+            : 'bg-gray-900 text-red-100',
+          isHovered && 'shadow-lg transform scale-[1.02]'
         )}
       >
+        {/* Copy button - appears on hover */}
+        {isHovered && message.content.trim() && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              handleCopyMessage()
+            }}
+            className={cn(
+              'absolute top-2 right-2 p-1 rounded bg-black/20 hover:bg-black/40 transition-colors',
+              message.type === 'user' ? 'text-white' : 'text-gray-300'
+            )}
+            title="Copy message"
+          >
+            {isCopied ? (
+              <Check className="h-3 w-3" />
+            ) : (
+              <Copy className="h-3 w-3" />
+            )}
+          </button>
+        )}
         {/* Voice indicator for voice messages */}
         {message.metadata?.source === 'voice' && (
           <div className="flex items-center gap-1 mb-1">
@@ -107,12 +244,45 @@ export const ChatMessage = React.memo(function ChatMessage({
           {/* Retry button for failed messages */}
           {message.status === 'failed' && (
             <button
-              onClick={() => onRetry(message.id)}
-              className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1"
+              onClick={(e) => {
+                e.stopPropagation()
+                handleRetry()
+              }}
+              className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors"
+              title="Retry sending message"
             >
               <AlertCircle className="h-3 w-3" />
               Retry
             </button>
+          )}
+          
+          {/* Interaction indicator for development */}
+          {process.env.NODE_ENV === 'development' && interactionCount > 0 && (
+            <span className="text-xs opacity-50">
+              Interactions: {interactionCount}
+            </span>
+          )}
+          
+          {/* Voice indicator enhancement */}
+          {message.metadata?.source === 'voice' && (
+            <span className="text-xs opacity-75 flex items-center gap-1" title="Voice message">
+              <Mic className="h-3 w-3" />
+              Voice
+            </span>
+          )}
+          
+          {/* Execution time */}
+          {message.metadata?.executionTime && (
+            <span className="text-xs opacity-75" title="Execution time">
+              ⚡ {(message.metadata.executionTime / 1000).toFixed(2)}s
+            </span>
+          )}
+          
+          {/* Agent confidence */}
+          {message.metadata?.confidence && (
+            <span className="text-xs opacity-75" title="AI confidence">
+              🎯 {Math.round(message.metadata.confidence * 100)}%
+            </span>
           )}
         </div>
       </div>

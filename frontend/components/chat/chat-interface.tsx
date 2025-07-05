@@ -8,7 +8,7 @@ import { getOrchestrator } from '@lib/orchestrator-client'
 import { ChatStreamService, StreamMessage, TypingIndicator, ConnectionStatus } from './ChatStreamService'
 import { Subscription } from 'rxjs'
 import * as E from 'fp-ts/Either'
-import { logger } from '@lib/logger'
+import { logger, safeDebug, safeInfo, safeWarn, safeError } from '@lib/logger'
 import { sanitizeChatMessage, useSanitizedContent, SANITIZE_CONFIGS } from '@lib/sanitize'
 import { SeironImage } from '@components/SeironImage'
 
@@ -38,7 +38,11 @@ interface AdapterAction {
 }
 
 // Generate unique session ID
-const generateSessionId = () => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+const generateSessionId = () => {
+  const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  safeDebug('Generated new chat session ID', { sessionId })
+  return sessionId
+}
 
 // Safe message content renderer
 function SafeMessageContent({ content, type }: { content: string; type: 'user' | 'agent' | 'system' }) {
@@ -67,6 +71,21 @@ function SafeMessageContent({ content, type }: { content: string; type: 'user' |
 export function ChatInterface() {
   const [input, setInput] = useState('')
   const [sessionId] = useState(generateSessionId())
+  
+  // Logging component mount
+  useEffect(() => {
+    logger.time('ChatInterface-Mount')
+    safeInfo('ChatInterface component mounted', {
+      sessionId,
+      timestamp: Date.now(),
+      userAgent: navigator.userAgent
+    })
+    
+    return () => {
+      logger.timeEnd('ChatInterface-Mount')
+      safeInfo('ChatInterface component unmounted', { sessionId })
+    }
+  }, [])
   const [hiveInsights, setHiveInsights] = useState<HiveInsight[]>([])
   const [networkStatus, setNetworkStatus] = useState<SeiNetworkStatus | null>(null)
   const [powerLevel, setPowerLevel] = useState<number>(9000)
@@ -101,6 +120,9 @@ export function ChatInterface() {
   
   // Add initial welcome message
   useEffect(() => {
+    logger.time('ChatInterface-WelcomeMessage')
+    safeDebug('Creating welcome message', { sessionId })
+    
     const welcomeMessage: StreamMessage = {
       id: '1',
       type: 'agent',
@@ -110,23 +132,58 @@ export function ChatInterface() {
       status: 'delivered'
     }
     setMessages([welcomeMessage])
+    
+    safeInfo('Welcome message added to chat', {
+      sessionId,
+      messageId: welcomeMessage.id,
+      agentType: welcomeMessage.agentType,
+      timestamp: welcomeMessage.timestamp
+    })
+    
+    logger.timeEnd('ChatInterface-WelcomeMessage')
   }, [])
 
   // Subscribe to chat streams
   useEffect(() => {
+    logger.time('ChatInterface-StreamSubscriptions')
+    safeDebug('Setting up chat stream subscriptions', { sessionId })
+    
     const subscriptions: Subscription[] = []
     
     // Subscribe to message stream
     subscriptions.push(
       chatService.messages$.subscribe(message => {
+        safeDebug('Received message from stream', {
+          sessionId,
+          messageId: message.id,
+          messageType: message.type,
+          agentType: message.agentType,
+          status: message.status,
+          timestamp: message.timestamp
+        })
+        
         setMessages(prev => {
           const existing = prev.findIndex(m => m.id === message.id)
-          if (existing >= 0) {
+          if (existing >= 0 && prev[existing]) {
             // Update existing message
+            safeDebug('Updating existing message', {
+              sessionId,
+              messageId: message.id,
+              previousStatus: prev[existing].status,
+              newStatus: message.status
+            })
             const updated = [...prev]
             updated[existing] = message
             return updated
           }
+          
+          safeDebug('Adding new message to chat', {
+            sessionId,
+            messageId: message.id,
+            messageType: message.type,
+            contentLength: message.content.length
+          })
+          
           return [...prev, message]
         })
       })
@@ -135,6 +192,11 @@ export function ChatInterface() {
     // Subscribe to typing indicators
     subscriptions.push(
       chatService.typingIndicators$.subscribe(indicators => {
+        safeDebug('Typing indicators updated', {
+          sessionId,
+          activeIndicators: indicators.length,
+          agentTypes: indicators.map(i => i.agentType)
+        })
         setTypingIndicators(indicators)
       })
     )
@@ -142,19 +204,56 @@ export function ChatInterface() {
     // Subscribe to connection status
     subscriptions.push(
       chatService.connectionStatus.subscribe(status => {
+        const logLevel = status.isConnected ? 'info' : 'warn'
+        const logMessage = `Connection status changed: ${status.isConnected ? 'connected' : 'disconnected'}`
+        
+        if (logLevel === 'info') {
+          safeInfo(logMessage, {
+            sessionId,
+            isConnected: status.isConnected,
+            lastHeartbeat: status.lastHeartbeat,
+            reconnectAttempts: status.reconnectAttempts,
+            error: status.error
+          })
+        } else {
+          safeWarn(logMessage, {
+            sessionId,
+            isConnected: status.isConnected,
+            lastHeartbeat: status.lastHeartbeat,
+            reconnectAttempts: status.reconnectAttempts,
+            error: status.error
+          })
+        }
+        
         setConnectionStatus(status)
       })
     )
     
     // Initialize adapter actions
-    setAdapterActions([
+    const adapterActionsList: AdapterAction[] = [
       { type: 'hive', action: 'search', params: {}, description: 'Search blockchain data with AI' },
       { type: 'hive', action: 'analytics', params: {}, description: 'Get AI-powered market insights' },
       { type: 'sak', action: 'get_token_balance', params: {}, description: 'Check token balances' },
       { type: 'sak', action: 'takara_supply', params: {}, description: 'Supply to Takara protocol' },
       { type: 'mcp', action: 'get_blockchain_state', params: {}, description: 'Get real-time network status' },
       { type: 'mcp', action: 'get_wallet_balance', params: {}, description: 'Get live wallet balance' },
-    ])
+      { type: 'sak', action: 'sei_network_status', params: {}, description: 'Get SEI network information' },
+      { type: 'sak', action: 'sei_token_info', params: {}, description: 'Get SEI token data' },
+      { type: 'hive', action: 'crypto_market_data', params: {}, description: 'Get crypto market information' },
+      { type: 'sak', action: 'sei_defi_data', params: {}, description: 'Get SEI DeFi protocols' },
+      { type: 'sak', action: 'sei_wallet_analysis', params: {}, description: 'Analyze SEI wallet' },
+    ]
+    
+    setAdapterActions(adapterActionsList)
+    
+    safeInfo('Adapter actions initialized', {
+      sessionId,
+      totalActions: adapterActionsList.length,
+      actionTypes: adapterActionsList.reduce((acc, action) => {
+        acc[action.type] = (acc[action.type] || 0) + 1
+        return acc
+      }, {} as Record<string, number>)
+    })
     
     // Legacy orchestrator events (will be migrated to streams)
     const orchestrator = getOrchestrator({
@@ -164,9 +263,21 @@ export function ChatInterface() {
     
     // Subscribe to Hive Intelligence events
     const unsubscribeHive = orchestrator.on('hive:insights', (event: AgentStreamEvent) => {
+      safeDebug('Received Hive Intelligence event', {
+        sessionId,
+        eventType: event.type,
+        agentId: event.agentId,
+        timestamp: event.timestamp
+      })
+      
       if (event.data && typeof event.data === 'object' && 'insights' in event.data) {
         const data = event.data as { insights: unknown }
         if (Array.isArray(data.insights)) {
+          safeInfo('Hive insights updated', {
+            sessionId,
+            insightsCount: data.insights.length,
+            insightTypes: data.insights.map(i => i.type)
+          })
           setHiveInsights(data.insights)
         }
       }
@@ -174,19 +285,52 @@ export function ChatInterface() {
 
     // Subscribe to MCP network status events
     const unsubscribeMCP = orchestrator.on('mcp:network_status', (event: AgentStreamEvent) => {
+      safeDebug('Received MCP network status event', {
+        sessionId,
+        eventType: event.type,
+        agentId: event.agentId,
+        timestamp: event.timestamp
+      })
+      
       if (event.data) {
-        setNetworkStatus(event.data as SeiNetworkStatus)
+        const networkData = event.data as SeiNetworkStatus
+        safeInfo('Network status updated', {
+          sessionId,
+          blockNumber: networkData.blockNumber,
+          networkStatus: networkData.networkStatus,
+          validatorCount: networkData.validators
+        })
+        setNetworkStatus(networkData)
       }
     })
 
     // Subscribe to power level updates
     const unsubscribePowerLevel = orchestrator.on('portfolio:power_level', (event: AgentStreamEvent) => {
+      safeDebug('Received power level update', {
+        sessionId,
+        eventType: event.type,
+        agentId: event.agentId,
+        timestamp: event.timestamp
+      })
+      
       if (event.data && typeof (event.data as any).powerLevel === 'number') {
-        setPowerLevel((event.data as any).powerLevel)
+        const newPowerLevel = (event.data as any).powerLevel
+        safeInfo('Power level updated', {
+          sessionId,
+          previousPowerLevel: powerLevel,
+          newPowerLevel,
+          change: newPowerLevel - powerLevel
+        })
+        setPowerLevel(newPowerLevel)
       }
     })
     
+    logger.timeEnd('ChatInterface-StreamSubscriptions')
+    
     return () => {
+      logger.time('ChatInterface-StreamCleanup')
+      safeDebug('Cleaning up chat stream subscriptions', { sessionId })
+      
       // Unsubscribe from all streams
       subscriptions.forEach(sub => sub.unsubscribe())
       
@@ -197,38 +341,101 @@ export function ChatInterface() {
       
       // Destroy chat service
       chatService.destroy()
+      
+      safeInfo('Chat stream subscriptions cleaned up', { sessionId })
+      logger.timeEnd('ChatInterface-StreamCleanup')
     }
   }, [chatService])
 
   // Auto-scroll to bottom
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (messagesEndRef.current) {
+      logger.time('ChatInterface-AutoScroll')
+      safeDebug('Auto-scrolling to bottom', {
+        sessionId,
+        messageCount: messages.length,
+        lastMessageId: messages[messages.length - 1]?.id
+      })
+      
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+      
+      logger.timeEnd('ChatInterface-AutoScroll')
+    }
   }, [messages])
 
   const executeAdapterAction = async (action: AdapterAction) => {
-    if (isLoading) return
+    if (isLoading) {
+      safeWarn('Adapter action blocked - already loading', {
+        sessionId,
+        blockedAction: action.action,
+        actionType: action.type
+      })
+      return
+    }
+    
+    logger.time(`AdapterAction-${action.type}-${action.action}`)
+    safeInfo('Executing adapter action', {
+      sessionId,
+      actionType: action.type,
+      action: action.action,
+      description: action.description,
+      timestamp: Date.now()
+    })
     
     setIsLoading(true)
 
     chatService.sendAdapterAction(action).subscribe({
       next: (result) => {
         if (E.isLeft(result)) {
-          logger.error('Failed to send adapter action:', result.left)
+          safeError('Failed to send adapter action', {
+            sessionId,
+            actionType: action.type,
+            action: action.action,
+            error: result.left
+          })
+        } else {
+          safeInfo('Adapter action sent successfully', {
+            sessionId,
+            actionType: action.type,
+            action: action.action
+          })
         }
       },
       error: (error) => {
-        logger.error('Error executing adapter action:', error)
+        safeError('Error executing adapter action', {
+          sessionId,
+          actionType: action.type,
+          action: action.action,
+          error
+        })
         setIsLoading(false)
+        logger.timeEnd(`AdapterAction-${action.type}-${action.action}`)
       },
       complete: () => {
+        safeDebug('Adapter action completed', {
+          sessionId,
+          actionType: action.type,
+          action: action.action
+        })
         setIsLoading(false)
+        logger.timeEnd(`AdapterAction-${action.type}-${action.action}`)
       }
     })
   }
 
   const handleSend = () => {
-    if (!input.trim() || isLoading) return
+    if (!input.trim()) {
+      safeWarn('Message send blocked - empty input', { sessionId })
+      return
+    }
+    
+    if (isLoading) {
+      safeWarn('Message send blocked - already loading', { sessionId })
+      return
+    }
 
+    logger.time('ChatInterface-SendMessage')
+    
     // Sanitize user input to prevent XSS
     const sanitizedInput = sanitizeChatMessage(input.trim())
     const metadata = {
@@ -237,21 +444,48 @@ export function ChatInterface() {
       networkStatus,
     }
     
+    safeInfo('User sending message', {
+      sessionId,
+      messageLength: sanitizedInput.length,
+      hasMetadata: !!metadata,
+      powerLevel,
+      hiveInsightsCount: hiveInsights.length,
+      networkStatus: networkStatus?.networkStatus,
+      timestamp: Date.now()
+    })
+    
     setInput('')
     setIsLoading(true)
 
     chatService.sendMessage(sanitizedInput, metadata).subscribe({
       next: (result) => {
         if (E.isLeft(result)) {
-          logger.error('Failed to send message:', result.left)
+          safeError('Failed to send message', {
+            sessionId,
+            messageLength: sanitizedInput.length,
+            error: result.left
+          })
+        } else {
+          safeInfo('Message sent successfully', {
+            sessionId,
+            messageId: result.right.id,
+            messageLength: sanitizedInput.length
+          })
         }
       },
       error: (error) => {
-        logger.error('Error sending message:', error)
+        safeError('Error sending message', {
+          sessionId,
+          messageLength: sanitizedInput.length,
+          error
+        })
         setIsLoading(false)
+        logger.timeEnd('ChatInterface-SendMessage')
       },
       complete: () => {
+        safeDebug('Message send completed', { sessionId })
         setIsLoading(false)
+        logger.timeEnd('ChatInterface-SendMessage')
       }
     })
   }
@@ -259,6 +493,11 @@ export function ChatInterface() {
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
+      safeDebug('User pressed Enter to send message', {
+        sessionId,
+        inputLength: input.length,
+        hasShift: e.shiftKey
+      })
       handleSend()
     }
   }
@@ -351,7 +590,14 @@ export function ChatInterface() {
             
             {/* Adapter Actions Toggle */}
             <button
-              onClick={() => setShowAdapterActions(!showAdapterActions)}
+              onClick={() => {
+                const newState = !showAdapterActions
+                safeDebug('Adapter actions panel toggled', {
+                  sessionId,
+                  showAdapterActions: newState
+                })
+                setShowAdapterActions(newState)
+              }}
               className="flex items-center gap-0.5 px-1.5 py-0.5 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition-colors"
             >
               <Zap className="h-2.5 w-2.5" />
@@ -384,7 +630,15 @@ export function ChatInterface() {
             {adapterActions.map((action, index) => (
               <button
                 key={index}
-                onClick={() => executeAdapterAction(action)}
+                onClick={() => {
+                  safeDebug('Adapter action button clicked', {
+                    sessionId,
+                    actionType: action.type,
+                    action: action.action,
+                    isLoading
+                  })
+                  executeAdapterAction(action)
+                }}
                 disabled={isLoading}
                 className={cn(
                   "flex items-center gap-1 p-1 rounded border text-xs transition-colors",
@@ -542,8 +796,17 @@ export function ChatInterface() {
           <div className="relative flex-1">
             <textarea
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value)
+                safeDebug('User input changed', {
+                  sessionId,
+                  inputLength: e.target.value.length,
+                  timestamp: Date.now()
+                })
+              }}
               onKeyPress={handleKeyPress}
+              onFocus={() => safeDebug('Input focused', { sessionId })}
+              onBlur={() => safeDebug('Input blurred', { sessionId })}
               placeholder="Tell Seiron your investing wishes... 🐉"
               className="w-full resize-none rounded-lg border border-red-700 bg-gray-900 text-red-100 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-red-600 focus:border-red-500 placeholder-red-400"
               rows={1}
@@ -553,7 +816,14 @@ export function ChatInterface() {
             </div>
           </div>
           <button
-            onClick={handleSend}
+            onClick={() => {
+              safeDebug('Send button clicked', {
+                sessionId,
+                inputLength: input.length,
+                isLoading
+              })
+              handleSend()
+            }}
             disabled={!input.trim() || isLoading}
             className="rounded-lg bg-gradient-to-r from-red-600 to-red-700 px-3 py-1 text-white hover:from-red-700 hover:to-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg border border-red-800 hover:shadow-red-900/50"
           >

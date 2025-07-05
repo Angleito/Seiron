@@ -7,6 +7,19 @@
 export const FeaturePreloader = {
   // Feature definitions
   features: {
+  "dragon-animations": {
+    "priority": "high",
+    "components": [
+      "components/dragon/EnhancedDragonCharacter",
+      "components/dragon/InteractiveDragon",
+      "components/DragonAnimationShowcase"
+    ],
+    "routes": [
+      "/dragon-demo",
+      "/dragon-showcase"
+    ],
+    "estimatedSize": "150KB"
+  },
   "voice-features": {
     "priority": "medium",
     "components": [
@@ -56,8 +69,8 @@ export const FeaturePreloader = {
 },
 
   // Preload based on route
-  preloadForRoute(route: string) {
-    const preloadPromises: Promise<unknown>[] = []
+  preloadForRoute(route) {
+    const preloadPromises = []
     
     Object.entries(this.features).forEach(([featureName, feature]) => {
       if (feature.routes.includes(route)) {
@@ -70,8 +83,8 @@ export const FeaturePreloader = {
   },
 
   // Preload specific feature
-  async preloadFeature(featureName: string) {
-    const feature = this.features[featureName as keyof typeof this.features]
+  async preloadFeature(featureName) {
+    const feature = this.features[featureName]
     if (!feature) {
       console.warn(`Feature ${featureName} not found`)
       return
@@ -80,6 +93,13 @@ export const FeaturePreloader = {
     const loadPromises = []
 
     switch (featureName) {
+      case 'dragon-animations':
+        loadPromises.push(
+          import('../components/dragon/lazy').then(m => m.preloadDragonComponents()),
+          import('../components/lazy-dragon-showcase').then(m => m.preloadDragonShowcase())
+        )
+        break
+
       case 'voice-features':
         loadPromises.push(
           import('../components/voice/lazy').then(m => m.preloadVoiceComponents()),
@@ -95,14 +115,15 @@ export const FeaturePreloader = {
 
       case 'chat-features':
         loadPromises.push(
-          import('../components/chat/chat-interface'),
+          import('../components/chat/ChatInterface'),
           import('../components/chat/VoiceEnabledChat')
         )
         break
 
       case 'portfolio-features':
         loadPromises.push(
-          import('../components/portfolio/portfolio-sidebar')
+          import('../components/portfolio/PortfolioOverview'),
+          import('../components/portfolio/PortfolioAnalytics')
         )
         break
     }
@@ -129,7 +150,7 @@ export const FeaturePreloader = {
 
   // Get preload recommendations
   getRecommendations() {
-    const recommendations: string[] = []
+    const recommendations = []
     
     Object.entries(this.features).forEach(([name, feature]) => {
       if (feature.priority === 'high') {

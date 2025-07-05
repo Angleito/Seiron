@@ -5,6 +5,20 @@ import * as E from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
 import * as O from 'fp-ts/Option'
 import { logger } from '../../lib/logger'
+import { voiceLogger, logVoiceInterface, logEnvironment } from '../../lib/voice-logger'
+
+// Log environment variables at module load
+const envStatus = {
+  hasElevenLabsKey: typeof process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY !== 'undefined',
+  elevenLabsKeyLength: process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY?.length || 0,
+  hasVoiceId: typeof process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID !== 'undefined',
+  voiceIdValue: process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID || 'NOT_SET',
+  voiceEnabled: process.env.NEXT_PUBLIC_VOICE_ENABLED || 'NOT_SET',
+  nodeEnv: process.env.NODE_ENV || 'unknown'
+}
+
+logger.debug('🔊 VoiceInterface module loaded, checking environment', envStatus)
+logEnvironment.check(envStatus, { component: 'VoiceInterface' })
 
 export interface VoiceInterfaceProps {
   onTranscriptChange?: (transcript: string) => void
@@ -29,6 +43,21 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
   autoReadResponses = false,
   className = ''
 }) => {
+  logger.debug('🔊 VoiceInterface component initializing', {
+    hasOnTranscriptChange: !!onTranscriptChange,
+    hasOnError: !!onError,
+    autoReadResponses,
+    configApiKeyLength: elevenLabsConfig.apiKey?.length || 0,
+    configVoiceId: elevenLabsConfig.voiceId,
+    configModelId: elevenLabsConfig.modelId,
+    hasVoiceSettings: !!elevenLabsConfig.voiceSettings
+  })
+  
+  // Enhanced voice logging
+  logVoiceInterface.init(elevenLabsConfig, { 
+    component: 'VoiceInterface',
+    autoReadResponses 
+  })
   const [state, setState] = useState<VoiceInterfaceState>({
     isMicrophoneActive: false,
     isSpeakerEnabled: autoReadResponses,
@@ -46,6 +75,14 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
     stopListening,
     isSupported: isSpeechSupported
   } = useSpeechRecognition()
+  
+  logger.debug('🔊 Speech recognition hook initialized', {
+    isListening,
+    transcriptLength: transcript.length,
+    interimTranscriptLength: interimTranscript.length,
+    hasSpeechError: !!speechError,
+    isSpeechSupported
+  })
 
   const {
     isSpeaking,
@@ -53,15 +90,35 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
     error: ttsError,
     speak
   } = useElevenLabsTTS(elevenLabsConfig)
+  
+  logger.debug('🔊 ElevenLabs TTS hook initialized', {
+    isSpeaking,
+    isTTSLoading,
+    hasTTSError: !!ttsError,
+    ttsErrorType: ttsError?.type,
+    ttsErrorMessage: ttsError?.message
+  })
 
   // Update playing audio state
   useEffect(() => {
+    logger.debug('🔊 Audio playing state changed', {
+      isSpeaking,
+      previousState: state.isPlayingAudio
+    })
     setState(prev => ({ ...prev, isPlayingAudio: isSpeaking }))
-  }, [isSpeaking])
+  }, [isSpeaking, state.isPlayingAudio])
 
   // Handle transcript changes
   useEffect(() => {
     const fullTranscript = transcript + (interimTranscript ? ` ${interimTranscript}` : '')
+    logger.debug('🔊 Transcript changed', {
+      transcriptLength: transcript.length,
+      interimTranscriptLength: interimTranscript.length,
+      fullTranscriptLength: fullTranscript.length,
+      hasOnTranscriptChange: !!onTranscriptChange,
+      transcript: transcript.substring(0, 100) + (transcript.length > 100 ? '...' : ''),
+      interimTranscript: interimTranscript.substring(0, 50) + (interimTranscript.length > 50 ? '...' : '')
+    })
     setState(prev => ({ ...prev, currentTranscript: fullTranscript }))
     onTranscriptChange?.(fullTranscript)
   }, [transcript, interimTranscript, onTranscriptChange])
@@ -69,28 +126,54 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
   // Handle errors
   useEffect(() => {
     const error = speechError || ttsError
+    logger.debug('🔊 Error state check', {
+      hasSpeechError: !!speechError,
+      hasTTSError: !!ttsError,
+      speechErrorType: speechError ? (speechError as any).type : null,
+      ttsErrorType: ttsError?.type,
+      speechErrorMessage: speechError ? (speechError as any).message : null,
+      ttsErrorMessage: ttsError?.message
+    })
+    
     if (error) {
       const errorMessage = pipe(
         O.fromNullable(error),
         O.map(e => new Error(typeof e === 'string' ? e : (e as any).message || 'Unknown error')),
         O.getOrElse(() => new Error('Unknown error'))
       )
+      
+      logger.error('🔊 Voice interface error occurred', {
+        errorSource: speechError ? 'speech' : 'tts',
+        errorType: (error as any).type,
+        errorMessage: errorMessage.message,
+        originalError: error
+      })
+      
       setState(prev => ({ ...prev, lastError: errorMessage }))
       onError?.(errorMessage)
     }
   }, [speechError, ttsError, onError])
 
   const toggleMicrophone = useCallback(async () => {
+    logger.debug('🔊 Toggling microphone', {
+      currentlyListening: isListening,
+      operation: isListening ? 'stop' : 'start'
+    })
+    
     if (isListening) {
       const result = await stopListening()()
       pipe(
         result,
         E.fold(
           (error) => {
-            logger.error('Failed to stop listening:', error)
+            logger.error('🔊 Failed to stop listening', {
+              errorType: error.type,
+              errorMessage: error.message
+            })
             onError?.(new Error(error.message))
           },
           () => {
+            logger.debug('🔊 Successfully stopped listening')
             setState(prev => ({ ...prev, isMicrophoneActive: false }))
           }
         )
@@ -101,10 +184,14 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
         result,
         E.fold(
           (error) => {
-            logger.error('Failed to start listening:', error)
+            logger.error('🔊 Failed to start listening', {
+              errorType: error.type,
+              errorMessage: error.message
+            })
             onError?.(new Error(error.message))
           },
           () => {
+            logger.debug('🔊 Successfully started listening')
             setState(prev => ({ ...prev, isMicrophoneActive: true }))
           }
         )
@@ -113,23 +200,41 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
   }, [isListening, startListening, stopListening, onError])
 
   const toggleSpeaker = useCallback(() => {
-    setState(prev => ({ ...prev, isSpeakerEnabled: !prev.isSpeakerEnabled }))
-  }, [])
+    const newState = !state.isSpeakerEnabled
+    logger.debug('🔊 Toggling speaker', {
+      previousState: state.isSpeakerEnabled,
+      newState
+    })
+    setState(prev => ({ ...prev, isSpeakerEnabled: newState }))
+  }, [state.isSpeakerEnabled])
 
   // Expose playAudioResponse for external use
   const playAudioResponse = useCallback(async (text: string) => {
-    if (!state.isSpeakerEnabled) return
+    logger.debug('🔊 Play audio response requested', {
+      textLength: text.length,
+      textPreview: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
+      speakerEnabled: state.isSpeakerEnabled
+    })
+    
+    if (!state.isSpeakerEnabled) {
+      logger.debug('🔊 Speaker disabled, skipping audio playback')
+      return
+    }
 
     const result = await speak(text)()
     pipe(
       result,
       E.fold(
         (error) => {
-          logger.error('Failed to play audio:', error)
+          logger.error('🔊 Failed to play audio response', {
+            errorType: error.type,
+            errorMessage: error.message,
+            textLength: text.length
+          })
           onError?.(new Error(error.message))
         },
         () => {
-          logger.debug('Audio playback completed')
+          logger.debug('🔊 Audio response playback completed successfully')
         }
       )
     )
@@ -138,7 +243,8 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
   // Store playAudioResponse in a ref for external access
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      (window as any).__voiceInterfacePlayAudio__ = playAudioResponse
+      logger.debug('🔊 Exposing playAudioResponse to global window object')
+      ;(window as any).__voiceInterfacePlayAudio__ = playAudioResponse
     }
   }, [playAudioResponse])
 
@@ -170,13 +276,24 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
   }, [state.isPlayingAudio])
 
   if (!isSpeechSupported) {
+    logger.warn('🔊 Speech recognition not supported, rendering fallback UI')
     return (
       <div className={`text-red-500 p-4 bg-red-900/20 rounded-lg ${className}`}>
         <p>Speech recognition is not supported in this browser.</p>
+        <p className="text-sm mt-2">Please try using Chrome, Edge, or Safari for voice features.</p>
       </div>
     )
   }
 
+  logger.debug('🔊 Rendering VoiceInterface component', {
+    isListening,
+    isSpeaking,
+    isTTSLoading,
+    speakerEnabled: state.isSpeakerEnabled,
+    hasTranscript: !!state.currentTranscript,
+    hasError: !!state.lastError
+  })
+  
   return (
     <div className={`flex flex-col items-center space-y-6 p-6 ${className}`}>
       {/* Dragon Emoji Display */}
