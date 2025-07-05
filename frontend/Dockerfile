@@ -7,14 +7,14 @@ RUN apk add --no-cache python3 make g++ py3-pip
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY frontend/package*.json ./
 
 # Install dependencies
 # Using npm install instead of npm ci due to lock file sync issues
 RUN npm install --legacy-peer-deps
 
-# Copy source code
-COPY . .
+# Copy frontend source code only
+COPY frontend/ .
 
 # Build Next.js application (skip for dev)
 # RUN npm run build
