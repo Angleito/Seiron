@@ -5,12 +5,24 @@ services:
     container_name: seiron-redis-test
     ports:
       - "6380:6379"
-    command: redis-server --save "" --appendonly no
+    volumes:
+      - ./logs/redis-test:/var/log/redis
+    command: redis-server --save "" --appendonly no --loglevel ${LOG_LEVEL:-warning} --logfile /var/log/redis/redis.log
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-warning}
+      - REDIS_LOG_LEVEL=${REDIS_LOG_LEVEL:-warning}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service=redis,env=test"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
+      start_period: 10s
 
   # Backend Test Runner
   backend-test:
@@ -23,13 +35,26 @@ services:
       - NODE_ENV=test
       - REDIS_URL=redis://redis:6379
       - SEI_RPC_URL=https://evm-rpc-testnet.sei-apis.com
+      - LOG_LEVEL=${LOG_LEVEL:-error}
+      - LOG_FORMAT=${LOG_FORMAT:-json}
+      - DEBUG=${DEBUG:-false}
+      - ENABLE_TEST_LOGGING=${ENABLE_TEST_LOGGING:-true}
+      - TEST_TIMEOUT=${TEST_TIMEOUT:-30000}
+      - ENABLE_COVERAGE_LOGGING=${ENABLE_COVERAGE_LOGGING:-true}
     volumes:
       - ./backend:/app
       - /app/node_modules
       - ./backend/coverage:/app/coverage
+      - ./logs/backend-test:/app/logs
     depends_on:
       redis:
         condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+        labels: "service=backend-test,env=test"
     command: ["npm", "test"]
 
   # Frontend Test Runner
@@ -40,14 +65,57 @@ services:
     container_name: seiron-frontend-test
     environment:
       - NODE_ENV=test
+      - LOG_LEVEL=${LOG_LEVEL:-error}
+      - DEBUG=${DEBUG:-false}
+      - ENABLE_TEST_LOGGING=${ENABLE_TEST_LOGGING:-true}
+      - TEST_TIMEOUT=${TEST_TIMEOUT:-30000}
+      - ENABLE_COVERAGE_LOGGING=${ENABLE_COVERAGE_LOGGING:-true}
     volumes:
       - ./frontend:/app
       - /app/node_modules
       - ./frontend/coverage:/app/coverage
+      - ./logs/frontend-test:/app/logs
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+        labels: "service=frontend-test,env=test"
     command: ["npm", "test"]
+
+  # Test log aggregation
+  log-aggregator:
+    image: fluent/fluent-bit:latest
+    container_name: seiron-log-aggregator-test
+    volumes:
+      - ./logs:/fluent-bit/logs
+      - ./docker/fluent-bit/fluent-bit.test.conf:/fluent-bit/etc/fluent-bit.conf
+      - ./docker/fluent-bit/parsers.conf:/fluent-bit/etc/parsers.conf
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-error}
+      - FLUENT_BIT_LOG_LEVEL=${FLUENT_BIT_LOG_LEVEL:-error}
+    depends_on:
+      - backend-test
+      - frontend-test
+      - redis
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+        labels: "service=log-aggregator,env=test"
+    restart: unless-stopped
 
 volumes:
   test-data:
+  log-data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./logs
+      o: bind
 
 networks:
   default:

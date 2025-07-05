@@ -84,18 +84,18 @@ function parseUserIntent(message: string, sessionId: string, walletAddress?: str
     action = 'assess_risk'
   }
 
-  const intent = {
+  const intent: EnhancedUserIntent = {
     id: `intent-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     userId: sessionId,
     walletAddress: walletAddress || '0x0000000000000000000000000000000000000000',
     type,
     action,
     parameters,
-    priority: 'medium',
+    priority: 'medium' as const,
     context: {
       sessionId,
       timestamp: new Date(),
-      source: 'chat',
+      source: 'chat' as const,
     },
   };
   
@@ -562,8 +562,8 @@ router.post('/analysis', [
           requestId,
           walletAddress,
           portfolioDuration: Math.round(portfolioDuration),
-          portfolioValue: portfolioData.totalValueUSD,
-          lendingPositions: portfolioData.lendingPositions?.length || 0
+          portfolioValue: (portfolioData as any).totalValueUSD,
+          lendingPositions: (portfolioData as any).lendingPositions?.length || 0
         });
         
         return req.services.ai.generatePortfolioAnalysis(portfolioData, walletAddress);
@@ -585,7 +585,7 @@ router.post('/analysis', [
       requestId,
       walletAddress,
       totalDuration: Math.round(totalDuration),
-      analysisLength: result.right.length
+      analysisLength: (result.right as any).length
     });
     
     res.json({ success: true, data: result.right });

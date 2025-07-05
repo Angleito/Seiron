@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import morgan from 'morgan';
-import { generateRequestId, PerformanceTimer } from '../utils/logger';
 import logger from '../utils/logger';
+import { randomUUID } from 'crypto';
 
 // Sensitive fields to filter from request/response bodies
 const SENSITIVE_FIELDS = [
@@ -32,7 +32,7 @@ function filterSensitiveData(obj: any): any {
   const filtered: any = {};
   for (const [key, value] of Object.entries(obj)) {
     const keyLower = key.toLowerCase();
-    if (SENSITIVE_FIELDS.some(field => keyLower.includes(field))) {
+    if (SENSITIVE_FIELDS.some(field => keyLower.includes(field.toLowerCase()))) {
       filtered[key] = '[FILTERED]';
     } else if (typeof value === 'object' && value !== null) {
       filtered[key] = filterSensitiveData(value);
@@ -81,13 +81,12 @@ function shouldLogResponseBody(req: Request, res: Response): boolean {
 
 // Request ID middleware
 export function requestIdMiddleware(req: Request, res: Response, next: NextFunction) {
-  const requestId = generateRequestId();
+  const requestId = randomUUID();
   req.requestId = requestId;
   res.setHeader('X-Request-ID', requestId);
   
   // Start performance timer
   req.startTime = Date.now();
-  req.performanceTimer = new PerformanceTimer(requestId);
   
   next();
 }
@@ -231,7 +230,7 @@ export function errorRequestLogger(err: Error, req: Request, res: Response, next
       userAgent: req.get('User-Agent'),
       walletAddress: req.walletAddress
     },
-    performance: req.performanceTimer ? { duration: req.performanceTimer.end() } : undefined
+    performance: req.startTime ? { duration: Date.now() - req.startTime } : undefined
   };
   
   logger.error('HTTP Request Error', errorData);
@@ -243,8 +242,8 @@ export function errorRequestLogger(err: Error, req: Request, res: Response, next
 export function requestCompletionLogger(req: Request, res: Response, next: NextFunction) {
   // Log when request completes
   res.on('finish', () => {
-    if (req.requestId && req.performanceTimer) {
-      const duration = req.performanceTimer.end();
+    if (req.requestId && req.startTime) {
+      const duration = Date.now() - req.startTime;
       logger.info('HTTP Request Completed', {
         requestId: req.requestId,
         method: req.method,

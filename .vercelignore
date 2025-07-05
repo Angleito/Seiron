@@ -1,0 +1,81 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build outputs
+dist/
+build/
+*/dist/
+*/build/
+
+# Development files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Testing
+coverage/
+*/coverage/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+**/__tests__/
+**/__mocks__/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+# Development tools
+.eslintrc*
+.prettierrc*
+jest.config.js
+jest.*.config.js
+cypress.config.ts
+cypress/
+scripts/
+monitoring/
+test/
+
+# Documentation
+README.md
+docs/
+*.md
+!README.md
+
+# Cache
+.cache/
+cache/
+.next/
+.turbo/
+.vercel/
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp

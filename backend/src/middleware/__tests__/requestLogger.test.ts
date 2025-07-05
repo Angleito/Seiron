@@ -56,7 +56,6 @@ describe('Request Logger Middleware', () => {
       expect(mockRequest.requestId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
       expect(mockResponse.setHeader).toHaveBeenCalledWith('X-Request-ID', mockRequest.requestId);
       expect(mockRequest.startTime).toBeDefined();
-      expect(mockRequest.performanceTimer).toBeDefined();
       expect(nextFunction).toHaveBeenCalled();
     });
   });

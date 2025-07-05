@@ -189,6 +189,7 @@ export interface DataSynchronizationResult {
 // ============================================================================
 
 export interface RealTimeError {
+  name: string;
   code: string;
   message: string;
   source: 'stream' | 'sync' | 'cache' | 'network' | 'validation';
@@ -1825,6 +1826,7 @@ export class RealTimeDataService extends EventEmitter {
 
   private createRealTimeError(code: string, message: string, source: string, details?: any): RealTimeError {
     return {
+      name: 'RealTimeError',
       code,
       message,
       source: source as any,

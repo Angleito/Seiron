@@ -275,7 +275,7 @@ export class PortfolioService {
         this.serviceLogger.endTimer('getPortfolioPerformance', { 
           walletAddress,
           period,
-          totalReturn: performance.totalReturn,
+          totalReturn: performance.returns.absolute,
           winRate: performance.winRate
         });
         return performance;
@@ -297,12 +297,10 @@ export class PortfolioService {
         const riskMetrics = this.positionTracker.calculateRiskMetrics(snapshot);
         this.serviceLogger.endTimer('getRiskMetrics', { 
           walletAddress,
-          riskScore: riskMetrics.riskScore,
           healthFactor: riskMetrics.healthFactor
         });
         this.serviceLogger.info('Risk metrics calculated', {
           walletAddress,
-          riskScore: riskMetrics.riskScore,
           liquidationRisk: riskMetrics.liquidationRisk
         });
         return riskMetrics;

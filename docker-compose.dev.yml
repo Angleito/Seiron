@@ -7,12 +7,23 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
-    command: redis-server --save 60 1 --loglevel warning
+      - ./logs/redis:/var/log/redis
+    command: redis-server --save 60 1 --loglevel ${LOG_LEVEL:-debug} --logfile /var/log/redis/redis.log
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-debug}
+      - REDIS_LOG_LEVEL=${REDIS_LOG_LEVEL:-debug}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+        labels: "service=redis,env=development"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   # Backend API Server (Development)
   backend:
@@ -30,15 +41,34 @@ services:
       - SEI_RPC_URL=${SEI_RPC_URL:-https://evm-rpc.sei-apis.com}
       - WALLET_ADDRESS=${WALLET_ADDRESS}
       - PRIVATE_KEY=${PRIVATE_KEY}
-      - DEBUG=seiron:*
+      - DEBUG=${DEBUG:-seiron:*}
+      - LOG_LEVEL=${LOG_LEVEL:-debug}
+      - LOG_FORMAT=${LOG_FORMAT:-pretty}
+      - LOG_RETENTION_DAYS=${LOG_RETENTION_DAYS:-7}
+      - ENABLE_PERFORMANCE_MONITORING=${ENABLE_PERFORMANCE_MONITORING:-true}
+      - ENABLE_HEALTH_CHECK_LOGGING=${ENABLE_HEALTH_CHECK_LOGGING:-true}
+      - ENABLE_REQUEST_LOGGING=${ENABLE_REQUEST_LOGGING:-true}
     volumes:
       - ./backend:/app
       - /app/node_modules
       - ./cache:/app/cache
       - ./logs:/app/logs
+      - ./logs/backend:/app/logs/backend
     depends_on:
       redis:
         condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "10"
+        labels: "service=backend,env=development"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     restart: unless-stopped
 
   # Frontend (Development with Vite HMR)
@@ -62,17 +92,65 @@ services:
       - VITE_ELEVENLABS_API_KEY=${VITE_ELEVENLABS_API_KEY}
       - VITE_ELEVENLABS_VOICE_ID=${VITE_ELEVENLABS_VOICE_ID}
       - VITE_VOICE_ENABLED=${VITE_VOICE_ENABLED:-true}
+      - LOG_LEVEL=${LOG_LEVEL:-debug}
+      - DEBUG=${DEBUG:-true}
+      - ENABLE_PERFORMANCE_MONITORING=${ENABLE_PERFORMANCE_MONITORING:-true}
+      - ENABLE_HMR_LOGGING=${ENABLE_HMR_LOGGING:-true}
     volumes:
       - ./frontend:/app
       - /app/node_modules
       - ./frontend/dist:/app/dist
+      - ./logs/frontend:/app/logs
     depends_on:
       - backend
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "10"
+        labels: "service=frontend,env=development"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     stdin_open: true
     tty: true
 
+  # Log aggregation service for development
+  log-aggregator:
+    image: fluent/fluent-bit:latest
+    container_name: seiron-log-aggregator-dev
+    volumes:
+      - ./logs:/fluent-bit/logs
+      - ./docker/fluent-bit/fluent-bit.dev.conf:/fluent-bit/etc/fluent-bit.conf
+      - ./docker/fluent-bit/parsers.conf:/fluent-bit/etc/parsers.conf
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-debug}
+      - FLUENT_BIT_LOG_LEVEL=${FLUENT_BIT_LOG_LEVEL:-debug}
+    depends_on:
+      - backend
+      - frontend
+      - redis
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+        labels: "service=log-aggregator,env=development"
+    restart: unless-stopped
+
 volumes:
   redis-data:
+  log-data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./logs
+      o: bind
 
 networks:
   default:

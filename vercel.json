@@ -1,0 +1,122 @@
+{
+  "version": 2,
+  "name": "seiron-ai-portfolio",
+  "buildCommand": "cd frontend && npm run build",
+  "outputDirectory": "frontend/dist",
+  "installCommand": "npm install --legacy-peer-deps && cd frontend && npm install --legacy-peer-deps && cd ../backend && npm install --legacy-peer-deps && cd ../api && npm install --legacy-peer-deps",
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/((?!api).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "functions": {
+    "api/ai.ts": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 30,
+      "memory": 1024
+    },
+    "api/chat.ts": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 30,
+      "memory": 1024
+    },
+    "api/portfolio.ts": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 30,
+      "memory": 1024
+    },
+    "api/voice.ts": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 30,
+      "memory": 1024
+    },
+    "api/confirmation.ts": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 30,
+      "memory": 1024
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https: wss: https://api.web3modal.org https://explorer-api.walletconnect.com; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'self' https://auth.privy.io https://verify.walletconnect.com;"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "X-Requested-With, Content-Type, Authorization, X-Request-ID"
+        }
+      ]
+    },
+    {
+      "source": "/(.*\\.(js|css|ico|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot))$",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
+  "env": {
+    "NEXT_PUBLIC_ELEVENLABS_API_KEY": "@elevenlabs_api_key",
+    "NEXT_PUBLIC_ELEVENLABS_VOICE_ID": "@elevenlabs_voice_id",
+    "NEXT_PUBLIC_VOICE_ENABLED": "true",
+    "OPENAI_API_KEY": "@openai_api_key",
+    "REDIS_URL": "@redis_url",
+    "NODE_ENV": "production",
+    "VITE_APP_NAME": "Seiron AI Portfolio"
+  },
+  "build": {
+    "env": {
+      "NODE_ENV": "production",
+      "VITE_NODE_ENV": "production"
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/portfolio/sync",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/ai/cleanup",
+      "schedule": "0 2 * * *"
+    }
+  ],
+  "trailingSlash": false,
+  "cleanUrls": true,
+  "regions": ["iad1"]
+}

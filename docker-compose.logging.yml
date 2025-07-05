@@ -1,0 +1,30 @@
+# Docker Compose override for enhanced logging
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.logging.yml up
+
+version: '3.8'
+
+services:
+  backend:
+    logging:
+      options:
+        max-size: "50m"
+        max-file: "10"
+    environment:
+      - LOG_LEVEL=debug
+      - ENABLE_REQUEST_LOGGING=true
+
+  frontend:
+    logging:
+      options:
+        max-size: "50m"
+        max-file: "10"
+    environment:
+      - LOG_LEVEL=debug
+
+  redis:
+    logging:
+      options:
+        max-size: "20m"
+        max-file: "5"
+    environment:
+      - REDIS_LOG_LEVEL=debug

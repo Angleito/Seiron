@@ -1,20 +1,16 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { Subscription } from 'rxjs'
 import * as E from 'fp-ts/Either'
-import { ChatStreamService, StreamMessage, TypingIndicator, ConnectionStatus } from './ChatStreamService'
+import { VercelChatService, StreamMessage, TypingIndicator, ConnectionStatus } from '../../lib/vercel-chat-service'
 import { AdapterAction } from '@lib/orchestrator-client'
 import { logger, safeDebug, safeInfo, safeWarn, safeError } from '@lib/logger'
 
 export interface UseChatStreamOptions {
   apiEndpoint?: string
-  wsEndpoint?: string
   sessionId: string
   maxRetries?: number
   retryDelay?: number
-  heartbeatInterval?: number
   messageTimeout?: number
-  bufferSize?: number
-  throttleTime?: number
   onMessage?: (message: StreamMessage) => void
   onTypingChange?: (indicators: TypingIndicator[]) => void
   onConnectionChange?: (status: ConnectionStatus) => void
@@ -42,7 +38,7 @@ export function useChatStream(options: UseChatStreamOptions): UseChatStreamResul
   })
   const [isLoading, setIsLoading] = useState(false)
   
-  const chatServiceRef = useRef<ChatStreamService | null>(null)
+  const chatServiceRef = useRef<VercelChatService | null>(null)
   const subscriptionsRef = useRef<Subscription[]>([])
   const mountTimeRef = useRef<number>(Date.now())
   const [performanceMetrics, setPerformanceMetrics] = useState({
@@ -76,16 +72,12 @@ export function useChatStream(options: UseChatStreamOptions): UseChatStreamResul
 
   // Initialize chat service
   useEffect(() => {
-    const service = new ChatStreamService({
-      apiEndpoint: options.apiEndpoint || import.meta.env.VITE_ORCHESTRATOR_API || '/api',
-      wsEndpoint: options.wsEndpoint || import.meta.env.VITE_ORCHESTRATOR_WS || 'ws://localhost:3001',
+    const service = new VercelChatService({
+      apiEndpoint: options.apiEndpoint || import.meta.env.VITE_API_URL || '',
       sessionId: options.sessionId,
       maxRetries: options.maxRetries || 3,
       retryDelay: options.retryDelay || 1000,
-      heartbeatInterval: options.heartbeatInterval || 30000,
-      messageTimeout: options.messageTimeout || 30000,
-      bufferSize: options.bufferSize || 100,
-      throttleTime: options.throttleTime || 100
+      messageTimeout: options.messageTimeout || 30000
     })
     
     chatServiceRef.current = service

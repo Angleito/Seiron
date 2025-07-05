@@ -145,12 +145,12 @@ export class AIService {
         const systemPrompt = this.buildSystemPrompt(context);
         
         const messageHistory = context?.messages.slice(-10) || [];
-        const chatMessages = [
+        const chatMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
           { role: 'system', content: systemPrompt },
           ...messageHistory.map(m => ({ 
             role: m.role as 'user' | 'assistant', 
             content: m.content 
-          })),
+          } as OpenAI.Chat.Completions.ChatCompletionMessageParam)),
           { role: 'user', content: message }
         ];
         
@@ -443,7 +443,7 @@ Keep the analysis concise and actionable.`;
         const apiStartTime = performance.now();
         const completion = await this.openai.chat.completions.create({
           model: 'gpt-4',
-          messages: [{ role: 'user', content: prompt }],
+          messages: [{ role: 'user', content: prompt }] as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
           temperature: 0.3,
           max_tokens: 800
         });
@@ -528,7 +528,7 @@ Keep the analysis concise and actionable.`;
             const apiStartTime = performance.now();
             const completion = await this.openai.chat.completions.create({
               model: 'gpt-4',
-              messages: [{ role: 'user', content: enhancedPrompt }],
+              messages: [{ role: 'user', content: enhancedPrompt }] as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
               temperature: 0.3,
               max_tokens: 1200
             });

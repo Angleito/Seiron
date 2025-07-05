@@ -1,6 +1,6 @@
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import { Client } from 'socket.io-client';
+import { io as ClientIO } from 'socket.io-client';
 import { SocketService } from '../services/SocketService';
 import { createWebSocketMiddleware } from '../middleware/websocketMiddleware';
 import { createServiceLogger } from '../services/LoggingService';
@@ -87,7 +87,7 @@ async function testWebSocketLogging() {
     try {
       // Test 1: Valid connection with authentication
       console.log('📝 Test 1: Valid connection with authentication');
-      const validClient = new Client(`http://localhost:${PORT}`, {
+      const validClient = ClientIO(`http://localhost:${PORT}`, {
         auth: {
           walletAddress: '0x1234567890123456789012345678901234567890'
         }
@@ -122,7 +122,7 @@ async function testWebSocketLogging() {
 
       // Test 4: Invalid authentication
       console.log('\n📝 Test 4: Invalid authentication');
-      const invalidClient = new Client(`http://localhost:${PORT}`, {
+      const invalidClient = ClientIO(`http://localhost:${PORT}`, {
         auth: {
           walletAddress: 'invalid-address'
         }
