@@ -1,13 +1,13 @@
 import { ChatInterface } from '@/components/chat/chat-interface'
 import { PortfolioSidebar } from '@/components/portfolio/portfolio-sidebar'
 import { WalletConnect } from '@/components/wallet/wallet-connect'
-import { EnhancedDragonCharacter } from '@/components/dragon/EnhancedDragonCharacter'
+import { SeironDragon } from '@/components/dragon/SeironDragon'
 
 export default function DashboardPage() {
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-gray-900 via-gray-800 to-red-900">
+    <div className="h-screen flex flex-col bg-black">
       {/* Dragon-themed Header */}
-      <header className="border-b border-red-600/30 bg-gradient-to-r from-gray-900 via-red-900 to-gray-900 px-6 py-6 shadow-lg">
+      <header className="border-b border-red-900/20 bg-gradient-to-r from-black via-red-950/10 to-black px-6 py-6 shadow-lg backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <div className="relative">
             {/* Dragon accent element */}
@@ -31,38 +31,29 @@ export default function DashboardPage() {
 
       {/* Main Content with mystical background */}
       <div className="flex-1 flex overflow-hidden relative">
-        {/* Mystical background pattern */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-red-500 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-1/3 right-1/3 w-24 h-24 bg-red-400 rounded-full blur-2xl animate-pulse delay-1000"></div>
-          <div className="absolute top-2/3 right-1/4 w-20 h-20 bg-red-600 rounded-full blur-xl animate-pulse delay-500"></div>
+        {/* Subtle mystical background */}
+        <div className="absolute inset-0">
+          <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-red-900 rounded-full blur-3xl opacity-5 animate-pulse"></div>
+          <div className="absolute bottom-1/3 right-1/3 w-24 h-24 bg-orange-900 rounded-full blur-2xl opacity-5 animate-pulse delay-1000"></div>
+          <div className="absolute top-2/3 right-1/4 w-20 h-20 bg-red-800 rounded-full blur-xl opacity-5 animate-pulse delay-500"></div>
         </div>
 
         {/* Floating Dragon in bottom right */}
         <div className="absolute bottom-4 right-4 z-10">
-          <EnhancedDragonCharacter 
+          <SeironDragon 
             size="md" 
-            initialState="attention"
-            initialMood="mystical"
-            interactive={true}
-            showDragonBalls={true}
-            enableCursorTracking={true}
-            autoStates={true}
-            animationConfig={{
-              performanceMode: 'balanced',
-              autoQualityAdjustment: true
-            }}
-            className="opacity-80 hover:opacity-100 transition-opacity"
+            variant="corner"
+            className="opacity-90 hover:opacity-100 transition-opacity"
           />
         </div>
 
         {/* Chat Area */}
-        <main className="flex-1 flex flex-col bg-gradient-to-b from-gray-800/50 to-gray-900/50 backdrop-blur-sm">
+        <main className="flex-1 flex flex-col bg-gradient-to-b from-black/80 to-red-950/10 backdrop-blur-sm">
           <ChatInterface />
         </main>
 
         {/* Sidebar */}
-        <aside className="w-80 border-l border-red-600/30 bg-gradient-to-b from-gray-900/80 to-gray-800/80 backdrop-blur-sm">
+        <aside className="w-80 border-l border-red-900/20 bg-gradient-to-b from-black/90 to-red-950/20 backdrop-blur-sm">
           <PortfolioSidebar />
         </aside>
       </div>

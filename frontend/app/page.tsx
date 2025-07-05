@@ -2,28 +2,19 @@
 
 import Link from 'next/link'
 import { Bot, Shield, TrendingUp, Zap, Star, Eye, Sparkles } from 'lucide-react'
-import { EnhancedDragonCharacter } from '@/components/dragon/EnhancedDragonCharacter'
+import { SeironDragon } from '@/components/dragon/SeironDragon'
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-red-950 via-red-900 to-red-800">
+    <div className="min-h-screen bg-black">
       {/* Hero Section */}
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-hidden bg-gradient-to-b from-black via-red-950/20 to-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-          {/* Enhanced Dragon Character */}
+          {/* Seiron Dragon with integrated environment */}
           <div className="flex justify-center mb-12">
-            <EnhancedDragonCharacter 
+            <SeironDragon 
               size="xl" 
-              initialState="ready"
-              initialMood="powerful"
-              interactive={true}
-              showDragonBalls={true}
-              enableCursorTracking={true}
-              autoStates={true}
-              animationConfig={{
-                performanceMode: 'quality',
-                autoQualityAdjustment: true
-              }}
+              variant="hero"
             />
           </div>
           
@@ -31,7 +22,7 @@ export default function Home() {
             <h1 className="text-6xl font-bold text-transparent bg-gradient-to-r from-red-400 via-orange-400 to-yellow-400 bg-clip-text mb-6 drop-shadow-lg">
               Seiron - Granting your wildest Sei Investing Wishes
             </h1>
-            <p className="text-xl text-orange-200 max-w-3xl mx-auto mb-8 leading-relaxed">
+            <p className="text-xl text-orange-300/80 max-w-3xl mx-auto mb-8 leading-relaxed">
               Unleash the power of the eternal dragon to fulfill your wildest investment dreams in the Sei ecosystem. 
               Speak your boldest financial desires, and watch Seiron manifest extraordinary trading strategies with mystical precision.
             </p>
@@ -60,22 +51,17 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Dragon Scale Background */}
+        {/* Subtle Dark Background Effects */}
         <div className="absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-gradient-to-r from-red-900/40 to-orange-900/40 opacity-70" />
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-red-500 rounded-full blur-3xl opacity-20 animate-pulse" />
-          <div className="absolute top-20 left-1/4 w-64 h-64 bg-orange-500 rounded-full blur-2xl opacity-15 animate-pulse" />
-          <div className="absolute bottom-20 right-1/4 w-80 h-80 bg-yellow-500 rounded-full blur-3xl opacity-10 animate-pulse" />
-          {/* Dragon Scale Pattern */}
-          <div className="absolute inset-0 opacity-5" style={{
-            backgroundImage: 'radial-gradient(circle at 20px 20px, rgba(255,0,0,0.3) 2px, transparent 2px)',
-            backgroundSize: '40px 40px'
-          }} />
+          <div className="absolute inset-0 bg-gradient-to-r from-red-950/10 to-orange-950/10" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-red-900 rounded-full blur-3xl opacity-10 animate-pulse" />
+          <div className="absolute top-20 left-1/4 w-64 h-64 bg-orange-900 rounded-full blur-2xl opacity-5 animate-pulse" />
+          <div className="absolute bottom-20 right-1/4 w-80 h-80 bg-red-800 rounded-full blur-3xl opacity-5 animate-pulse" />
         </div>
       </div>
 
       {/* Dragon Powers Section */}
-      <div id="features" className="py-24 bg-gradient-to-b from-red-900 to-red-950">
+      <div id="features" className="py-24 bg-gradient-to-b from-black via-red-950/10 to-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-transparent bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text mb-4">
@@ -143,7 +129,7 @@ export default function Home() {
       </div>
 
       {/* The Summoning Ritual Section */}
-      <div className="py-24 bg-gradient-to-b from-red-950 to-red-900">
+      <div className="py-24 bg-gradient-to-b from-black via-red-950/20 to-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-transparent bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text mb-4">
@@ -155,7 +141,7 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-gradient-to-br from-red-800 to-red-900 rounded-lg p-8 shadow-xl border border-orange-500/40">
+            <div className="bg-gradient-to-br from-red-950/50 to-black rounded-lg p-8 shadow-xl border border-orange-500/20 backdrop-blur-sm">
               <div className="text-3xl font-bold text-transparent bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text mb-4">1</div>
               <h3 className="text-xl font-semibold text-orange-100 mb-2">
                 Prepare the Altar
@@ -165,7 +151,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-red-800 to-red-900 rounded-lg p-8 shadow-xl border border-orange-500/40">
+            <div className="bg-gradient-to-br from-red-950/50 to-black rounded-lg p-8 shadow-xl border border-orange-500/20 backdrop-blur-sm">
               <div className="text-3xl font-bold text-transparent bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text mb-4">2</div>
               <h3 className="text-xl font-semibold text-orange-100 mb-2">
                 Speak Your Wish
@@ -175,7 +161,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-red-800 to-red-900 rounded-lg p-8 shadow-xl border border-orange-500/40">
+            <div className="bg-gradient-to-br from-red-950/50 to-black rounded-lg p-8 shadow-xl border border-orange-500/20 backdrop-blur-sm">
               <div className="text-3xl font-bold text-transparent bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text mb-4">3</div>
               <h3 className="text-xl font-semibold text-orange-100 mb-2">
                 Dragon's Manifestation
@@ -189,7 +175,7 @@ export default function Home() {
       </div>
 
       {/* Final Summoning Section */}
-      <div className="py-24 bg-gradient-to-r from-red-800 via-red-900 to-orange-800">
+      <div className="py-24 bg-gradient-to-b from-black via-red-950/30 to-black">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-orange-100 mb-4">
             Ready to Make Your Wildest Investment Dreams Come True?
@@ -208,7 +194,7 @@ export default function Home() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-red-950 text-orange-400 py-12">
+      <footer className="bg-black text-orange-400 py-12 border-t border-red-900/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <p className="text-sm text-orange-300">
