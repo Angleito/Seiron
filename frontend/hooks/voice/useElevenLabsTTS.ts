@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import * as E from 'fp-ts/Either'
 import * as TE from 'fp-ts/TaskEither'
 import * as O from 'fp-ts/Option'
 import { pipe } from 'fp-ts/function'
@@ -45,11 +44,6 @@ const createTTSError = (
 const CACHE_KEY_PREFIX = 'elevenlabs_tts_'
 const CACHE_MAX_SIZE = 20
 const CACHE_TTL = 3600000 // 1 hour
-
-interface CachedAudio {
-  buffer: ArrayBuffer
-  timestamp: number
-}
 
 const openIndexedDB = (): TE.TaskEither<TTSError, IDBDatabase> =>
   TE.tryCatch(
