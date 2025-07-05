@@ -827,21 +827,59 @@ export class OrchestratorService extends EventEmitter {
    * Execute adapter call step
    */
   private async executeAdapterCall(step: TaskStep): Promise<any> {
+    const startTime = performance.now();
+    
     if (!step.adapter) {
       throw new Error('Adapter call step must specify adapter');
     }
     
-    switch (step.adapter) {
-      case 'hive':
-        return this.executeHiveCall(step.operation, step.parameters);
-      case 'sak':
-        return this.executeSAKCall(step.operation, step.parameters);
-      case 'mcp':
-        return this.executeMCPCall(step.operation, step.parameters);
-      case 'integration':
-        return this.executeIntegrationCall(step.operation, step.parameters);
-      default:
-        throw new Error(`Unknown adapter: ${step.adapter}`);
+    this.logger.debug('Executing adapter call', {
+      stepId: step.id,
+      adapter: step.adapter,
+      operation: step.operation,
+      parametersCount: Object.keys(step.parameters).length
+    });
+    
+    try {
+      let result;
+      
+      switch (step.adapter) {
+        case 'hive':
+          result = await this.executeHiveCall(step.operation, step.parameters);
+          break;
+        case 'sak':
+          result = await this.executeSAKCall(step.operation, step.parameters);
+          break;
+        case 'mcp':
+          result = await this.executeMCPCall(step.operation, step.parameters);
+          break;
+        case 'integration':
+          result = await this.executeIntegrationCall(step.operation, step.parameters);
+          break;
+        default:
+          throw new Error(`Unknown adapter: ${step.adapter}`);
+      }
+      
+      const duration = performance.now() - startTime;
+      this.logger.debug('Adapter call completed', {
+        stepId: step.id,
+        adapter: step.adapter,
+        operation: step.operation,
+        duration: Math.round(duration),
+        hasResult: !!result
+      });
+      
+      return result;
+    } catch (error) {
+      const duration = performance.now() - startTime;
+      this.logger.error('Adapter call failed', {
+        stepId: step.id,
+        adapter: step.adapter,
+        operation: step.operation,
+        duration: Math.round(duration),
+        error: error instanceof Error ? error.message : String(error)
+      });
+      throw error;
     }
   }
 
@@ -849,15 +887,37 @@ export class OrchestratorService extends EventEmitter {
    * Execute Hive Intelligence call
    */
   private async executeHiveCall(operation: string, parameters: any): Promise<any> {
+    const startTime = performance.now();
+    
+    this.logger.debug('Executing Hive call', {
+      operation,
+      query: parameters.query,
+      walletAddress: parameters.walletAddress,
+      hasMetadata: !!parameters.metadata
+    });
+    
     const result = await this.seiIntegration.getHiveAnalytics(
       parameters.query || 'portfolio analysis',
       parameters.metadata,
       parameters.walletAddress
     )();
     
+    const duration = performance.now() - startTime;
+    
     if (result._tag === 'Left') {
+      this.logger.error('Hive call failed', {
+        operation,
+        duration: Math.round(duration),
+        error: result.left.message
+      });
       throw new Error(result.left.message);
     }
+    
+    this.logger.debug('Hive call completed', {
+      operation,
+      duration: Math.round(duration),
+      resultSize: JSON.stringify(result.right).length
+    });
     
     return result.right;
   }
@@ -866,15 +926,37 @@ export class OrchestratorService extends EventEmitter {
    * Execute SAK call
    */
   private async executeSAKCall(operation: string, parameters: any): Promise<any> {
+    const startTime = performance.now();
+    
+    this.logger.debug('Executing SAK call', {
+      operation,
+      paramsKeys: Object.keys(parameters.params || {}),
+      hasContext: !!parameters.context,
+      walletAddress: parameters.context?.walletAddress
+    });
+    
     const result = await this.seiIntegration.executeSAKTool(
       operation,
       parameters.params || {},
       parameters.context
     )();
     
+    const duration = performance.now() - startTime;
+    
     if (result._tag === 'Left') {
+      this.logger.error('SAK call failed', {
+        operation,
+        duration: Math.round(duration),
+        error: result.left.message
+      });
       throw new Error(result.left.message);
     }
+    
+    this.logger.debug('SAK call completed', {
+      operation,
+      duration: Math.round(duration),
+      resultSize: JSON.stringify(result.right).length
+    });
     
     return result.right;
   }
@@ -883,19 +965,50 @@ export class OrchestratorService extends EventEmitter {
    * Execute MCP call
    */
   private async executeMCPCall(operation: string, parameters: any): Promise<any> {
-    switch (operation) {
-      case 'get_blockchain_state':
-        const blockchainResult = await this.seiIntegration.getMCPBlockchainState()();
-        if (blockchainResult._tag === 'Left') throw new Error(blockchainResult.left.message);
-        return blockchainResult.right;
-        
-      case 'get_wallet_balance':
-        const balanceResult = await this.seiIntegration.getMCPWalletBalance(parameters.walletAddress)();
-        if (balanceResult._tag === 'Left') throw new Error(balanceResult.left.message);
-        return balanceResult.right;
-        
-      default:
-        throw new Error(`Unknown MCP operation: ${operation}`);
+    const startTime = performance.now();
+    
+    this.logger.debug('Executing MCP call', {
+      operation,
+      walletAddress: parameters.walletAddress,
+      parametersCount: Object.keys(parameters).length
+    });
+    
+    try {
+      let result;
+      
+      switch (operation) {
+        case 'get_blockchain_state':
+          const blockchainResult = await this.seiIntegration.getMCPBlockchainState()();
+          if (blockchainResult._tag === 'Left') throw new Error(blockchainResult.left.message);
+          result = blockchainResult.right;
+          break;
+          
+        case 'get_wallet_balance':
+          const balanceResult = await this.seiIntegration.getMCPWalletBalance(parameters.walletAddress)();
+          if (balanceResult._tag === 'Left') throw new Error(balanceResult.left.message);
+          result = balanceResult.right;
+          break;
+          
+        default:
+          throw new Error(`Unknown MCP operation: ${operation}`);
+      }
+      
+      const duration = performance.now() - startTime;
+      this.logger.debug('MCP call completed', {
+        operation,
+        duration: Math.round(duration),
+        resultSize: JSON.stringify(result).length
+      });
+      
+      return result;
+    } catch (error) {
+      const duration = performance.now() - startTime;
+      this.logger.error('MCP call failed', {
+        operation,
+        duration: Math.round(duration),
+        error: error instanceof Error ? error.message : String(error)
+      });
+      throw error;
     }
   }
 
@@ -903,27 +1016,60 @@ export class OrchestratorService extends EventEmitter {
    * Execute integration call
    */
   private async executeIntegrationCall(operation: string, parameters: any): Promise<any> {
-    switch (operation) {
-      case 'integrated_analysis':
-        const analysisResult = await this.seiIntegration.generateIntegratedAnalysis(
-          parameters.walletAddress,
-          parameters.analysisType,
-          parameters.options
-        )();
-        if (analysisResult._tag === 'Left') throw new Error(analysisResult.left.message);
-        return analysisResult.right;
-        
-      case 'integrated_search':
-        const searchResult = await this.seiIntegration.performIntegratedSearch(
-          parameters.query,
-          parameters.walletAddress,
-          parameters.options
-        )();
-        if (searchResult._tag === 'Left') throw new Error(searchResult.left.message);
-        return searchResult.right;
-        
-      default:
-        throw new Error(`Unknown integration operation: ${operation}`);
+    const startTime = performance.now();
+    
+    this.logger.debug('Executing integration call', {
+      operation,
+      walletAddress: parameters.walletAddress,
+      analysisType: parameters.analysisType,
+      query: parameters.query,
+      hasOptions: !!parameters.options
+    });
+    
+    try {
+      let result;
+      
+      switch (operation) {
+        case 'integrated_analysis':
+          const analysisResult = await this.seiIntegration.generateIntegratedAnalysis(
+            parameters.walletAddress,
+            parameters.analysisType,
+            parameters.options
+          )();
+          if (analysisResult._tag === 'Left') throw new Error(analysisResult.left.message);
+          result = analysisResult.right;
+          break;
+          
+        case 'integrated_search':
+          const searchResult = await this.seiIntegration.performIntegratedSearch(
+            parameters.query,
+            parameters.walletAddress,
+            parameters.options
+          )();
+          if (searchResult._tag === 'Left') throw new Error(searchResult.left.message);
+          result = searchResult.right;
+          break;
+          
+        default:
+          throw new Error(`Unknown integration operation: ${operation}`);
+      }
+      
+      const duration = performance.now() - startTime;
+      this.logger.debug('Integration call completed', {
+        operation,
+        duration: Math.round(duration),
+        resultSize: JSON.stringify(result).length
+      });
+      
+      return result;
+    } catch (error) {
+      const duration = performance.now() - startTime;
+      this.logger.error('Integration call failed', {
+        operation,
+        duration: Math.round(duration),
+        error: error instanceof Error ? error.message : String(error)
+      });
+      throw error;
     }
   }
 
