@@ -49,7 +49,7 @@ interface TokenInfo {
 }
 
 interface TransactionPreview {
-  type: 'swap' | 'lend' | 'borrow' | 'withdraw' | 'supply' | 'provide-liquidity' | 'remove-liquidity';
+  type: 'swap' | 'lend' | 'borrow' | 'withdraw' | 'supply' | 'provide-liquidity' | 'remove-liquidity' | 'stake' | 'unstake';
   protocol: string;
   action: string;
   tokenIn?: TokenInfo;

@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react';
 import { formatEther, formatUnits } from 'viem';
 import { useWaitForTransactionReceipt } from 'wagmi';
-import { CheckCircle, XCircle, Loader2, AlertTriangle } from 'lucide-react';
+import { CheckCircle, Loader2, AlertTriangle } from 'lucide-react';
 import { useWalletOperations } from '@hooks/useWalletOperations';
 import { logger } from '@lib/logger';
-import { sanitizeTransactionDescription, useSanitizedContent, SANITIZE_CONFIGS } from '@lib/sanitize';
+import { useSanitizedContent, SANITIZE_CONFIGS } from '@lib/sanitize';
 
 // Safe description renderer
 function SafeTransactionDescription({ description }: { description: string }) {
@@ -182,12 +182,12 @@ export function TransactionModal({
             </div>
           )}
 
-          {transaction.estimatedGas && (
+          {transaction.estimatedGas !== undefined && transaction.estimatedGas > 0n && (
             <div className="bg-black/50 rounded-lg p-4 border border-red-500/10">
               <div className="flex items-center justify-between">
                 <span className="text-gray-400">Estimated Gas</span>
                 <span className="text-white font-medium">
-                  {formatEther(transaction.estimatedGas || 0n)} SEI
+                  {transaction.estimatedGas ? formatEther(transaction.estimatedGas) : '0'} SEI
                 </span>
               </div>
             </div>

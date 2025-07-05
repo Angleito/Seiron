@@ -240,6 +240,18 @@ export function TransactionDemo() {
     }
   };
 
+  // Convert RiskAssessmentData to RiskAssessment format
+  const convertRiskAssessment = (data: RiskAssessmentData) => ({
+    level: data.level,
+    score: data.score,
+    factors: data.factors.map(factor => ({
+      type: factor.type,
+      severity: factor.severity === 'critical' ? 'high' : factor.severity,
+      message: factor.description
+    })),
+    recommendations: data.recommendations
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-red-950 p-8">
       <Toaster position="top-right" theme="dark" />
@@ -335,12 +347,15 @@ export function TransactionDemo() {
                 priceImpact: getCurrentPreview().priceImpact,
                 exchangeRate: getCurrentPreview().exchangeRate,
                 apy: getCurrentPreview().apy,
-                healthFactor: getCurrentPreview().healthFactor
+                healthFactor: getCurrentPreview().healthFactor ? {
+                  before: getCurrentPreview().healthFactor!.current,
+                  after: getCurrentPreview().healthFactor!.after
+                } : undefined
               }}
-              riskAssessment={getCurrentRiskAssessment()}
+              riskAssessment={convertRiskAssessment(getCurrentRiskAssessment())}
               onConfirm={handleConfirm}
               onCancel={() => setShowConfirmation(false)}
-              isProcessing={state.isPending}
+              isProcessing={state.step !== 'idle' && state.step !== 'confirmed' && state.step !== 'failed'}
             />
           </div>
         )}

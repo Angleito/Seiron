@@ -40,18 +40,18 @@ export class LazyLoadingBoundary extends Component<LazyLoadingBoundaryProps, Laz
     }
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('LazyLoadingBoundary caught an error:', error, errorInfo)
     this.props.onError?.(error, errorInfo)
   }
 
-  componentDidMount() {
+  override componentDidMount() {
     if (this.props.showProgress) {
       this.startProgressTracking()
     }
   }
 
-  componentWillUnmount() {
+  override componentWillUnmount() {
     if (this.progressInterval) {
       clearInterval(this.progressInterval)
     }
@@ -65,13 +65,13 @@ export class LazyLoadingBoundary extends Component<LazyLoadingBoundaryProps, Laz
     }, 200)
   }
 
-  private stopProgressTracking = () => {
-    if (this.progressInterval) {
-      clearInterval(this.progressInterval)
-      this.progressInterval = null
-    }
-    this.setState({ progress: 100 })
-  }
+  // private stopProgressTracking = () => {
+  //   if (this.progressInterval) {
+  //     clearInterval(this.progressInterval)
+  //     this.progressInterval = null
+  //   }
+  //   this.setState({ progress: 100 })
+  // }
 
   private handleRetry = () => {
     this.setState({
@@ -85,7 +85,7 @@ export class LazyLoadingBoundary extends Component<LazyLoadingBoundaryProps, Laz
     }
   }
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       return (
         <div className="flex items-center justify-center p-8 bg-red-50 rounded-lg">
@@ -140,7 +140,7 @@ export class LazyLoadingBoundary extends Component<LazyLoadingBoundaryProps, Laz
 /**
  * Hook version of LazyLoadingBoundary for functional components
  */
-export const useLazyLoadingBoundary = (featureName?: string) => {
+export const useLazyLoadingBoundary = (_featureName?: string) => {
   const [isLoading, setIsLoading] = React.useState(false)
   const [error, setError] = React.useState<Error | null>(null)
   const [progress, setProgress] = React.useState(0)
