@@ -387,11 +387,12 @@ export class LoggingService extends EventEmitter {
    */
   public getAllServiceHealth = (): Record<string, ServiceHealthMetrics> => {
     const result: Record<string, ServiceHealthMetrics> = {};
-    for (const [service, metrics] of this.healthMetrics.entries()) {
+    this.healthMetrics.forEach((metrics, service) => {
       result[service] = metrics;
-    }
+    });
     return result;
   };
+
 
   // ============================================================================
   // Query and Analytics
@@ -589,11 +590,11 @@ export class LoggingService extends EventEmitter {
 
     // Remove old performance timers
     const now = performance.now();
-    for (const [key, startTime] of this.performanceTimers.entries()) {
+    this.performanceTimers.forEach((startTime, key) => {
       if (now - startTime > 300000) { // 5 minutes
         this.performanceTimers.delete(key);
       }
-    }
+    });
   };
 }
 

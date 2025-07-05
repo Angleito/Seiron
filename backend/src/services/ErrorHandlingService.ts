@@ -506,9 +506,9 @@ export class ErrorHandlingService extends EventEmitter {
    */
   public getCircuitBreakerStatus = (): Record<string, CircuitBreakerState> => {
     const status: Record<string, CircuitBreakerState> = {};
-    for (const [name, state] of this.circuitBreakers.entries()) {
+    this.circuitBreakers.forEach((state, name) => {
       status[name] = { ...state };
-    }
+    });
     return status;
   };
 
@@ -664,7 +664,7 @@ export const withErrorRecovery = (
         () => originalMethod.apply(this, args),
         strategyKey,
         context
-      )();
+      )() as Promise<R>;
     };
 
     return descriptor;

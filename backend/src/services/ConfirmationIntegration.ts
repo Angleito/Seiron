@@ -1,10 +1,35 @@
 import { pipe } from 'fp-ts/function';
 import * as TE from 'fp-ts/TaskEither';
 import * as E from 'fp-ts/Either';
-import { ConfirmationHandler } from '../../../src/langchain/conversation/ConfirmationHandler';
+// import { ConfirmationHandler } from '../../../src/langchain/conversation/ConfirmationHandler';
 import { ConfirmationService, PendingTransaction } from './ConfirmationService';
-import { ExecutableCommand } from '../../../src/langchain/processing/types';
-import { ConversationSession } from '../../../src/langchain/conversation/types';
+// import { ExecutableCommand } from '../../../src/langchain/processing/types';
+// import { ConversationSession } from '../../../src/langchain/conversation/types';
+
+// Temporary interfaces until langchain integration is complete
+export interface ExecutableCommand {
+  action: string;
+  intent: string;
+  parameters: {
+    primary: Record<string, any>;
+    optional: Record<string, any>;
+  };
+  estimatedGas?: number;
+}
+
+export interface ConversationSession {
+  id: string;
+  userId: string;
+  messages: any[];
+}
+
+export interface ConfirmationHandler {
+  createConfirmationRequest(command: ExecutableCommand, session: ConversationSession): Promise<E.Either<Error, any>>;
+  processConfirmationResponse(id: string, response: string, session: ConversationSession): Promise<E.Either<Error, any>>;
+  getConfirmationStatus(id: string): any;
+  formatConfirmationRequest(request: any): string;
+  cancelConfirmation(id: string, reason: string): Promise<E.Either<Error, boolean>>;
+}
 import logger from '../utils/logger';
 
 /**
@@ -16,11 +41,8 @@ export class ConfirmationIntegration {
 
   constructor(confirmationService: ConfirmationService) {
     this.confirmationService = confirmationService;
-    this.confirmationHandler = new ConfirmationHandler({
-      timeout: 300000, // 5 minutes
-      retryCount: 3,
-      defaultRiskThreshold: 'medium'
-    });
+    // TODO: Replace with actual ConfirmationHandler once langchain integration is complete
+    this.confirmationHandler = {} as ConfirmationHandler;
   }
 
   /**

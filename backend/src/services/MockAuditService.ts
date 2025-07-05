@@ -4,7 +4,7 @@ import * as A from 'fp-ts/Array'
 import * as E from 'fp-ts/Either'
 import * as fs from 'fs/promises'
 import * as path from 'path'
-import glob from 'glob'
+import { glob } from 'glob'
 
 export interface MockPattern { // TODO: REMOVE_MOCK - Mock-related keywords
   pattern: RegExp
@@ -35,7 +35,7 @@ const mockPatterns: MockPattern[] = [ // TODO: REMOVE_MOCK - Mock-related keywor
     severity: 'high'
   },
   {
-    pattern: /\[(["'])[^\1]*\1,\s*(["'])[^\2]*\2,\s*(["'])[^\3]*\3\]/g,
+    pattern: /\[["'][^"']*["'],\s*["'][^"']*["'],\s*["'][^"']*["']\]/g,
     description: 'Hard-coded array literals',
     severity: 'medium'
   },
@@ -58,12 +58,10 @@ const mockPatterns: MockPattern[] = [ // TODO: REMOVE_MOCK - Mock-related keywor
 
 const findAllFiles = (pattern: string): TE.TaskEither<Error, string[]> =>
   TE.tryCatch(
-    () => new Promise<string[]>((resolve, reject) => {
-      glob(pattern, { ignore: ['**/node_modules/**', '**/dist/**', '**/.next/**'] }, (err, files) => { // TODO: REMOVE_MOCK - Hard-coded array literals
-        if (err) reject(err)
-        else resolve(files)
-      })
-    }),
+    async () => {
+      const files = await glob(pattern, { ignore: ['**/node_modules/**', '**/dist/**', '**/.next/**'] }); // TODO: REMOVE_MOCK - Hard-coded array literals
+      return files;
+    },
     (error) => new Error(`Failed to find files: ${error}`)
   )
 

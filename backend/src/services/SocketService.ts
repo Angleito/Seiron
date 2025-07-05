@@ -1,7 +1,7 @@
 import { Server, Socket } from 'socket.io';
 import * as TE from 'fp-ts/TaskEither';
-import { createServiceLogger, createServiceErrorHandler } from './LoggingService';
-import { withErrorRecovery } from './ErrorHandlingService';
+import { createServiceLogger } from './LoggingService';
+import { createServiceErrorHandler } from './ErrorHandlingService';
 
 export interface PortfolioUpdate {
   type: 'position_update' | 'balance_change' | 'transaction_complete' | 'error' | 
@@ -42,7 +42,7 @@ export class SocketService {
    * Remove user socket connection
    */
   public removeUserSocket(socket: Socket): void {
-    for (const [walletAddress, sockets] of this.userSockets.entries()) {
+    for (const [walletAddress, sockets] of Array.from(this.userSockets)) {
       const index = sockets.findIndex(s => s.id === socket.id);
       if (index !== -1) {
         sockets.splice(index, 1);
@@ -218,7 +218,7 @@ export class SocketService {
       'expired': 'transaction_expired'
     } as const;
 
-    return this.sendPortfolioUpdate(walletAddress, {
+    const baseUpdate: PortfolioUpdate = {
       type: typeMap[status],
       data: {
         transactionId,
@@ -226,9 +226,9 @@ export class SocketService {
         details,
         timestamp: new Date().toISOString()
       },
-      timestamp: new Date().toISOString(),
-      source: 'system',
-      priority: status === 'confirmed' ? 'high' : 'medium'
-    });
+      timestamp: new Date().toISOString()
+    };
+
+    return this.sendPortfolioUpdate(walletAddress, baseUpdate);
   }
 }
