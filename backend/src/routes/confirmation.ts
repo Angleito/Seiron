@@ -29,25 +29,19 @@ router.post('/confirm/:transactionId', [
     });
   }
 
-  const result = await pipe(
-    req.services.confirmation.confirmTransaction(transactionId, walletAddress),
-    TE.fold(
-      (error) => TE.of({ 
-        success: false, 
-        error: error.message 
-      }),
-      (confirmationResult) => TE.of({ 
-        success: true, 
-        data: confirmationResult 
-      })
-    )
-  )();
+  const result = await req.services.confirmation.confirmTransaction(transactionId, walletAddress)();
 
-  if (!result.success) {
-    return res.status(400).json(result);
+  if (result._tag === 'Left') {
+    return res.status(400).json({ 
+      success: false, 
+      error: result.left.message 
+    });
   }
 
-  res.json(result);
+  res.json({ 
+    success: true, 
+    data: result.right 
+  });
 });
 
 /**
@@ -75,25 +69,19 @@ router.post('/reject/:transactionId', [
     });
   }
 
-  const result = await pipe(
-    req.services.confirmation.rejectTransaction(transactionId, walletAddress, reason),
-    TE.fold(
-      (error) => TE.of({ 
-        success: false, 
-        error: error.message 
-      }),
-      (confirmationResult) => TE.of({ 
-        success: true, 
-        data: confirmationResult 
-      })
-    )
-  )();
+  const result = await req.services.confirmation.rejectTransaction(transactionId, walletAddress, reason)();
 
-  if (!result.success) {
-    return res.status(400).json(result);
+  if (result._tag === 'Left') {
+    return res.status(400).json({ 
+      success: false, 
+      error: result.left.message 
+    });
   }
 
-  res.json(result);
+  res.json({ 
+    success: true, 
+    data: result.right 
+  });
 });
 
 /**
@@ -118,21 +106,19 @@ router.get('/pending/:walletAddress', [
     });
   }
 
-  const result = await pipe(
-    req.services.confirmation.getPendingTransactionsForWallet(walletAddress),
-    TE.fold(
-      (error) => TE.of({ 
-        success: false, 
-        error: error.message 
-      }),
-      (transactions) => TE.of({ 
-        success: true, 
-        data: transactions 
-      })
-    )
-  )();
+  const result = await req.services.confirmation.getPendingTransactionsForWallet(walletAddress)();
 
-  res.json(result);
+  if (result._tag === 'Left') {
+    return res.json({ 
+      success: false, 
+      error: result.left.message 
+    });
+  }
+
+  res.json({ 
+    success: true, 
+    data: result.right 
+  });
 });
 
 /**
@@ -149,35 +135,30 @@ router.get('/transaction/:transactionId', [
 
   const { transactionId } = req.params;
 
-  const result = await pipe(
-    req.services.confirmation.getPendingTransaction(transactionId),
-    TE.fold(
-      (error) => TE.of({ 
-        success: false, 
-        error: error.message 
-      }),
-      (transaction) => {
-        // Verify the requesting user has access to this transaction
-        if (req.walletAddress && transaction.walletAddress !== req.walletAddress) {
-          return TE.of({ 
-            success: false, 
-            error: 'Unauthorized access to transaction' 
-          });
-        }
-        
-        return TE.of({ 
-          success: true, 
-          data: transaction 
-        });
-      }
-    )
-  )();
+  const result = await req.services.confirmation.getPendingTransaction(transactionId)();
 
-  if (!result.success) {
-    return res.status(result.error === 'Transaction not found' ? 404 : 403).json(result);
+  if (result._tag === 'Left') {
+    const errorMessage = result.left.message;
+    return res.status(errorMessage === 'Transaction not found' ? 404 : 403).json({ 
+      success: false, 
+      error: errorMessage 
+    });
   }
 
-  res.json(result);
+  const transaction = result.right;
+  
+  // Verify the requesting user has access to this transaction
+  if (req.walletAddress && transaction.walletAddress !== req.walletAddress) {
+    return res.status(403).json({ 
+      success: false, 
+      error: 'Unauthorized access to transaction' 
+    });
+  }
+
+  res.json({ 
+    success: true, 
+    data: transaction 
+  });
 });
 
 export { router as confirmationRouter };

@@ -176,7 +176,7 @@ export class PortfolioExporter {
           )
         )
       ),
-      TE.chain(results => this.createBackupManifest(effectiveBackupPath, results)),
+      TE.chain(results => this.createBackupManifest(effectiveBackupPath, results as any)),
       TE.map(() => ({
         backupPath: effectiveBackupPath,
         walletsBackedUp: walletAddresses.length
@@ -211,12 +211,16 @@ export class PortfolioExporter {
   }> => {
     return pipe(
       this.loadImportFile(filePath),
-      TE.chain(exportData => this.performValidation(exportData)),
-      TE.map(({ valid, errors }) => ({
-        valid,
-        errors,
-        metadata: exportData.metadata as ExportMetadata
-      }))
+      TE.chain(exportData => 
+        pipe(
+          this.performValidation(exportData),
+          TE.map(({ valid, errors }) => ({
+            valid,
+            errors,
+            metadata: exportData.metadata as any
+          }))
+        )
+      )
     );
   };
 
@@ -226,7 +230,7 @@ export class PortfolioExporter {
   public getExportInfo = (filePath: string): AsyncResult<ExportMetadata> => {
     return pipe(
       this.loadImportFile(filePath),
-      TE.map(exportData => exportData.metadata as ExportMetadata)
+      TE.map(exportData => exportData.metadata as any)
     );
   };
 
@@ -247,7 +251,7 @@ export class PortfolioExporter {
           entry.isDirectory() && entry.name.startsWith('portfolio-backup-')
         );
 
-        const backups = [];
+        const backups: { path: string; timestamp: string; walletCount: number }[] = [];
         for (const dir of backupDirs) {
           const backupPath = path.join(searchDir, dir.name);
           const manifestPath = path.join(backupPath, 'backup-manifest.json');
@@ -306,9 +310,9 @@ export class PortfolioExporter {
           data: {
             snapshot: currentSnapshot,
             history,
-            metrics: metrics!,
+            metrics: metrics as any,
             performance,
-            risks: risks!
+            risks: risks as any
           },
           metadata: {
             exportedBy: 'PortfolioExporter',
@@ -765,9 +769,9 @@ export class PortfolioExporter {
   ): AsyncResult<{ walletsRestored: number; errors: string[] }> => {
     return TE.tryCatch(
       async () => {
-        const result = { walletsRestored: 0, errors: [] };
+        const result: { walletsRestored: number; errors: string[] } = { walletsRestored: 0, errors: [] };
 
-        for (const exportInfo of manifest.exports) {
+        for (const exportInfo of manifest.exports as any[]) {
           try {
             const filePath = path.join(backupPath, exportInfo.filename);
             await this.importPortfolio(filePath, importConfig)();

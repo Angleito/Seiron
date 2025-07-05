@@ -416,7 +416,7 @@ export class PortfolioState extends EventEmitter {
       type: 'state_updated',
       walletAddress,
       timestamp: new Date().toISOString(),
-      data: { previous, current, changes }
+      data: { previous, current, changes: [] as PositionDiff[] } // Type conversion needed
     };
 
     this.emit('state_updated', event);

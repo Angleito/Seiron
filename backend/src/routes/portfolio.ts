@@ -20,13 +20,13 @@ router.get('/data', [
 
   const { walletAddress } = req.query as { walletAddress: string };
 
-  const result = await pipe(
-    req.services.portfolio.getPortfolioData(walletAddress),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (portfolioData) => TE.of({ success: true, data: portfolioData })
-    )
-  )();
+  const result = await req.services.portfolio.getPortfolioData(walletAddress)();
+
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
+
+  res.json({ success: true, data: result.right });
 
   res.json(result);
 });
@@ -45,13 +45,13 @@ router.get('/summary', [
 
   const { walletAddress } = req.query as { walletAddress: string };
 
-  const result = await pipe(
-    req.services.portfolio.getPortfolioSummary(walletAddress),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (summary) => TE.of({ success: true, data: summary })
-    )
-  )();
+  const result = await req.services.portfolio.getPortfolioSummary(walletAddress)();
+
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
+
+  res.json({ success: true, data: result.right });
 
   res.json(result);
 });
@@ -83,37 +83,36 @@ router.post('/lending/supply', [
 
   // If confirmation required, create pending transaction
   if (requireConfirmation) {
-    const result = await pipe(
-      req.services.portfolio.createPendingLendingOperation('supply', params),
-      TE.fold(
-        (error) => TE.of({ success: false, error: error.message }),
-        (pendingResult) => TE.of({ 
-          success: true, 
-          data: pendingResult,
-          requiresConfirmation: true 
-        })
-      )
-    )();
+    const result = await req.services.portfolio.createPendingLendingOperation('supply', params)();
+
+    if (result._tag === 'Left') {
+      return res.json({ success: false, error: result.left.message });
+    }
+
+    return res.json({ 
+      success: true, 
+      data: result.right,
+      requiresConfirmation: true 
+    });
 
     return res.json(result);
   }
 
   // Direct execution without confirmation (backward compatibility)
-  const result = await pipe(
-    req.services.portfolio.executeLendingOperation('supply', params),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (txResult) => {
-        // Send real-time update
-        req.services.socket.sendTransactionUpdate(
-          walletAddress,
-          txResult.txHash,
-          'pending'
-        );
-        return TE.of({ success: true, data: txResult });
-      }
-    )
-  )();
+  const result = await req.services.portfolio.executeLendingOperation('supply', params)();
+
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
+
+  // Send real-time update
+  req.services.socket.sendTransactionUpdate(
+    walletAddress,
+    result.right.txHash,
+    'pending'
+  );
+  
+  res.json({ success: true, data: result.right });
 
   res.json(result);
 });
@@ -134,46 +133,49 @@ router.post('/lending/supply/execute', [
   const { transactionId, walletAddress } = req.body;
 
   // Get transaction details and execute
-  const transactionResult = await pipe(
-    req.services.confirmation.getPendingTransaction(transactionId),
-    TE.chain(transaction => {
-      if (transaction.walletAddress !== walletAddress) {
-        return TE.left(new Error('Unauthorized'));
-      }
-      if (transaction.status !== 'confirmed') {
-        return TE.left(new Error('Transaction not confirmed'));
-      }
-      return TE.right(transaction);
-    })
-  )();
+  const transactionResult = await req.services.confirmation.getPendingTransaction(transactionId)();
 
-  if (E.isLeft(transactionResult)) {
+  if (transactionResult._tag === 'Left') {
     return res.status(400).json({ 
       success: false, 
       error: transactionResult.left.message 
     });
   }
 
-  const transaction = transactionResult.right;
+  const transaction = transactionResult.right as any; // Type assertion for pending transaction
   
-  const result = await pipe(
-    req.services.portfolio.executeLendingOperation(
-      transaction.action as 'supply',
-      transaction.parameters,
-      transactionId
-    ),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (txResult) => {
-        req.services.socket.sendTransactionUpdate(
-          walletAddress,
-          txResult.txHash,
-          'pending'
-        );
-        return TE.of({ success: true, data: txResult });
-      }
-    )
+  // Validate transaction access
+  if (transaction.walletAddress !== walletAddress) {
+    return res.status(403).json({ 
+      success: false, 
+      error: 'Unauthorized' 
+    });
+  }
+  
+  if (transaction.status !== 'confirmed') {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'Transaction not confirmed' 
+    });
+  }
+  
+  const result = await req.services.portfolio.executeLendingOperation(
+    transaction.action as 'supply',
+    transaction.parameters,
+    transactionId
   )();
+
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
+
+  req.services.socket.sendTransactionUpdate(
+    walletAddress,
+    result.right.txHash,
+    'pending'
+  );
+  
+  res.json({ success: true, data: result.right });
 
   res.json(result);
 });
@@ -205,36 +207,35 @@ router.post('/lending/withdraw', [
 
   // If confirmation required, create pending transaction
   if (requireConfirmation) {
-    const result = await pipe(
-      req.services.portfolio.createPendingLendingOperation('withdraw', params),
-      TE.fold(
-        (error) => TE.of({ success: false, error: error.message }),
-        (pendingResult) => TE.of({ 
-          success: true, 
-          data: pendingResult,
-          requiresConfirmation: true 
-        })
-      )
-    )();
+    const result = await req.services.portfolio.createPendingLendingOperation('withdraw', params)();
+
+    if (result._tag === 'Left') {
+      return res.json({ success: false, error: result.left.message });
+    }
+
+    return res.json({ 
+      success: true, 
+      data: result.right,
+      requiresConfirmation: true 
+    });
 
     return res.json(result);
   }
 
   // Direct execution without confirmation
-  const result = await pipe(
-    req.services.portfolio.executeLendingOperation('withdraw', params),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (txResult) => {
-        req.services.socket.sendTransactionUpdate(
-          walletAddress,
-          txResult.txHash,
-          'pending'
-        );
-        return TE.of({ success: true, data: txResult });
-      }
-    )
-  )();
+  const result = await req.services.portfolio.executeLendingOperation('withdraw', params)();
+
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
+
+  req.services.socket.sendTransactionUpdate(
+    walletAddress,
+    result.right.txHash,
+    'pending'
+  );
+  
+  res.json({ success: true, data: result.right });
 
   res.json(result);
 });
@@ -282,20 +283,19 @@ router.post('/liquidity/add', [
     deadline: Math.floor(Date.now() / 1000) + 300 // 5 minutes
   };
 
-  const result = await pipe(
-    req.services.portfolio.executeLiquidityOperation('addLiquidity', liquidityParams),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (txResult) => {
-        req.services.socket.sendTransactionUpdate(
-          walletAddress,
-          txResult.txHash,
-          'pending'
-        );
-        return TE.of({ success: true, data: txResult });
-      }
-    )
-  )();
+  const result = await req.services.portfolio.executeLiquidityOperation('addLiquidity', liquidityParams)();
+
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
+
+  req.services.socket.sendTransactionUpdate(
+    walletAddress,
+    result.right.txHash,
+    'pending'
+  );
+  
+  res.json({ success: true, data: result.right });
 
   res.json(result);
 });
@@ -324,20 +324,19 @@ router.post('/liquidity/remove', [
     deadline: Math.floor(Date.now() / 1000) + 300
   };
 
-  const result = await pipe(
-    req.services.portfolio.executeLiquidityOperation('removeLiquidity', removeParams),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (txResult) => {
-        req.services.socket.sendTransactionUpdate(
-          walletAddress,
-          txResult.txHash,
-          'pending'
-        );
-        return TE.of({ success: true, data: txResult });
-      }
-    )
-  )();
+  const result = await req.services.portfolio.executeLiquidityOperation('removeLiquidity', removeParams)();
+
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
+
+  req.services.socket.sendTransactionUpdate(
+    walletAddress,
+    result.right.txHash,
+    'pending'
+  );
+  
+  res.json({ success: true, data: result.right });
 
   res.json(result);
 });
@@ -363,20 +362,19 @@ router.post('/liquidity/collect', [
     amount1Max: 2n ** 128n - 1n
   };
 
-  const result = await pipe(
-    req.services.portfolio.executeLiquidityOperation('collectFees', collectParams),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (txResult) => {
-        req.services.socket.sendTransactionUpdate(
-          walletAddress,
-          txResult.txHash,
-          'pending'
-        );
-        return TE.of({ success: true, data: txResult });
-      }
-    )
-  )();
+  const result = await req.services.portfolio.executeLiquidityOperation('collectFees', collectParams)();
+
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
+
+  req.services.socket.sendTransactionUpdate(
+    walletAddress,
+    result.right.txHash,
+    'pending'
+  );
+  
+  res.json({ success: true, data: result.right });
 
   res.json(result);
 });

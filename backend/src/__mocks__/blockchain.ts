@@ -8,7 +8,7 @@ import * as O from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
 import { pipe } from 'fp-ts/function';
 import { PortfolioSnapshot, LendingPosition, LiquidityPosition, TokenBalance } from '@/types/portfolio';
-import { generatePortfolioSnapshot, generateTokenBalance, generateLendingPosition, generateLiquidityPosition } from '@/test-utils';
+import { generatePortfolioSnapshot, generateTokenBalance, generateLendingPosition, generateLiquidityPosition } from '@/__tests__/utils/generators';
 
 // ===================== Error Types =====================
 
@@ -204,16 +204,20 @@ export const mockGetLendingPositions = (walletAddress: string): TE.TaskEither<Bl
             generateLendingPosition({ 
               platform: 'Aave',
               tokenSymbol: 'ETH', 
-              suppliedUSD: 4000,
-              borrowedUSD: 1000,
-              healthFactor: 4.0
+              type: 'supply',
+              valueUSD: 4000
+            }),
+            generateLendingPosition({ 
+              platform: 'Aave',
+              tokenSymbol: 'ETH', 
+              type: 'borrow',
+              valueUSD: 1000
             }),
             generateLendingPosition({ 
               platform: 'Compound',
               tokenSymbol: 'USDC', 
-              suppliedUSD: 2000,
-              borrowedUSD: 0,
-              healthFactor: Number.MAX_SAFE_INTEGER
+              type: 'supply',
+              valueUSD: 2000
             })
           ];
         }
@@ -239,14 +243,14 @@ export const mockGetLiquidityPositions = (walletAddress: string): TE.TaskEither<
               token0Symbol: 'ETH',
               token1Symbol: 'USDC',
               valueUSD: 3000,
-              apy: 15.5
+              totalApr: 15.5
             }),
             generateLiquidityPosition({
               platform: 'SushiSwap',
               token0Symbol: 'USDC',
               token1Symbol: 'USDT',
               valueUSD: 1500,
-              apy: 8.2
+              totalApr: 8.2
             })
           ];
         }
@@ -278,8 +282,8 @@ export const mockGetPortfolioSnapshot = (walletAddress: string): TE.TaskEither<B
         }
         
         // Calculate totals from positions
-        const totalSuppliedUSD = lendingPositions.reduce((sum, pos) => sum + pos.suppliedUSD, 0);
-        const totalBorrowedUSD = lendingPositions.reduce((sum, pos) => sum + pos.borrowedUSD, 0);
+        const totalSuppliedUSD = lendingPositions.filter(pos => pos.type === 'supply').reduce((sum, pos) => sum + pos.valueUSD, 0);
+        const totalBorrowedUSD = lendingPositions.filter(pos => pos.type === 'borrow').reduce((sum, pos) => sum + pos.valueUSD, 0);
         const totalLiquidityUSD = liquidityPositions.reduce((sum, pos) => sum + pos.valueUSD, 0);
         const totalValueUSD = totalSuppliedUSD + totalLiquidityUSD;
         const netWorth = totalValueUSD - totalBorrowedUSD;
@@ -293,9 +297,9 @@ export const mockGetPortfolioSnapshot = (walletAddress: string): TE.TaskEither<B
           totalLiquidityUSD,
           netWorth,
           healthFactor,
-          lendingPositions,
-          liquidityPositions,
-          tokenBalances,
+          lendingPositions: [...lendingPositions],
+          liquidityPositions: [...liquidityPositions],
+          tokenBalances: [...tokenBalances],
           timestamp: new Date().toISOString()
         };
       })
@@ -368,9 +372,13 @@ export const createHighRiskScenario = (walletAddress: string): void => {
     lendingPositions: [
       generateLendingPosition({
         tokenSymbol: 'ETH',
-        suppliedUSD: 10000,
-        borrowedUSD: 9000,
-        healthFactor: 1.11
+        type: 'supply',
+        valueUSD: 10000
+      }),
+      generateLendingPosition({
+        tokenSymbol: 'ETH',
+        type: 'borrow',
+        valueUSD: 9000
       })
     ]
   });
@@ -384,12 +392,12 @@ export const createConcentratedPortfolioScenario = (walletAddress: string): void
     lendingPositions: [
       generateLendingPosition({
         tokenSymbol: 'RISKY_TOKEN',
-        suppliedUSD: 18000, // 90% concentration
-        valueUSD: 18000
+        type: 'supply',
+        valueUSD: 18000 // 90% concentration
       }),
       generateLendingPosition({
         tokenSymbol: 'SAFE_TOKEN',
-        suppliedUSD: 2000,
+        type: 'supply',
         valueUSD: 2000
       })
     ]

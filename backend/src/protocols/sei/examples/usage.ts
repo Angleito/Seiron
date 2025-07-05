@@ -15,9 +15,9 @@ import {
 import {
   SeiProtocolConfig,
   SiloStakeParams,
-  CitrexOpenPositionParams,
-  SeiProtocolErrorHandler
+  CitrexOpenPositionParams
 } from '../types';
+import { SeiProtocolErrorHandler } from '../errors/SeiProtocolErrorHandler';
 import logger from '../../../utils/logger';
 
 // ===================== Configuration Setup =====================
@@ -463,7 +463,7 @@ export async function errorHandlingExample(): Promise<void> {
     console.log('🔄 Testing error handling with retry...');
     
     const faultyOperation = () => 
-      TE.left(new Error('Simulated network error'));
+      TE.left(SeiProtocolErrorHandler.handleProtocolError(new Error('Simulated network error')));
     
     const retryableOperation = SeiProtocolErrorHandler.retryOperation(
       faultyOperation,
@@ -498,14 +498,14 @@ export async function errorHandlingExample(): Promise<void> {
     const safeResult = await safeOperation();
     
     if (safeResult._tag === 'Left') {
-      const { error, userMessage } = SeiProtocolErrorHandler.handleProtocolError(
+      const errorDetails = SeiProtocolErrorHandler.handleProtocolError(
         safeResult.left,
         'test_operation'
       );
       
       console.log('✅ Error handled gracefully:');
-      console.log(`  User Message: ${userMessage}`);
-      console.log(`  Technical Details: ${error.message}`);
+      console.log(`  User Message: ${errorDetails.userMessage}`);
+      console.log(`  Technical Details: ${errorDetails.message}`);
     }
 
   } catch (error) {
@@ -534,15 +534,7 @@ export async function runAllExamples(): Promise<void> {
 }
 
 // ===================== Individual Example Exports =====================
-
-export {
-  basicProtocolSetup,
-  siloStakingExample,
-  citrexTradingExample,
-  portfolioManagementExample,
-  riskManagementExample,
-  errorHandlingExample
-};
+// Functions are already exported above with their declarations
 
 // Run examples if this file is executed directly
 if (require.main === module) {

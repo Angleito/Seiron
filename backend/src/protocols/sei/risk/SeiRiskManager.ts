@@ -5,6 +5,7 @@
 
 import { pipe } from 'fp-ts/function';
 import * as TE from 'fp-ts/TaskEither';
+import * as E from 'fp-ts/Either';
 import * as A from 'fp-ts/Array';
 import * as O from 'fp-ts/Option';
 import {
@@ -536,9 +537,15 @@ export class SeiRiskManager {
     ]);
     
     // Assume SEI has high correlation with other positions (simplified)
-    const seiExposure = [...siloPositions, ...citrexPositions].filter(pos => 
-      pos.stakedTokenSymbol === 'SEI' || pos.market?.includes('SEI')
-    ).length;
+    const seiExposure = [...siloPositions, ...citrexPositions].filter(pos => {
+      if ('stakedTokenSymbol' in pos) {
+        return pos.stakedTokenSymbol === 'SEI';
+      }
+      if ('market' in pos) {
+        return pos.market?.includes('SEI');
+      }
+      return false;
+    }).length;
     
     const totalPositions = siloPositions.length + citrexPositions.length;
     

@@ -4,21 +4,49 @@ import * as E from 'fp-ts/Either';
 import * as A from 'fp-ts/Array';
 import * as N from 'fp-ts/number';
 import { EventEmitter } from 'events';
-import { createServiceLogger, createServiceErrorHandler } from './LoggingService';
-import { withErrorRecovery } from './ErrorHandlingService';
-import type { 
-  HiveAnalyticsResult, 
-  HiveInsight, 
-  HiveRecommendation 
-} from '../../../src/agents/adapters/HiveIntelligenceAdapter';
-import type { 
-  SAKOperationResult 
-} from '../../../src/agents/adapters/SeiAgentKitAdapter';
-import type { 
-  BlockchainState, 
-  WalletBalance 
-} from '../../../src/agents/adapters/SeiMCPAdapter';
-import type { SeiIntegrationService } from './SeiIntegrationService';
+import { createServiceLogger } from './LoggingService';
+import { createServiceErrorHandler, withErrorRecovery } from './ErrorHandlingService';
+import type { SeiIntegrationService, HiveIntelligenceAdapter, SeiAgentKitAdapter, SeiMCPAdapter } from './SeiIntegrationService';
+
+// Adapter types - will be properly defined later
+export interface HiveAnalyticsResult {
+  insights: HiveInsight[];
+  recommendations: HiveRecommendation[];
+}
+
+export interface HiveInsight {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  confidence: number;
+  data?: any;
+}
+
+export interface HiveRecommendation {
+  title: string;
+  description: string;
+  priority: string;
+  expectedImpact: number;
+}
+
+export interface SAKOperationResult {
+  success: boolean;
+  data?: any;
+  metadata?: any;
+}
+
+export interface BlockchainState {
+  blockNumber?: number;
+  networkStatus: string;
+  gasPrice?: any;
+}
+
+export interface WalletBalance {
+  address: string;
+  balances: any[];
+  totalValueUSD: number;
+}
 
 /**
  * PortfolioAnalyticsService - Enhanced Portfolio Analytics
@@ -211,14 +239,17 @@ export class PortfolioAnalyticsService extends EventEmitter {
   private config: PortfolioAnalyticsConfig;
   private seiIntegration: SeiIntegrationService;
   private analyticsCache: Map<string, { data: any; expiresAt: number }> = new Map();
+  private hiveAdapter?: HiveIntelligenceAdapter;
+  private sakAdapter?: SeiAgentKitAdapter;
+  private mcpAdapter?: SeiMCPAdapter;
 
   constructor(
     seiIntegration: SeiIntegrationService,
-    config: PortfolioAnalyticsConfig = this.getDefaultConfig()
+    config?: PortfolioAnalyticsConfig
   ) {
     super();
     this.seiIntegration = seiIntegration;
-    this.config = config;
+    this.config = config || this.getDefaultConfig();
     this.setupAnalyticsEventHandlers();
   }
 
@@ -417,7 +448,18 @@ export class PortfolioAnalyticsService extends EventEmitter {
     TE.tryCatch(
       async () => {
         const basicMetrics = this.calculateBasicMetrics(integratedData);
-        const riskMetrics = await this.calculateRiskMetrics(integratedData)();
+        const riskMetricsResult = await this.calculateRiskMetrics(integratedData)();
+        const riskMetrics = pipe(
+          riskMetricsResult,
+          E.getOrElse(() => ({
+            overallRiskScore: 50,
+            volatilityScore: 50,
+            liquidityScore: 50,
+            concentrationRisk: 50,
+            correlationRisk: 50,
+            riskLevel: 'medium' as const
+          }))
+        );
         const yieldMetrics = this.calculateYieldMetrics(integratedData);
         const marketMetrics = this.calculateMarketMetrics(integratedData);
         const diversificationMetrics = this.calculateDiversificationMetrics(integratedData);

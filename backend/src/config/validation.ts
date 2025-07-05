@@ -143,14 +143,19 @@ export const validateStringArray = (field: string, value: string): Either<Config
  * Combines multiple validation results into a single result
  */
 export const combineValidations = <T>(
-  validations: readonly Either<ConfigError, any>[]
+  validations: readonly Either<ConfigError | readonly ConfigError[], any>[]
 ): Either<readonly ConfigError[], readonly any[]> => {
   const errors: ConfigError[] = [];
   const values: any[] = [];
   
   for (const validation of validations) {
     if (E.isLeft(validation)) {
-      errors.push(validation.left);
+      // Handle both single error and array of errors
+      if (Array.isArray(validation.left)) {
+        errors.push(...(validation.left as ConfigError[]));
+      } else {
+        errors.push(validation.left as ConfigError);
+      }
     } else {
       values.push(validation.right);
     }

@@ -7,10 +7,12 @@ export * from './blockchain';
 export * from './cache';
 
 // Re-export fp-ts types for convenience
-export * as E from 'fp-ts/Either';
-export * as O from 'fp-ts/Option';
-export * as TE from 'fp-ts/TaskEither';
-export { pipe } from 'fp-ts/function';
+import * as E from 'fp-ts/Either';
+import * as O from 'fp-ts/Option';
+import * as TE from 'fp-ts/TaskEither';
+import { pipe } from 'fp-ts/function';
+
+export { E, O, TE, pipe };
 
 // Common mock patterns // TODO: REMOVE_MOCK - Mock-related keywords
 export const createMockSuccess = <T>(value: T): E.Either<never, T> => E.right(value); // TODO: REMOVE_MOCK - Mock-related keywords

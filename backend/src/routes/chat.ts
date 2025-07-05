@@ -167,19 +167,16 @@ router.post('/message', [
   const portfolioResult = await req.services.portfolio.getPortfolioData(walletAddress)();
   const portfolioData = portfolioResult._tag === 'Right' ? portfolioResult.right : undefined;
 
-  const result = await pipe(
-    req.services.ai.processMessageEnhanced(message, walletAddress, portfolioData),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (aiResponse) => {
-        // Send real-time update via Socket.io
-        req.services.socket.sendChatResponse(walletAddress, aiResponse);
-        return TE.of({ success: true, data: aiResponse });
-      }
-    )
-  )();
+  const result = await req.services.ai.processMessageEnhanced(message, walletAddress, portfolioData)();
 
-  res.json(result);
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
+
+  // Send real-time update via Socket.io
+  req.services.socket.sendChatResponse(walletAddress, result.right);
+  res.json({ success: true, data: result.right });
+
 });
 
 /**
@@ -272,15 +269,14 @@ router.delete('/history', [
 
   const { walletAddress } = req.body;
 
-  const result = await pipe(
-    req.services.ai.clearConversationHistory(walletAddress),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      () => TE.of({ success: true, message: 'Conversation history cleared' })
-    )
-  )();
+  const result = await req.services.ai.clearConversationHistory(walletAddress)();
 
-  res.json(result);
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
+
+  res.json({ success: true, message: 'Conversation history cleared' });
+
 });
 
 /**
@@ -301,14 +297,15 @@ router.post('/analysis', [
     req.services.portfolio.getPortfolioData(walletAddress),
     TE.chain(portfolioData => 
       req.services.ai.generatePortfolioAnalysis(portfolioData, walletAddress)
-    ),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (analysis) => TE.of({ success: true, data: analysis })
     )
   )();
 
-  res.json(result);
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: (result.left as Error).message });
+  }
+
+  res.json({ success: true, data: result.right });
+
 });
 
 /**
@@ -327,22 +324,20 @@ router.post('/hive-search', [
 
   const { query, walletAddress, metadata } = req.body;
 
-  const result = await pipe(
-    req.services.seiIntegration.performHiveSearch(query, metadata, walletAddress),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (searchResults) => {
-        // Send real-time update via Socket.io
-        req.services.socket.sendChatResponse(walletAddress, {
-          type: 'hive_search_results',
-          data: searchResults
-        });
-        return TE.of({ success: true, data: searchResults });
-      }
-    )
-  )();
+  const result = await req.services.seiIntegration.performHiveSearch(query, metadata, walletAddress)();
 
-  res.json(result);
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
+
+  // Send real-time update via Socket.io
+  req.services.socket.sendChatResponse(walletAddress, {
+    type: 'hive_search_results',
+    data: result.right
+  });
+  
+  res.json({ success: true, data: result.right });
+
 });
 
 /**
@@ -361,22 +356,20 @@ router.post('/hive-analytics', [
 
   const { query, walletAddress, metadata } = req.body;
 
-  const result = await pipe(
-    req.services.seiIntegration.getHiveAnalytics(query, metadata, walletAddress),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (analytics) => {
-        // Send real-time analytics via Socket.io
-        req.services.socket.sendChatResponse(walletAddress, {
-          type: 'hive_analytics',
-          data: analytics
-        });
-        return TE.of({ success: true, data: analytics });
-      }
-    )
-  )();
+  const result = await req.services.seiIntegration.getHiveAnalytics(query, metadata, walletAddress)();
 
-  res.json(result);
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
+
+  // Send real-time analytics via Socket.io
+  req.services.socket.sendChatResponse(walletAddress, {
+    type: 'hive_analytics',
+    data: result.right
+  });
+  
+  res.json({ success: true, data: result.right });
+
 });
 
 /**
@@ -396,22 +389,20 @@ router.post('/sak-execute', [
 
   const { toolName, params, walletAddress, context } = req.body;
 
-  const result = await pipe(
-    req.services.seiIntegration.executeSAKTool(toolName, params, { ...context, walletAddress }),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (sakResult) => {
-        // Send real-time update via Socket.io
-        req.services.socket.sendChatResponse(walletAddress, {
-          type: 'sak_execution_result',
-          data: sakResult
-        });
-        return TE.of({ success: true, data: sakResult });
-      }
-    )
-  )();
+  const result = await req.services.seiIntegration.executeSAKTool(toolName, params, { ...context, walletAddress })();
 
-  res.json(result);
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
+
+  // Send real-time update via Socket.io
+  req.services.socket.sendChatResponse(walletAddress, {
+    type: 'sak_execution_result',
+    data: result.right
+  });
+  
+  res.json({ success: true, data: result.right });
+
 });
 
 /**
@@ -432,22 +423,20 @@ router.post('/sak-batch', [
 
   const { operations, walletAddress, context } = req.body;
 
-  const result = await pipe(
-    req.services.seiIntegration.executeSAKBatch(operations, { ...context, walletAddress }),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (batchResults) => {
-        // Send real-time update via Socket.io
-        req.services.socket.sendChatResponse(walletAddress, {
-          type: 'sak_batch_results',
-          data: batchResults
-        });
-        return TE.of({ success: true, data: batchResults });
-      }
-    )
-  )();
+  const result = await req.services.seiIntegration.executeSAKBatch(operations, { ...context, walletAddress })();
 
-  res.json(result);
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
+
+  // Send real-time update via Socket.io
+  req.services.socket.sendChatResponse(walletAddress, {
+    type: 'sak_batch_results',
+    data: result.right
+  });
+  
+  res.json({ success: true, data: result.right });
+
 });
 
 /**
@@ -457,15 +446,14 @@ router.post('/sak-batch', [
 router.get('/sak-tools', async (req, res) => {
   const { category } = req.query;
 
-  const result = await pipe(
-    req.services.seiIntegration.getSAKTools(category as string),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (tools) => TE.of({ success: true, data: tools })
-    )
-  )();
+  const result = await req.services.seiIntegration.getSAKTools(category as string)();
 
-  res.json(result);
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
+
+  res.json({ success: true, data: result.right });
+
 });
 
 /**
@@ -479,22 +467,20 @@ router.get('/mcp-blockchain-state', async (req, res) => {
     return res.status(400).json({ error: 'Wallet address is required' });
   }
 
-  const result = await pipe(
-    req.services.seiIntegration.getMCPBlockchainState(),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (state) => {
-        // Send real-time blockchain state via Socket.io
-        req.services.socket.sendChatResponse(walletAddress, {
-          type: 'blockchain_state_update',
-          data: state
-        });
-        return TE.of({ success: true, data: state });
-      }
-    )
-  )();
+  const result = await req.services.seiIntegration.getMCPBlockchainState()();
 
-  res.json(result);
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
+
+  // Send real-time blockchain state via Socket.io
+  req.services.socket.sendChatResponse(walletAddress, {
+    type: 'blockchain_state_update',
+    data: result.right
+  });
+  
+  res.json({ success: true, data: result.right });
+
 });
 
 /**
@@ -508,22 +494,20 @@ router.get('/mcp-wallet-balance', async (req, res) => {
     return res.status(400).json({ error: 'Wallet address is required' });
   }
 
-  const result = await pipe(
-    req.services.seiIntegration.getMCPWalletBalance(walletAddress),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (balance) => {
-        // Send real-time balance update via Socket.io
-        req.services.socket.sendChatResponse(walletAddress, {
-          type: 'wallet_balance_update',
-          data: balance
-        });
-        return TE.of({ success: true, data: balance });
-      }
-    )
-  )();
+  const result = await req.services.seiIntegration.getMCPWalletBalance(walletAddress)();
 
-  res.json(result);
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
+
+  // Send real-time balance update via Socket.io
+  req.services.socket.sendChatResponse(walletAddress, {
+    type: 'wallet_balance_update',
+    data: result.right
+  });
+  
+  res.json({ success: true, data: result.right });
+
 });
 
 /**
@@ -542,15 +526,14 @@ router.post('/mcp-subscribe-events', [
 
   const { eventTypes, walletAddress, filters } = req.body;
 
-  const result = await pipe(
-    req.services.seiIntegration.subscribeMCPEvents(eventTypes, filters, walletAddress),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (subscription) => TE.of({ success: true, data: subscription })
-    )
-  )();
+  const result = await req.services.seiIntegration.subscribeMCPEvents(eventTypes, filters, walletAddress)();
 
-  res.json(result);
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
+
+  res.json({ success: true, data: result.right });
+
 });
 
 /**
@@ -577,30 +560,28 @@ router.post('/enhanced-analysis', [
     includeMCPRealtime = true
   } = req.body;
 
-  const result = await pipe(
-    req.services.portfolioAnalytics.generateEnhancedAnalysis(
-      walletAddress,
-      analysisType,
-      {
-        includeHiveInsights,
-        includeSAKData,
-        includeMCPRealtime
-      }
-    ),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (analysis) => {
-        // Send real-time analysis via Socket.io
-        req.services.socket.sendChatResponse(walletAddress, {
-          type: 'enhanced_analysis',
-          data: analysis
-        });
-        return TE.of({ success: true, data: analysis });
-      }
-    )
+  const result = await req.services.portfolioAnalytics.generateEnhancedAnalysis(
+    walletAddress,
+    analysisType,
+    {
+      includeHiveInsights,
+      includeSAKData,
+      includeMCPRealtime
+    }
   )();
 
-  res.json(result);
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
+
+  // Send real-time analysis via Socket.io
+  req.services.socket.sendChatResponse(walletAddress, {
+    type: 'enhanced_analysis',
+    data: result.right
+  });
+  
+  res.json({ success: true, data: result.right });
+
 });
 
 /**
@@ -614,15 +595,14 @@ router.get('/real-time-status', async (req, res) => {
     return res.status(400).json({ error: 'Wallet address is required' });
   }
 
-  const result = await pipe(
-    req.services.realTimeData.getConnectionStatus(walletAddress),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (status) => TE.of({ success: true, data: status })
-    )
-  )();
+  const result = await req.services.realTimeData.getConnectionStatus(walletAddress)();
 
-  res.json(result);
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
+
+  res.json({ success: true, data: result.right });
+
 });
 
 export { router as chatRouter };

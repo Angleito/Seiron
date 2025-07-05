@@ -47,41 +47,62 @@ export const generateVolatility = (): number =>
 // ===================== Portfolio Data Generators =====================
 
 export const generateTokenBalance = (overrides: Partial<TokenBalance> = {}): TokenBalance => ({
-  contractAddress: generateTokenAddress(overrides.symbol || 'TEST'),
+  token: generateTokenAddress(overrides.symbol || 'TEST'),
   symbol: 'TEST',
-  balance: '1000000000000000000', // 1 token in wei
+  name: 'Test Token',
   decimals: 18,
+  balance: 1000000000000000000n, // 1 token in wei as bigint
+  balanceFormatted: '1.0',
   valueUSD: 1000,
+  priceUSD: 1000,
   ...overrides
 });
 
 export const generateLendingPosition = (overrides: Partial<LendingPosition> = {}): LendingPosition => ({
+  id: 'test-lending-position',
+  walletAddress: generateWalletAddress(),
   platform: 'MockLender', // TODO: REMOVE_MOCK - Mock-related keywords
-  tokenAddress: generateTokenAddress(overrides.tokenSymbol || 'TEST'),
+  type: 'supply',
+  token: generateTokenAddress(overrides.tokenSymbol || 'TEST'),
   tokenSymbol: 'TEST',
-  supplied: '1000000000000000000',
-  borrowed: '0',
-  suppliedUSD: 1000,
-  borrowedUSD: 0,
-  apy: 5.5,
+  amount: '1000000000000000000',
+  amountFormatted: '1.0',
   valueUSD: 1000,
-  healthFactor: Number.MAX_SAFE_INTEGER,
+  apy: 5.5,
+  healthContribution: 0.8,
+  createdAt: generateTimestamp(),
+  lastUpdated: generateTimestamp(),
   ...overrides
 });
 
 export const generateLiquidityPosition = (overrides: Partial<LiquidityPosition> = {}): LiquidityPosition => ({
+  id: 'test-liquidity-position',
+  walletAddress: generateWalletAddress(),
   platform: 'MockDEX', // TODO: REMOVE_MOCK - Mock-related keywords
-  poolAddress: generateTokenAddress('POOL'),
-  token0Address: generateTokenAddress(overrides.token0Symbol || 'TOKEN0'),
-  token1Address: generateTokenAddress(overrides.token1Symbol || 'TOKEN1'),
+  poolId: 'test-pool',
+  token0: generateTokenAddress(overrides.token0Symbol || 'TOKEN0'),
+  token1: generateTokenAddress(overrides.token1Symbol || 'TOKEN1'),
   token0Symbol: 'TOKEN0',
   token1Symbol: 'TOKEN1',
   token0Amount: '1000000000000000000',
   token1Amount: '1000000000000000000',
   liquidity: '2000000000000000000',
   valueUSD: 2000,
-  fee24h: 10,
-  apy: 12.5,
+  feeApr: 1.0,
+  totalApr: 12.5,
+  uncollectedFees: {
+    token0: '0',
+    token1: '0',
+    valueUSD: 0
+  },
+  priceRange: {
+    lower: 0.95,
+    upper: 1.05,
+    current: 1.0
+  },
+  isInRange: true,
+  createdAt: generateTimestamp(),
+  lastUpdated: generateTimestamp(),
   ...overrides
 });
 
@@ -90,8 +111,8 @@ export const generatePortfolioSnapshot = (overrides: Partial<PortfolioSnapshot> 
   const liquidityPositions = overrides.liquidityPositions || [generateLiquidityPosition()];
   const tokenBalances = overrides.tokenBalances || [generateTokenBalance()];
 
-  const totalSuppliedUSD = lendingPositions.reduce((sum, pos) => sum + pos.suppliedUSD, 0);
-  const totalBorrowedUSD = lendingPositions.reduce((sum, pos) => sum + pos.borrowedUSD, 0);
+  const totalSuppliedUSD = lendingPositions.filter(pos => pos.type === 'supply').reduce((sum, pos) => sum + pos.valueUSD, 0);
+  const totalBorrowedUSD = lendingPositions.filter(pos => pos.type === 'borrow').reduce((sum, pos) => sum + pos.valueUSD, 0);
   const totalLiquidityUSD = liquidityPositions.reduce((sum, pos) => sum + pos.valueUSD, 0);
   const totalValueUSD = totalSuppliedUSD + totalLiquidityUSD;
   const netWorth = totalValueUSD - totalBorrowedUSD;
@@ -279,9 +300,12 @@ export const generateHighRiskPortfolio = (): PortfolioSnapshot =>
     healthFactor: 1.11, // Just above liquidation
     lendingPositions: [
       generateLendingPosition({
-        suppliedUSD: 5000,
-        borrowedUSD: 4500,
-        healthFactor: 1.11
+        type: 'supply',
+        valueUSD: 5000
+      }),
+      generateLendingPosition({
+        type: 'borrow',
+        valueUSD: 4500
       })
     ]
   });
@@ -291,12 +315,12 @@ export const generateHighConcentrationPortfolio = (): PortfolioSnapshot =>
     lendingPositions: [
       generateLendingPosition({
         tokenSymbol: 'RISKY',
-        suppliedUSD: 9000, // 90% concentration
-        valueUSD: 9000
+        type: 'supply',
+        valueUSD: 9000 // 90% concentration
       }),
       generateLendingPosition({
         tokenSymbol: 'SAFE',
-        suppliedUSD: 1000,
+        type: 'supply',
         valueUSD: 1000
       })
     ]
@@ -320,8 +344,8 @@ export const withRandomSeed = <T>(generator: () => T, seed: number): T => {
 
 export const generateMany = <T>(generator: () => T, count: number): ReadonlyArray<T> =>
   pipe(
-    A.makeBy(count, generator),
-    A.map(fn => fn())
+    A.makeBy(count, () => generator()),
+    A.map(fn => fn)
   );
 
 export type Generator<T> = () => T;

@@ -276,7 +276,8 @@ export class PortfolioAnalytics {
               this.calculatePerformance(walletAddress, period)
             )
           ),
-          TE.map(performance => {
+          TE.map(performanceReadonly => {
+            const performance = [...performanceReadonly];
             const analytics = { metrics, performance, risks, detailed };
             
             // Cache the results

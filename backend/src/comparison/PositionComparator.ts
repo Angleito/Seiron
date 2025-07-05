@@ -301,7 +301,10 @@ export class PositionComparator {
     // Analyze concentration changes
     const concentrationIssues = this.detectConcentrationIssues(comparison);
     if (concentrationIssues.length > 0) {
-      priority = Math.max(priority === 'low' ? 0 : priority === 'medium' ? 1 : priority === 'high' ? 2 : 3, 1) === 1 ? 'medium' : priority;
+      const priorityMap = { 'low': 0, 'medium': 1, 'high': 2, 'urgent': 3 } as const;
+      const currentPriorityNum = priorityMap[priority];
+      const newPriorityNum = Math.max(currentPriorityNum, 1);
+      priority = newPriorityNum === 0 ? 'low' : newPriorityNum === 1 ? 'medium' : newPriorityNum === 2 ? 'high' : 'urgent';
       risks.push(...concentrationIssues);
       recommendations.push('Consider diversifying portfolio across more platforms/assets');
     }

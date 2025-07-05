@@ -18,6 +18,7 @@ import {
   validateStringArray,
   validateUrl,
   validateRange,
+  validateNumber,
   combineValidations,
   validateConfig
 } from '../validation';
@@ -33,20 +34,20 @@ const validateServerConfig = (): Either<readonly import('../types').ConfigError[
   const validations = [
     validateEnvWithDefault('PORT', 3000, (value) => 
       pipe(
-        validateEnvNumber('PORT'),
-        validateRange('PORT', 1000, 65535)
+        validateNumber('PORT', value),
+        (result) => result._tag === 'Left' ? result : validateRange('PORT', 1000, 65535)(result.right)
       )
     ),
     validateEnvWithDefault('HOST', '0.0.0.0', (value) => right(value)),
     validateEnvironment('NODE_ENV'),
-    validateEnvWithDefault('CORS_ORIGINS', 'http://localhost:3000', (value) => 
+    validateEnvWithDefault('CORS_ORIGINS', [] as readonly string[], (value) => 
       validateStringArray('CORS_ORIGINS', value)
     ),
     validateEnvWithDefault('RATE_LIMIT_WINDOW_MS', 900000, (value) => 
-      validateEnvNumber('RATE_LIMIT_WINDOW_MS')
+      validateNumber('RATE_LIMIT_WINDOW_MS', value)
     ),
     validateEnvWithDefault('RATE_LIMIT_MAX', 100, (value) => 
-      validateEnvNumber('RATE_LIMIT_MAX')
+      validateNumber('RATE_LIMIT_MAX', value)
     )
   ];
 
@@ -74,11 +75,11 @@ const validateServerConfig = (): Either<readonly import('../types').ConfigError[
 const validateDatabaseConfig = (): Either<readonly import('../types').ConfigError[], DatabaseConfig> => {
   const validations = [
     validateEnvWithDefault('REDIS_HOST', 'localhost', (value) => right(value)),
-    validateEnvWithDefault('REDIS_PORT', 6379, (value) => validateEnvNumber('REDIS_PORT')),
+    validateEnvWithDefault('REDIS_PORT', 6379, (value) => validateNumber('REDIS_PORT', value)),
     validateEnvWithDefault('REDIS_PASSWORD', undefined, (value) => right(value)),
-    validateEnvWithDefault('REDIS_DB', 0, (value) => validateEnvNumber('REDIS_DB')),
-    validateEnvWithDefault('REDIS_MAX_RETRIES', 3, (value) => validateEnvNumber('REDIS_MAX_RETRIES')),
-    validateEnvWithDefault('REDIS_RETRY_DELAY', 100, (value) => validateEnvNumber('REDIS_RETRY_DELAY'))
+    validateEnvWithDefault('REDIS_DB', 0, (value) => validateNumber('REDIS_DB', value)),
+    validateEnvWithDefault('REDIS_MAX_RETRIES', 3, (value) => validateNumber('REDIS_MAX_RETRIES', value)),
+    validateEnvWithDefault('REDIS_RETRY_DELAY', 100, (value) => validateNumber('REDIS_RETRY_DELAY', value))
   ];
 
   return pipe(
@@ -110,16 +111,16 @@ const validateBlockchainConfig = (): Either<readonly import('../types').ConfigEr
     validateEnvWithDefault('SEI_RPC_URL', 'https://rpc.sei-testnet.com', (value) => 
       validateUrl('SEI_RPC_URL', value)
     ),
-    validateEnvWithDefault('SEI_CHAIN_ID', 713715, (value) => validateEnvNumber('SEI_CHAIN_ID')),
-    validateEnvWithDefault('SEI_BLOCK_TIME', 400, (value) => validateEnvNumber('SEI_BLOCK_TIME')),
+    validateEnvWithDefault('SEI_CHAIN_ID', 713715, (value) => validateNumber('SEI_CHAIN_ID', value)),
+    validateEnvWithDefault('SEI_BLOCK_TIME', 400, (value) => validateNumber('SEI_BLOCK_TIME', value)),
     validateEnvWithDefault('DRAGONSWAP_API_URL', 'https://api.dragonswap.app', (value) => 
       validateUrl('DRAGONSWAP_API_URL', value)
     ),
-    validateEnvWithDefault('DRAGONSWAP_TIMEOUT', 5000, (value) => validateEnvNumber('DRAGONSWAP_TIMEOUT')),
+    validateEnvWithDefault('DRAGONSWAP_TIMEOUT', 5000, (value) => validateNumber('DRAGONSWAP_TIMEOUT', value)),
     validateEnvWithDefault('YEIFINANCE_API_URL', 'https://api.yei.finance', (value) => 
       validateUrl('YEIFINANCE_API_URL', value)
     ),
-    validateEnvWithDefault('YEIFINANCE_TIMEOUT', 5000, (value) => validateEnvNumber('YEIFINANCE_TIMEOUT'))
+    validateEnvWithDefault('YEIFINANCE_TIMEOUT', 5000, (value) => validateNumber('YEIFINANCE_TIMEOUT', value))
   ];
 
   return pipe(
@@ -157,8 +158,8 @@ const validateAIConfig = (): Either<readonly import('../types').ConfigError[], A
   const validations = [
     validateEnvString('OPENAI_API_KEY'),
     validateEnvWithDefault('OPENAI_MODEL', 'gpt-4', (value) => right(value)),
-    validateEnvWithDefault('OPENAI_MAX_TOKENS', 1000, (value) => validateEnvNumber('OPENAI_MAX_TOKENS')),
-    validateEnvWithDefault('OPENAI_TEMPERATURE', 0.7, (value) => validateEnvNumber('OPENAI_TEMPERATURE'))
+    validateEnvWithDefault('OPENAI_MAX_TOKENS', 1000, (value) => validateNumber('OPENAI_MAX_TOKENS', value)),
+    validateEnvWithDefault('OPENAI_TEMPERATURE', 0.7, (value) => validateNumber('OPENAI_TEMPERATURE', value))
   ];
 
   return pipe(
@@ -188,7 +189,7 @@ const validateSecurityConfig = (): Either<readonly import('../types').ConfigErro
     validateEnvString('JWT_SECRET'),
     validateEnvWithDefault('JWT_EXPIRES_IN', '24h', (value) => right(value)),
     validateEnvWithDefault('ENCRYPTION_ALGORITHM', 'aes-256-gcm', (value) => right(value)),
-    validateEnvWithDefault('ENCRYPTION_KEY_LENGTH', 32, (value) => validateEnvNumber('ENCRYPTION_KEY_LENGTH'))
+    validateEnvWithDefault('ENCRYPTION_KEY_LENGTH', 32, (value) => validateNumber('ENCRYPTION_KEY_LENGTH', value))
   ];
 
   return pipe(
@@ -219,13 +220,13 @@ const validateLoggingConfig = (): Either<readonly import('../types').ConfigError
   const validations = [
     validateEnvWithDefault('LOG_LEVEL', 'info', (value) => right(value)),
     validateEnvWithDefault('LOG_FORMAT', 'json', (value) => right(value)),
-    validateEnvWithDefault('LOG_TRANSPORTS', 'console,file', (value) => 
+    validateEnvWithDefault('LOG_TRANSPORTS', [] as readonly string[], (value) => 
       validateStringArray('LOG_TRANSPORTS', value)
     ),
     validateEnvWithDefault('LOG_FILE_ENABLED', true, (value) => right(value === 'true')),
     validateEnvWithDefault('LOG_FILE_NAME', 'app.log', (value) => right(value)),
     validateEnvWithDefault('LOG_FILE_MAX_SIZE', '10m', (value) => right(value)),
-    validateEnvWithDefault('LOG_FILE_MAX_FILES', 5, (value) => validateEnvNumber('LOG_FILE_MAX_FILES'))
+    validateEnvWithDefault('LOG_FILE_MAX_FILES', 5, (value) => validateNumber('LOG_FILE_MAX_FILES', value))
   ];
 
   return pipe(

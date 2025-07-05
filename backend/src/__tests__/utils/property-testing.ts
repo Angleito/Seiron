@@ -76,8 +76,8 @@ export const generateArray = <T>(
   () => {
     const length = Math.floor(Math.random() * (maxLength - minLength + 1)) + minLength; // TODO: REMOVE_MOCK - Random value generation
     return pipe(
-      A.makeBy(length, generator),
-      A.map(gen => gen())
+      A.makeBy(length, () => generator()),
+      A.map(gen => gen)
     );
   };
 
@@ -142,7 +142,7 @@ export const filterGen = <T>(generator: Generator<T>, predicate: Predicate<T>): 
 export const tupleGen = <T extends ReadonlyArray<any>>(
   ...generators: { [K in keyof T]: Generator<T[K]> }
 ): Generator<T> =>
-  () => generators.map(gen => gen()) as T;
+  () => generators.map(gen => gen()) as unknown as T;
 
 export const recordGen = <T extends Record<string, any>>(
   generators: { [K in keyof T]: Generator<T[K]> }
@@ -317,7 +317,7 @@ const shrink = <T>(
   
   // Simple shrinking for arrays
   if (Array.isArray(counterexample)) {
-    return shrinkArray(counterexample, property as Property<any[]>, maxAttempts) as T;
+    return shrinkArray(counterexample as any[], property as Property<any[]>, maxAttempts) as unknown as T;
   }
   
   // No shrinking for other types

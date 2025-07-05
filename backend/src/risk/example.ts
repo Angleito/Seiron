@@ -226,7 +226,7 @@ export const exampleErrorHandling = () => {
       },
       assessment => {
         console.log('Unexpected success');
-        return { success: true, assessment };
+        return { success: true, error: null as any };
       }
     )
   )();

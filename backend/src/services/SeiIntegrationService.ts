@@ -3,27 +3,114 @@ import * as TE from 'fp-ts/TaskEither';
 import * as E from 'fp-ts/Either';
 import * as O from 'fp-ts/Option';
 import { EventEmitter } from 'events';
-import type { 
-  HiveIntelligenceAdapter, 
-  HiveResponse, 
-  HiveAnalyticsResult, 
-  HiveSearchResult,
-  HiveQuery,
-  HiveQueryMetadata
-} from '../../../src/agents/adapters/HiveIntelligenceAdapter';
-import type { 
-  SeiAgentKitAdapter, 
-  SAKOperationResult, 
-  SAKContext, 
-  SAKTool 
-} from '../../../src/agents/adapters/SeiAgentKitAdapter';
-import type { 
-  SeiMCPAdapter, 
-  MCPResult, 
-  BlockchainState, 
-  WalletBalance,
-  MCPContext
-} from '../../../src/agents/adapters/SeiMCPAdapter';
+// Adapter types - properly defined with TaskEither return types
+export interface HiveIntelligenceAdapter {
+  search: (query: string, metadata?: HiveQueryMetadata) => TE.TaskEither<Error, HiveResponse>;
+  getAnalytics: (query: string, metadata?: HiveQueryMetadata) => TE.TaskEither<Error, HiveResponse>;
+  installHivePlugin: () => TE.TaskEither<Error, void>;
+  getCreditUsage: () => TE.TaskEither<Error, { usedCredits: number; totalCredits: number; remainingCredits: number }>;
+  on: (event: string, callback: (data: any) => void) => void;
+}
+
+export interface SeiAgentKitAdapter {
+  executeSAKTool: (toolName: string, params: any, context?: any) => TE.TaskEither<Error, SAKOperationResult>;
+  executeSAKBatch: (operations: any[], context?: any) => TE.TaskEither<Error, SAKOperationResult[]>;
+  getSAKTools: () => E.Either<Error, SAKTool[]>;
+  getSAKToolsByCategory: (category: string) => E.Either<Error, SAKTool[]>;
+  installSAKPlugin: () => TE.TaskEither<Error, void>;
+  on: (event: string, callback: (data: any) => void) => void;
+}
+
+export interface SeiMCPAdapter {
+  getBlockchainState: () => TE.TaskEither<Error, BlockchainState>;
+  getWalletBalance: (address: string) => TE.TaskEither<Error, WalletBalance>;
+  subscribeToEvents: (types: string[], filters?: any) => TE.TaskEither<Error, void>;
+  connectToMCP: () => Promise<void>;
+  disconnectFromMCP: () => void;
+  isConnected: () => boolean;
+  on: (event: string, callback: (data: any) => void) => void;
+}
+
+export interface HiveResponse {
+  data?: any;
+}
+
+export interface HiveAnalyticsResult {
+  insights: HiveInsight[];
+  recommendations: HiveRecommendation[];
+}
+
+export interface HiveSearchResult {
+  relevanceScore: number;
+}
+
+export interface HiveInsight {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  confidence: number;
+  data?: any;
+}
+
+export interface HiveRecommendation {
+  title: string;
+  description: string;
+  priority: string;
+  expectedImpact: number;
+}
+
+export interface HiveQuery {
+  query: string;
+}
+
+export interface HiveQueryMetadata {
+  walletAddress?: string;
+  [key: string]: any;
+}
+
+export interface SAKOperationResult {
+  success: boolean;
+  data?: any;
+  metadata?: any;
+}
+
+export interface SAKContext {
+  walletAddress: string;
+  network: string;
+  permissions: string[];
+}
+
+export interface SAKTool {
+  name: string;
+  category: string;
+}
+
+export interface MCPResult {
+  success: boolean;
+  data?: any;
+}
+
+export interface BlockchainState {
+  blockNumber?: number;
+  networkStatus: string;
+  gasPrice?: any;
+}
+
+export interface WalletBalance {
+  address: string;
+  balances: any[];
+  totalValueUSD: number;
+}
+
+export interface MCPContext {
+  network: string;
+}
+
+export interface TransactionResponse {
+  hash: string;
+  success: boolean;
+}
 
 /**
  * SeiIntegrationService - Unified Adapter Management
@@ -386,7 +473,7 @@ export class SeiIntegrationService extends EventEmitter {
     return pipe(
       this.hiveAdapter.search(query, metadata),
       TE.mapLeft(error => this.createIntegrationError('HIVE_SEARCH_FAILED', error.message, 'hive', error)),
-      TE.map(response => response.data || [])
+      TE.map(response => this.isHiveResponse(response) ? (response.data || []) : [])
     );
   };
 
@@ -405,7 +492,7 @@ export class SeiIntegrationService extends EventEmitter {
     return pipe(
       this.hiveAdapter.getAnalytics(query, { ...metadata, walletAddress }),
       TE.mapLeft(error => this.createIntegrationError('HIVE_ANALYTICS_FAILED', error.message, 'hive', error)),
-      TE.map(response => response.data!)
+      TE.map(response => this.isHiveResponse(response) && response.data ? response.data : this.createDefaultHiveAnalytics())
     );
   };
 
@@ -423,7 +510,7 @@ export class SeiIntegrationService extends EventEmitter {
 
     return pipe(
       this.sakAdapter.executeSAKTool(toolName, params, context),
-      TE.mapLeft(error => this.createIntegrationError('SAK_EXECUTION_FAILED', error.message, 'sak', error))
+      TE.mapLeft(error => this.createIntegrationError('SAK_EXECUTION_FAILED', this.getErrorMessage(error), 'sak', error))
     );
   };
 
@@ -440,7 +527,7 @@ export class SeiIntegrationService extends EventEmitter {
 
     return pipe(
       this.sakAdapter.executeSAKBatch(operations, context),
-      TE.mapLeft(error => this.createIntegrationError('SAK_BATCH_FAILED', error.message, 'sak', error))
+      TE.mapLeft(error => this.createIntegrationError('SAK_BATCH_FAILED', this.getErrorMessage(error), 'sak', error))
     );
   };
 
@@ -455,7 +542,7 @@ export class SeiIntegrationService extends EventEmitter {
     return pipe(
       category ? this.sakAdapter.getSAKToolsByCategory(category) : this.sakAdapter.getSAKTools(),
       TE.fromEither,
-      TE.mapLeft(error => this.createIntegrationError('SAK_TOOLS_FAILED', error.message, 'sak', error))
+      TE.mapLeft(error => this.createIntegrationError('SAK_TOOLS_FAILED', this.getErrorMessage(error), 'sak', error))
     );
   };
 
@@ -469,7 +556,7 @@ export class SeiIntegrationService extends EventEmitter {
 
     return pipe(
       this.mcpAdapter.getBlockchainState(),
-      TE.mapLeft(error => this.createIntegrationError('MCP_BLOCKCHAIN_FAILED', error.message, 'mcp', error))
+      TE.mapLeft(error => this.createIntegrationError('MCP_BLOCKCHAIN_FAILED', this.getErrorMessage(error), 'mcp', error))
     );
   };
 
@@ -483,7 +570,7 @@ export class SeiIntegrationService extends EventEmitter {
 
     return pipe(
       this.mcpAdapter.getWalletBalance(walletAddress),
-      TE.mapLeft(error => this.createIntegrationError('MCP_BALANCE_FAILED', error.message, 'mcp', error))
+      TE.mapLeft(error => this.createIntegrationError('MCP_BALANCE_FAILED', this.getErrorMessage(error), 'mcp', error))
     );
   };
 
@@ -501,7 +588,7 @@ export class SeiIntegrationService extends EventEmitter {
 
     return pipe(
       this.mcpAdapter.subscribeToEvents(eventTypes, filters),
-      TE.mapLeft(error => this.createIntegrationError('MCP_SUBSCRIBE_FAILED', error.message, 'mcp', error))
+      TE.mapLeft(error => this.createIntegrationError('MCP_SUBSCRIBE_FAILED', this.getErrorMessage(error), 'mcp', error))
     );
   };
 
@@ -580,7 +667,7 @@ export class SeiIntegrationService extends EventEmitter {
 
     return pipe(
       this.hiveAdapter.installHivePlugin(),
-      TE.mapLeft(error => this.createIntegrationError('HIVE_INIT_FAILED', error.message, 'hive', error))
+      TE.mapLeft(error => this.createIntegrationError('HIVE_INIT_FAILED', this.getErrorMessage(error), 'hive', error))
     );
   };
 
@@ -594,7 +681,7 @@ export class SeiIntegrationService extends EventEmitter {
 
     return pipe(
       this.sakAdapter.installSAKPlugin(),
-      TE.mapLeft(error => this.createIntegrationError('SAK_INIT_FAILED', error.message, 'sak', error))
+      TE.mapLeft(error => this.createIntegrationError('SAK_INIT_FAILED', this.getErrorMessage(error), 'sak', error))
     );
   };
 
@@ -648,7 +735,7 @@ export class SeiIntegrationService extends EventEmitter {
       totalSources++;
       if (results.hive.length > 0) {
         relevantSources++;
-        analysis.relevanceScore += results.hive.reduce((sum, result) => sum + result.relevanceScore, 0) / results.hive.length;
+        analysis.relevanceScore += results.hive.reduce((sum: number, result: HiveSearchResult) => sum + result.relevanceScore, 0) / results.hive.length;
         analysis.insights.push(`Found ${results.hive.length} relevant blockchain insights`);
       }
     }
@@ -841,14 +928,14 @@ export class SeiIntegrationService extends EventEmitter {
     }
 
     try {
-      const creditUsage = await this.hiveAdapter.getCreditUsage()();
+      const creditUsageResult = await this.hiveAdapter.getCreditUsage()();
       return {
         connected: true,
         lastActivity: new Date(),
-        creditUsage: creditUsage._tag === 'Right' ? {
-          used: creditUsage.right.usedCredits,
-          total: creditUsage.right.totalCredits,
-          remaining: creditUsage.right.remainingCredits
+        creditUsage: E.isRight(creditUsageResult) ? {
+          used: creditUsageResult.right.usedCredits,
+          total: creditUsageResult.right.totalCredits,
+          remaining: creditUsageResult.right.remainingCredits
         } : undefined
       };
     } catch (error) {
@@ -862,10 +949,10 @@ export class SeiIntegrationService extends EventEmitter {
     }
 
     try {
-      const tools = this.sakAdapter.getSAKTools();
+      const toolsResult = this.sakAdapter.getSAKTools();
       return {
         connected: true,
-        availableTools: tools._tag === 'Right' ? tools.right.length : 0,
+        availableTools: E.isRight(toolsResult) ? toolsResult.right.length : 0,
         lastOperation: new Date()
       };
     } catch (error) {
@@ -1026,5 +1113,27 @@ export class SeiIntegrationService extends EventEmitter {
         message: 'Your power grows stronger! Continue training to reach the next level!'
       };
     }
+  }
+
+  // Type guard and utility methods
+  private isHiveResponse(value: unknown): value is HiveResponse {
+    return typeof value === 'object' && value !== null && 'data' in value;
+  }
+
+  private createDefaultHiveAnalytics(): HiveAnalyticsResult {
+    return {
+      insights: [],
+      recommendations: []
+    };
+  }
+
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    if (typeof error === 'string') {
+      return error;
+    }
+    return 'Unknown error occurred';
   }
 }

@@ -334,8 +334,16 @@ export class HealthMonitoringService extends EventEmitter {
           issues: []
         }),
         (metrics) => ({
-          status: metrics.status,
-          metrics,
+          status: metrics.status as HealthStatus,
+          metrics: {
+            uptime: metrics.uptime,
+            errorRate: metrics.errorRate,
+            avgResponseTime: metrics.avgResponseTime,
+            memoryUsage: metrics.memoryUsage,
+            cpuUsage: metrics.cpuUsage,
+            lastHealthCheck: metrics.lastHealthCheck,
+            status: 'degraded' as const
+          },
           lastCheck: new Date(),
           dependencies: serviceInfo.dependencies || [],
           issues: this.analyzeServiceIssues(serviceName, metrics)

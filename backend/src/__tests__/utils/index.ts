@@ -12,16 +12,56 @@ export * from './generators';
 // Functional assertions
 export * from './assertions';
 
-// Property-based testing
-export * from './property-testing';
+// Property-based testing (selective exports to avoid conflicts)
+export { 
+  PropertyTestConfig, 
+  defaultConfig,
+  PropertyTestResult,
+  forAllWith,
+  quickCheck,
+  verboseCheck,
+  generateInteger,
+  generatePositiveInteger,
+  generateFloat,
+  generatePositiveFloat,
+  generateArray,
+  generateNonEmptyArray,
+  oneOf,
+  frequency,
+  mapGen,
+  filterGen,
+  tupleGen,
+  recordGen,
+  generatePortfolioValue,
+  generateHealthFactor,
+  generateLeverageRatio,
+  generateConcentration,
+  generateCorrelation,
+  generateWeights,
+  generateConcentratedWeights,
+  isMonotonic,
+  isStrictlyMonotonic,
+  sumEquals,
+  allPositive,
+  allNonNegative,
+  inRange,
+  isIdempotent,
+  isCommutative,
+  isAssociative,
+  isLinear,
+  isConvex,
+  isConcave
+} from './property-testing';
 
 // Re-export fp-ts for convenience in tests
-export * as E from 'fp-ts/Either';
-export * as O from 'fp-ts/Option';
-export * as TE from 'fp-ts/TaskEither';
-export * as T from 'fp-ts/Task';
-export * as A from 'fp-ts/Array';
-export { pipe } from 'fp-ts/function';
+import * as E from 'fp-ts/Either';
+import * as O from 'fp-ts/Option';
+import * as TE from 'fp-ts/TaskEither';
+import * as T from 'fp-ts/Task';
+import * as A from 'fp-ts/Array';
+import { pipe } from 'fp-ts/function';
+
+export { E, O, TE, T, A, pipe };
 
 // Common test patterns
 export const testPureFunction = <Args extends ReadonlyArray<any>, Result>(

@@ -70,12 +70,14 @@ Provide specific actionable recommendations for:
 Format as a JSON object with categories.`;
 
       return req.services.ai.processMessage(prompt, walletAddress, portfolioData);
-    }),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (aiResponse) => TE.of({ success: true, data: aiResponse })
-    )
+    })
   )();
+
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
+
+  res.json({ success: true, data: result.right });
 
   res.json(result);
 });
@@ -106,13 +108,11 @@ Please provide:
 
 Keep the explanation accessible but comprehensive.`;
 
-  const result = await pipe(
-    req.services.ai.processMessage(prompt, walletAddress || 'anonymous'),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (aiResponse) => TE.of({ success: true, data: aiResponse })
-    )
-  )();
+  const result = await req.services.ai.processMessage(prompt, walletAddress || 'anonymous')();
+
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
 
   res.json(result);
 });
@@ -155,12 +155,12 @@ Provide risk assessment including:
 Format as structured analysis.`;
 
       return req.services.ai.processMessage(prompt, walletAddress, portfolioData);
-    }),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (aiResponse) => TE.of({ success: true, data: aiResponse })
-    )
+    })
   )();
+
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
 
   res.json(result);
 });
@@ -180,13 +180,11 @@ router.get('/market-insights', async (req, res) => {
 
 Focus on actionable insights for portfolio management.`;
 
-  const result = await pipe(
-    req.services.ai.processMessage(prompt, 'system'),
-    TE.fold(
-      (error) => TE.of({ success: false, error: error.message }),
-      (aiResponse) => TE.of({ success: true, data: aiResponse })
-    )
-  )();
+  const result = await req.services.ai.processMessage(prompt, 'system')();
+
+  if (result._tag === 'Left') {
+    return res.json({ success: false, error: result.left.message });
+  }
 
   res.json(result);
 });

@@ -72,7 +72,8 @@ export class DragonSwapAdapter implements LiquidityAdapter {
       TE.bind('positionIds', () => this.getUserPositionIds(walletAddress)),
       TE.chain(({ positionIds }) => 
         TE.sequenceArray(positionIds.map(id => this.getPositionDetails(id, walletAddress)))
-      )
+      ),
+      TE.map(positions => [...positions])
     );
 
   /**

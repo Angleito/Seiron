@@ -11,6 +11,10 @@
 
 // Example 1: Frontend initiates a lending operation
 async function exampleLendingWithConfirmation() {
+  // Mock variables for example
+  const socket = {} as any; // Mock socket
+  const transactionId = 'uuid-example'; // Mock transaction ID
+  
   // Step 1: Frontend sends request to create pending transaction
   const response = await fetch('/api/portfolio/lending/supply', {
     method: 'POST',
@@ -29,17 +33,18 @@ async function exampleLendingWithConfirmation() {
 
   // Step 2: Frontend receives WebSocket event with confirmation details
   // Event: 'portfolio_update' with type: 'confirmation_required'
-  socket.on('portfolio_update', (update) => {
+  socket.on('portfolio_update', (update: any) => {
     if (update.type === 'confirmation_required') {
       const { transactionId, transaction } = update.data;
       
       // Display confirmation UI with transaction details
-      showConfirmationDialog({
+      // showConfirmationDialog({ // Commented out for build
+      console.log('Show confirmation dialog:', {
         id: transactionId,
         summary: transaction.summary,
         risks: transaction.risks,
         expiresAt: transaction.expiresAt
-      });
+      }); // })
     }
   });
 
@@ -77,6 +82,10 @@ async function exampleLendingWithConfirmation() {
 
 // Example 2: Rejecting a transaction
 async function exampleRejectTransaction() {
+  // Mock variables for example
+  const socket = {} as any; // Mock socket
+  const transactionId = 'uuid-example'; // Mock transaction ID
+  
   // Via REST API
   const rejectResponse = await fetch(`/api/reject/${transactionId}`, {
     method: 'POST',
@@ -97,6 +106,10 @@ async function exampleRejectTransaction() {
 
 // Example 3: WebSocket event flow
 function setupWebSocketListeners() {
+  // Mock variables for example
+  const io = {} as any; // Mock io
+  const walletAddress = '0x123...'; // Mock wallet address
+  
   const socket = io('http://localhost:8000');
 
   // Join portfolio room
@@ -141,6 +154,9 @@ function setupWebSocketListeners() {
 
 // Example 4: Risk-based confirmation
 async function exampleHighRiskTransaction() {
+  // Mock variables for example
+  const socket = {} as any; // Mock socket
+  
   // High-value transaction will have critical risks
   const response = await fetch('/api/portfolio/lending/supply', {
     method: 'POST',
@@ -154,7 +170,7 @@ async function exampleHighRiskTransaction() {
   });
 
   // The pending transaction will include risk warnings
-  socket.on('portfolio_update', (update) => {
+  socket.on('portfolio_update', (update: any) => {
     if (update.type === 'confirmation_required') {
       const { transaction } = update.data;
       
@@ -173,10 +189,13 @@ async function exampleHighRiskTransaction() {
 
 // Example 5: Transaction expiration handling
 async function exampleExpirationHandling() {
+  // Mock variables for example
+  const socket = {} as any; // Mock socket
+  
   // Transactions expire after 5 minutes by default
   let transactionId: string;
 
-  socket.on('portfolio_update', (update) => {
+  socket.on('portfolio_update', (update: any) => {
     if (update.type === 'confirmation_required') {
       transactionId = update.data.transactionId;
       const expiresAt = update.data.transaction.expiresAt;

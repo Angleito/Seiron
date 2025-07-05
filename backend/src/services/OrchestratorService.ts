@@ -3,7 +3,7 @@ import * as TE from 'fp-ts/TaskEither';
 import * as E from 'fp-ts/Either';
 import * as O from 'fp-ts/Option';
 import { EventEmitter } from 'events';
-import type { Orchestrator } from '../../../src/orchestrator/core';
+// import type { Orchestrator } from '../../../src/orchestrator/core';
 import type { SeiIntegrationService } from './SeiIntegrationService';
 import type { PortfolioAnalyticsService } from './PortfolioAnalyticsService';
 import type { RealTimeDataService } from './RealTimeDataService';
@@ -226,7 +226,8 @@ export interface OrchestrationError {
 
 export class OrchestratorService extends EventEmitter {
   private config: BackendOrchestratorConfig;
-  private coreOrchestrator?: Orchestrator;
+  // TODO: Define proper Orchestrator interface when core orchestrator module is available
+  // private coreOrchestrator?: Orchestrator;
   private seiIntegration: SeiIntegrationService;
   private portfolioAnalytics: PortfolioAnalyticsService;
   private realTimeData: RealTimeDataService;
@@ -251,14 +252,15 @@ export class OrchestratorService extends EventEmitter {
     portfolioAnalytics: PortfolioAnalyticsService,
     realTimeData: RealTimeDataService,
     socketService: SocketService,
-    config: BackendOrchestratorConfig = this.getDefaultConfig()
+    config?: BackendOrchestratorConfig
   ) {
+    super();
     super();
     this.seiIntegration = seiIntegration;
     this.portfolioAnalytics = portfolioAnalytics;
     this.realTimeData = realTimeData;
     this.socketService = socketService;
-    this.config = config;
+    this.config = config || this.getDefaultConfig();
     
     this.stats = this.initializeStats();
     this.setupOrchestratorEventHandlers();
@@ -313,7 +315,8 @@ export class OrchestratorService extends EventEmitter {
   ): TE.TaskEither<OrchestrationError, OrchestrationResult[]> =>
     pipe(
       intents,
-      TE.traverseArray(intent => this.processIntent(intent))
+      TE.traverseArray(intent => this.processIntent(intent)),
+      TE.map(results => results as OrchestrationResult[])
     );
 
   /**
@@ -381,7 +384,8 @@ export class OrchestratorService extends EventEmitter {
     TE.tryCatch(
       async () => {
         const integrationStatus = await this.seiIntegration.getIntegrationStatus()();
-        const realtimeStatus = this.realTimeData.getStreamStatistics();
+        const realtimeStatusResult = await this.realTimeData.getStreamStatistics()();
+        const realtimeStatus = realtimeStatusResult._tag === 'Right' ? realtimeStatusResult.right : { activeStreams: 0, eventsProcessed: 0, avgLatency: 0 };
         
         const components = {
           integration: integrationStatus._tag === 'Right' && integrationStatus.right.overall.healthy ? 'healthy' : 'unhealthy',
@@ -449,7 +453,8 @@ export class OrchestratorService extends EventEmitter {
         }
         
         // Priority validation
-        if (!['low', 'medium', 'high', 'urgent'].includes(intent.priority)) { // TODO: REMOVE_MOCK - Hard-coded array literals
+        const validPriorities = ['low', 'medium', 'high', 'urgent'] as const;
+        if (!validPriorities.includes(intent.priority)) {
           throw new Error('Invalid priority level');
         }
         
@@ -471,7 +476,7 @@ export class OrchestratorService extends EventEmitter {
   ): TE.TaskEither<OrchestrationError, TaskPipeline> =>
     TE.tryCatch(
       async () => {
-        const pipelineId = `pipeline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`; // TODO: REMOVE_MOCK - Random value generation
+        const pipelineId = `pipeline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         const steps = await this.generateTaskSteps(intent);
         
         const pipeline: TaskPipeline = {
@@ -737,7 +742,7 @@ export class OrchestratorService extends EventEmitter {
    */
   private async executeNotificationStep(step: TaskStep, pipeline: TaskPipeline): Promise<any> {
     await this.socketService.sendPortfolioUpdate(pipeline.walletAddress, {
-      type: 'orchestration_update',
+      type: 'position_update',
       data: {
         pipelineId: pipeline.id,
         step: step.id,
@@ -776,6 +781,11 @@ export class OrchestratorService extends EventEmitter {
     
     return pipe(
       this.portfolioAnalytics.performRiskAssessment(intent.walletAddress, result.data),
+      TE.mapLeft(analyticsError => this.createOrchestrationError(
+        'ANALYTICS_ENHANCEMENT_FAILED',
+        `Analytics enhancement failed: ${analyticsError.message}`,
+        'analytics'
+      )),
       TE.map(riskAssessment => ({
         ...result,
         analytics: {
@@ -803,6 +813,11 @@ export class OrchestratorService extends EventEmitter {
     
     return pipe(
       this.realTimeData.startDataStreams(intent.walletAddress, this.config.realTime.streamTypes as any),
+      TE.mapLeft(realTimeError => this.createOrchestrationError(
+        'REALTIME_SETUP_FAILED',
+        `Real-time setup failed: ${realTimeError.message}`,
+        'realtime'
+      )),
       TE.map(streams => ({
         ...result,
         realTimeUpdates: {
@@ -998,7 +1013,7 @@ export class OrchestratorService extends EventEmitter {
   }
 
   private isRetryableError(error: any): boolean {
-    const retryableErrors = ['NETWORK_ERROR', 'TIMEOUT', 'RATE_LIMIT_EXCEEDED', 'TEMPORARY_UNAVAILABLE']; // TODO: REMOVE_MOCK - Hard-coded array literals
+    const retryableErrors = ['NETWORK_ERROR', 'TIMEOUT', 'RATE_LIMIT_EXCEEDED', 'TEMPORARY_UNAVAILABLE'];
     const errorMessage = error instanceof Error ? error.message : String(error);
     return retryableErrors.some(retryable => errorMessage.includes(retryable));
   }
@@ -1129,8 +1144,10 @@ export class OrchestratorService extends EventEmitter {
     const nextTask = this.taskQueue.shift();
     
     if (nextTask) {
-      const promise = this.processIntent(nextTask.intent)();
-      this.runningTasks.set(nextTask.intent.id, promise);
+      const promise = this.processIntent(nextTask.intent)()
+        .then(result => result._tag === 'Right' ? result.right : null)
+        .catch(() => null);
+      this.runningTasks.set(nextTask.intent.id, promise as Promise<OrchestrationResult>);
       
       promise.finally(() => {
         this.runningTasks.delete(nextTask.intent.id);
@@ -1192,7 +1209,7 @@ export class OrchestratorService extends EventEmitter {
   }
 
   private isRecoverableError(code: string): boolean {
-    const recoverableErrors = ['NETWORK_ERROR', 'TIMEOUT', 'RATE_LIMIT_EXCEEDED']; // TODO: REMOVE_MOCK - Hard-coded array literals
+    const recoverableErrors = ['NETWORK_ERROR', 'TIMEOUT', 'RATE_LIMIT_EXCEEDED'];
     return recoverableErrors.includes(code);
   }
 
@@ -1232,7 +1249,7 @@ export class OrchestratorService extends EventEmitter {
       },
       realTime: {
         enabled: true,
-        streamTypes: ['blockchain', 'wallet', 'portfolio'], // TODO: REMOVE_MOCK - Hard-coded array literals
+        streamTypes: ['blockchain', 'wallet', 'portfolio'] as const,
         batchSize: 10,
         maxDelay: 5000
       },

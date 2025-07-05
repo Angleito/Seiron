@@ -57,11 +57,40 @@ const socketService = new SocketService(io);
 const confirmationService = new ConfirmationService(socketService);
 const portfolioService = new PortfolioService(socketService, confirmationService);
 const aiService = new AIService();
-const realTimeDataService = new RealTimeDataService(socketService);
-const seiIntegrationService = new SeiIntegrationService();
+const seiIntegrationService = new SeiIntegrationService({
+  hive: {
+    enabled: true,
+    baseUrl: process.env.HIVE_BASE_URL || 'http://localhost:3001',
+    apiKey: process.env.HIVE_API_KEY || '',
+    rateLimitConfig: { maxRequests: 100, windowMs: 60000 },
+    cacheConfig: { enabled: true, ttlMs: 300000, maxSize: 1000 }
+  },
+  sak: {
+    enabled: true,
+    seiRpcUrl: process.env.SEI_RPC_URL || 'https://sei-rpc.polkachu.com',
+    seiEvmRpcUrl: process.env.SEI_EVM_RPC_URL || 'https://evm-rpc.sei-apis.com',
+    chainId: process.env.SEI_CHAIN_ID || 'sei-testnet',
+    network: 'testnet' as const,
+    defaultPermissions: ['read', 'write'],
+    walletPrivateKey: process.env.SAK_WALLET_PRIVATE_KEY,
+    rateLimitConfig: { defaultMaxCalls: 100, defaultWindowMs: 60000 }
+  },
+  mcp: {
+    enabled: true,
+    endpoint: process.env.MCP_ENDPOINT || 'ws://localhost:3003',
+    port: parseInt(process.env.MCP_PORT || '3003'),
+    secure: process.env.NODE_ENV === 'production',
+    apiKey: process.env.MCP_API_KEY,
+    network: 'testnet' as const,
+    connectionTimeout: 30000,
+    heartbeatInterval: 30000
+  }
+});
+const realTimeDataService = new RealTimeDataService(
+  seiIntegrationService,
+  socketService
+);
 const portfolioAnalyticsService = new PortfolioAnalyticsService(
-  portfolioService,
-  aiService,
   seiIntegrationService
 );
 const orchestratorService = new OrchestratorService(
@@ -121,56 +150,48 @@ io.on('connection', (socket) => {
     const { walletAddress, message } = data;
     
     // Process chat message and emit response
-    const response = await pipe(
-      aiService.processMessage(message, walletAddress),
-      TE.fold(
-        (error) => TE.of({ success: false, error: error.message }),
-        (result) => TE.of({ success: true, data: result })
-      )
-    )();
-
-    socket.emit('chat_response', response);
+    const response = await aiService.processMessage(message, walletAddress)();
+    
+    if (response._tag === 'Left') {
+      socket.emit('chat_response', { success: false, error: response.left.message });
+    } else {
+      socket.emit('chat_response', { success: true, data: response.right });
+    }
   });
 
   // Confirmation-related events
   socket.on('confirm_transaction', async (data) => {
     const { transactionId, walletAddress } = data;
     
-    const result = await pipe(
-      confirmationService.confirmTransaction(transactionId, walletAddress),
-      TE.fold(
-        (error) => TE.of({ success: false, error: error.message }),
-        (confirmationResult) => TE.of({ success: true, data: confirmationResult })
-      )
-    )();
-
-    socket.emit('confirmation_result', result);
+    const result = await confirmationService.confirmTransaction(transactionId, walletAddress)();
+    
+    if (result._tag === 'Left') {
+      socket.emit('confirmation_result', { success: false, error: result.left.message });
+    } else {
+      socket.emit('confirmation_result', { success: true, data: result.right });
+    }
   });
 
   socket.on('reject_transaction', async (data) => {
     const { transactionId, walletAddress, reason } = data;
     
-    const result = await pipe(
-      confirmationService.rejectTransaction(transactionId, walletAddress, reason),
-      TE.fold(
-        (error) => TE.of({ success: false, error: error.message }),
-        (confirmationResult) => TE.of({ success: true, data: confirmationResult })
-      )
-    )();
-
-    socket.emit('confirmation_result', result);
+    const result = await confirmationService.rejectTransaction(transactionId, walletAddress, reason)();
+    
+    if (result._tag === 'Left') {
+      socket.emit('confirmation_result', { success: false, error: result.left.message });
+    } else {
+      socket.emit('confirmation_result', { success: true, data: result.right });
+    }
   });
 
   socket.on('get_pending_transactions', async (walletAddress: string) => {
-    const result = await pipe(
-      confirmationService.getPendingTransactionsForWallet(walletAddress),
-      TE.fold(
-        (error) => TE.of({ success: false, error: error.message }),
-        (transactions) => TE.of({ success: true, data: transactions })
-      )
-    )();
-
-    socket.emit('pending_transactions', result);
+    const result = await confirmationService.getPendingTransactionsForWallet(walletAddress)();
+    
+    if (result._tag === 'Left') {
+      socket.emit('pending_transactions', { success: false, error: result.left.message });
+    } else {
+      socket.emit('pending_transactions', { success: true, data: result.right });
+    }
   });
 
   socket.on('disconnect', () => {

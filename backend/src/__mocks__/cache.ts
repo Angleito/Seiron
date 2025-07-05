@@ -368,9 +368,9 @@ export const mockCacheUpdate = <T>( // TODO: REMOVE_MOCK - Mock-related keywords
     TE.chain(option =>
       O.isSome(option)
         ? pipe(
-            updater(option.value),
-            value => mockCacheSet(key, value, ttlMs), // TODO: REMOVE_MOCK - Mock-related keywords
-            TE.map(() => O.some(value))
+            TE.right(updater(option.value)),
+            TE.chainFirst(value => mockCacheSet(key, value, ttlMs)), // TODO: REMOVE_MOCK - Mock-related keywords
+            TE.map(value => O.some(value))
           )
         : TE.right(O.none)
     )

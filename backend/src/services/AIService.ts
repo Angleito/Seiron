@@ -1,7 +1,8 @@
 import { pipe } from 'fp-ts/function';
 import * as TE from 'fp-ts/TaskEither';
+import * as E from 'fp-ts/Either';
 import OpenAI from 'openai';
-import { createServiceLogger, createServiceErrorHandler } from './LoggingService';
+import { createServiceLogger } from './LoggingService';
 import { withErrorRecovery } from './ErrorHandlingService';
 
 // Types will be defined locally for now
@@ -35,7 +36,9 @@ export class AIService {
   private chatInterface: ChatInterface;
   private contexts: Map<string, ChatContext> = new Map();
   private logger = createServiceLogger('AIService');
-  private errorHandler = createServiceErrorHandler('AIService');
+  private hiveAdapter?: HiveIntelligenceAdapter;
+  private sakAdapter?: SeiAgentKitAdapter;
+  private mcpAdapter?: SeiMCPAdapter;
 
   constructor() {
     this.openai = new OpenAI({
@@ -341,6 +344,47 @@ Keep the analysis concise and actionable.`;
     );
 
   /**
+   * Process message with enhanced features
+   */
+  public processMessageEnhanced = (
+    message: string,
+    walletAddress: string,
+    portfolioData?: any
+  ): TE.TaskEither<Error, AIResponse> => {
+    // For now, use the same logic as processMessage
+    // In the future, this can be enhanced with additional adapters
+    return this.processMessage(message, walletAddress, portfolioData);
+  };
+
+  /**
+   * Gather data from all adapters
+   */
+  private gatherAdapterData = (
+    query: string,
+    walletAddress: string
+  ): TE.TaskEither<Error, any> => {
+    // Mock implementation for now
+    return TE.right({
+      hiveData: { query, insights: [], timestamp: new Date().toISOString() },
+      sakData: { tools: [], executions: [], timestamp: new Date().toISOString() },
+      mcpData: { state: 'connected', data: {}, timestamp: new Date().toISOString() }
+    });
+  };
+
+  /**
+   * Generate enhanced analysis from adapter data
+   */
+  private generateEnhancedAnalysis = (adapterData: any): any => {
+    return {
+      riskScore: 0.5,
+      yieldOptimizations: [],
+      marketInsights: [],
+      rebalancingRecommendations: [],
+      powerLevel: 'Over 9000! 🐉'
+    };
+  };
+
+  /**
    * Get adapter connection status
    */
   public getAdapterStatus(): {
@@ -369,7 +413,24 @@ Keep the analysis concise and actionable.`;
   }
 }
 
-// ChatInterface class needs to be imported or defined
+// Adapter interface types
+interface HiveIntelligenceAdapter {
+  search: (query: string, metadata?: any) => Promise<any>;
+  getAnalytics: (query: string, metadata?: any) => Promise<any>;
+}
+
+interface SeiAgentKitAdapter {
+  executeTool: (toolName: string, params: any) => Promise<any>;
+  getTools: () => Promise<any>;
+}
+
+interface SeiMCPAdapter {
+  isConnected: () => boolean;
+  getBlockchainState: () => Promise<any>;
+  getWalletBalance: (address: string) => Promise<any>;
+}
+
+// ChatInterface class implementation
 class ChatInterface {
   parseCommand(message: string): E.Either<Error, Command | undefined> {
     // Simplified command parsing
