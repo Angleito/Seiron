@@ -8,7 +8,7 @@ import * as TE from 'fp-ts/TaskEither';
 import * as A from 'fp-ts/Array';
 import { PublicClient, WalletClient } from 'viem';
 import {
-  SeiProtocolIntegration,
+  SeiProtocolIntegration as ISeiProtocolIntegration,
   SeiProtocolConfig,
   SeiProtocolPosition,
   SiloStakingPosition,
@@ -21,22 +21,22 @@ import {
   AsyncResult,
   BasePosition
 } from '../../types/portfolio';
-import { createSeiProtocolIntegration } from './adapters';
+import { createSeiProtocolIntegration as createAdapterIntegration } from './adapters';
 import logger from '../../utils/logger';
 
 /**
  * Enhanced portfolio service with Sei protocol integration
  */
-export class SeiProtocolIntegration {
-  private protocols: SeiProtocolIntegration;
+export class SeiProtocolIntegration implements ISeiProtocolIntegration {
+  private protocols: ISeiProtocolIntegration;
   private isInitialized = false;
 
   constructor(
     private publicClient: PublicClient,
     private walletClient: WalletClient,
-    private config: SeiProtocolConfig
+    public config: SeiProtocolConfig
   ) {
-    this.protocols = createSeiProtocolIntegration(publicClient, walletClient, config);
+    this.protocols = createAdapterIntegration(publicClient, walletClient, config);
   }
 
   /**
@@ -285,23 +285,21 @@ export class SeiProtocolIntegration {
     operationName: string
   ): AsyncResult<T> =>
     pipe(
-      TE.Do,
-      TE.bind('result', () => operation()),
-      TE.tapEither((result) => {
+      operation(),
+      TE.map((result) => {
         logger.info(`Protocol operation completed: ${operationName}`, {
           success: true,
           timestamp: new Date().toISOString()
         });
-        return TE.right(result);
+        return result;
       }),
       TE.mapLeft((error) => {
         logger.error(`Protocol operation failed: ${operationName}`, {
-          error: error.message,
+          error: typeof error === 'object' && error !== null && 'message' in error ? error.message : String(error),
           timestamp: new Date().toISOString()
         });
         return error;
-      }),
-      TE.map(({ result }) => result)
+      })
     );
 
   // ===================== Private Helper Methods =====================
@@ -417,8 +415,11 @@ export class SeiProtocolIntegration {
     return this.isInitialized;
   }
 
-  public get config() {
-    return this.config;
+
+  // Required by ISeiProtocolIntegration interface
+  public get health() {
+    // Return a simple health status since the interface expects ProtocolHealth[]
+    return [];
   }
 }
 

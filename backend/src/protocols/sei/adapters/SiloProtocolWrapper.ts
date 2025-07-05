@@ -125,7 +125,7 @@ export class SiloProtocolWrapper implements SiloProtocolAdapter {
       TE.bind('positions', ({ positionIds }) =>
         TE.sequenceArray(positionIds.map(id => this.getStakingPositionDetails(id, walletAddress)))
       ),
-      TE.map(({ positions }) => positions)
+      TE.map(({ positions }) => positions as SiloStakingPosition[])
     );
 
   /**
@@ -147,7 +147,10 @@ export class SiloProtocolWrapper implements SiloProtocolAdapter {
           apy: this.calculateAPY(poolData.apr),
           lockupPeriods: Object.values(SILO_CONSTANTS.STAKING_PERIODS),
           multipliers: SILO_CONSTANTS.MULTIPLIERS,
-          penalties: SILO_CONSTANTS.PENALTIES,
+          penalties: {
+            earlyUnstake: SILO_CONSTANTS.PENALTIES.EARLY_UNSTAKE,
+            slashing: SILO_CONSTANTS.PENALTIES.SLASHING
+          },
           isActive: poolData.isActive,
           capacity: poolData.capacity,
           remainingCapacity: poolData.remainingCapacity
@@ -196,7 +199,14 @@ export class SiloProtocolWrapper implements SiloProtocolAdapter {
       TE.Do,
       TE.bind('validation', () => this.validateStakeParams(params)),
       TE.bind('poolInfo', () => this.getStakingPoolInfo(params.token)),
-      TE.bind('txHash', ({ poolInfo }) => this.executeStake(params, poolInfo)),
+      TE.bind('txHash', ({ poolInfo }) => TE.tryCatch(
+        () => this.executeStake(params, poolInfo),
+        (error) => new SiloProtocolError(
+          `Failed to execute stake: ${error}`,
+          'STAKE_EXECUTION_FAILED',
+          { params, error }
+        )
+      )),
       TE.map(({ txHash }) => txHash)
     );
 
@@ -208,7 +218,14 @@ export class SiloProtocolWrapper implements SiloProtocolAdapter {
       TE.Do,
       TE.bind('position', () => this.getStakingPositionById(params.positionId)),
       TE.bind('penalty', ({ position }) => this.calculateUnstakePenalty(params.positionId, params.amount)),
-      TE.bind('txHash', ({ position, penalty }) => this.executeUnstake(params, position, penalty)),
+      TE.bind('txHash', ({ position, penalty }) => TE.tryCatch(
+        () => this.executeUnstake(params, position, penalty),
+        (error) => new SiloProtocolError(
+          `Failed to execute unstake: ${error}`,
+          'UNSTAKE_EXECUTION_FAILED',
+          { params, error }
+        )
+      )),
       TE.map(({ txHash }) => txHash)
     );
 
@@ -219,7 +236,14 @@ export class SiloProtocolWrapper implements SiloProtocolAdapter {
     pipe(
       TE.Do,
       TE.bind('rewards', () => this.calculateRewards(params.walletAddress, params.positionId)),
-      TE.bind('txHash', ({ rewards }) => this.executeClaimRewards(params, rewards)),
+      TE.bind('txHash', ({ rewards }) => TE.tryCatch(
+        () => this.executeClaimRewards(params, rewards),
+        (error) => new SiloProtocolError(
+          `Failed to execute claim rewards: ${error}`,
+          'CLAIM_REWARDS_EXECUTION_FAILED',
+          { params, error }
+        )
+      )),
       TE.map(({ txHash }) => txHash)
     );
 

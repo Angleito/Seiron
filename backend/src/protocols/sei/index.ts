@@ -52,7 +52,7 @@ export const setupSeiProtocols = (config: SeiProtocolConfig) => {
     transport: http(config.rpcUrl)
   });
 
-  const integration = new SeiProtocolIntegration(publicClient, walletClient, config);
+  const integration = createIntegration(publicClient, walletClient, config);
   const riskManager = createSeiRiskManager();
 
   return {

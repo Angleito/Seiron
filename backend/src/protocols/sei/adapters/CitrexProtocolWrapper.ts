@@ -152,7 +152,7 @@ export class CitrexProtocolWrapper implements CitrexProtocolAdapter {
       TE.bind('positions', ({ positionIds }) =>
         TE.sequenceArray(positionIds.map(id => this.getPosition(id)))
       ),
-      TE.map(({ positions }) => positions)
+      TE.map(({ positions }) => positions as CitrexPerpetualPosition[])
     );
 
   /**
@@ -321,8 +321,15 @@ export class CitrexProtocolWrapper implements CitrexProtocolAdapter {
       TE.bind('validation', () => this.validateOpenPositionParams(params)),
       TE.bind('marketData', () => this.getMarketData(params.market)),
       TE.bind('riskCheck', ({ marketData }) => this.performRiskCheck(params, marketData[0])),
-      TE.bind('txHash', ({ marketData }) => this.executeOpenPosition(params, marketData[0])),
-      TE.map(({ txHash }) => txHash)
+      TE.bind('txHash', ({ marketData }) => TE.tryCatch(
+        () => this.executeOpenPosition(params, marketData[0]),
+        (error) => new CitrexProtocolError(
+          `Failed to execute open position: ${error}`,
+          'OPEN_POSITION_FAILED',
+          { params, error }
+        )
+      )),
+      TE.map(({ txHash }) => txHash as TransactionHash)
     );
 
   /**
@@ -333,8 +340,15 @@ export class CitrexProtocolWrapper implements CitrexProtocolAdapter {
       TE.Do,
       TE.bind('position', () => this.getPosition(params.positionId)),
       TE.bind('marketData', ({ position }) => this.getMarketData(position.market)),
-      TE.bind('txHash', ({ position, marketData }) => this.executeClosePosition(params, position, marketData[0])),
-      TE.map(({ txHash }) => txHash)
+      TE.bind('txHash', ({ position, marketData }) => TE.tryCatch(
+        () => this.executeClosePosition(params, position, marketData[0]),
+        (error) => new CitrexProtocolError(
+          `Failed to execute close position: ${error}`,
+          'CLOSE_POSITION_FAILED',
+          { params, error }
+        )
+      )),
+      TE.map(({ txHash }) => txHash as TransactionHash)
     );
 
   /**
@@ -345,8 +359,15 @@ export class CitrexProtocolWrapper implements CitrexProtocolAdapter {
       TE.Do,
       TE.bind('position', () => this.getPosition(params.positionId)),
       TE.bind('validation', ({ position }) => this.validateAdjustPositionParams(params, position)),
-      TE.bind('txHash', ({ position }) => this.executeAdjustPosition(params, position)),
-      TE.map(({ txHash }) => txHash)
+      TE.bind('txHash', ({ position }) => TE.tryCatch(
+        () => this.executeAdjustPosition(params, position),
+        (error) => new CitrexProtocolError(
+          `Failed to execute adjust position: ${error}`,
+          'ADJUST_POSITION_FAILED',
+          { params, error }
+        )
+      )),
+      TE.map(({ txHash }) => txHash as TransactionHash)
     );
 
   /**

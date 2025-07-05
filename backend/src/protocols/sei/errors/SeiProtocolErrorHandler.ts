@@ -516,4 +516,4 @@ export const handleProtocolError = (error: unknown, operation?: string, params?:
   };
 };
 
-export { SeiProtocolErrorHandler };
+// SeiProtocolErrorHandler is already exported above
