@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 interface CirclingDragonBallsProps {
   radius?: number
@@ -25,6 +25,8 @@ export function CirclingDragonBalls({
 }: CirclingDragonBallsProps) {
   const [isHovered, setIsHovered] = useState(false)
   const animationDuration = speedConfig[speed]
+  const animationTimersRef = useRef<number[]>([])
+  const containerRef = useRef<HTMLDivElement>(null)
 
   // Dragon Ball star patterns (1-7 stars)
   const dragonBalls = [
@@ -36,13 +38,45 @@ export function CirclingDragonBalls({
     { stars: 6, color: 'from-orange-400 to-red-400' },
     { stars: 7, color: 'from-yellow-300 to-yellow-500' }
   ]
+  
+  // Cleanup effect for component unmount
+  useEffect(() => {
+    return () => {
+      // Clear any remaining animation timers
+      animationTimersRef.current.forEach(timer => {
+        clearTimeout(timer)
+      })
+      animationTimersRef.current = []
+      
+      // Reset hover state
+      setIsHovered(false)
+    }
+  }, [])
+  
+  // Handle hover state changes with cleanup
+  useEffect(() => {
+    if (!interactive) return
+    
+    const handleMouseEnter = () => setIsHovered(true)
+    const handleMouseLeave = () => setIsHovered(false)
+    
+    const container = containerRef.current
+    if (container) {
+      container.addEventListener('mouseenter', handleMouseEnter)
+      container.addEventListener('mouseleave', handleMouseLeave)
+      
+      return () => {
+        container.removeEventListener('mouseenter', handleMouseEnter)
+        container.removeEventListener('mouseleave', handleMouseLeave)
+      }
+    }
+  }, [interactive])
 
   return (
     <div 
+      ref={containerRef}
       className={`relative ${className}`}
       style={{ width: `${radius * 2}px`, height: `${radius * 2}px` }}
-      onMouseEnter={() => interactive && setIsHovered(true)}
-      onMouseLeave={() => interactive && setIsHovered(false)}
     >
       {/* Orbital Path Ring */}
       <div 

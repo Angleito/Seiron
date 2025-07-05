@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useAnimation, AnimationControls } from 'framer-motion'
 
 export type DragonState = 'idle' | 'attention' | 'ready' | 'active' | 'sleeping' | 'awakening'
@@ -35,6 +35,8 @@ export function useDragonAnimation({
   const [powerLevel, setPowerLevel] = useState(0)
   const [isCharging, setIsCharging] = useState(false)
   const controls = useAnimation()
+  const timeoutRefs = useRef<NodeJS.Timeout[]>([])
+  const intervalRefs = useRef<NodeJS.Timeout[]>([])
 
   // Time-based state changes
   useEffect(() => {
@@ -65,7 +67,15 @@ export function useDragonAnimation({
 
     checkTime()
     const interval = setInterval(checkTime, 60000) // Check every minute
-    return () => clearInterval(interval)
+    intervalRefs.current.push(interval)
+    
+    return () => {
+      clearInterval(interval)
+      const index = intervalRefs.current.indexOf(interval)
+      if (index > -1) {
+        intervalRefs.current.splice(index, 1)
+      }
+    }
   }, [enableTimeBasedStates])
 
   // Auto state transitions
@@ -104,7 +114,15 @@ export function useDragonAnimation({
     const transition = stateTransitions[dragonState as keyof typeof stateTransitions]
     if (transition) {
       const timeout = setTimeout(transition, 3000 + Math.random() * 4000)
-      return () => clearTimeout(timeout)
+      timeoutRefs.current.push(timeout)
+      
+      return () => {
+        clearTimeout(timeout)
+        const index = timeoutRefs.current.indexOf(timeout)
+        if (index > -1) {
+          timeoutRefs.current.splice(index, 1)
+        }
+      }
     }
   }, [dragonState, enableAutoState])
 
@@ -114,12 +132,28 @@ export function useDragonAnimation({
       const interval = setInterval(() => {
         setPowerLevel(prev => Math.min(prev + 10, 100))
       }, 100)
-      return () => clearInterval(interval)
+      intervalRefs.current.push(interval)
+      
+      return () => {
+        clearInterval(interval)
+        const index = intervalRefs.current.indexOf(interval)
+        if (index > -1) {
+          intervalRefs.current.splice(index, 1)
+        }
+      }
     } else {
       const interval = setInterval(() => {
         setPowerLevel(prev => Math.max(prev - 5, 0))
       }, 200)
-      return () => clearInterval(interval)
+      intervalRefs.current.push(interval)
+      
+      return () => {
+        clearInterval(interval)
+        const index = intervalRefs.current.indexOf(interval)
+        if (index > -1) {
+          intervalRefs.current.splice(index, 1)
+        }
+      }
     }
   }, [dragonState, isCharging])
 
@@ -224,10 +258,31 @@ export function useDragonAnimation({
           ],
           transition: { duration: 3, ease: "easeInOut" }
         })
-        setTimeout(() => setIsCharging(false), 3000)
+        const timeout = setTimeout(() => setIsCharging(false), 3000)
+        timeoutRefs.current.push(timeout)
         break
     }
   }, [controls])
+
+  // Cleanup effect for component unmount
+  useEffect(() => {
+    return () => {
+      // Clear all timeouts
+      timeoutRefs.current.forEach(timeout => {
+        clearTimeout(timeout)
+      })
+      timeoutRefs.current = []
+      
+      // Clear all intervals
+      intervalRefs.current.forEach(interval => {
+        clearInterval(interval)
+      })
+      intervalRefs.current = []
+      
+      // Stop any ongoing animations
+      controls.stop()
+    }
+  }, [])
 
   return {
     dragonState,

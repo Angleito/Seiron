@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { usePublicClient, useBlockNumber } from 'wagmi';
+import { usePublicClient } from 'wagmi';
+import { useBlockNumber } from 'wagmi';
 import { Hash, TransactionReceipt, Transaction } from 'viem';
 import { logger } from '@lib/logger';
 

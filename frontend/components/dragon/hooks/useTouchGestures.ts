@@ -3,8 +3,7 @@
 import { useState, useRef, useCallback } from 'react'
 import type { TouchGesture, TouchGestureHookReturn } from '../types'
 import { INTERACTION_ZONES } from '../constants'
-import { pipe } from 'fp-ts/function'
-import * as O from 'fp-ts/Option'
+// Removed unused fp-ts imports
 
 interface UseTouchGesturesOptions {
   enabled?: boolean
@@ -44,6 +43,7 @@ export function useTouchGestures({
   const longPressTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
   const initialDistanceRef = useRef<number>(0)
   const initialAngleRef = useRef<number>(0)
+  const cleanupFunctionsRef = useRef<(() => void)[]>([])
 
   // Utility functions
   const getDistance = useCallback((touch1: Touch, touch2: Touch): number => {
@@ -62,8 +62,11 @@ export function useTouchGestures({
     let x = 0, y = 0
     const touchArray = Array.from(touches)
     for (let i = 0; i < touchArray.length; i++) {
-      x += touchArray[i].clientX
-      y += touchArray[i].clientY
+      const touch = touchArray[i]
+      if (touch) {
+        x += touch.clientX
+        y += touch.clientY
+      }
     }
     return { x: x / touchArray.length, y: y / touchArray.length }
   }, [])
@@ -208,7 +211,7 @@ export function useTouchGestures({
     const now = Date.now()
     const duration = now - touchStartRef.current.time
     const endPosition = e.changedTouches.length > 0 
-      ? { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY }
+      ? { x: e.changedTouches[0]?.clientX ?? 0, y: e.changedTouches[0]?.clientY ?? 0 }
       : getTouchCenter(touchStartRef.current?.touches || ({} as TouchList))
 
     const startPosition = touchStartRef.current.positions[0] || endPosition
@@ -266,6 +269,35 @@ export function useTouchGestures({
     initialDistanceRef.current = 0
     initialAngleRef.current = 0
   }, [enabled, getTouchCenter, longPressDuration, swipeThreshold, getVelocity, onTap, onSwipe, triggerHapticFeedback])
+
+  // Cleanup effect for component unmount
+  useEffect(() => {
+    return () => {
+      // Clear any remaining timeouts
+      if (longPressTimeoutRef.current) {
+        clearTimeout(longPressTimeoutRef.current)
+        longPressTimeoutRef.current = undefined
+      }
+      
+      // Execute cleanup functions
+      cleanupFunctionsRef.current.forEach(cleanup => {
+        try {
+          cleanup()
+        } catch (error) {
+          console.warn('Error during gesture cleanup:', error)
+        }
+      })
+      cleanupFunctionsRef.current = []
+      
+      // Reset state
+      setGestures([])
+      setIsGestureActive(false)
+      setCurrentGesture(null)
+      touchStartRef.current = null
+      initialDistanceRef.current = 0
+      initialAngleRef.current = 0
+    }
+  }, [])
 
   const gestureHandlers = {
     onTouchStart: handleTouchStart,

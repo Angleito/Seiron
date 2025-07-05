@@ -102,7 +102,10 @@ class SiloProtocolWrapper {
                 apy: this.calculateAPY(poolData.apr),
                 lockupPeriods: Object.values(SILO_CONSTANTS.STAKING_PERIODS),
                 multipliers: SILO_CONSTANTS.MULTIPLIERS,
-                penalties: SILO_CONSTANTS.PENALTIES,
+                penalties: {
+                    earlyUnstake: SILO_CONSTANTS.PENALTIES.EARLY_UNSTAKE,
+                    slashing: SILO_CONSTANTS.PENALTIES.SLASHING
+                },
                 isActive: poolData.isActive,
                 capacity: poolData.capacity,
                 remainingCapacity: poolData.remainingCapacity
@@ -125,9 +128,9 @@ class SiloProtocolWrapper {
                 slashingEvents: 0
             };
         }));
-        this.stake = (params) => (0, function_1.pipe)(TE.Do, TE.bind('validation', () => this.validateStakeParams(params)), TE.bind('poolInfo', () => this.getStakingPoolInfo(params.token)), TE.bind('txHash', ({ poolInfo }) => this.executeStake(params, poolInfo)), TE.map(({ txHash }) => txHash));
-        this.unstake = (params) => (0, function_1.pipe)(TE.Do, TE.bind('position', () => this.getStakingPositionById(params.positionId)), TE.bind('penalty', ({ position }) => this.calculateUnstakePenalty(params.positionId, params.amount)), TE.bind('txHash', ({ position, penalty }) => this.executeUnstake(params, position, penalty)), TE.map(({ txHash }) => txHash));
-        this.claimRewards = (params) => (0, function_1.pipe)(TE.Do, TE.bind('rewards', () => this.calculateRewards(params.walletAddress, params.positionId)), TE.bind('txHash', ({ rewards }) => this.executeClaimRewards(params, rewards)), TE.map(({ txHash }) => txHash));
+        this.stake = (params) => (0, function_1.pipe)(TE.Do, TE.bind('validation', () => this.validateStakeParams(params)), TE.bind('poolInfo', () => this.getStakingPoolInfo(params.token)), TE.bind('txHash', ({ poolInfo }) => TE.tryCatch(() => this.executeStake(params, poolInfo), (error) => new types_1.SiloProtocolError(`Failed to execute stake: ${error}`, 'STAKE_EXECUTION_FAILED', { params, error }))), TE.map(({ txHash }) => txHash));
+        this.unstake = (params) => (0, function_1.pipe)(TE.Do, TE.bind('position', () => this.getStakingPositionById(params.positionId)), TE.bind('penalty', ({ position }) => this.calculateUnstakePenalty(params.positionId, params.amount)), TE.bind('txHash', ({ position, penalty }) => TE.tryCatch(() => this.executeUnstake(params, position, penalty), (error) => new types_1.SiloProtocolError(`Failed to execute unstake: ${error}`, 'UNSTAKE_EXECUTION_FAILED', { params, error }))), TE.map(({ txHash }) => txHash));
+        this.claimRewards = (params) => (0, function_1.pipe)(TE.Do, TE.bind('rewards', () => this.calculateRewards(params.walletAddress, params.positionId)), TE.bind('txHash', ({ rewards }) => TE.tryCatch(() => this.executeClaimRewards(params, rewards), (error) => new types_1.SiloProtocolError(`Failed to execute claim rewards: ${error}`, 'CLAIM_REWARDS_EXECUTION_FAILED', { params, error }))), TE.map(({ txHash }) => txHash));
         this.calculateRewards = (walletAddress, positionId) => (0, function_1.pipe)(TE.Do, TE.bind('positions', () => this.getStakingPositions(walletAddress)), TE.bind('filteredPositions', ({ positions }) => TE.right(positionId ? positions.filter(p => p.id === positionId) : positions)), TE.bind('rewards', ({ filteredPositions }) => TE.sequenceArray(filteredPositions.map(pos => this.calculatePositionRewards(pos)))), TE.map(({ rewards }) => rewards.flat()));
         this.estimateStakingReturns = (params) => (0, function_1.pipe)(TE.Do, TE.bind('poolInfo', () => this.getStakingPoolInfo(params.token)), TE.map(({ poolInfo }) => {
             const amount = Number(params.amount);

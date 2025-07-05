@@ -2,10 +2,35 @@
 
 import { useEffect, useState } from 'react';
 import { formatEther, formatUnits } from 'viem';
-import { useWaitForTransactionReceipt } from '@privy-io/wagmi';
+import { useWaitForTransactionReceipt } from 'wagmi';
 import { CheckCircle, XCircle, Loader2, AlertTriangle } from 'lucide-react';
 import { useWalletOperations } from '@hooks/useWalletOperations';
 import { logger } from '@lib/logger';
+import { sanitizeTransactionDescription, useSanitizedContent, SANITIZE_CONFIGS } from '@lib/sanitize';
+
+// Safe description renderer
+function SafeTransactionDescription({ description }: { description: string }) {
+  const { sanitized, isValid, warnings } = useSanitizedContent(
+    description, 
+    SANITIZE_CONFIGS.TRANSACTION_DESCRIPTION
+  )
+  
+  // Log warnings in development
+  if (process.env.NODE_ENV === 'development' && warnings.length > 0) {
+    logger.warn('Transaction description sanitization warnings:', warnings)
+  }
+  
+  // If content is potentially unsafe, show a warning
+  if (!isValid) {
+    return (
+      <div className="text-yellow-400 text-sm">
+        ⚠️ Transaction description filtered for security
+      </div>
+    )
+  }
+  
+  return <span className="text-gray-300">{sanitized}</span>
+}
 
 interface TransactionDetails {
   id: string;
@@ -162,7 +187,7 @@ export function TransactionModal({
               <div className="flex items-center justify-between">
                 <span className="text-gray-400">Estimated Gas</span>
                 <span className="text-white font-medium">
-                  {formatEther(transaction.estimatedGas)} SEI
+                  {formatEther(transaction.estimatedGas || 0n)} SEI
                 </span>
               </div>
             </div>
@@ -170,7 +195,7 @@ export function TransactionModal({
 
           {transaction.description && (
             <div className="bg-black/50 rounded-lg p-4 border border-red-500/10">
-              <p className="text-gray-300">{transaction.description}</p>
+              <SafeTransactionDescription description={transaction.description} />
             </div>
           )}
 

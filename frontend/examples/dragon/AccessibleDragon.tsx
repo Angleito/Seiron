@@ -7,7 +7,7 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { EnhancedDragonCharacter } from '@components/dragon'
-import { useKeyboardNavigation } from '@components/dragon/hooks'
+import { useKeyboardNavigation } from '@components/dragon'
 import type { DragonState, DragonMood, InteractionType } from '@components/dragon/types'
 
 export function AccessibleDragon() {

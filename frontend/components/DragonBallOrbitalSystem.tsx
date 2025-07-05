@@ -52,6 +52,8 @@ export function DragonBallOrbitalSystem({
   const animationFrameRef = useRef<number>()
   const lastTimeRef = useRef<number>(0)
   const spatialGrid = useRef(new SpatialGrid())
+  const wishAnimationRef = useRef<number>()
+  const cleanupFunctionsRef = useRef<(() => void)[]>([])
   
   const { state: dragonState, intensity, performanceMode } = useDragonInteraction()
   
@@ -132,12 +134,17 @@ export function DragonBallOrbitalSystem({
     if (allNearCenter && !isWishing) {
       triggerWishAnimation()
     }
-  }, [dragonBalls, isWishing, interactive])
+  }, [dragonBalls, isWishing, interactive, triggerWishAnimation])
   
   // Trigger wish-granting animation
   const triggerWishAnimation = useCallback(() => {
     setIsWishing(true)
     setWishProgress(0)
+    
+    // Cancel any existing wish animation
+    if (wishAnimationRef.current) {
+      cancelAnimationFrame(wishAnimationRef.current)
+    }
     
     // Animate wish progress
     const startTime = Date.now()
@@ -148,14 +155,15 @@ export function DragonBallOrbitalSystem({
       setWishProgress(progress)
       
       if (progress < 1) {
-        requestAnimationFrame(animateWish)
+        wishAnimationRef.current = requestAnimationFrame(animateWish)
       } else {
         setIsWishing(false)
+        wishAnimationRef.current = undefined
         onWishGranted?.()
       }
     }
     
-    requestAnimationFrame(animateWish)
+    wishAnimationRef.current = requestAnimationFrame(animateWish)
   }, [onWishGranted])
   
   // Physics update loop
@@ -240,6 +248,11 @@ export function DragonBallOrbitalSystem({
           updatedBall.angle += updatedBall.angularVelocity * deltaTime
         }
         
+        // Limit trail length to prevent memory leaks
+        if (updatedBall.trail.length > 20) {
+          updatedBall.trail = updatedBall.trail.slice(-20)
+        }
+        
         return updatedBall
       })
       
@@ -252,10 +265,12 @@ export function DragonBallOrbitalSystem({
             if (other.id <= newBalls[i].id) continue // Avoid duplicate checks
             
             const j = newBalls.findIndex(b => b.id === other.id)
-            if (detectCollision(newBalls[i], newBalls[j], ballSize / 2)) {
+            if (j >= 0 && detectCollision(newBalls[i], newBalls[j], ballSize / 2)) {
               const { v1, v2 } = resolveCollision(newBalls[i], newBalls[j])
-              newBalls[i].velocity = v1
-              newBalls[j].velocity = v2
+              if (newBalls[i] && newBalls[j]) {
+                newBalls[i].velocity = v1
+                newBalls[j].velocity = v2
+              }
             }
           }
         }
@@ -274,9 +289,22 @@ export function DragonBallOrbitalSystem({
     animationFrameRef.current = requestAnimationFrame(updatePhysics)
     
     return () => {
+      // Cancel animation frames
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current)
+        animationFrameRef.current = undefined
       }
+      if (wishAnimationRef.current) {
+        cancelAnimationFrame(wishAnimationRef.current)
+        wishAnimationRef.current = undefined
+      }
+      
+      // Clear spatial grid
+      spatialGrid.current.clear()
+      
+      // Execute cleanup functions
+      cleanupFunctionsRef.current.forEach(cleanup => cleanup())
+      cleanupFunctionsRef.current = []
     }
   }, [updatePhysics])
   
@@ -288,6 +316,29 @@ export function DragonBallOrbitalSystem({
       angularVelocity: newSpeed * (1 + ball.id * 0.05) // Slight variation per ball
     })))
   }, [dragonState, intensity])
+  
+  // Cleanup effect for component unmount
+  useEffect(() => {
+    return () => {
+      // Cancel all animation frames
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
+      if (wishAnimationRef.current) {
+        cancelAnimationFrame(wishAnimationRef.current)
+      }
+      
+      // Clear spatial grid and reset references
+      spatialGrid.current.clear()
+      
+      // Clear dragon balls state to prevent memory leaks
+      setDragonBalls([])
+      
+      // Execute and clear cleanup functions
+      cleanupFunctionsRef.current.forEach(cleanup => cleanup())
+      cleanupFunctionsRef.current = []
+    }
+  }, [])
   
   return (
     <div 
@@ -326,7 +377,8 @@ export function DragonBallOrbitalSystem({
       
       {/* Dragon Balls */}
       {dragonBalls.map((ball, index) => {
-        const ballConfig = DRAGON_BALLS.find(b => b.id === ball.id)!
+        const ballConfig = DRAGON_BALLS.find(b => b.id === ball.id)
+        if (!ballConfig) return null
         
         return (
           <div key={ball.id}>

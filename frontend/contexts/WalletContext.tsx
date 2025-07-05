@@ -7,6 +7,7 @@ import * as E from 'fp-ts/Either'
 import * as O from 'fp-ts/Option'
 import { pipe } from 'fp-ts/function'
 import { logger } from '@lib/logger'
+import { secureLocalStorage } from '@lib/security/secureStorage'
 
 // ============================================================================
 // Types
@@ -39,26 +40,26 @@ export interface WalletContextType {
   chainId: O.Option<number>
 }
 
-// Analytics event types
+// Analytics event types (sanitized for logging)
 export type AnalyticsEvent =
-  | { type: 'wallet_connected'; address: string; chainId: number }
-  | { type: 'wallet_disconnected'; address?: string }
+  | { type: 'wallet_connected'; chainId: number }
+  | { type: 'wallet_disconnected' }
   | { type: 'wallet_error'; error: string }
   | { type: 'chain_changed'; from?: number; to: number }
-  | { type: 'account_changed'; from?: string; to: string }
+  | { type: 'account_changed' } // Removed sensitive address data
 
 // ============================================================================
 // Constants
 // ============================================================================
 
-const WALLET_STATE_KEY = 'seiron_wallet_state'
+const WALLET_STATE_KEY = 'wallet_state'
 
 // ============================================================================
 // Analytics
 // ============================================================================
 
 const emitAnalyticsEvent = (event: AnalyticsEvent): void => {
-  // In production, this would send to your analytics service
+  // Only log non-sensitive analytics data
   logger.debug('[Analytics]', event)
   
   // Emit custom event for other parts of the app
@@ -68,30 +69,32 @@ const emitAnalyticsEvent = (event: AnalyticsEvent): void => {
 }
 
 // ============================================================================
-// Local Storage
+// Secure Local Storage
 // ============================================================================
 
-const saveWalletState = (state: WalletState): void => {
+const saveWalletState = async (state: WalletState): Promise<void> => {
   try {
     if (typeof window !== 'undefined') {
-      localStorage.setItem(WALLET_STATE_KEY, JSON.stringify(state))
+      const result = await secureLocalStorage.setItem(WALLET_STATE_KEY, state)
+      if (E.isLeft(result)) {
+        logger.error('Failed to save wallet state:', result.left.message)
+      }
     }
   } catch (error) {
     logger.error('Failed to save wallet state:', error)
   }
 }
 
-const loadWalletState = (): O.Option<WalletState> => {
+const loadWalletState = async (): Promise<O.Option<WalletState>> => {
   try {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(WALLET_STATE_KEY)
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        // Validate the loaded state
-        if (parsed.type && ['Disconnected', 'Connecting', 'Connected', 'Error'].includes(parsed.type)) {
-          return O.some(parsed as WalletState)
-        }
-      }
+      const saved = await secureLocalStorage.getItem<WalletState>(WALLET_STATE_KEY)
+      return pipe(
+        saved,
+        O.filter(state => 
+          state.type && ['Disconnected', 'Connecting', 'Connected', 'Error'].includes(state.type)
+        )
+      )
     }
   } catch (error) {
     logger.error('Failed to load wallet state:', error)
@@ -99,10 +102,13 @@ const loadWalletState = (): O.Option<WalletState> => {
   return O.none
 }
 
-const clearWalletState = (): void => {
+const clearWalletState = async (): Promise<void> => {
   try {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem(WALLET_STATE_KEY)
+      const result = await secureLocalStorage.removeItem(WALLET_STATE_KEY)
+      if (E.isLeft(result)) {
+        logger.error('Failed to clear wallet state:', result.left.message)
+      }
     }
   } catch (error) {
     logger.error('Failed to clear wallet state:', error)
@@ -143,11 +149,13 @@ export const walletReducer = (state: WalletState, action: WalletAction): WalletS
                 address: action.address,
                 chainId: action.chainId
               }
-              saveWalletState(newState)
+              // Save state asynchronously without blocking
+              saveWalletState(newState).catch(error => 
+                logger.error('Failed to save wallet state after connect:', error)
+              )
               emitAnalyticsEvent({
                 type: 'wallet_connected',
-                address: action.address,
-                chainId: action.chainId
+                chainId: action.chainId // Only include non-sensitive data
               })
               return newState
             default:
@@ -167,7 +175,10 @@ export const walletReducer = (state: WalletState, action: WalletAction): WalletS
                 type: 'Error',
                 error: action.error
               }
-              clearWalletState()
+              // Clear state asynchronously without blocking
+              clearWalletState().catch(error => 
+                logger.error('Failed to clear wallet state after error:', error)
+              )
               emitAnalyticsEvent({
                 type: 'wallet_error',
                 error: action.error
@@ -183,11 +194,12 @@ export const walletReducer = (state: WalletState, action: WalletAction): WalletS
       return pipe(
         state,
         (s) => {
-          const address = s.type === 'Connected' ? s.address : undefined
-          clearWalletState()
+          // Clear state asynchronously without blocking
+          clearWalletState().catch(error => 
+            logger.error('Failed to clear wallet state after disconnect:', error)
+          )
           emitAnalyticsEvent({
-            type: 'wallet_disconnected',
-            address
+            type: 'wallet_disconnected'
           })
           return { type: 'Disconnected' } as WalletState
         }
@@ -204,7 +216,10 @@ export const walletReducer = (state: WalletState, action: WalletAction): WalletS
                 ...s,
                 chainId: action.chainId
               }
-              saveWalletState(newState)
+              // Save state asynchronously without blocking
+              saveWalletState(newState).catch(error => 
+                logger.error('Failed to save wallet state after chain change:', error)
+              )
               emitAnalyticsEvent({
                 type: 'chain_changed',
                 from: s.chainId,
@@ -228,11 +243,12 @@ export const walletReducer = (state: WalletState, action: WalletAction): WalletS
                 ...s,
                 address: action.address
               }
-              saveWalletState(newState)
+              // Save state asynchronously without blocking
+              saveWalletState(newState).catch(error => 
+                logger.error('Failed to save wallet state after account change:', error)
+              )
               emitAnalyticsEvent({
-                type: 'account_changed',
-                from: s.address,
-                to: action.address
+                type: 'account_changed' // No sensitive address data
               })
               return newState
             default:
@@ -257,20 +273,44 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined)
 // ============================================================================
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
-  // Initialize state from localStorage or default
-  const initialState = pipe(
-    loadWalletState(),
-    O.fold(
-      () => ({ type: 'Disconnected' } as WalletState),
-      (state) => state
-    )
-  )
+  // Initialize state with default, then load from secure storage
+  const [state, dispatch] = useReducer(walletReducer, { type: 'Disconnected' } as WalletState)
+  const [isInitialized, setIsInitialized] = React.useState(false)
 
-  const [state, dispatch] = useReducer(walletReducer, initialState)
+  // Load initial state from secure storage
+  useEffect(() => {
+    const initializeState = async () => {
+      try {
+        const savedState = await loadWalletState()
+        if (O.isSome(savedState)) {
+          // Restore the saved state
+          const restoredState = savedState.value
+          if (restoredState.type === 'Connected') {
+            dispatch({
+              type: 'CONNECT_SUCCESS',
+              address: restoredState.address,
+              chainId: restoredState.chainId
+            })
+          } else if (restoredState.type === 'Error') {
+            dispatch({
+              type: 'CONNECT_ERROR',
+              error: restoredState.error
+            })
+          }
+        }
+      } catch (error) {
+        logger.error('Failed to initialize wallet state:', error)
+      } finally {
+        setIsInitialized(true)
+      }
+    }
+    
+    initializeState()
+  }, [])
 
   // Privy hooks
   const { login, logout, ready, authenticated } = usePrivy()
-  const { wallets } = useWallets()
+  // const { wallets } = useWallets() // Available for future wallet selection features
   
   // Wagmi hooks
   const { address, isConnected, chainId } = useAccount()
@@ -303,9 +343,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     }
   }, [logout, wagmiDisconnect])
 
-  // Sync with Privy/Wagmi state
+  // Sync with Privy/Wagmi state (only after initialization)
   useEffect(() => {
-    if (!ready) return
+    if (!ready || !isInitialized) return
 
     if (authenticated && isConnected && address && chainId) {
       // Connected
@@ -322,27 +362,27 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         dispatch({ type: 'DISCONNECT' })
       }
     }
-  }, [ready, authenticated, isConnected, address, chainId, state])
+  }, [ready, authenticated, isConnected, address, chainId, state, isInitialized])
 
   // Listen for account changes
   useEffect(() => {
-    if (state.type === 'Connected' && address && address !== state.address) {
+    if (isInitialized && state.type === 'Connected' && address && address !== state.address) {
       dispatch({
         type: 'ACCOUNT_CHANGED',
         address
       })
     }
-  }, [address, state])
+  }, [address, state, isInitialized])
 
   // Listen for chain changes
   useEffect(() => {
-    if (state.type === 'Connected' && chainId && chainId !== state.chainId) {
+    if (isInitialized && state.type === 'Connected' && chainId && chainId !== state.chainId) {
       dispatch({
         type: 'CHAIN_CHANGED',
         chainId
       })
     }
-  }, [chainId, state])
+  }, [chainId, state, isInitialized])
 
   // Memoized values
   const contextValue = useMemo<WalletContextType>(() => ({

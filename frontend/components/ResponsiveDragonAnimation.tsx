@@ -82,7 +82,7 @@ export function ResponsiveDragonAnimation({
     lg: 'lg',
     xl: 'xl',
     '2xl': 'xl'
-  }, 'md') as 'sm' | 'md' | 'lg' | 'xl'
+  }, 'md') as 'sm' | 'md' | 'lg' | 'xl' || 'md'
 
   // Dragon ball configuration based on screen size and orientation
   const getDragonBallConfig = () => {
@@ -121,6 +121,8 @@ export function ResponsiveDragonAnimation({
     if (!interactive || !isTouchDevice) return
     
     const touch = e.touches[0]
+    if (!touch) return
+    
     setTouchStartPos({ x: touch.clientX, y: touch.clientY })
     setIsPressed(true)
   }
@@ -129,6 +131,8 @@ export function ResponsiveDragonAnimation({
     if (!interactive || !isPressed) return
     
     const touch = e.touches[0]
+    if (!touch) return
+    
     const deltaX = touch.clientX - touchStartPos.x
     const deltaY = touch.clientY - touchStartPos.y
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)

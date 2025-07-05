@@ -25,7 +25,7 @@ export class ErrorBoundary extends Component<Props, State> {
     }
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static override getDerivedStateFromError(error: Error): State {
     return {
       hasError: true,
       error,
@@ -33,7 +33,7 @@ export class ErrorBoundary extends Component<Props, State> {
     }
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     const { name = 'Unknown', onError } = this.props
     
     // Log error details
@@ -76,7 +76,7 @@ export class ErrorBoundary extends Component<Props, State> {
     window.location.href = '/'
   }
 
-  render() {
+  override render() {
     const { hasError, error } = this.state
     const { children, fallback, name = 'Application' } = this.props
 

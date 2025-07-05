@@ -11,7 +11,8 @@ import {
   tap,
   filter,
   debounceTime,
-  startWith
+  startWith,
+  scan
 } from 'rxjs/operators';
 import * as E from 'fp-ts/Either';
 import * as O from 'fp-ts/Option';
@@ -196,15 +197,17 @@ export function usePriceFeed(config: PriceFeedConfig) {
         }
         
         // Fetch with fallback
-        return fetchPriceWithFallback(asset)().then(
-          E.fold(
-            (error) => throwError(() => error),
-            (data) => {
-              cache.current.set(data);
-              return of(data);
-            }
-          )
-        );
+        return new Promise<PriceData>((resolve, reject) => {
+          fetchPriceWithFallback(asset)()
+            .then(E.fold(
+              (error) => reject(error),
+              (data) => {
+                cache.current.set(data);
+                resolve(data);
+              }
+            ))
+            .catch(reject);
+        });
       }),
       retry({
         count: retryAttempts,
@@ -338,24 +341,4 @@ export const isPriceData = (value: unknown): value is PriceData => {
   );
 };
 
-function scan<T, R>(
-  accumulator: (acc: R, value: T) => R, 
-  seed: R
-): (source: Observable<T>) => Observable<R> {
-  return (source: Observable<T>) => 
-    new Observable<R>(subscriber => {
-      let acc = seed;
-      return source.subscribe({
-        next(value) {
-          try {
-            acc = accumulator(acc, value);
-            subscriber.next(acc);
-          } catch (err) {
-            subscriber.error(err);
-          }
-        },
-        error(err) { subscriber.error(err); },
-        complete() { subscriber.complete(); }
-      });
-    });
-}
+// Removed custom scan implementation - using RxJS built-in

@@ -188,60 +188,76 @@ export function useEnhancedMouseTracking({
     const localY = y - rect.top
 
     // Check dragon balls first (highest priority for interaction)
-    for (const ball of svgZones.dragonBalls.positions) {
-      const dx = localX - ball.cx
-      const dy = localY - ball.cy
-      if (Math.sqrt(dx * dx + dy * dy) <= ball.r) {
-        return 'dragon-ball'
+    if (svgZones.dragonBalls?.positions) {
+      for (const ball of svgZones.dragonBalls.positions) {
+        const dx = localX - ball.cx
+        const dy = localY - ball.cy
+        if (Math.sqrt(dx * dx + dy * dy) <= ball.r) {
+          return 'dragon-ball'
+        }
       }
     }
 
     // Check eyes
-    const leftEyeDx = localX - svgZones.eyes.left.x
-    const leftEyeDy = localY - svgZones.eyes.left.y
-    if (Math.sqrt(leftEyeDx * leftEyeDx + leftEyeDy * leftEyeDy) <= (svgZones.eyes.left.radius || 15)) {
-      return 'left-eye'
-    }
-
-    const rightEyeDx = localX - svgZones.eyes.right.x
-    const rightEyeDy = localY - svgZones.eyes.right.y
-    if (Math.sqrt(rightEyeDx * rightEyeDx + rightEyeDy * rightEyeDy) <= (svgZones.eyes.right.radius || 15)) {
-      return 'right-eye'
-    }
-
-    // Check head
-    const headDx = localX - svgZones.head.x
-    const headDy = localY - svgZones.head.y
-    if (Math.sqrt(headDx * headDx + headDy * headDy) <= svgZones.head.radius) {
-      return 'head'
-    }
-
-    // Check limbs
-    for (let i = 0; i < svgZones.limbs.frontArms.length; i++) {
-      const arm = svgZones.limbs.frontArms[i]
-      if (isPointInRect(localX, localY, arm.bounds)) {
-        return i === 0 ? 'left-arm' : 'right-arm'
+    if (svgZones.eyes?.left) {
+      const leftEyeDx = localX - svgZones.eyes.left.x
+      const leftEyeDy = localY - svgZones.eyes.left.y
+      if (Math.sqrt(leftEyeDx * leftEyeDx + leftEyeDy * leftEyeDy) <= (svgZones.eyes.left.radius || 15)) {
+        return 'left-eye'
       }
     }
 
-    for (let i = 0; i < svgZones.limbs.rearArms.length; i++) {
-      const leg = svgZones.limbs.rearArms[i]
-      if (isPointInRect(localX, localY, leg.bounds)) {
-        return i === 0 ? 'left-leg' : 'right-leg'
+    if (svgZones.eyes?.right) {
+      const rightEyeDx = localX - svgZones.eyes.right.x
+      const rightEyeDy = localY - svgZones.eyes.right.y
+      if (Math.sqrt(rightEyeDx * rightEyeDx + rightEyeDy * rightEyeDy) <= (svgZones.eyes.right.radius || 15)) {
+        return 'right-eye'
+      }
+    }
+
+    // Check head
+    if (svgZones.head) {
+      const headDx = localX - svgZones.head.x
+      const headDy = localY - svgZones.head.y
+      if (Math.sqrt(headDx * headDx + headDy * headDy) <= svgZones.head.radius) {
+        return 'head'
+      }
+    }
+
+    // Check limbs
+    if (svgZones.limbs?.frontArms) {
+      for (let i = 0; i < svgZones.limbs.frontArms.length; i++) {
+        const arm = svgZones.limbs.frontArms[i]
+        if (isPointInRect(localX, localY, arm.bounds)) {
+          return i === 0 ? 'left-arm' : 'right-arm'
+        }
+      }
+    }
+
+    if (svgZones.limbs?.rearArms) {
+      for (let i = 0; i < svgZones.limbs.rearArms.length; i++) {
+        const leg = svgZones.limbs.rearArms[i]
+        if (isPointInRect(localX, localY, leg.bounds)) {
+          return i === 0 ? 'left-leg' : 'right-leg'
+        }
       }
     }
 
     // Check tail
-    for (const tailSegment of svgZones.tail.segments) {
-      if (isPointInRect(localX, localY, tailSegment.bounds)) {
-        return 'tail'
+    if (svgZones.tail?.segments) {
+      for (const tailSegment of svgZones.tail.segments) {
+        if (isPointInRect(localX, localY, tailSegment.bounds)) {
+          return 'tail'
+        }
       }
     }
 
     // Check body
-    for (const bodySegment of svgZones.body.segments) {
-      if (isPointInRect(localX, localY, bodySegment)) {
-        return 'body'
+    if (svgZones.body?.segments) {
+      for (const bodySegment of svgZones.body.segments) {
+        if (isPointInRect(localX, localY, bodySegment)) {
+          return 'body'
+        }
       }
     }
 
@@ -289,15 +305,15 @@ export function useEnhancedMouseTracking({
       return { rotation, pupilPosition }
     }
 
-    const leftEyeMovement = calculateRealisticEyeMovement(
+    const leftEyeMovement = svgZones.eyes?.left ? calculateRealisticEyeMovement(
       svgZones.eyes.left,
       { x: localX, y: localY }
-    )
+    ) : { rotation: { x: 0, y: 0 }, pupilPosition: { x: 0, y: 0 } }
 
-    const rightEyeMovement = calculateRealisticEyeMovement(
+    const rightEyeMovement = svgZones.eyes?.right ? calculateRealisticEyeMovement(
       svgZones.eyes.right,
       { x: localX, y: localY }
-    )
+    ) : { rotation: { x: 0, y: 0 }, pupilPosition: { x: 0, y: 0 } }
 
     // Simulate natural blinking
     const now = Date.now()
@@ -329,7 +345,7 @@ export function useEnhancedMouseTracking({
         right: rightEyeMovement.rotation
       }
     }))
-  }, [eyeTrackingEnabled, elementRef, svgZones.eyes, eyeTracking.lastBlinkTime])
+  }, [eyeTrackingEnabled, elementRef, svgZones.eyes])
 
   // Enhanced head rotation with inertia
   const updateHeadRotation = useCallback((mousePosition: { x: number; y: number }) => {
@@ -339,6 +355,8 @@ export function useEnhancedMouseTracking({
     const localX = mousePosition.x - rect.left
     const localY = mousePosition.y - rect.top
 
+    if (!svgZones.head) return
+    
     const dx = localX - svgZones.head.x
     const dy = localY - svgZones.head.y
     const distance = Math.sqrt(dx * dx + dy * dy)
@@ -415,26 +433,26 @@ export function useEnhancedMouseTracking({
 
     switch (part) {
       case 'head':
-        return {
+        return svgZones.head ? {
           x: rect.left + svgZones.head.x,
           y: rect.top + svgZones.head.y
-        }
+        } : null
       case 'left-eye':
-        return {
+        return svgZones.eyes?.left ? {
           x: rect.left + svgZones.eyes.left.x,
           y: rect.top + svgZones.eyes.left.y
-        }
+        } : null
       case 'right-eye':
-        return {
+        return svgZones.eyes?.right ? {
           x: rect.left + svgZones.eyes.right.x,
           y: rect.top + svgZones.eyes.right.y
-        }
+        } : null
       case 'body':
-        const bodySegment = svgZones.body.segments[0]
-        return {
+        const bodySegment = svgZones.body?.segments?.[0]
+        return bodySegment ? {
           x: rect.left + bodySegment.x + bodySegment.width / 2,
           y: rect.top + bodySegment.y + bodySegment.height / 2
-        }
+        } : null
       default:
         return null
     }

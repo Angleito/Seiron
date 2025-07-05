@@ -4,7 +4,23 @@ import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    // CSP compliance plugin
+    {
+      name: 'csp-headers',
+      configureServer(server) {
+        server.middlewares.use('/', (req, res, next) => {
+          // Add security headers for development
+          res.setHeader('X-Content-Type-Options', 'nosniff')
+          res.setHeader('X-Frame-Options', 'DENY')
+          res.setHeader('X-XSS-Protection', '1; mode=block')
+          res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
+          next()
+        })
+      }
+    }
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

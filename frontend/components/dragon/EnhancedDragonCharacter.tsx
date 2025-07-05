@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useCallback, useMemo, useEffect } from 'react'
+import React, { useRef, useCallback, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence, useMotionValue, useTransform, type Variants } from 'framer-motion'
 import { useDragonStateMachine } from './hooks/useDragonStateMachine'
 import { useMouseTracking } from './hooks/useMouseTracking'
@@ -16,7 +16,31 @@ import {
   DEFAULT_DRAGON_CONFIG 
 } from './constants'
 
-export function EnhancedDragonCharacter({
+// Performance optimized component comparison
+const arePropsEqual = (prevProps: EnhancedDragonCharacterProps, nextProps: EnhancedDragonCharacterProps): boolean => {
+  // Compare basic props
+  if (prevProps.size !== nextProps.size) return false
+  if (prevProps.initialState !== nextProps.initialState) return false
+  if (prevProps.interactive !== nextProps.interactive) return false
+  if (prevProps.showDragonBalls !== nextProps.showDragonBalls) return false
+  if (prevProps.enableCursorTracking !== nextProps.enableCursorTracking) return false
+  if (prevProps.autoStates !== nextProps.autoStates) return false
+  if (prevProps.className !== nextProps.className) return false
+  
+  // Deep compare animation config
+  if (JSON.stringify(prevProps.animationConfig) !== JSON.stringify(nextProps.animationConfig)) return false
+  if (JSON.stringify(prevProps.dragonBallConfig) !== JSON.stringify(nextProps.dragonBallConfig)) return false
+  
+  // Compare callback references (these should be memoized by parent)
+  if (prevProps.onStateChange !== nextProps.onStateChange) return false
+  if (prevProps.onMoodChange !== nextProps.onMoodChange) return false
+  if (prevProps.onPowerLevelChange !== nextProps.onPowerLevelChange) return false
+  if (prevProps.onInteraction !== nextProps.onInteraction) return false
+  
+  return true
+}
+
+function EnhancedDragonCharacterInternal({
   size = 'lg',
   initialState = 'idle',
   // initialMood = 'neutral',
@@ -34,6 +58,8 @@ export function EnhancedDragonCharacter({
   autoStates = true
 }: EnhancedDragonCharacterProps) {
   const dragonRef = useRef<HTMLDivElement>(null)
+  const cleanupFunctionsRef = useRef<(() => void)[]>([])
+  const animationTimersRef = useRef<number[]>([])
   // const [isHovered, setIsHovered] = useState(false)
   // const [dragonsBreathing, setDragonsBreathing] = useState(true)
   // const [touchPosition, setTouchPosition] = useState<{ x: number; y: number } | null>(null)
@@ -106,6 +132,9 @@ export function EnhancedDragonCharacter({
       // setEyePosition(prev => ({ ...prev, y }))
     })
     
+    // Store cleanup functions
+    cleanupFunctionsRef.current.push(unsubscribeX, unsubscribeY)
+    
     return () => {
       unsubscribeX()
       unsubscribeY()
@@ -177,15 +206,35 @@ export function EnhancedDragonCharacter({
   useEffect(() => {
     if (!autoStates || !mouseTracking.isMouseActive) return
 
+    let transitionTimer: number
+    
     if (mouseTracking.isInProximity && dragon.state === 'idle') {
-      dragon.actions.setState('attention')
+      transitionTimer = window.setTimeout(() => {
+        dragon.actions.setState('attention')
+      }, 100) // Small delay to prevent rapid state changes
     } else if (!mouseTracking.isInProximity && dragon.state === 'attention') {
-      dragon.actions.setState('idle')
+      transitionTimer = window.setTimeout(() => {
+        dragon.actions.setState('idle')
+      }, 100)
+    }
+    
+    if (transitionTimer) {
+      animationTimersRef.current.push(transitionTimer)
+    }
+    
+    return () => {
+      if (transitionTimer) {
+        clearTimeout(transitionTimer)
+        const index = animationTimersRef.current.indexOf(transitionTimer)
+        if (index > -1) {
+          animationTimersRef.current.splice(index, 1)
+        }
+      }
     }
   }, [autoStates, mouseTracking.isInProximity, mouseTracking.isMouseActive, dragon.state, dragon.actions])
 
-  // Animation variants based on state - optimized for SVG container
-  const dragonVariants: Variants = {
+  // Animation variants based on state - optimized for SVG container - memoized
+  const dragonVariants: Variants = useMemo(() => ({
     idle: {
       scale: 1,
       rotate: 0,
@@ -225,11 +274,11 @@ export function EnhancedDragonCharacter({
       rotate: [-1, 1, 0],
       transition: { duration: 2, times: [0, 0.7, 1] }
     }
-  }
+  }), []) // Variants don't change, so empty dependency array
 
   
-  // Legacy Dragon Ball orbital animation (fallback)
-  const LegacyDragonBalls = ({ count = 7 }: { count?: number }) => {
+  // Legacy Dragon Ball orbital animation (fallback) - memoized
+  const LegacyDragonBalls = useMemo(() => ({ count = 7 }: { count?: number }) => {
     if (!showDragonBalls || reducedMotion) return null
 
     return (
@@ -278,10 +327,10 @@ export function EnhancedDragonCharacter({
         ))}
       </motion.div>
     )
-  }
+  }, [showDragonBalls, reducedMotion, dragon.state, sizeConfig])
 
-  // Aura effect based on state
-  const DragonAura = () => {
+  // Aura effect based on state - memoized
+  const DragonAura = useMemo(() => () => {
     if (!config.enableAura || reducedMotion) return null
 
     const colors = DRAGON_COLORS[dragon.state] || DRAGON_COLORS.idle
@@ -303,10 +352,10 @@ export function EnhancedDragonCharacter({
         }}
       />
     )
-  }
+  }, [config.enableAura, reducedMotion, dragon.state])
 
-  // Particle system
-  const DragonParticles = () => {
+  // Particle system - memoized
+  const DragonParticles = useMemo(() => () => {
     if (!config.enableParticles || reducedMotion) return null
 
     const particleCount = config.particleCount
@@ -336,7 +385,32 @@ export function EnhancedDragonCharacter({
         ))}
       </div>
     )
-  }
+  }, [config.enableParticles, reducedMotion, config.particleCount])
+
+  // Cleanup effect for component unmount
+  useEffect(() => {
+    return () => {
+      // Clear all animation timers
+      animationTimersRef.current.forEach(timer => {
+        clearTimeout(timer)
+      })
+      animationTimersRef.current = []
+      
+      // Execute cleanup functions
+      cleanupFunctionsRef.current.forEach(cleanup => {
+        try {
+          cleanup()
+        } catch (error) {
+          console.warn('Error during cleanup:', error)
+        }
+      })
+      cleanupFunctionsRef.current = []
+      
+      // Reset motion values
+      mouseX.set(0)
+      mouseY.set(0)
+    }
+  }, [])
 
   return (
     <motion.div
@@ -438,3 +512,6 @@ export function EnhancedDragonCharacter({
     </motion.div>
   )
 }
+
+// Export the memoized component
+export const EnhancedDragonCharacter = React.memo(EnhancedDragonCharacterInternal, arePropsEqual)

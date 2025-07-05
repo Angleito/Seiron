@@ -15,6 +15,31 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { sanitizeTransactionDescription, useSanitizedContent, SANITIZE_CONFIGS } from '@lib/sanitize';
+
+// Safe text renderer for transaction confirmation
+function SafeTransactionText({ text, className = "" }: { text: string; className?: string }) {
+  const { sanitized, isValid, warnings } = useSanitizedContent(
+    text, 
+    SANITIZE_CONFIGS.TRANSACTION_DESCRIPTION
+  )
+  
+  // Log warnings in development
+  if (process.env.NODE_ENV === 'development' && warnings.length > 0) {
+    console.warn('Transaction text sanitization warnings:', warnings)
+  }
+  
+  // If content is potentially unsafe, show a warning
+  if (!isValid) {
+    return (
+      <div className="text-yellow-400 text-sm">
+        ⚠️ Content filtered for security
+      </div>
+    )
+  }
+  
+  return <span className={className}>{sanitized}</span>
+}
 
 interface TokenInfo {
   address: string;
@@ -182,14 +207,17 @@ export function TransactionConfirmation({
                       factor.severity === 'medium' ? 'text-yellow-400' : 
                       'text-green-400'
                     }`}>•</span>
-                    <p className="text-gray-300">{factor.message}</p>
+                    <SafeTransactionText text={factor.message} className="text-gray-300" />
                   </div>
                 ))}
                 {riskAssessment.recommendations && riskAssessment.recommendations.length > 0 && (
                   <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                     <p className="text-blue-400 font-semibold text-sm mb-2">Recommendations:</p>
                     {riskAssessment.recommendations.map((rec, index) => (
-                      <p key={index} className="text-sm text-gray-300">• {rec}</p>
+                      <div key={index} className="flex items-start space-x-2">
+                        <span className="text-sm text-gray-300">•</span>
+                        <SafeTransactionText text={rec} className="text-sm text-gray-300" />
+                      </div>
                     ))}
                   </div>
                 )}
@@ -295,7 +323,7 @@ export function TransactionConfirmation({
               <XCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm text-red-300 font-semibold">Simulation Failed</p>
-                <p className="text-sm text-red-300/80">{simulationResult.error}</p>
+                <SafeTransactionText text={simulationResult.error || 'Unknown error'} className="text-sm text-red-300/80" />
               </div>
             </div>
           )}

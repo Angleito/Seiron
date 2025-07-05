@@ -55,24 +55,24 @@ export function AccessibleDragonAnimation({
     - Press Tab to navigate to other elements
   `.trim()
 
-  // Handle state changes with announcements (available for future use)
-  const _handleStateChange = useCallback((newState: 'idle' | 'active' | 'powered') => {
-    setDragonState(newState)
-    
-    if (announceStateChanges) {
-      switch (newState) {
-        case 'idle':
-          announce('Dragon is resting')
-          break
-        case 'active':
-          announce('Dragon is awakening')
-          break
-        case 'powered':
-          announce('Dragon is powered up and ready')
-          break
-      }
-    }
-  }, [announceStateChanges, announce])
+  // State change handler available for future use
+  // const handleStateChange = useCallback((newState: 'idle' | 'active' | 'powered') => {
+  //   setDragonState(newState)
+  //   
+  //   if (announceStateChanges) {
+  //     switch (newState) {
+  //       case 'idle':
+  //         announce('Dragon is resting')
+  //         break
+  //       case 'active':
+  //         announce('Dragon is awakening')
+  //         break
+  //       case 'powered':
+  //         announce('Dragon is powered up and ready')
+  //         break
+  //     }
+  //   }
+  // }, [announceStateChanges, announce])
 
   // Cleanup
   useEffect(() => {

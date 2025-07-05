@@ -155,14 +155,14 @@ export function PowerLevelDisplay({
   const currentConfig = useMemo(() => {
     return POWER_LEVEL_CONFIGS.find(config => 
       powerLevel >= config.minValue && powerLevel < config.maxValue
-    ) || POWER_LEVEL_CONFIGS[POWER_LEVEL_CONFIGS.length - 1]
+    ) || POWER_LEVEL_CONFIGS[POWER_LEVEL_CONFIGS.length - 1] || POWER_LEVEL_CONFIGS[0]
   }, [powerLevel])
 
   // Calculate progress within current tier
   const tierProgress = useMemo(() => {
-    if (currentConfig.maxValue === Infinity) return 100
+    if (!currentConfig || currentConfig.maxValue === Infinity) return 100
     const range = currentConfig.maxValue - currentConfig.minValue
-    const progress = ((powerLevel - currentConfig.minValue) / range) * 100
+    const progress = range > 0 ? ((powerLevel - currentConfig.minValue) / range) * 100 : 0
     return Math.min(Math.max(progress, 0), 100)
   }, [powerLevel, currentConfig])
 
@@ -375,16 +375,16 @@ export function PowerLevelDisplay({
               <span className="text-gray-600">Next Tier:</span>
               <div className="flex items-center gap-1">
                 <span className="text-gray-800 font-medium">
-                  {POWER_LEVEL_CONFIGS[currentConfig.level]?.tier}
+                  {POWER_LEVEL_CONFIGS[currentConfig.level]?.tier ?? 'Unknown'}
                 </span>
                 <span className="text-2xl">
-                  {POWER_LEVEL_CONFIGS[currentConfig.level]?.emoji}
+                  {POWER_LEVEL_CONFIGS[currentConfig.level]?.emoji ?? '🔥'}
                 </span>
               </div>
             </div>
             <div className="mt-1">
               <span className="text-xs text-gray-500">
-                Need {formatPowerLevel(currentConfig.maxValue - powerLevel)} more power
+                Need {formatPowerLevel(Math.max(0, currentConfig.maxValue - powerLevel))} more power
               </span>
             </div>
           </div>

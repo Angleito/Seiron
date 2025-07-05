@@ -298,7 +298,8 @@ export function OptimizedDragonBallOrbital({
       
       {/* Dragon Balls - Using CSS transforms for GPU acceleration */}
       {dragonBalls.map((ball) => {
-        const ballConfig = DRAGON_BALLS.find(b => b.id === ball.id)!
+        const ballConfig = DRAGON_BALLS.find(b => b.id === ball.id)
+        if (!ballConfig) return null
         const isHovered = ball.id === hoveredBallId
         
         return (

@@ -30,21 +30,21 @@ declare global {
   }
 
   interface SpeechRecognitionResultList {
-    length: number
+    readonly length: number
     item(index: number): SpeechRecognitionResult
     [index: number]: SpeechRecognitionResult
   }
 
   interface SpeechRecognitionResult {
-    length: number
+    readonly length: number
     item(index: number): SpeechRecognitionAlternative
     [index: number]: SpeechRecognitionAlternative
-    isFinal: boolean
+    readonly isFinal: boolean
   }
 
   interface SpeechRecognitionAlternative {
-    transcript: string
-    confidence: number
+    readonly transcript: string
+    readonly confidence: number
   }
 
   interface SpeechRecognitionErrorEvent extends Event {
@@ -71,10 +71,7 @@ export interface SpeechRecognitionState {
   error: SpeechError | null
 }
 
-interface SpeechRecognitionEvent extends Event {
-  results: SpeechRecognitionResultList
-  resultIndex: number
-}
+// Removed duplicate interface declaration
 
 const createSpeechError = (
   type: SpeechError['type'],

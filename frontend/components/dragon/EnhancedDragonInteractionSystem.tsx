@@ -236,109 +236,109 @@ const EnhancedDragonInteractionSystemContent: React.FC<EnhancedDragonInteraction
   // Performance monitoring
   const { performanceMode, metrics } = useAnimationPerformance(enablePerformanceOptimization)
 
-  // Event handlers
-  const handleStateChange = useCallback((state: DragonState) => {
-    setCurrentState(state)
-    onStateChange?.(state)
-    onInteractionEvent?.('hover', { state })
-    
-    // Show feedback
-    setInteractionFeedback({
-      id: `state-${Date.now()}`,
-      message: `Dragon is now ${state}`,
-      type: 'info'
-    })
-  }, [onStateChange, onInteractionEvent])
+  // Event handlers (available for future integration with interaction hooks)
+  // const handleStateChange = useCallback((state: DragonState) => {
+  //   setCurrentState(state)
+  //   onStateChange?.(state)
+  //   onInteractionEvent?.('hover', { state })
+  //   
+  //   // Show feedback
+  //   setInteractionFeedback({
+  //     id: `state-${Date.now()}`,
+  //     message: `Dragon is now ${state}`,
+  //     type: 'info'
+  //   })
+  // }, [onStateChange, onInteractionEvent])
 
-  const handleMoodChange = useCallback((mood: DragonMood) => {
-    setCurrentMood(mood)
-    onMoodChange?.(mood)
-    onInteractionEvent?.('hover', { mood })
-  }, [onMoodChange, onInteractionEvent])
+  // const handleMoodChange = useCallback((mood: DragonMood) => {
+  //   setCurrentMood(mood)
+  //   onMoodChange?.(mood)
+  //   onInteractionEvent?.('hover', { mood })
+  // }, [onMoodChange, onInteractionEvent])
 
-  const handlePowerLevelChange = useCallback((level: number) => {
-    setPowerLevel(level)
-    onPowerLevelChange?.(level)
-    onInteractionEvent?.('hover', { level })
-    
-    if (level > 9000) {
-      setInteractionFeedback({
-        id: `power-${Date.now()}`,
-        message: "Power level: IT'S OVER 9000!",
-        type: 'success'
-      })
-    }
-  }, [onPowerLevelChange, onInteractionEvent])
+  // const handlePowerLevelChange = useCallback((level: number) => {
+  //   setPowerLevel(level)
+  //   onPowerLevelChange?.(level)
+  //   onInteractionEvent?.('hover', { level })
+  //   
+  //   if (level > 9000) {
+  //     setInteractionFeedback({
+  //       id: `power-${Date.now()}`,
+  //       message: "Power level: IT'S OVER 9000!",
+  //       type: 'success'
+  //     })
+  //   }
+  // }, [onPowerLevelChange, onInteractionEvent])
 
-  const handleDragonPartClick = useCallback((part: DragonPart, _event: MouseEvent) => {
-    const responseTime = Date.now() - interactionStartTimeRef.current
-    
-    // Update interaction stats
-    setInteractionStats(prev => ({
-      ...prev,
-      totalInteractions: prev.totalInteractions + 1,
-      partInteractions: {
-        ...prev.partInteractions,
-        [part]: (prev.partInteractions[part] || 0) + 1
-      },
-      averageResponseTime: (prev.averageResponseTime + responseTime) / 2
-    }))
+  // const handleDragonPartClick = useCallback((part: DragonPart, _event: MouseEvent) => {
+  //   const responseTime = Date.now() - interactionStartTimeRef.current
+  //   
+  //   // Update interaction stats
+  //   setInteractionStats(prev => ({
+  //     ...prev,
+  //     totalInteractions: prev.totalInteractions + 1,
+  //     partInteractions: {
+  //       ...prev.partInteractions,
+  //       [part]: (prev.partInteractions[part] || 0) + 1
+  //     },
+  //     averageResponseTime: (prev.averageResponseTime + responseTime) / 2
+  //   }))
 
-    onInteractionEvent?.('click', { part, responseTime })
-    
-    // Show feedback for special interactions
-    const feedbackMessages: Record<DragonPart, string> = {
-      'head': 'Dragon acknowledges you',
-      'left-eye': 'Left eye winks',
-      'right-eye': 'Right eye winks',
-      'body': 'Dragon powers up',
-      'left-arm': 'Left arm flexes',
-      'right-arm': 'Right arm flexes',
-      'left-leg': 'Left leg kicks',
-      'right-leg': 'Right leg kicks',
-      'tail': 'Tail swishes powerfully',
-      'wings': 'Wings flutter',
-      'dragon-ball': 'Dragon ball collected!'
-    }
+  //   onInteractionEvent?.('click', { part, responseTime })
+  //   
+  //   // Show feedback for special interactions
+  //   const feedbackMessages: Record<DragonPart, string> = {
+  //     'head': 'Dragon acknowledges you',
+  //     'left-eye': 'Left eye winks',
+  //     'right-eye': 'Right eye winks',
+  //     'body': 'Dragon powers up',
+  //     'left-arm': 'Left arm flexes',
+  //     'right-arm': 'Right arm flexes',
+  //     'left-leg': 'Left leg kicks',
+  //     'right-leg': 'Right leg kicks',
+  //     'tail': 'Tail swishes powerfully',
+  //     'wings': 'Wings flutter',
+  //     'dragon-ball': 'Dragon ball collected!'
+  //   }
 
-    pipe(
-      O.fromNullable(feedbackMessages[part]),
-      O.map(message => {
-        setInteractionFeedback({
-          id: `click-${Date.now()}`,
-          message,
-          type: part === 'dragon-ball' ? 'success' : 'info'
-        })
-      })
-    )
-  }, [onInteractionEvent])
+  //   pipe(
+  //     O.fromNullable(feedbackMessages[part]),
+  //     O.map(message => {
+  //       setInteractionFeedback({
+  //         id: `click-${Date.now()}`,
+  //         message,
+  //         type: part === 'dragon-ball' ? 'success' : 'info'
+  //       })
+  //     })
+  //   )
+  // }, [onInteractionEvent])
 
-  const handleGestureDetected = useCallback((gesture: TouchGesture, part?: DragonPart) => {
-    setInteractionStats(prev => ({
-      ...prev,
-      gestureStats: {
-        ...prev.gestureStats,
-        [gesture.type]: (prev.gestureStats[gesture.type] || 0) + 1
-      }
-    }))
+  // const handleGestureDetected = useCallback((gesture: TouchGesture, part?: DragonPart) => {
+  //   setInteractionStats(prev => ({
+  //     ...prev,
+  //     gestureStats: {
+  //       ...prev.gestureStats,
+  //       [gesture.type]: (prev.gestureStats[gesture.type] || 0) + 1
+  //     }
+  //   }))
 
-    onInteractionEvent?.('gesture-swipe', { gesture, part })
-    
-    // Provide feedback for complex gestures
-    if (gesture.type === 'pinch' && gesture.scale && gesture.scale > 1.5) {
-      setInteractionFeedback({
-        id: `gesture-${Date.now()}`,
-        message: 'Dragon grows larger!',
-        type: 'success'
-      })
-    } else if (gesture.type === 'rotate' && gesture.rotation && Math.abs(gesture.rotation) > 90) {
-      setInteractionFeedback({
-        id: `gesture-${Date.now()}`,
-        message: 'Dragon spins with power!',
-        type: 'success'
-      })
-    }
-  }, [onInteractionEvent])
+  //   onInteractionEvent?.('gesture-swipe', { gesture, part })
+  //   
+  //   // Provide feedback for complex gestures
+  //   if (gesture.type === 'pinch' && gesture.scale && gesture.scale > 1.5) {
+  //     setInteractionFeedback({
+  //       id: `gesture-${Date.now()}`,
+  //       message: 'Dragon grows larger!',
+  //       type: 'success'
+  //     })
+  //   } else if (gesture.type === 'rotate' && gesture.rotation && Math.abs(gesture.rotation) > 90) {
+  //     setInteractionFeedback({
+  //       id: `gesture-${Date.now()}`,
+  //       message: 'Dragon spins with power!',
+  //       type: 'success'
+  //     })
+  //   }
+  // }, [onInteractionEvent])
 
   // Performance monitoring
   useEffect(() => {

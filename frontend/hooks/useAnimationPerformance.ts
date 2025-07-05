@@ -54,6 +54,9 @@ export function useAnimationPerformance(options: UseAnimationPerformanceOptions 
   const lastTimeRef = useRef(performance.now())
   const droppedFramesRef = useRef(0)
   const measurementIntervalRef = useRef<number>()
+  const droppedFrameDetectionRef = useRef<number>()
+  const performanceObserverRef = useRef<PerformanceObserver>()
+  const cleanupFunctionsRef = useRef<(() => void)[]>([])
 
   // Measure FPS
   const measureFPS = useCallback(() => {
@@ -126,7 +129,6 @@ export function useAnimationPerformance(options: UseAnimationPerformanceOptions 
   // Detect dropped frames
   useEffect(() => {
     let lastFrameTime = performance.now()
-    let animationFrame: number
 
     const detectDroppedFrames = () => {
       const currentTime = performance.now()
@@ -138,13 +140,16 @@ export function useAnimationPerformance(options: UseAnimationPerformanceOptions 
       }
       
       lastFrameTime = currentTime
-      animationFrame = requestAnimationFrame(detectDroppedFrames)
+      droppedFrameDetectionRef.current = requestAnimationFrame(detectDroppedFrames)
     }
 
-    animationFrame = requestAnimationFrame(detectDroppedFrames)
+    droppedFrameDetectionRef.current = requestAnimationFrame(detectDroppedFrames)
 
     return () => {
-      cancelAnimationFrame(animationFrame)
+      if (droppedFrameDetectionRef.current) {
+        cancelAnimationFrame(droppedFrameDetectionRef.current)
+        droppedFrameDetectionRef.current = undefined
+      }
     }
   }, [targetFPS])
 
@@ -153,10 +158,50 @@ export function useAnimationPerformance(options: UseAnimationPerformanceOptions 
     measurementIntervalRef.current = requestAnimationFrame(measureFPS)
     checkGPUMemory()
 
+    // Set up performance observer for additional metrics
+    if (typeof window !== 'undefined' && 'PerformanceObserver' in window) {
+      try {
+        const observer = new PerformanceObserver((list) => {
+          const entries = list.getEntries()
+          // Process performance entries if needed
+          entries.forEach(entry => {
+            if (entry.entryType === 'measure') {
+              // Handle custom performance measures
+            }
+          })
+        })
+        
+        observer.observe({ entryTypes: ['measure', 'navigation'] })
+        performanceObserverRef.current = observer
+        
+        cleanupFunctionsRef.current.push(() => {
+          observer.disconnect()
+        })
+      } catch (error) {
+        // Performance observer not supported, continue without it
+      }
+    }
+
     return () => {
+      // Cancel animation frames
       if (measurementIntervalRef.current) {
         cancelAnimationFrame(measurementIntervalRef.current)
+        measurementIntervalRef.current = undefined
       }
+      if (droppedFrameDetectionRef.current) {
+        cancelAnimationFrame(droppedFrameDetectionRef.current)
+        droppedFrameDetectionRef.current = undefined
+      }
+      
+      // Disconnect performance observer
+      if (performanceObserverRef.current) {
+        performanceObserverRef.current.disconnect()
+        performanceObserverRef.current = undefined
+      }
+      
+      // Execute cleanup functions
+      cleanupFunctionsRef.current.forEach(cleanup => cleanup())
+      cleanupFunctionsRef.current = []
     }
   }, [measureFPS, checkGPUMemory])
 
@@ -262,14 +307,21 @@ export function useAnimationPerformance(options: UseAnimationPerformanceOptions 
     startMonitoring: () => {},
     stopMonitoring: () => {},
     forceQualityLevel: (level: number) => {},
-    resetMetrics: () => setMetrics({
-      fps: 60,
-      frameTime: 16.67,
-      droppedFrames: 0,
-      lastUpdate: Date.now(),
-      cpuUsage: 0,
-      networkLatency: 0
-    })
+    resetMetrics: () => {
+      // Reset frame counting
+      frameCountRef.current = 0
+      droppedFramesRef.current = 0
+      lastTimeRef.current = performance.now()
+      
+      setMetrics({
+        fps: 60,
+        frameTime: 16.67,
+        droppedFrames: 0,
+        lastUpdate: Date.now(),
+        cpuUsage: 0,
+        networkLatency: 0
+      })
+    }
   }
 }
 
@@ -278,6 +330,7 @@ export function useAnimationThrottle(callback: () => void, dependencies: any[] =
   const { performanceMode, metrics } = useAnimationPerformance()
   const animationFrameRef = useRef<number>()
   const lastExecutionRef = useRef(0)
+  const isActiveRef = useRef(false)
 
   useEffect(() => {
     const throttleDelay = performanceMode === 'minimal' ? 100 : 
@@ -285,6 +338,8 @@ export function useAnimationThrottle(callback: () => void, dependencies: any[] =
                          16 // ~60fps
 
     const animate = () => {
+      if (!isActiveRef.current) return
+      
       const now = performance.now()
       
       if (now - lastExecutionRef.current >= throttleDelay) {
@@ -297,13 +352,27 @@ export function useAnimationThrottle(callback: () => void, dependencies: any[] =
 
     // Only start animation if FPS is acceptable
     if (metrics.fps > 30) {
+      isActiveRef.current = true
       animationFrameRef.current = requestAnimationFrame(animate)
     }
 
     return () => {
+      isActiveRef.current = false
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current)
+        animationFrameRef.current = undefined
       }
     }
   }, [callback, performanceMode, metrics.fps, ...dependencies])
+  
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      isActiveRef.current = false
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+        animationFrameRef.current = undefined
+      }
+    }
+  }, [])
 }

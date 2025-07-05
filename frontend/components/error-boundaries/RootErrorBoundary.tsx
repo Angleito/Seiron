@@ -24,7 +24,7 @@ export class RootErrorBoundary extends Component<Props, State> {
     }
   }
 
-  static getDerivedStateFromError(error: Error): Partial<State> {
+  static override getDerivedStateFromError(error: Error): Partial<State> {
     const errorId = `seiron-${Date.now().toString(36)}`
     return {
       hasError: true,
@@ -33,7 +33,7 @@ export class RootErrorBoundary extends Component<Props, State> {
     }
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log critical error
     logger.error('Critical application error:', {
       errorId: this.state.errorId,
@@ -67,7 +67,7 @@ export class RootErrorBoundary extends Component<Props, State> {
     window.location.reload()
   }
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-gradient-to-b from-gray-950 to-black flex items-center justify-center p-4">

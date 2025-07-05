@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Send, Mic, MicOff, Sparkles, AlertCircle } from 'lucide-react'
 import { cn } from '@lib/utils'
 import { useChatStream } from './useChatStream'
@@ -17,8 +17,8 @@ import * as A from 'fp-ts/Array'
 // Generate unique session ID
 const generateSessionId = () => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
-// Safe message content renderer
-function SafeMessageContent({ content, type }: { content: string; type: 'user' | 'agent' | 'system' }) {
+// Safe message content renderer - memoized
+const SafeMessageContent = React.memo(function SafeMessageContent({ content, type }: { content: string; type: 'user' | 'agent' | 'system' }) {
   const { sanitized, isValid, warnings } = useSanitizedContent(
     content, 
     type === 'user' ? SANITIZE_CONFIGS.CHAT_MESSAGE : SANITIZE_CONFIGS.TEXT_ONLY
@@ -39,9 +39,9 @@ function SafeMessageContent({ content, type }: { content: string; type: 'user' |
   }
   
   return <span className="whitespace-pre-wrap">{sanitized}</span>
-}
+})
 
-function VoiceEnabledChatContent() {
+const VoiceEnabledChatContent = React.memo(function VoiceEnabledChatContent() {
   const [input, setInput] = useState('')
   const [sessionId] = useState(generateSessionId())
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(false)
@@ -49,8 +49,8 @@ function VoiceEnabledChatContent() {
   const [lastProcessedTranscript, setLastProcessedTranscript] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
-  // ElevenLabs configuration - now using backend proxy
-  const elevenLabsConfig: ElevenLabsConfig = {
+  // ElevenLabs configuration - now using backend proxy - memoized
+  const elevenLabsConfig: ElevenLabsConfig = useMemo(() => ({
     apiUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
     modelId: 'eleven_monolingual_v1',
     voiceSettings: {
@@ -59,7 +59,7 @@ function VoiceEnabledChatContent() {
       style: 0.5,
       useSpeakerBoost: true
     }
-  }
+  }), [])
   
   // Hook for programmatic audio playback
   const { playResponse, isPlaying } = useVoiceInterfaceAudio(elevenLabsConfig)

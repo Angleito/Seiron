@@ -7,7 +7,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { EnhancedDragonCharacter, detectDeviceType } from '@components/dragon'
-import { useAnimationPerformance } from '@components/dragon/hooks'
+import { useAnimationPerformance } from '@components/dragon'
 import type { DragonState, PerformanceMode } from '@components/dragon/types'
 
 export function HighPerformanceDragon() {

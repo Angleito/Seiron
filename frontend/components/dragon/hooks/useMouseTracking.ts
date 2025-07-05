@@ -177,10 +177,12 @@ export function useMouseTracking({
       
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current)
+        animationFrameRef.current = undefined
       }
       
       if (activityTimeoutRef.current) {
         clearTimeout(activityTimeoutRef.current)
+        activityTimeoutRef.current = undefined
       }
     }
   }, [enabled, handleMouseMove, handleMouseLeave, animationLoop])
@@ -189,6 +191,7 @@ export function useMouseTracking({
   useEffect(() => {
     if (!enabled || !elementRef.current) return
 
+    const element = elementRef.current
     const resizeObserver = new ResizeObserver(() => {
       // Recalculate position on resize
       const dragonCenter = getElementCenter()
@@ -197,7 +200,7 @@ export function useMouseTracking({
       }
     })
 
-    resizeObserver.observe(elementRef.current)
+    resizeObserver.observe(element)
 
     return () => {
       resizeObserver.disconnect()
@@ -206,16 +209,29 @@ export function useMouseTracking({
 
   // Initialize position
   useEffect(() => {
-    if (enabled && elementRef.current) {
-      // Initialize with current mouse position
-      const initializePosition = (e: MouseEvent) => {
-        const initialPos = { x: e.clientX, y: e.clientY }
-        smoothedPositionRef.current = initialPos
-        updateTracking(initialPos)
-        document.removeEventListener('mousemove', initializePosition)
-      }
+    if (!enabled || !elementRef.current) return
+    
+    let initializeListener: ((e: MouseEvent) => void) | null = null
+    
+    // Initialize with current mouse position
+    const initializePosition = (e: MouseEvent) => {
+      const initialPos = { x: e.clientX, y: e.clientY }
+      smoothedPositionRef.current = initialPos
+      updateTracking(initialPos)
       
-      document.addEventListener('mousemove', initializePosition, { once: true, passive: true })
+      if (initializeListener) {
+        document.removeEventListener('mousemove', initializeListener)
+        initializeListener = null
+      }
+    }
+    
+    initializeListener = initializePosition
+    document.addEventListener('mousemove', initializePosition, { once: true, passive: true })
+    
+    return () => {
+      if (initializeListener) {
+        document.removeEventListener('mousemove', initializeListener)
+      }
     }
   }, [enabled, elementRef, updateTracking])
 
@@ -238,9 +254,14 @@ export function useEyeTracking(
   const [eyeRotation, setEyeRotation] = useState({ x: 0, y: 0 })
   const lastUpdateRef = useRef(0)
   const animationFrameRef = useRef<number>()
+  const isActiveRef = useRef(true)
 
   useEffect(() => {
+    isActiveRef.current = true
+    
     const updateEyeRotation = () => {
+      if (!isActiveRef.current) return
+      
       const now = Date.now()
       
       // Throttle updates to 30fps (33ms)
@@ -269,16 +290,31 @@ export function useEyeTracking(
         }
         return { x: rotationX, y: rotationY }
       })
+      
+      animationFrameRef.current = requestAnimationFrame(updateEyeRotation)
     }
     
     animationFrameRef.current = requestAnimationFrame(updateEyeRotation)
     
     return () => {
+      isActiveRef.current = false
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current)
+        animationFrameRef.current = undefined
       }
     }
   }, [mousePosition.x, mousePosition.y, dragonPosition.x, dragonPosition.y, maxRotation])
+  
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      isActiveRef.current = false
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+        animationFrameRef.current = undefined
+      }
+    }
+  }, [])
 
   return eyeRotation
 }

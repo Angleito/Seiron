@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useCallback, useRef } from 'react';
-import { useWalletClient, usePublicClient, useAccount } from 'wagmi';
+import { useWalletClient, usePublicClient } from 'wagmi';
+import { useAccount } from 'wagmi';
 import { Hash, TransactionReceipt } from 'viem';
 import { toast } from 'sonner';
 import { logger } from '@lib/logger';

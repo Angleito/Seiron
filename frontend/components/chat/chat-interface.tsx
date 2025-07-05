@@ -9,6 +9,7 @@ import { ChatStreamService, StreamMessage, TypingIndicator, ConnectionStatus } f
 import { Subscription } from 'rxjs'
 import * as E from 'fp-ts/Either'
 import { logger } from '@lib/logger'
+import { sanitizeChatMessage, useSanitizedContent, SANITIZE_CONFIGS } from '@lib/sanitize'
 import { SeironImage } from '@components/SeironImage'
 
 // New adapter-related types
@@ -38,6 +39,30 @@ interface AdapterAction {
 
 // Generate unique session ID
 const generateSessionId = () => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+// Safe message content renderer
+function SafeMessageContent({ content, type }: { content: string; type: 'user' | 'agent' | 'system' }) {
+  const { sanitized, isValid, warnings } = useSanitizedContent(
+    content, 
+    type === 'user' ? SANITIZE_CONFIGS.CHAT_MESSAGE : SANITIZE_CONFIGS.TEXT_ONLY
+  )
+  
+  // Log warnings in development
+  if (process.env.NODE_ENV === 'development' && warnings.length > 0) {
+    logger.warn('Message sanitization warnings:', warnings)
+  }
+  
+  // If content is potentially unsafe, show a warning
+  if (!isValid) {
+    return (
+      <div className="text-yellow-400 text-sm">
+        ⚠️ Message content filtered for security
+      </div>
+    )
+  }
+  
+  return <span className="whitespace-pre-wrap">{sanitized}</span>
+}
 
 export function ChatInterface() {
   const [input, setInput] = useState('')
@@ -204,7 +229,8 @@ export function ChatInterface() {
   const handleSend = () => {
     if (!input.trim() || isLoading) return
 
-    const messageContent = input
+    // Sanitize user input to prevent XSS
+    const sanitizedInput = sanitizeChatMessage(input.trim())
     const metadata = {
       powerLevel,
       hiveInsights,
@@ -214,7 +240,7 @@ export function ChatInterface() {
     setInput('')
     setIsLoading(true)
 
-    chatService.sendMessage(messageContent, metadata).subscribe({
+    chatService.sendMessage(sanitizedInput, metadata).subscribe({
       next: (result) => {
         if (E.isLeft(result)) {
           logger.error('Failed to send message:', result.left)
@@ -432,7 +458,7 @@ export function ChatInterface() {
                   )}
                 </div>
               )}
-              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+              <SafeMessageContent content={message.content} type={message.type} />
               <div className="flex items-center gap-4 mt-1">
                 <p
                   className={cn(

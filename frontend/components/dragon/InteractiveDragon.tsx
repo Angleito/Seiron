@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useRef, useEffect, useState } from 'react'
+import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { DragonInteractionProvider, useDragonInteraction, useDragonAnimationClasses } from './DragonInteractionController'
-import { useDragonState, useDragonOrientation, useDragonAnimation } from '@hooks/useDragonInteraction'
-import { useAnimationPerformance } from '@hooks/useAnimationPerformance'
+import { useDragonState, useDragonOrientation, useDragonAnimation } from '../../hooks/useDragonInteraction'
+import { useAnimationPerformance } from './hooks/useAnimationPerformance'
 
 interface InteractiveDragonProps {
   size?: 'sm' | 'md' | 'lg' | 'xl'
@@ -19,16 +19,16 @@ const sizeConfig = {
   xl: { width: 400, height: 400, containerSize: 'w-96 h-96' }
 }
 
-// Dragon component that uses the interaction context
-function DragonCore({ size = 'lg', showDragonBalls = true, enableParticles = true, className = '' }: InteractiveDragonProps) {
+// Dragon component that uses the interaction context - memoized
+const DragonCore = React.memo(function DragonCore({ size = 'lg', showDragonBalls = true, enableParticles = true, className = '' }: InteractiveDragonProps) {
   const config = sizeConfig[size]
   const animationClasses = useDragonAnimationClasses()
   const { state, intensity, isHovered, setHovered } = useDragonInteraction()
   const { headTransform, eyeTransform, bodyRotation } = useDragonOrientation()
   const { animationSpeed, particleCount, glowIntensity, enableGlow, enableComplexAnimations } = useDragonAnimation()
   
-  // State-based visual effects
-  const getAuraColor = () => {
+  // State-based visual effects - memoized
+  const getAuraColor = useMemo(() => {
     switch (state) {
       case 'active':
         return 'from-red-600/40 via-orange-500/40 to-yellow-400/40'
@@ -39,9 +39,9 @@ function DragonCore({ size = 'lg', showDragonBalls = true, enableParticles = tru
       default:
         return 'from-red-500/10 via-orange-500/10 to-yellow-500/10'
     }
-  }
+  }, [state])
   
-  const getDragonBallSpeed = () => {
+  const getDragonBallSpeed = useMemo(() => {
     switch (state) {
       case 'active':
         return 'animate-dragon-balls-fast'
@@ -50,7 +50,7 @@ function DragonCore({ size = 'lg', showDragonBalls = true, enableParticles = tru
       default:
         return 'animate-dragon-balls-orbit'
     }
-  }
+  }, [state])
   
   return (
     <div 
@@ -61,14 +61,14 @@ function DragonCore({ size = 'lg', showDragonBalls = true, enableParticles = tru
       {/* Dynamic Aura */}
       {enableGlow && (
         <div 
-          className={`absolute inset-0 rounded-full bg-gradient-to-r ${getAuraColor()} blur-xl transition-all duration-500`}
+          className={`absolute inset-0 rounded-full bg-gradient-to-r ${getAuraColor} blur-xl transition-all duration-500`}
           style={{ opacity: glowIntensity }}
         />
       )}
       
       {/* Dragon Balls Orbiting */}
       {showDragonBalls && enableComplexAnimations && (
-        <div className={`absolute inset-0 ${getDragonBallSpeed()}`}>
+        <div className={`absolute inset-0 ${getDragonBallSpeed}`}>
           {[1, 2, 3, 4, 5, 6, 7].map((stars, index) => (
             <DragonBall
               key={stars}
@@ -170,10 +170,10 @@ function DragonCore({ size = 'lg', showDragonBalls = true, enableParticles = tru
       )}
     </div>
   )
-}
+})
 
-// Dragon Ball Component
-function DragonBall({ 
+// Dragon Ball Component - memoized
+const DragonBall = React.memo(function DragonBall({ 
   stars, 
   index, 
   size, 
@@ -186,12 +186,12 @@ function DragonBall({
   intensity: string
   isActive: boolean 
 }) {
-  const glowIntensity = {
+  const glowIntensity = useMemo(() => ({
     low: 'shadow-lg',
     medium: 'shadow-xl',
     high: 'shadow-2xl',
     max: 'shadow-2xl drop-shadow-[0_0_15px_rgba(251,191,36,0.8)]'
-  }[intensity]
+  }[intensity]), [intensity])
   
   return (
     <div
@@ -217,24 +217,24 @@ function DragonBall({
       </div>
     </div>
   )
-}
+})
 
-// Particle System Component
-function ParticleSystem({ count, intensity }: { count: number; intensity: string }) {
-  const particles = Array.from({ length: count }, (_, i) => ({
+// Particle System Component - memoized
+const ParticleSystem = React.memo(function ParticleSystem({ count, intensity }: { count: number; intensity: string }) {
+  const particles = useMemo(() => Array.from({ length: count }, (_, i) => ({
     id: i,
     left: `${Math.random() * 100}%`,
     delay: Math.random() * 4,
     duration: 3 + Math.random() * 2,
     size: Math.random() * 3 + 1
-  }))
+  })), [count])
   
-  const particleOpacity = {
+  const particleOpacity = useMemo(() => ({
     low: 0.3,
     medium: 0.5,
     high: 0.7,
     max: 0.9
-  }[intensity]
+  }[intensity]), [intensity])
   
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -254,19 +254,19 @@ function ParticleSystem({ count, intensity }: { count: number; intensity: string
       ))}
     </div>
   )
-}
+})
 
-// Main Interactive Dragon Component with Provider
-export function InteractiveDragon(props: InteractiveDragonProps) {
+// Main Interactive Dragon Component with Provider - memoized
+export const InteractiveDragon = React.memo(function InteractiveDragon(props: InteractiveDragonProps) {
   const dragonRef = useRef<HTMLDivElement>(null)
   const { performanceMode } = useAnimationPerformance()
   
-  // Adjust props based on performance
-  const adjustedProps = {
+  // Adjust props based on performance - memoized
+  const adjustedProps = useMemo(() => ({
     ...props,
     enableParticles: props.enableParticles !== false && performanceMode !== 'minimal',
     showDragonBalls: props.showDragonBalls !== false && performanceMode !== 'minimal'
-  }
+  }), [props, performanceMode])
   
   return (
     <DragonInteractionProvider dragonRef={dragonRef}>
@@ -275,4 +275,4 @@ export function InteractiveDragon(props: InteractiveDragonProps) {
       </div>
     </DragonInteractionProvider>
   )
-}
+})

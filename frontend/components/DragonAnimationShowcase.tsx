@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { EnhancedDragonAnimation } from './EnhancedDragonAnimation'
 import { useDragonAnimation, DragonState, DragonMood } from '@hooks/useDragonAnimation'
 
-export function DragonAnimationShowcase() {
+function DragonAnimationShowcaseInternal() {
   const [showAdvanced, setShowAdvanced] = useState(false)
   const {
     dragonState,
@@ -18,9 +18,10 @@ export function DragonAnimationShowcase() {
     isCharging
   } = useDragonAnimation()
 
-  const states: DragonState[] = ['idle', 'attention', 'ready', 'active', 'sleeping', 'awakening']
-  const moods: DragonMood[] = ['neutral', 'happy', 'excited', 'powerful', 'mystical']
-  const specialAnimations = ['roar', 'spin', 'pulse', 'shake', 'powerUp']
+  // Memoize static arrays to prevent unnecessary re-renders
+  const states: DragonState[] = useMemo(() => ['idle', 'attention', 'ready', 'active', 'sleeping', 'awakening'], [])
+  const moods: DragonMood[] = useMemo(() => ['neutral', 'happy', 'excited', 'powerful', 'mystical'], [])
+  const specialAnimations = useMemo(() => ['roar', 'spin', 'pulse', 'shake', 'powerUp'], [])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-red-900/10 to-orange-900/10 p-8">
@@ -82,7 +83,7 @@ export function DragonAnimationShowcase() {
               {states.map((state) => (
                 <button
                   key={state}
-                  onClick={() => setDragonState(state)}
+                  onClick={useCallback(() => setDragonState(state), [state, setDragonState])}
                   className={`
                     px-4 py-2 rounded-lg font-medium transition-all
                     ${dragonState === state 
@@ -104,7 +105,7 @@ export function DragonAnimationShowcase() {
               {moods.map((mood) => (
                 <button
                   key={mood}
-                  onClick={() => setDragonMood(mood)}
+                  onClick={useCallback(() => setDragonMood(mood), [mood, setDragonMood])}
                   className={`
                     px-4 py-2 rounded-lg font-medium transition-all
                     ${dragonMood === mood 
@@ -126,7 +127,7 @@ export function DragonAnimationShowcase() {
               {specialAnimations.map((anim) => (
                 <button
                   key={anim}
-                  onClick={() => triggerSpecialAnimation(anim)}
+                  onClick={useCallback(() => triggerSpecialAnimation(anim), [anim, triggerSpecialAnimation])}
                   className="px-4 py-2 rounded-lg font-medium bg-gradient-to-r from-yellow-500 to-orange-500 text-white hover:from-yellow-600 hover:to-orange-600 transition-all dragon-ball-hover"
                 >
                   {anim.charAt(0).toUpperCase() + anim.slice(1)}
@@ -245,3 +246,6 @@ export function DragonAnimationShowcase() {
     </div>
   )
 }
+
+// Export memoized component
+export const DragonAnimationShowcase = React.memo(DragonAnimationShowcaseInternal)

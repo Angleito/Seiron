@@ -1,4 +1,4 @@
-import { useWalletClient, usePublicClient } from '@privy-io/wagmi'
+import { useWalletClient, usePublicClient } from 'wagmi'
 import { usePrivy } from '@privy-io/react-auth'
 import { parseEther, encodeFunctionData, type Address } from 'viem'
 import { seiMainnet } from '@config/privy'

@@ -56,7 +56,6 @@ export function Providers({
     <RootErrorBoundary>
       <PrivyProvider
         appId={privyConfig.appId}
-        clientId={privyConfig.clientId}
         config={privyConfig.config}
       >
         <QueryClientProvider client={queryClient}>

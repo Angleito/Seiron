@@ -118,7 +118,7 @@ export function useKeyboardNavigation({
           height: rect.height
         }
       }),
-      O.getOrElse(() => null)
+      O.getOrElse<{ x: number; y: number; width: number; height: number } | null>(() => null)
     )
   }, [])
 
