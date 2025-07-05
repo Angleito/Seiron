@@ -13,6 +13,10 @@ interface ImportMetaEnv {
   readonly VITE_WALLETCONNECT_PROJECT_ID?: string
   readonly VITE_SEI_RPC_URL: string
   
+  // Supabase Configuration
+  readonly VITE_SUPABASE_URL: string
+  readonly VITE_SUPABASE_ANON_KEY: string
+  
   // Voice Configuration (Backend Proxy)
   readonly VITE_API_URL: string
   readonly VITE_VOICE_ENABLED: string

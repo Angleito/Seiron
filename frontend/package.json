@@ -32,6 +32,7 @@
   "dependencies": {
     "@privy-io/react-auth": "^2.17.3",
     "@privy-io/wagmi": "^1.0.5",
+    "@supabase/supabase-js": "^2.50.3",
     "@tanstack/react-query": "^5.81.5",
     "autoprefixer": "^10.4.21",
     "clsx": "^2.1.1",
