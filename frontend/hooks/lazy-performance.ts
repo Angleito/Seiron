@@ -15,10 +15,7 @@ export const usePerformanceMonitorLazy = () => {
   return import('./usePerformanceMonitor').then(module => module.usePerformanceMonitor)
 }
 
-// Dynamic import for orbital performance hook
-export const useOrbitalPerformanceLazy = () => {
-  return import('./useOrbitalPerformance').then(module => module.useOrbitalPerformance)
-}
+// Orbital performance hook removed - dragon animations no longer needed
 
 /**
  * Performance hook factory
@@ -87,9 +84,7 @@ export class LazyPerformanceManager {
         case 'usePerformanceMonitor':
           await usePerformanceMonitorLazy()
           break
-        case 'useOrbitalPerformance':
-          await useOrbitalPerformanceLazy()
-          break
+        // useOrbitalPerformance removed - no longer needed
         default:
           throw new Error(`Unknown performance hook: ${hookName}`)
       }
@@ -111,7 +106,7 @@ export class LazyPerformanceManager {
   }
   
   getLoadingProgress(): { loaded: number; total: number; progress: number } {
-    const total = 3 // useAnimationPerformance, usePerformanceMonitor, useOrbitalPerformance
+    const total = 2 // useAnimationPerformance, usePerformanceMonitor
     const loaded = this.loadedHooks.size
     return {
       loaded,
@@ -147,8 +142,7 @@ export const preloadPerformanceHooks = async () => {
     // Preload all performance hooks
     await Promise.all([
       manager.loadPerformanceHook('useAnimationPerformance'),
-      manager.loadPerformanceHook('usePerformanceMonitor'),
-      manager.loadPerformanceHook('useOrbitalPerformance')
+      manager.loadPerformanceHook('usePerformanceMonitor')
     ])
     
     // Mark as loaded
@@ -190,12 +184,7 @@ export const PerformanceConfig = {
     historySize: 100,
   },
   
-  // Orbital performance settings
-  orbital: {
-    enabled: true,
-    trackingInterval: 100, // ms
-    maxDataPoints: 500,
-  }
+  // Orbital performance settings removed - no longer needed
 } as const
 
 /**

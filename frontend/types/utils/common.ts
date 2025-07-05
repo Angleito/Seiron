@@ -1,8 +1,7 @@
 // Common utility types
 
-import * as E from 'fp-ts/Either'
 import * as O from 'fp-ts/Option'
-import * as TE from 'fp-ts/TaskEither'
+// Note: fp-ts imports are used for type definitions
 
 // Basic utility types
 export type Nullable<T> = T | null
@@ -59,8 +58,8 @@ export type Predicate<T> = (value: T) => boolean
 export type AsyncPredicate<T> = (value: T) => Promise<boolean>
 export type Mapper<T, U> = (value: T) => U
 export type AsyncMapper<T, U> = (value: T) => Promise<U>
-export type Reducer<T, U> = (accumulator: U, current: T) => U
-export type AsyncReducer<T, U> = (accumulator: U, current: T) => Promise<U>
+export type ArrayReducer<T, U> = (accumulator: U, current: T) => U
+export type AsyncArrayReducer<T, U> = (accumulator: U, current: T) => Promise<U>
 export type Comparator<T> = (a: T, b: T) => number
 export type Equality<T> = (a: T, b: T) => boolean
 

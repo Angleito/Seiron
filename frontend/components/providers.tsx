@@ -5,7 +5,7 @@ import { PrivyProvider } from '@privy-io/react-auth'
 import { WagmiProvider, createConfig } from '@privy-io/wagmi'
 import { http } from 'viem'
 import { privyConfig, seiMainnet } from '@config/privy'
-import { DragonInteractionProvider } from '@components/dragon/DragonInteractionController'
+// Removed dragon interaction provider after component cleanup
 import { WalletProvider } from '../contexts/WalletContext'
 import { RootErrorBoundary } from '@components/error-boundaries'
 import { logger } from '@lib/logger'
@@ -61,9 +61,7 @@ export function Providers({
         <QueryClientProvider client={queryClient}>
           <WagmiProvider config={wagmiConfig}>
             <WalletProvider>
-              <DragonInteractionProvider>
-                {children}
-              </DragonInteractionProvider>
+              {children}
             </WalletProvider>
           </WagmiProvider>
         </QueryClientProvider>

@@ -1,3 +1,4 @@
+// NOTE: Consider moving these types to types/api/ for better organization
 import { Either } from '@types/agent'
 
 // Common adapter configuration

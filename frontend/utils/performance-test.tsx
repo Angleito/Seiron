@@ -243,9 +243,7 @@ export const OPTIMIZATION_CHECKLIST = {
     name: 'React.memo Implementation',
     description: 'Components wrapped with React.memo to prevent unnecessary re-renders',
     components: [
-      'EnhancedDragonCharacter',
-      'InteractiveDragon', 
-      'DragonAnimationShowcase',
+      'SimpleDragonSprite',
       'VoiceEnabledChat',
       'PortfolioSidebar'
     ]
@@ -254,8 +252,6 @@ export const OPTIMIZATION_CHECKLIST = {
     name: 'useMemo for Expensive Calculations',
     description: 'Heavy computations memoized with proper dependencies',
     optimizations: [
-      'Animation variants',
-      'Particle configurations',
       'Voice configurations',
       'Asset calculations'
     ]
@@ -264,10 +260,9 @@ export const OPTIMIZATION_CHECKLIST = {
     name: 'useCallback for Event Handlers',
     description: 'Event handlers wrapped with useCallback to prevent prop changes',
     handlers: [
-      'Animation event handlers',
       'Voice command handlers',
       'Portfolio fetch functions',
-      'Interaction callbacks'
+      'Simple interaction callbacks'
     ]
   },
   useEffect: {

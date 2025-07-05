@@ -5,7 +5,6 @@ import { LoadingSpinner } from '@components/ui/LoadingSpinner'
 import { PageErrorBoundary } from '@components/error-boundaries'
 import { LazyLoadingBoundary } from '@components/ui/LazyLoadingBoundary'
 import { 
-  DragonAnimationLoader, 
   VoiceFeatureLoader, 
   PerformanceMonitorLoader,
   ChatFeatureLoader,
@@ -17,11 +16,8 @@ import {
 const HomePage = lazy(() => import('./pages/HomePage'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const DemoPage = lazy(() => import('./pages/DemoPage'))
-const DragonDemoPage = lazy(() => import('./pages/DragonDemoPage'))
-const DragonShowcasePage = lazy(() => import('./pages/DragonShowcasePage'))
 const VoiceTestPage = lazy(() => import('./pages/VoiceTestPage'))
 const AgentTestPage = lazy(() => import('./pages/AgentTestPage'))
-const AnimationDemoPage = lazy(() => import('./pages/AnimationDemoPage'))
 const SecurityTestPage = lazy(() => import('./pages/SecurityTestPage'))
 
 const PageLoader = ({ 
@@ -31,12 +27,10 @@ const PageLoader = ({
 }: { 
   children: React.ReactNode
   pageName?: string
-  featureType?: 'dragon' | 'voice' | 'performance' | 'chat' | 'portfolio' | 'generic'
+  featureType?: 'voice' | 'performance' | 'chat' | 'portfolio' | 'generic'
 }) => {
   const getFeatureLoader = () => {
     switch (featureType) {
-      case 'dragon':
-        return <DragonAnimationLoader />
       case 'voice':
         return <VoiceFeatureLoader />
       case 'performance':
@@ -93,22 +87,6 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: 'dragon-demo',
-        element: (
-          <PageLoader pageName="Dragon Demo" featureType="dragon">
-            <DragonDemoPage />
-          </PageLoader>
-        ),
-      },
-      {
-        path: 'dragon-showcase',
-        element: (
-          <PageLoader pageName="Dragon Showcase" featureType="dragon">
-            <DragonShowcasePage />
-          </PageLoader>
-        ),
-      },
-      {
         path: 'voice-test',
         element: (
           <PageLoader pageName="Voice Test" featureType="voice">
@@ -121,14 +99,6 @@ export const router = createBrowserRouter([
         element: (
           <PageLoader pageName="Agent Test">
             <AgentTestPage />
-          </PageLoader>
-        ),
-      },
-      {
-        path: 'animation-demo',
-        element: (
-          <PageLoader pageName="Animation Demo" featureType="performance">
-            <AnimationDemoPage />
           </PageLoader>
         ),
       },

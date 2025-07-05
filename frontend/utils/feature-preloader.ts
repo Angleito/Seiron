@@ -7,19 +7,6 @@
 export const FeaturePreloader = {
   // Feature definitions
   features: {
-  "dragon-animations": {
-    "priority": "high",
-    "components": [
-      "components/dragon/EnhancedDragonCharacter",
-      "components/dragon/InteractiveDragon",
-      "components/DragonAnimationShowcase"
-    ],
-    "routes": [
-      "/dragon-demo",
-      "/dragon-showcase"
-    ],
-    "estimatedSize": "150KB"
-  },
   "voice-features": {
     "priority": "medium",
     "components": [
@@ -84,7 +71,7 @@ export const FeaturePreloader = {
 
   // Preload specific feature
   async preloadFeature(featureName: string) {
-    const feature = this.features[featureName]
+    const feature = this.features[featureName as keyof typeof this.features]
     if (!feature) {
       console.warn(`Feature ${featureName} not found`)
       return
@@ -93,13 +80,6 @@ export const FeaturePreloader = {
     const loadPromises = []
 
     switch (featureName) {
-      case 'dragon-animations':
-        loadPromises.push(
-          import('../components/dragon/lazy').then(m => m.preloadDragonComponents()),
-          import('../components/lazy-dragon-showcase').then(m => m.preloadDragonShowcase())
-        )
-        break
-
       case 'voice-features':
         loadPromises.push(
           import('../components/voice/lazy').then(m => m.preloadVoiceComponents()),

@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import DragonLoader from './DragonLoader';
 import SeiroonLogo from './SeiroonLogo';
 import MysticalBackground from './MysticalBackground';
-import DragonBallProgress from './DragonBallProgress';
+// Removed DragonLoader and DragonBallProgress imports (components deleted)
 
 const SeiroonDemo: React.FC = () => {
   const [progress, setProgress] = useState(0);
@@ -40,20 +39,20 @@ const SeiroonDemo: React.FC = () => {
         {/* Loading State */}
         {isLoading && (
           <div className="mb-8 text-center">
-            <DragonLoader size="lg" variant="pulsing" />
+            <div className="w-16 h-16 mx-auto mb-4 border-4 border-red-500 border-t-transparent rounded-full animate-spin"></div>
             <p className="mt-4 text-sei-gray-400">Awakening the dragon...</p>
           </div>
         )}
         
         {/* Progress Indicator */}
         <div className="mb-8 w-full max-w-md">
-          <DragonBallProgress 
-            progress={progress} 
-            variant="classic" 
-            size="md" 
-            showPercentage={true}
-            showLabels={false}
-          />
+          <div className="w-full bg-gray-800 rounded-full h-4 overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-red-500 to-gold-500 transition-all duration-300 ease-out"
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+          <p className="text-center text-sm text-gray-400 mt-2">{progress}% Complete</p>
         </div>
         
         {/* Demo Controls */}
@@ -63,19 +62,19 @@ const SeiroonDemo: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
             {/* Loader Variants */}
             <div className="bg-sei-gray-800/50 backdrop-blur-sm rounded-dragon p-6 border border-dragon-red-500/20">
-              <h3 className="text-lg font-semibold text-gold-400 mb-4">Dragon Loaders</h3>
+              <h3 className="text-lg font-semibold text-gold-400 mb-4">Loading Indicators</h3>
               <div className="flex justify-around items-center">
                 <div className="text-center">
-                  <DragonLoader size="sm" variant="classic" />
-                  <p className="text-xs text-sei-gray-400 mt-2">Classic</p>
+                  <div className="w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-xs text-sei-gray-400 mt-2">Spin</p>
                 </div>
                 <div className="text-center">
-                  <DragonLoader size="sm" variant="spinning" />
-                  <p className="text-xs text-sei-gray-400 mt-2">Spinning</p>
+                  <div className="w-8 h-8 bg-red-500 rounded-full animate-pulse"></div>
+                  <p className="text-xs text-sei-gray-400 mt-2">Pulse</p>
                 </div>
                 <div className="text-center">
-                  <DragonLoader size="sm" variant="pulsing" />
-                  <p className="text-xs text-sei-gray-400 mt-2">Pulsing</p>
+                  <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-gold-500 rounded-full animate-bounce"></div>
+                  <p className="text-xs text-sei-gray-400 mt-2">Bounce</p>
                 </div>
               </div>
             </div>
@@ -100,9 +99,15 @@ const SeiroonDemo: React.FC = () => {
             <div className="bg-sei-gray-800/50 backdrop-blur-sm rounded-dragon p-6 border border-dragon-red-500/20">
               <h3 className="text-lg font-semibold text-gold-400 mb-4">Progress Indicators</h3>
               <div className="space-y-4">
-                <DragonBallProgress progress={25} variant="compact" size="sm" />
-                <DragonBallProgress progress={50} variant="compact" size="sm" />
-                <DragonBallProgress progress={75} variant="compact" size="sm" />
+                <div className="w-full bg-gray-800 rounded-full h-2">
+                  <div className="h-full bg-gradient-to-r from-red-500 to-gold-500 rounded-full" style={{ width: '25%' }}></div>
+                </div>
+                <div className="w-full bg-gray-800 rounded-full h-2">
+                  <div className="h-full bg-gradient-to-r from-red-500 to-gold-500 rounded-full" style={{ width: '50%' }}></div>
+                </div>
+                <div className="w-full bg-gray-800 rounded-full h-2">
+                  <div className="h-full bg-gradient-to-r from-red-500 to-gold-500 rounded-full" style={{ width: '75%' }}></div>
+                </div>
               </div>
             </div>
             

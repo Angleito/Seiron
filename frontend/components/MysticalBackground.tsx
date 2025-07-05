@@ -40,7 +40,7 @@ const MysticalBackground: React.FC<MysticalBackgroundProps> = ({
         x: Math.random() * 100,
         y: Math.random() * 100,
         size: Math.random() * 4 + 1,
-        color: colors[Math.floor(Math.random() * colors.length)],
+        color: colors[Math.floor(Math.random() * colors.length)] || 'bg-gray-400',
         animationDelay: Math.random() * 5,
         animationDuration: Math.random() * 3 + 2,
       }));

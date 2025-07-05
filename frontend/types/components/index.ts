@@ -1,8 +1,5 @@
 // Component types - centralized exports
 
-// Dragon component types
-export * from './dragon'
-
 // Voice component types
 export * from './voice'
 
@@ -13,15 +10,6 @@ export * from './transactions'
 export * from './chat'
 
 // Re-export commonly used types for convenience
-export type {
-  DragonState,
-  DragonMood,
-  DragonPose,
-  DragonProps,
-  DragonInteractionEvent,
-  PerformanceMetrics,
-  TouchGesture
-} from './dragon'
 
 export type {
   VoiceInterfaceProps,

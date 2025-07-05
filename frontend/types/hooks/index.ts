@@ -3,9 +3,6 @@
 // Voice hook types
 export * from './voice'
 
-// Dragon hook types
-export * from './dragon'
-
 // Chat hook types
 export * from './chat'
 
@@ -17,15 +14,6 @@ export type {
   VoiceCommandsHookReturn,
   VoiceActivityHookReturn
 } from './voice'
-
-export type {
-  DragonAnimationHookReturn,
-  DragonInteractionHookReturn,
-  MouseTrackingHookReturn,
-  TouchGesturesHookReturn,
-  DragonPerformanceHookReturn,
-  DragonHookReturn
-} from './dragon'
 
 export type {
   ChatHookReturn,

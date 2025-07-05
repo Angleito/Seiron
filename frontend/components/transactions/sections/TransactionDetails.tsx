@@ -28,7 +28,7 @@ export const TransactionDetails = React.memo(function TransactionDetails({ data 
           </div>
         )}
         
-        {data.minimumReceived && data.outputToken && (
+        {data.minimumReceived !== undefined && data.minimumReceived > 0n && data.outputToken && (
           <div className="flex justify-between text-sm">
             <span className="text-gray-400">Minimum Received</span>
             <span className="text-white">
@@ -105,7 +105,7 @@ export const TransactionDetails = React.memo(function TransactionDetails({ data 
             <span className="text-gray-400">Gas Price</span>
             <span className="text-white">{formatUnits(data.gasPrice, 9)} Gwei</span>
           </div>
-          {data.maxFee && (
+          {data.maxFee !== undefined && data.maxFee > 0n && (
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">Max Fee</span>
               <span className="text-white">{formatEther(data.maxFee)} SEI</span>

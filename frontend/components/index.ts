@@ -1,48 +1,9 @@
-// Mystical Seiron Dragon Components
-export { default as DragonLoader } from './DragonLoader';
+// Simple Dragon Components
 export { default as SeiroonLogo } from './SeiroonLogo';
 export { default as MysticalBackground } from './MysticalBackground';
-export { default as DragonBallProgress } from './DragonBallProgress';
 export { default as SeiroonDemo } from './SeiroonDemo';
-export { FloatingDragonLogo } from './FloatingDragonLogo';
-export { CirclingDragonBalls } from './CirclingDragonBalls';
-
-// Interactive Dragon Components
-export { InteractiveDragon } from './dragon/InteractiveDragon';
-export { DragonInteractionProvider, useDragonInteraction } from './dragon/DragonInteractionController';
-
-// Dragon Component Parts
-export { DragonCore } from './dragon/parts/DragonCore';
-export { DragonEyes } from './dragon/parts/DragonEyes';
-export { DragonBall } from './dragon/parts/DragonBall';
-export { DragonBallOrbit } from './dragon/parts/DragonBallOrbit';
-
-// Dragon Effects
-export { DragonAura } from './dragon/effects/DragonAura';
-export { DragonBreath } from './dragon/effects/DragonBreath';
-export { ParticleSystem } from './dragon/effects/ParticleSystem';
-export { PowerRings } from './dragon/effects/PowerRings';
-export { InteractionFeedback } from './dragon/effects/InteractionFeedback';
-
-// Dragon Containers & Presentations
-export { InteractiveDragonContainer } from './containers/InteractiveDragonContainer';
-export { InteractiveDragonPresentation } from './dragon/InteractiveDragonPresentation';
-
-// Enhanced Dragon Animation System
-export {
-  EnhancedDragonCharacter,
-  DragonPresets,
-  createDragonConfig,
-  getOptimalDragonConfig,
-  detectDeviceType,
-  useDragonStateMachine,
-  useMouseTracking,
-  useTouchGestures,
-  useAnimationPerformance,
-  performanceUtils
-} from './dragon';
-
-export { DragonShowcase } from './dragon/DragonShowcase';
+export { default as EnhancedDragonCharacter } from './EnhancedDragonCharacter';
+export { default as SimpleDragonSprite } from './SimpleDragonSprite';
 
 // Chat Components
 export { VoiceEnabledChat } from './chat/VoiceEnabledChat';
@@ -79,16 +40,8 @@ export type { TransactionPreviewData, TokenAmount, ProtocolInfo } from './transa
 // Shared UI Components
 export * from './ui';
 
-// Dragon Types
-export type {
-  DragonState,
-  DragonMood,
-  EnhancedDragonCharacterProps,
-  DragonAnimationConfig,
-  PerformanceMode
-} from './dragon';
-
-export type { InteractiveDragonProps } from './dragon/InteractiveDragon';
+// Dragon Types - simplified
+export type { SimpleDragonSpriteProps } from './SimpleDragonSprite';
 
 // Existing Components
 export { WalletConnect } from './wallet/wallet-connect';

@@ -114,6 +114,7 @@ export function TransactionConfirmation({
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [countdown]);
 
   const getRiskColor = (level: string) => {

@@ -20,12 +20,6 @@ export const createLazyComponent = <T = {}>(
  * Lazy loading configurations for different feature bundles
  */
 export const LazyLoadingConfig = {
-  // Dragon animation components
-  dragonAnimations: {
-    chunkName: 'dragon-animations',
-    preload: false, // Load on demand
-  },
-  
   // Voice feature components
   voiceFeatures: {
     chunkName: 'voice-features',

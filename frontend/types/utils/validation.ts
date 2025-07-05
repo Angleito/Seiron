@@ -2,7 +2,7 @@
 
 import * as E from 'fp-ts/Either'
 import * as O from 'fp-ts/Option'
-import * as A from 'fp-ts/Array'
+// Note: fp-ts imports are used for type definitions only
 
 // Core validation types
 export interface ValidationError {

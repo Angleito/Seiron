@@ -183,8 +183,9 @@ export function PowerLevelDisplay({
       return () => clearInterval(timer)
     } else {
       setDisplayLevel(powerLevel)
+      return undefined
     }
-  }, [powerLevel, animated])
+  }, [powerLevel, animated, displayLevel])
 
   // Handle tier changes
   useEffect(() => {

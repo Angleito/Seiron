@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { formatEther, formatUnits } from 'viem'
+import { formatEther } from 'viem'
 import { 
   ArrowRightLeft,
   Percent,

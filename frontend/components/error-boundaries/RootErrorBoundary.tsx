@@ -25,7 +25,7 @@ export class RootErrorBoundary extends Component<Props, State> {
     }
   }
 
-  static override getDerivedStateFromError(error: Error): Partial<State> {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     const errorId = `seiron-${Date.now().toString(36)}`
     return {
       hasError: true,
