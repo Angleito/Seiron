@@ -6,57 +6,23 @@ import { pipe } from 'fp-ts/function'
 import { fromEvent, merge, Subject } from 'rxjs'
 import { map, distinctUntilChanged, takeUntil } from 'rxjs/operators'
 
-// Web Speech API type declarations
+// Import types from the centralized speech types file
+import type { 
+  SpeechRecognition as ISpeechRecognition,
+  SpeechRecognitionEvent as ISpeechRecognitionEvent,
+  SpeechRecognitionErrorEvent as ISpeechRecognitionErrorEvent,
+  SpeechRecognitionResult
+} from '../../types/api/speech'
+
+// Extend Window interface for browser compatibility
 declare global {
   interface Window {
-    SpeechRecognition: typeof SpeechRecognition
-    webkitSpeechRecognition: typeof SpeechRecognition
-  }
-  
-  interface SpeechRecognition extends EventTarget {
-    continuous: boolean
-    interimResults: boolean
-    lang: string
-    start(): void
-    stop(): void
-    abort(): void
-    onerror: (event: SpeechRecognitionErrorEvent) => void
-    onresult: (event: SpeechRecognitionEvent) => void
-    onstart: () => void
-    onend: () => void
-  }
-
-  interface SpeechRecognitionEvent {
-    results: SpeechRecognitionResultList
-    resultIndex: number
-  }
-
-  interface SpeechRecognitionResultList {
-    readonly length: number
-    item(index: number): SpeechRecognitionResult
-    [index: number]: SpeechRecognitionResult
-  }
-
-  interface SpeechRecognitionResult {
-    readonly length: number
-    item(index: number): SpeechRecognitionAlternative
-    [index: number]: SpeechRecognitionAlternative
-    readonly isFinal: boolean
-  }
-
-  interface SpeechRecognitionAlternative {
-    readonly transcript: string
-    readonly confidence: number
-  }
-
-  interface SpeechRecognitionErrorEvent extends Event {
-    error: string
-    message: string
-  }
-
-  const SpeechRecognition: {
-    prototype: SpeechRecognition
-    new (): SpeechRecognition
+    SpeechRecognition: {
+      new (): ISpeechRecognition
+    }
+    webkitSpeechRecognition: {
+      new (): ISpeechRecognition
+    }
   }
 }
 
@@ -154,7 +120,7 @@ const createSpeechError = (
 })
 
 // Pure validation functions
-const validateSpeechRecognition = (recognition: SpeechRecognition | null): E.Either<SpeechError, SpeechRecognition> =>
+const validateSpeechRecognition = (recognition: ISpeechRecognition | null): E.Either<SpeechError, ISpeechRecognition> =>
   recognition === null
     ? E.left(createSpeechError('NO_SUPPORT', 'Speech recognition is not supported in this browser'))
     : E.right(recognition)
@@ -170,7 +136,7 @@ const validateListeningState = (isListening: boolean, operation: 'start' | 'stop
 }
 
 // Pure transcript processing
-const extractTranscript = (event: SpeechRecognitionEvent): {
+const extractTranscript = (event: ISpeechRecognitionEvent): {
   transcript: string
   interimTranscript: string
 } => {
@@ -192,7 +158,7 @@ const extractTranscript = (event: SpeechRecognitionEvent): {
 }
 
 // Pure error mapping
-const mapSpeechRecognitionError = (errorEvent: SpeechRecognitionErrorEvent): SpeechError => {
+const mapSpeechRecognitionError = (errorEvent: ISpeechRecognitionErrorEvent): SpeechError => {
   switch (errorEvent.error) {
     case 'not-allowed':
       return createSpeechError('PERMISSION_DENIED', 'Microphone permission denied')
@@ -218,19 +184,19 @@ const createSpeechRecognitionConfig = (overrides: Partial<{
 })
 
 const configureSpeechRecognition = (config: ReturnType<typeof createSpeechRecognitionConfig>) => 
-  (recognition: SpeechRecognition): SpeechRecognition => {
+  (recognition: ISpeechRecognition): ISpeechRecognition => {
     recognition.continuous = config.continuous
     recognition.interimResults = config.interimResults
     recognition.lang = config.lang
     if ('maxAlternatives' in recognition) {
-      (recognition as SpeechRecognition & { maxAlternatives?: number }).maxAlternatives = config.maxAlternatives
+      (recognition as ISpeechRecognition & { maxAlternatives?: number }).maxAlternatives = config.maxAlternatives
     }
     return recognition
   }
 
 // Pure stream creation functions
-const createResultStream = (recognition: SpeechRecognition, stopSignal: Subject<void>) =>
-  fromEvent<SpeechRecognitionEvent>(recognition as EventTarget, 'result').pipe(
+const createResultStream = (recognition: ISpeechRecognition, stopSignal: Subject<void>) =>
+  fromEvent<ISpeechRecognitionEvent>(recognition as any, 'result').pipe(
     takeUntil(stopSignal),
     map(extractTranscript),
     distinctUntilChanged(
@@ -240,14 +206,14 @@ const createResultStream = (recognition: SpeechRecognition, stopSignal: Subject<
     )
   )
 
-const createErrorStream = (recognition: SpeechRecognition, stopSignal: Subject<void>) =>
-  fromEvent<SpeechRecognitionErrorEvent>(recognition as EventTarget, 'error').pipe(
+const createErrorStream = (recognition: ISpeechRecognition, stopSignal: Subject<void>) =>
+  fromEvent<ISpeechRecognitionErrorEvent>(recognition as any, 'error').pipe(
     takeUntil(stopSignal),
-    map((event: SpeechRecognitionErrorEvent) => mapSpeechRecognitionError(event))
+    map((event) => mapSpeechRecognitionError(event))
   )
 
-const createEndStream = (recognition: SpeechRecognition, stopSignal: Subject<void>) =>
-  fromEvent(recognition as EventTarget, 'end').pipe(
+const createEndStream = (recognition: ISpeechRecognition, stopSignal: Subject<void>) =>
+  fromEvent(recognition as any, 'end').pipe(
     takeUntil(stopSignal),
     map(() => 'END' as const)
   )
@@ -255,7 +221,7 @@ const createEndStream = (recognition: SpeechRecognition, stopSignal: Subject<voi
 export const useSpeechRecognition = () => {
   const [state, dispatch] = useReducer(speechRecognitionReducer, initialSpeechState)
 
-  const recognitionRef = useRef<SpeechRecognition | null>(null)
+  const recognitionRef = useRef<ISpeechRecognition | null>(null)
   const stopSubject = useRef(new Subject<void>())
 
   // Pure recognition instance creation

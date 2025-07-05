@@ -1,4 +1,4 @@
-import React, { lazy, ComponentType } from 'react'
+import { lazy, ComponentType, createElement } from 'react'
 import { LoadingSpinner } from '@components/ui/LoadingSpinner'
 
 /**
@@ -58,7 +58,7 @@ export const usePreloadComponent = (importFn: () => Promise<any>) => {
  */
 export const withLazyLoading = <T extends object>(
   Component: ComponentType<T>,
-  options: {
+  _options: {
     fallback?: ComponentType
     chunkName?: string
     onError?: (error: Error) => void
@@ -66,7 +66,10 @@ export const withLazyLoading = <T extends object>(
 ): ComponentType<T> => {
   const LazyComponent = lazy(() => Promise.resolve({ default: Component }))
   
-  return React.forwardRef<any, T>((props, ref) => 
-    React.createElement(LazyComponent, { ...props, ref })
-  )
+  // Return a regular component that renders the lazy component
+  const WrappedComponent: ComponentType<T> = (props) => {
+    return createElement(LazyComponent, props as any)
+  }
+  
+  return WrappedComponent
 }

@@ -5,7 +5,6 @@
  */
 
 import { 
-  filterSensitiveData, 
   prepareForLogging, 
   containsSensitiveData,
   DEVELOPMENT_FILTER_CONFIG,

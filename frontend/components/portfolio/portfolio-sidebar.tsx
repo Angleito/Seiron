@@ -167,11 +167,11 @@ function PortfolioSidebarInternal() {
   }, [assets])
 
   return (
-    <div className="h-full bg-gradient-to-b from-sei-gray-50 to-sei-gray-100 p-6 overflow-y-auto">
+    <div className="h-full bg-gradient-to-b from-sei-gray-50 to-sei-gray-100 p-3 overflow-y-auto">
       {/* Enhanced Portfolio Summary */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-dragon-red-700">Dragon's Treasure Vault</h2>
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-sm font-semibold text-dragon-red-700">Dragon's Treasure Vault</h2>
           <div className="flex items-center gap-2">
             <button
               onClick={fetchRealTimeData}
@@ -179,7 +179,7 @@ function PortfolioSidebarInternal() {
               className="p-1 text-blue-600 hover:text-blue-700 disabled:opacity-50"
               title="Refresh real-time data"
             >
-              <Activity className={cn("h-4 w-4", isLoading && "animate-spin")} />
+              <Activity className={cn("h-3 w-3", isLoading && "animate-spin")} />
             </button>
             <button
               onClick={requestHiveAnalysis}
@@ -187,22 +187,22 @@ function PortfolioSidebarInternal() {
               className="p-1 text-purple-600 hover:text-purple-700 disabled:opacity-50"
               title="Get AI analysis"
             >
-              <Search className="h-4 w-4" />
+              <Search className="h-3 w-3" />
             </button>
           </div>
         </div>
         
-        <div className="bg-white rounded-lg p-4 shadow-dragon border border-dragon-red-200">
+        <div className="bg-white rounded-lg p-3 shadow-dragon border border-dragon-red-200">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-sei-gray-600">Total Power Level</span>
             <div className="flex items-center gap-1">
-              <DollarSign className="h-4 w-4 text-dragon-red-400" />
+              <DollarSign className="h-3 w-3 text-dragon-red-400" />
               {realTimeBalance && (
                 <span className="text-xs text-green-600">🟢 LIVE</span>
               )}
             </div>
           </div>
-          <p className="text-2xl font-bold text-dragon-red-700">
+          <p className="text-xl font-bold text-dragon-red-700">
             ${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
           <div className="flex items-center justify-between mt-2">
@@ -211,9 +211,9 @@ function PortfolioSidebarInternal() {
               totalChange >= 0 ? 'text-green-600' : 'text-red-600'
             )}>
               {totalChange >= 0 ? (
-                <TrendingUp className="h-4 w-4 mr-1" />
+                <TrendingUp className="h-3 w-3 mr-1" />
               ) : (
-                <TrendingDown className="h-4 w-4 mr-1" />
+                <TrendingDown className="h-3 w-3 mr-1" />
               )}
               <span className="text-sm font-medium">
                 {totalChange >= 0 ? '+' : ''}{totalChange}% (24h)
@@ -234,15 +234,15 @@ function PortfolioSidebarInternal() {
 
       {/* Assets */}
       <div>
-        <h3 className="text-lg font-semibold text-dragon-red-700 mb-4">Mystical Treasures</h3>
-        <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-dragon-red-700 mb-2">Mystical Treasures</h3>
+        <div className="space-y-2">
           {assets.map((asset) => (
-            <div key={asset.symbol} className="bg-white rounded-lg p-4 shadow-dragon border border-dragon-red-100">
-              <div className="flex items-center justify-between mb-2">
+            <div key={asset.symbol} className="bg-white rounded-lg p-2 shadow-dragon border border-dragon-red-100">
+              <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center">
-                  <Coins className="h-5 w-5 text-gold-500 mr-2" />
+                  <Coins className="h-4 w-4 text-gold-500 mr-1" />
                   <div>
-                    <p className="font-medium text-dragon-red-700">{asset.symbol}</p>
+                    <p className="text-sm font-medium text-dragon-red-700">{asset.symbol}</p>
                     <p className="text-xs text-sei-gray-500">{asset.name}</p>
                   </div>
                 </div>
@@ -279,7 +279,7 @@ function PortfolioSidebarInternal() {
                 )}
                 {asset.seiProtocol && (
                   <div className="flex items-center gap-1">
-                    <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
+                    <span className="text-xs bg-red-100 text-red-700 px-1 py-0.5 rounded">
                       SEI Native
                     </span>
                   </div>
@@ -291,14 +291,14 @@ function PortfolioSidebarInternal() {
       </div>
 
       {/* Sei Protocol Integrations */}
-      <div className="mt-8">
-        <h3 className="text-lg font-semibold text-dragon-red-700 mb-4">Sei Protocol Powers</h3>
-        <div className="space-y-3">
+      <div className="mt-4">
+        <h3 className="text-sm font-semibold text-dragon-red-700 mb-2">Sei Protocol Powers</h3>
+        <div className="space-y-2">
           {seiProtocols.map((protocol) => (
-            <div key={protocol.name} className="bg-white rounded-lg p-3 shadow-dragon border border-dragon-red-100">
+            <div key={protocol.name} className="bg-white rounded-lg p-2 shadow-dragon border border-dragon-red-100">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">{protocol.icon}</span>
+                  <span className="text-sm">{protocol.icon}</span>
                   <div>
                     <p className="text-sm font-medium text-dragon-red-700">{protocol.name}</p>
                     <p className="text-xs text-sei-gray-500">
@@ -307,9 +307,9 @@ function PortfolioSidebarInternal() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-bold text-green-600">{protocol.apy}% APY</p>
+                  <p className="text-xs font-bold text-green-600">{protocol.apy}% APY</p>
                   <div className={cn(
-                    "text-xs px-2 py-1 rounded",
+                    "text-xs px-1 py-0.5 rounded",
                     protocol.riskLevel === 'low' && "bg-green-100 text-green-700",
                     protocol.riskLevel === 'medium' && "bg-yellow-100 text-yellow-700",
                     protocol.riskLevel === 'high' && "bg-red-100 text-red-700"
@@ -333,19 +333,19 @@ function PortfolioSidebarInternal() {
 
       {/* Hive Intelligence Insights */}
       {hiveAnalytics && (
-        <div className="mt-8">
-          <h3 className="text-lg font-semibold text-dragon-red-700 mb-4 flex items-center gap-2">
-            <Search className="h-5 w-5" />
+        <div className="mt-4">
+          <h3 className="text-sm font-semibold text-dragon-red-700 mb-2 flex items-center gap-1">
+            <Search className="h-3 w-3" />
             AI Battle Insights
           </h3>
           
           {/* Insights */}
           {hiveAnalytics.insights.length > 0 && (
-            <div className="mb-4">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Market Intelligence</h4>
+            <div className="mb-2">
+              <h4 className="text-xs font-medium text-gray-700 mb-1">Market Intelligence</h4>
               <div className="space-y-2">
                 {hiveAnalytics.insights.slice(0, 3).map((insight, index) => (
-                  <div key={index} className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                  <div key={index} className="bg-blue-50 rounded-lg p-2 border border-blue-200">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-medium text-blue-700 uppercase">
                         {insight.type}
@@ -365,11 +365,11 @@ function PortfolioSidebarInternal() {
           {/* Recommendations */}
           {hiveAnalytics.recommendations.length > 0 && (
             <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Strategic Recommendations</h4>
+              <h4 className="text-xs font-medium text-gray-700 mb-1">Strategic Recommendations</h4>
               <div className="space-y-2">
                 {hiveAnalytics.recommendations.slice(0, 2).map((rec, index) => (
                   <div key={index} className={cn(
-                    "rounded-lg p-3 border",
+                    "rounded-lg p-2 border",
                     rec.priority === 'high' && "bg-red-50 border-red-200",
                     rec.priority === 'medium' && "bg-yellow-50 border-yellow-200",
                     rec.priority === 'low' && "bg-green-50 border-green-200"
@@ -402,24 +402,24 @@ function PortfolioSidebarInternal() {
       )}
 
       {/* Dragon's Wisdom Stats */}
-      <div className="mt-8">
-        <h3 className="text-lg font-semibold text-dragon-red-700 mb-4">Dragon's Wisdom</h3>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white rounded-lg p-3 shadow-dragon border border-dragon-red-100">
+      <div className="mt-4">
+        <h3 className="text-sm font-semibold text-dragon-red-700 mb-2">Dragon's Wisdom</h3>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-white rounded-lg p-2 shadow-dragon border border-dragon-red-100">
             <p className="text-xs text-sei-gray-500">Daily Manifestations</p>
             <p className="text-sm font-semibold text-dragon-red-700">$12,543</p>
           </div>
-          <div className="bg-white rounded-lg p-3 shadow-dragon border border-dragon-red-100">
+          <div className="bg-white rounded-lg p-2 shadow-dragon border border-dragon-red-100">
             <p className="text-xs text-sei-gray-500">Wishes Granted</p>
             <p className="text-sm font-semibold text-dragon-red-700">47</p>
           </div>
-          <div className="bg-white rounded-lg p-3 shadow-dragon border border-dragon-red-100">
+          <div className="bg-white rounded-lg p-2 shadow-dragon border border-dragon-red-100">
             <p className="text-xs text-sei-gray-500">Dragon's Precision</p>
             <p className="text-sm font-semibold text-dragon-red-700">
               {hiveAnalytics ? '85%' : '68%'}
             </p>
           </div>
-          <div className="bg-white rounded-lg p-3 shadow-dragon border border-dragon-red-100">
+          <div className="bg-white rounded-lg p-2 shadow-dragon border border-dragon-red-100">
             <p className="text-xs text-sei-gray-500">Power Level Tier</p>
             <p className="text-sm font-semibold text-dragon-red-700">
               {powerLevel > 50000 ? 'Legendary' : powerLevel > 20000 ? 'Super Saiyan' : 'Elite Warrior'}

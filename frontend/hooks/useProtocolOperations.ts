@@ -1,4 +1,3 @@
-import { usePublicClient } from 'wagmi'
 import { useWalletOperations } from './useWalletOperations'
 // Protocol imports commented out due to missing files
 // import { createSymphonyProtocolWrapperFrontend, defaultSymphonyConfig, defaultSymphonyIntegrationConfig } from '@/src/protocols/sei/adapters/SymphonyProtocolWrapperFrontend'
@@ -48,13 +47,10 @@ export interface ProtocolTransaction {
 }
 
 export function useProtocolOperations() {
-  const publicClient = usePublicClient()
   const { sendTransaction, address, isConnected } = useWalletOperations()
   const [pendingTransactions, setPendingTransactions] = useState<ProtocolTransaction[]>([])
 
   // Protocol wrapper commented out due to missing files
-  const symphonyWrapper = null
-  
   // publicClient and symphonyWrapper will be used when protocol wrappers are implemented
 
   const getSwapQuote = useCallback(async (_request: SwapQuoteRequest) => {

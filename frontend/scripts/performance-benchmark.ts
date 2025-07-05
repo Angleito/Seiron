@@ -29,23 +29,25 @@ const mockDragonData = {
   }
 }
 
-const mockVoiceData = {
-  transcript: 'Seiron, grant my wish!',
-  config: {
-    apiKey: 'test-key',
-    model: 'eleven_monolingual_v1',
-    settings: { stability: 0.5, similarity: 0.75 }
-  }
-}
+// Mock voice data for future benchmarks
+// const mockVoiceData = {
+//   transcript: 'Seiron, grant my wish!',
+//   config: {
+//     apiKey: 'test-key',
+//     model: 'eleven_monolingual_v1',
+//     settings: { stability: 0.5, similarity: 0.75 }
+//   }
+// }
 
-const mockPortfolioData = {
-  assets: [
-    { symbol: 'BTC', value: 50000, change: 2.5 },
-    { symbol: 'ETH', value: 3000, change: -1.2 },
-    { symbol: 'SEI', value: 0.5, change: 8.9 }
-  ],
-  totalValue: 125000
-}
+// Mock portfolio data for future benchmarks
+// const mockPortfolioData = {
+//   assets: [
+//     { symbol: 'BTC', value: 50000, change: 2.5 },
+//     { symbol: 'ETH', value: 3000, change: -1.2 },
+//     { symbol: 'SEI', value: 0.5, change: 8.9 }
+//   ],
+//   totalValue: 125000
+// }
 
 // Benchmark functions
 function benchmarkDragonComponent(): ComponentMetrics {
@@ -55,20 +57,15 @@ function benchmarkDragonComponent(): ComponentMetrics {
   let expensiveCalculations = 0
   for (let i = 0; i < 1000; i++) {
     // Before: This would recalculate every render
-    const _variants = {
-      idle: { scale: 1, rotate: 0 },
-      active: { scale: 1.1, rotate: 5 },
-      powering: { scale: 1.2, rotate: 10 }
-    }
     expensiveCalculations++
   }
   
   // Simulate memoized calculations (after optimization)
   let memoizedCalculations = 0
-  const cachedVariants = mockDragonData.animationVariants
+  // const cachedVariants = mockDragonData.animationVariants
   for (let i = 0; i < 1000; i++) {
     // After: This uses cached result
-    const _variants = cachedVariants
+    // Using cachedVariants directly
     memoizedCalculations++
   }
   
@@ -88,19 +85,15 @@ function benchmarkVoiceComponent(): ComponentMetrics {
   // Simulate voice configuration recreation (before optimization)
   let configRecreations = 0
   for (let i = 0; i < 500; i++) {
-    const config = {
-      apiKey: 'test-key',
-      model: 'eleven_monolingual_v1',
-      settings: { stability: 0.5, similarity: 0.75 }
-    }
+    // Configuration would be recreated here
     configRecreations++
   }
   
   // Simulate memoized configuration (after optimization)  
   let memoizedConfigs = 0
-  const cachedConfig = mockVoiceData.config
+  // Using cachedConfig from mockVoiceData
   for (let i = 0; i < 500; i++) {
-    const config = cachedConfig
+    // Using cached config
     memoizedConfigs++
   }
   
@@ -120,19 +113,15 @@ function benchmarkPortfolioComponent(): ComponentMetrics {
   // Simulate asset calculations (before optimization)
   let assetCalculations = 0
   for (let i = 0; i < 1000; i++) {
-    const processedAssets = mockPortfolioData.assets.map(asset => ({
-      ...asset,
-      powerLevel: asset.value * 100,
-      changeColor: asset.change > 0 ? 'green' : 'red'
-    }))
+    // Asset processing would happen here
     assetCalculations++
   }
   
   // Simulate memoized asset processing (after optimization)
   let memoizedProcessing = 0
-  const cachedAssets = mockPortfolioData.assets
+  // Using cached assets from mockPortfolioData
   for (let i = 0; i < 1000; i++) {
-    const assets = cachedAssets // Memoized result
+    // Using memoized result
     memoizedProcessing++
   }
   
@@ -239,7 +228,7 @@ function simulateMemoryOptimization() {
 // Main execution
 if (require.main === module) {
   const performanceResults = comparePerformance()
-  const memoryResults = simulateMemoryOptimization()
+  simulateMemoryOptimization()
   
   console.log('\n🎉 Benchmark Complete!')
   console.log('\nOptimizations Applied:')

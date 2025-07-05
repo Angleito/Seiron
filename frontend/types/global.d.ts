@@ -5,82 +5,8 @@
 // Browser API Extensions
 // ============================================================================
 
-// Speech Recognition API (Web Speech API)
-interface SpeechRecognitionEvent extends Event {
-  results: SpeechRecognitionResultList;
-  resultIndex: number;
-  interpretation: unknown;
-  emma: Document;
-}
-
-interface SpeechRecognitionErrorEvent extends Event {
-  error: 'no-speech' | 'aborted' | 'audio-capture' | 'network' | 'not-allowed' | 'service-not-allowed' | 'bad-grammar' | 'language-not-supported';
-  message: string;
-}
-
-interface SpeechRecognitionResultList {
-  length: number;
-  item(index: number): SpeechRecognitionResult;
-  [index: number]: SpeechRecognitionResult;
-}
-
-interface SpeechRecognitionResult {
-  length: number;
-  item(index: number): SpeechRecognitionAlternative;
-  [index: number]: SpeechRecognitionAlternative;
-  isFinal: boolean;
-}
-
-interface SpeechRecognitionAlternative {
-  transcript: string;
-  confidence: number;
-}
-
-interface SpeechRecognition extends EventTarget {
-  grammars: SpeechGrammarList;
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  maxAlternatives: number;
-  serviceURI: string;
-  start(): void;
-  stop(): void;
-  abort(): void;
-  onaudiostart: ((this: SpeechRecognition, ev: Event) => unknown) | null;
-  onaudioend: ((this: SpeechRecognition, ev: Event) => unknown) | null;
-  onend: ((this: SpeechRecognition, ev: Event) => unknown) | null;
-  onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => unknown) | null;
-  onnomatch: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => unknown) | null;
-  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => unknown) | null;
-  onsoundstart: ((this: SpeechRecognition, ev: Event) => unknown) | null;
-  onsoundend: ((this: SpeechRecognition, ev: Event) => unknown) | null;
-  onspeechstart: ((this: SpeechRecognition, ev: Event) => unknown) | null;
-  onspeechend: ((this: SpeechRecognition, ev: Event) => unknown) | null;
-  onstart: ((this: SpeechRecognition, ev: Event) => unknown) | null;
-}
-
-interface SpeechGrammarList {
-  length: number;
-  item(index: number): SpeechGrammar;
-  [index: number]: SpeechGrammar;
-  addFromURI(src: string, weight?: number): void;
-  addFromString(string: string, weight?: number): void;
-}
-
-interface SpeechGrammar {
-  src: string;
-  weight: number;
-}
-
-declare var SpeechRecognition: {
-  prototype: SpeechRecognition;
-  new(): SpeechRecognition;
-};
-
-declare var webkitSpeechRecognition: {
-  prototype: SpeechRecognition;
-  new(): SpeechRecognition;
-};
+// Speech Recognition types are defined in types/api/speech.ts
+// Import them when needed instead of declaring them globally
 
 // ============================================================================
 // Common Data Structures
@@ -316,9 +242,7 @@ declare global {
 
 declare global {
   interface Window {
-    // Speech Recognition
-    SpeechRecognition?: typeof SpeechRecognition;
-    webkitSpeechRecognition?: typeof webkitSpeechRecognition;
+    // Speech Recognition types are imported from types/api/speech.ts
     
     // Wallet Extensions
     ethereum?: {

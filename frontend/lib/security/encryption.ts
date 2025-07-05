@@ -310,7 +310,7 @@ export const validateEncryptedData = (data: unknown): E.Either<Error, EncryptedD
     return E.left(new Error('Invalid encrypted data: not an object'))
   }
 
-  const { ciphertext, iv, tag, timestamp } = data
+  const { ciphertext, iv, tag, timestamp } = data as any
 
   if (typeof ciphertext !== 'string' || ciphertext.length === 0) {
     return E.left(new Error('Invalid encrypted data: missing or invalid ciphertext'))
@@ -349,7 +349,7 @@ export const isEncryptedDataExpired = (
 /**
  * Rotate encryption key (for security best practices)
  */
-export const rotateEncryptionKey = (password: string): TE.TaskEither<Error, void> => {
+export const rotateEncryptionKey = (_password: string): TE.TaskEither<Error, void> => {
   return TE.tryCatch(
     async () => {
       // Generate new salt

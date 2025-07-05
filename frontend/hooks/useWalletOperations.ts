@@ -1,6 +1,6 @@
 import { useWalletClient, usePublicClient } from 'wagmi'
 import { usePrivy } from '@privy-io/react-auth'
-import { parseEther, encodeFunctionData, type Address } from 'viem'
+import { type Address } from 'viem'
 import { seiMainnet } from '@config/privy'
 import { logger } from '@lib/logger'
 
@@ -21,7 +21,7 @@ export interface PreparedTransaction {
 }
 
 export function useWalletOperations() {
-  const { authenticated, user } = usePrivy()
+  const { authenticated } = usePrivy()
   const { data: walletClient } = useWalletClient()
   const publicClient = usePublicClient()
 
@@ -95,7 +95,18 @@ export function useWalletOperations() {
     }
   }
 
-  const signTypedData = async (typedData: Record<string, unknown>) => {
+  const signTypedData = async (params: {
+    types: Record<string, Array<{ name: string; type: string }>>
+    primaryType: string
+    message: Record<string, unknown>
+    domain?: {
+      name?: string
+      version?: string
+      chainId?: number
+      verifyingContract?: Address
+      salt?: `0x${string}`
+    }
+  }) => {
     if (!walletClient) {
       throw new Error('Wallet not connected')
     }
@@ -103,7 +114,10 @@ export function useWalletOperations() {
     try {
       const signature = await walletClient.signTypedData({
         account: walletClient.account!,
-        ...typedData,
+        types: params.types as any,
+        primaryType: params.primaryType,
+        message: params.message,
+        domain: params.domain,
       })
 
       return signature

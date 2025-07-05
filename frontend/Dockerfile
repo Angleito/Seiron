@@ -22,7 +22,7 @@ RUN npm run build
 # Production stage
 FROM node:20-alpine
 
-RUN apk add --no-cache tini
+RUN apk add --no-cache tini python3 make g++
 
 WORKDIR /app
 

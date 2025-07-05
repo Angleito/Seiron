@@ -5,7 +5,6 @@
 
 import { 
   filterSensitiveData, 
-  prepareForLogging, 
   containsSensitiveData,
   PRODUCTION_FILTER_CONFIG,
   DEVELOPMENT_FILTER_CONFIG 
@@ -109,7 +108,7 @@ export const verifyDataFiltering = (): {
     // Verify sensitive fields are redacted in production
     const sensitiveFields = ['walletAddress', 'privateKey', 'email', 'transactionHash']
     for (const field of sensitiveFields) {
-      if (prodFiltered.filtered[field] && prodFiltered.filtered[field] !== '[REDACTED]') {
+      if ((prodFiltered.filtered as any)[field] && (prodFiltered.filtered as any)[field] !== '[REDACTED]') {
         errors.push(`Sensitive field '${field}' not properly redacted in production mode`)
         passed = false
       }
@@ -125,9 +124,9 @@ export const verifyDataFiltering = (): {
 
     // Verify sensitive fields are masked (not completely redacted) in development
     for (const field of sensitiveFields) {
-      if (devFiltered.filtered[field] && 
-          devFiltered.filtered[field] !== '[REDACTED]' && 
-          !devFiltered.filtered[field].includes('***')) {
+      if ((devFiltered.filtered as any)[field] && 
+          (devFiltered.filtered as any)[field] !== '[REDACTED]' && 
+          !(devFiltered.filtered as any)[field].includes('***')) {
         errors.push(`Sensitive field '${field}' not properly masked in development mode`)
         passed = false
       }
@@ -218,7 +217,7 @@ export const verifySecureStorage = async (): Promise<{
       results.storageRead = 'success'
       
       // Verify data integrity
-      const retrievedData = retrieved.value
+      const retrievedData = retrieved.value as any
       if (retrievedData.walletAddress !== testSensitiveData.walletAddress) {
         errors.push('Retrieved data does not match stored data')
         passed = false

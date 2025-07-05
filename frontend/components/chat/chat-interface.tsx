@@ -289,21 +289,16 @@ export function ChatInterface() {
   const getAdapterIcon = (type: string) => {
     switch (type) {
       case 'sak':
-        return <Zap className="h-4 w-4" />
+        return <Zap className="h-3 w-3" />
       case 'hive':
-        return <Search className="h-4 w-4" />
+        return <Search className="h-3 w-3" />
       case 'mcp':
-        return <Activity className="h-4 w-4" />
+        return <Activity className="h-3 w-3" />
       default:
-        return <Sparkles className="h-4 w-4" />
+        return <Sparkles className="h-3 w-3" />
     }
   }
 
-  const getPowerLevel = (confidence?: number) => {
-    if (!confidence) return ''
-    const level = Math.floor(confidence * 7) + 1
-    return '⭐'.repeat(level)
-  }
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-b from-gray-950 to-black"
@@ -315,15 +310,15 @@ export function ChatInterface() {
            `
          }}>
       {/* Enhanced Status Bar */}
-      <div className="px-4 py-2 bg-gradient-to-r from-red-50 to-orange-50 border-b border-red-200">
-        <div className="flex items-center justify-between flex-wrap gap-2">
+      <div className="px-2 py-1 bg-gradient-to-r from-red-50 to-orange-50 border-b border-red-200">
+        <div className="flex items-center justify-between flex-wrap gap-1">
           {/* Connection Status Indicator */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <div className={cn(
-              "h-2 w-2 rounded-full",
+              "h-1.5 w-1.5 rounded-full",
               connectionStatus.isConnected ? "bg-green-500" : "bg-red-500"
             )} />
-            <span className="text-sm text-red-700">
+            <span className="text-xs text-red-700">
               {connectionStatus.isConnected ? 'Connected to Dragon Realm' : 'Connecting...'}
             </span>
             {connectionStatus.error && (
@@ -332,23 +327,23 @@ export function ChatInterface() {
           </div>
           
           {/* Power Level Display */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1">
-              <TrendingUp className="h-4 w-4 text-red-600" />
-              <span className="text-sm text-red-700 font-bold">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-0.5">
+              <TrendingUp className="h-3 w-3 text-red-600" />
+              <span className="text-xs text-red-700 font-bold">
                 Power Level: {powerLevel.toLocaleString()}
               </span>
             </div>
             
             {/* Network Status */}
             {networkStatus && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5">
                 <Activity className={cn(
-                  "h-4 w-4",
+                  "h-3 w-3",
                   networkStatus.networkStatus === 'healthy' ? 'text-green-600' : 
                   networkStatus.networkStatus === 'congested' ? 'text-yellow-600' : 'text-red-600'
                 )} />
-                <span className="text-sm text-red-700">
+                <span className="text-xs text-red-700">
                   Block {networkStatus.blockNumber}
                 </span>
               </div>
@@ -357,9 +352,9 @@ export function ChatInterface() {
             {/* Adapter Actions Toggle */}
             <button
               onClick={() => setShowAdapterActions(!showAdapterActions)}
-              className="flex items-center gap-1 px-2 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition-colors"
+              className="flex items-center gap-0.5 px-1.5 py-0.5 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition-colors"
             >
-              <Zap className="h-3 w-3" />
+              <Zap className="h-2.5 w-2.5" />
               Adapters
             </button>
           </div>
@@ -367,13 +362,13 @@ export function ChatInterface() {
         
         {/* Hive Insights Preview */}
         {hiveInsights.length > 0 && (
-          <div className="mt-2 flex items-center gap-2">
-            <Search className="h-4 w-4 text-red-600" />
+          <div className="mt-1 flex items-center gap-1">
+            <Search className="h-3 w-3 text-red-600" />
             <span className="text-xs text-red-600">
               {hiveInsights.length} AI insights available
             </span>
             {hiveInsights.slice(0, 2).map((insight) => (
-              <span key={insight.id} className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
+              <span key={insight.id} className="text-xs bg-red-100 text-red-700 px-1 py-0.5 rounded">
                 {insight.type}: {insight.confidence}% confidence
               </span>
             ))}
@@ -383,16 +378,16 @@ export function ChatInterface() {
 
       {/* Adapter Actions Panel */}
       {showAdapterActions && (
-        <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-          <h3 className="text-sm font-semibold text-gray-700 mb-2">Dragon Power Adapters</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+        <div className="p-2 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+          <h3 className="text-xs font-semibold text-gray-700 mb-1">Dragon Power Adapters</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-1">
             {adapterActions.map((action, index) => (
               <button
                 key={index}
                 onClick={() => executeAdapterAction(action)}
                 disabled={isLoading}
                 className={cn(
-                  "flex items-center gap-2 p-2 rounded border text-sm transition-colors",
+                  "flex items-center gap-1 p-1 rounded border text-xs transition-colors",
                   "hover:bg-white hover:shadow-sm",
                   action.type === 'sak' && "border-yellow-300 bg-yellow-50 text-yellow-700",
                   action.type === 'hive' && "border-blue-300 bg-blue-50 text-blue-700",
@@ -401,8 +396,7 @@ export function ChatInterface() {
                 )}
               >
                 {getAdapterIcon(action.type)}
-                <span className="font-medium">{action.type.toUpperCase()}</span>
-                <span className="text-xs">{action.description}</span>
+                <span className="truncate">{action.action}</span>
               </button>
             ))}
           </div>
@@ -410,11 +404,11 @@ export function ChatInterface() {
       )}
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 relative">
+      <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-2 relative">
         {/* Seiron Watermark */}
         <SeironImage 
           variant="watermark"
-          className="absolute bottom-8 right-8 z-0"
+          className="absolute bottom-2 right-2 z-0 opacity-50"
         />
         
         {messages.map((message) => (
@@ -427,7 +421,7 @@ export function ChatInterface() {
           >
             <div
               className={cn(
-                'max-w-[70%] rounded-lg px-4 py-2 border',
+                'max-w-[85%] rounded-lg px-2.5 py-1 border text-sm',
                 message.type === 'user'
                   ? 'bg-gradient-to-r from-red-600 to-red-700 text-white border-red-800 shadow-lg'
                   : message.type === 'system'
@@ -446,20 +440,15 @@ export function ChatInterface() {
               } : {}}
             >
               {message.type === 'agent' && (
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-2xl animate-pulse">{getAgentIcon(message.agentType)}</span>
-                  <span className="text-xs font-bold text-red-300 tracking-wide">
-                    {message.agentType?.replace('_', ' ').replace('AGENT', 'DRAGON').toUpperCase()}
+                <div className="flex items-center gap-1 mb-0.5">
+                  <span className="text-base">{getAgentIcon(message.agentType)}</span>
+                  <span className="text-xs font-medium text-red-300">
+                    {message.agentType?.replace('_', ' ').toUpperCase()}
                   </span>
-                  {message.metadata?.confidence && (
-                    <span className="text-xs text-yellow-400 ml-2">
-                      {getPowerLevel(message.metadata.confidence)}
-                    </span>
-                  )}
                 </div>
               )}
               <SafeMessageContent content={message.content} type={message.type} />
-              <div className="flex items-center gap-4 mt-1">
+              <div className="flex items-center gap-2 mt-0.5">
                 <p
                   className={cn(
                     'text-xs',
@@ -495,24 +484,19 @@ export function ChatInterface() {
                   </p>
                 )}
                 {message.metadata?.confidence && (
-                  <p className="text-xs text-yellow-400 font-bold">
-                    🔥 {Math.round(message.metadata.confidence * 100)}% Power Level
-                  </p>
+                  <span className="text-xs text-yellow-400">
+                    {Math.round(message.metadata.confidence * 100)}%
+                  </span>
                 )}
                 {message.metadata?.powerLevel && (
-                  <p className="text-xs text-orange-400 font-bold">
-                    ⚡ Saiyan Level: {message.metadata.powerLevel.toLocaleString()}
-                  </p>
-                )}
-                {message.metadata?.adapterType && (
-                  <p className="text-xs text-blue-400">
-                    🔧 {message.metadata.adapterType.toUpperCase()} Adapter
-                  </p>
+                  <span className="text-xs text-orange-400">
+                    ⚡{message.metadata.powerLevel.toLocaleString()}
+                  </span>
                 )}
                 {message.metadata?.dragonBallMessage && (
-                  <p className="text-xs text-orange-300 italic mt-1 border-l-2 border-orange-400 pl-2">
+                  <span className="text-xs text-orange-300 italic pl-1">
                     🐲 {message.metadata.dragonBallMessage}
-                  </p>
+                  </span>
                 )}
               </div>
             </div>
@@ -520,15 +504,15 @@ export function ChatInterface() {
         ))}
         {/* Typing Indicators */}
         {typingIndicators.length > 0 && (
-          <div className="space-y-2 relative z-10">
+          <div className="space-y-1 relative z-10">
             {typingIndicators.map((indicator) => (
               <div key={indicator.agentId} className="flex justify-start">
-                <div className="bg-gradient-to-r from-gray-900 to-black rounded-lg px-4 py-2 border border-red-800 shadow-lg">
-                  <div className="flex items-center gap-2">
-                    <div className="text-2xl animate-bounce">{getAgentIcon(indicator.agentType)}</div>
-                    <Sparkles className="h-4 w-4 animate-spin text-red-400" />
-                    <span className="text-sm text-red-300 font-medium">
-                      {indicator.agentType.replace('_', ' ').replace('agent', 'Dragon')} is conjuring magic...
+                <div className="bg-gradient-to-r from-gray-900 to-black rounded-lg px-2 py-1 border border-red-800 text-sm">
+                  <div className="flex items-center gap-1">
+                    <div className="text-sm animate-pulse">{getAgentIcon(indicator.agentType)}</div>
+                    <Sparkles className="h-2.5 w-2.5 animate-spin text-red-400" />
+                    <span className="text-xs text-red-300">
+                      typing...
                     </span>
                   </div>
                 </div>
@@ -540,11 +524,11 @@ export function ChatInterface() {
         {/* Legacy loading indicator */}
         {isLoading && typingIndicators.length === 0 && (
           <div className="flex justify-start relative z-10">
-            <div className="bg-gradient-to-r from-gray-900 to-black rounded-lg px-4 py-2 border border-red-800 shadow-lg">
-              <div className="flex items-center gap-2">
-                <div className="text-2xl animate-bounce">🐉</div>
-                <Sparkles className="h-4 w-4 animate-spin text-red-400" />
-                <span className="text-sm text-red-300 font-medium">Seiron is conjuring magic...</span>
+            <div className="bg-gradient-to-r from-gray-900 to-black rounded-lg px-2 py-1 border border-red-800">
+              <div className="flex items-center gap-1">
+                <div className="text-sm animate-pulse">🐉</div>
+                <Sparkles className="h-2.5 w-2.5 animate-spin text-red-400" />
+                <span className="text-xs text-red-300">typing...</span>
               </div>
             </div>
           </div>
@@ -553,39 +537,38 @@ export function ChatInterface() {
       </div>
 
       {/* Mystical Input Area */}
-      <div className="border-t border-red-800 p-4 bg-gradient-to-r from-gray-900 to-black">
-        <div className="flex space-x-2">
+      <div className="border-t border-red-800 p-2 bg-gradient-to-r from-gray-900 to-black">
+        <div className="flex space-x-1">
           <div className="relative flex-1">
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Tell Seiron your investing wishes... 🐉"
-              className="w-full resize-none rounded-lg border border-red-700 bg-gray-900 text-red-100 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-500 placeholder-red-400"
+              className="w-full resize-none rounded-lg border border-red-700 bg-gray-900 text-red-100 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-red-600 focus:border-red-500 placeholder-red-400"
               rows={1}
             />
-            <div className="absolute right-2 top-2 text-red-600 opacity-50">
-              <Sparkles className="h-4 w-4" />
+            <div className="absolute right-1 top-1 text-red-600 opacity-50">
+              <Sparkles className="h-3 w-3" />
             </div>
           </div>
           <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="rounded-lg bg-gradient-to-r from-red-600 to-red-700 px-4 py-2 text-white hover:from-red-700 hover:to-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg border border-red-800 hover:shadow-red-900/50"
+            className="rounded-lg bg-gradient-to-r from-red-600 to-red-700 px-3 py-1 text-white hover:from-red-700 hover:to-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg border border-red-800 hover:shadow-red-900/50"
           >
-            <Send className="h-4 w-4" />
+            <Send className="h-3 w-3" />
           </button>
         </div>
-        <div className="flex items-center justify-between mt-2">
-          <p className="text-xs text-red-400 flex items-center gap-1">
-            <span className="text-red-600">🔥</span>
-            Empowered by Dragon Legion + SAK + Hive Intelligence + MCP Protocol
+        <div className="flex items-center justify-between mt-1">
+          <p className="text-xs text-red-400">
+            🔥 Powered by SAK + Hive + MCP
           </p>
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-center gap-1 text-xs">
             <span className="text-orange-400">⚡ Power: {powerLevel.toLocaleString()}</span>
             {networkStatus && (
               <span className={cn(
-                "px-2 py-1 rounded",
+                "px-1 py-0.5 rounded text-xs",
                 networkStatus.networkStatus === 'healthy' ? 'bg-green-100 text-green-700' :
                 networkStatus.networkStatus === 'congested' ? 'bg-yellow-100 text-yellow-700' :
                 'bg-red-100 text-red-700'
@@ -594,7 +577,7 @@ export function ChatInterface() {
               </span>
             )}
             {hiveInsights.length > 0 && (
-              <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
+              <span className="bg-blue-100 text-blue-700 px-1 py-0.5 rounded text-xs">
                 {hiveInsights.length} AI Insights
               </span>
             )}

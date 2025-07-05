@@ -1,6 +1,6 @@
 // Web Speech API type declarations
 
-export interface SpeechRecognitionErrorEvent {
+export interface SpeechRecognitionErrorEvent extends Event {
   error: 'no-speech' | 'aborted' | 'audio-capture' | 'network' | 'not-allowed' | 'service-not-allowed' | 'bad-grammar' | 'language-not-supported'
   message: string
 }
@@ -64,23 +64,8 @@ export interface SpeechGrammar {
   weight: number
 }
 
-// Browser compatibility declarations
-declare global {
-  interface Window {
-    SpeechRecognition: {
-      new (): SpeechRecognition
-    }
-    webkitSpeechRecognition: {
-      new (): SpeechRecognition
-    }
-    SpeechGrammarList: {
-      new (): SpeechGrammarList
-    }
-    webkitSpeechGrammarList: {
-      new (): SpeechGrammarList
-    }
-  }
-}
+// These types are exported for use in other files
+// Global declarations are handled in the components that use them
 
 // Enhanced Speech Recognition Types
 export interface SpeechRecognitionConfig {

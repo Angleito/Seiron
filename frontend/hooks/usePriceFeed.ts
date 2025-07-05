@@ -73,13 +73,7 @@ const setCachedPrice = (cache: PriceCache, data: PriceData, timeout: number): Pr
 
 const clearPriceCache = (): PriceCache => new Map();
 
-const cleanExpiredEntries = (cache: PriceCache): PriceCache => 
-  new Map(
-    Array.from(cache.entries())
-      .filter(([_key, entry]) => Date.now() <= entry.expiry)
-  );
-
-// Function is available for future use - cleanExpiredEntries is exported for external use
+// Removed unused cleanExpiredEntries function
 
 // API clients
 const fetchOraclePrice = (asset: Asset): TE.TaskEither<Error, PriceData> =>
@@ -138,15 +132,6 @@ const fetchCoinGeckoPrice = (asset: Asset): TE.TaskEither<Error, PriceData> =>
 const fetchPythPrice = (asset: Asset): TE.TaskEither<Error, PriceData> =>
   TE.tryCatch(
     async () => {
-      // Pyth price feed IDs (these are examples, real ones would be different)
-      const pythIds: Record<Asset, string> = {
-        SEI: '0x1234...', // Example ID
-        BTC: '0x5678...', // Example ID
-        ETH: '0x9abc...'  // Example ID
-      };
-      
-      // pythIds would be used in real Pyth implementation
-      
       // This is a mock implementation. Real implementation would use Pyth SDK
       const mockPrice = Math.random() * 50000 + 1000; // Random price for demo
       

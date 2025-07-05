@@ -113,7 +113,11 @@ export class AdapterFactoryImpl implements AdapterFactory {
     results.forEach((result, index) => {
       if (result.status === 'rejected') {
         const adapter = adapters[index]
-        logger.error(`Failed to connect adapter ${adapter.name}:`, result.reason)
+        if (adapter && adapter.name) {
+          logger.error(`Failed to connect adapter ${adapter.name}:`, result.reason)
+        } else {
+          logger.error(`Failed to connect adapter at index ${index}:`, result.reason)
+        }
       }
     })
   }

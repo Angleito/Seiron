@@ -5,16 +5,10 @@
 
 import * as E from 'fp-ts/Either'
 import * as O from 'fp-ts/Option'
-import * as TE from 'fp-ts/TaskEither'
-import { pipe } from 'fp-ts/function'
 import { 
-  encrypt, 
-  decrypt, 
   encryptWithPassword, 
   decryptWithPassword,
-  encryptWithSessionKey,
   validateEncryptedData,
-  isEncryptedDataExpired,
   generateSecurePassword,
   isWebCryptoAvailable,
   EncryptedData

@@ -1,3 +1,6 @@
+/* Import responsive dragon styles */
+@import './dragon-responsive.css';
+
 @font-face {
   font-family: 'Geist Sans';
   src: url('/fonts/GeistVF.woff') format('woff');
@@ -511,9 +514,6 @@
 /* ========================================
    RESPONSIVE DRAGON UTILITIES
    ======================================== */
-
-/* Import responsive dragon styles */
-@import './dragon-responsive.css';
 
 /* Mobile-first responsive animations */
 @media (max-width: 640px) {

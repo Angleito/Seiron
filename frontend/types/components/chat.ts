@@ -1,7 +1,7 @@
 // Chat component types
 
 import { ReactNode } from 'react'
-import { AgentMessage, AgentType } from '../api/orchestrator'
+import { AgentType } from '../agent'
 
 export interface ChatProps {
   className?: string

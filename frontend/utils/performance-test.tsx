@@ -37,9 +37,7 @@ export function PerformanceProfiler({
     id,
     phase,
     actualDuration,
-    baseDuration,
-    startTime,
-    commitTime
+    baseDuration
   ) => {
     const existing = performanceStore.get(id) || {
       componentName: id,

@@ -26,7 +26,7 @@ export interface ElevenLabsConfig {
 }
 
 export interface AudioContext {
-  audioContext: AudioContext | null
+  audioContext: BaseAudioContext | null
   currentSource: AudioBufferSourceNode | null
 }
 

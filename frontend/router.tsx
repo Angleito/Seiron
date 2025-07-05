@@ -1,7 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom'
 import { RootLayout } from './components/layouts/RootLayout'
-import { Suspense, lazy } from 'react'
-import { LoadingSpinner } from '@components/ui/LoadingSpinner'
+import { lazy } from 'react'
 import { PageErrorBoundary } from '@components/error-boundaries'
 import { LazyLoadingBoundary } from '@components/ui/LazyLoadingBoundary'
 import { 

@@ -37,7 +37,7 @@ export const composeState = <T extends Record<string, any>>(
 ): T => {
   return Object.freeze(
     partialStates.reduce((acc, partial) => ({ ...acc, ...partial }), {} as T)
-  )
+  ) as T
 }
 
 // Async state updater with error handling
@@ -164,7 +164,7 @@ export type StateTransition<TState, TAction> = {
 }
 
 export const createStateMachine = <TState, TAction>(
-  initialState: TState,
+  _initialState: TState,
   transitions: StateTransition<TState, TAction>[]
 ) => {
   return (currentState: TState, action: TAction): TState => {

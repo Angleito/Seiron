@@ -2,19 +2,7 @@ import VoiceInterface from '@components/voice/VoiceInterface'
 import { useState } from 'react'
 
 export default function VoiceTestPage() {
-  const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([])
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _handleVoiceCommand = (_transcript: string) => {
-    console.log('Voice command received:', _transcript)
-    setMessages(prev => [...prev, { role: 'user', content: _transcript }])
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _handleAIResponse = (_response: string) => {
-    console.log('AI response:', _response)
-    setMessages(prev => [...prev, { role: 'assistant', content: _response }])
-  }
+  const [messages] = useState<Array<{ role: string; content: string }>>([])
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white p-8">

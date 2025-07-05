@@ -253,7 +253,7 @@ export class BundleAnalyzer {
     return lazyChunks.includes(chunkName)
   }
 
-  private extractDependencies(entry: PerformanceResourceTiming): string[] {
+  private extractDependencies(_entry: PerformanceResourceTiming): string[] {
     // This would need to be implemented based on actual bundle analysis
     return []
   }

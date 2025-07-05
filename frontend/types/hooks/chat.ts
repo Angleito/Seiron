@@ -5,7 +5,7 @@ import * as E from 'fp-ts/Either'
 import * as TE from 'fp-ts/TaskEither'
 import * as O from 'fp-ts/Option'
 import { ChatMessage, ChatSession, ChatSettings, ChatError, VoiceSettings, AgentStatus } from '../components/chat'
-import { OrchestratorResponse, ChatRequest, ChatResponse } from '../api/orchestrator'
+import { ChatRequest } from '../api/orchestrator'
 
 // Chat Hook Types
 export interface ChatHookConfig {

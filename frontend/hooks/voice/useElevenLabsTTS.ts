@@ -3,6 +3,13 @@ import * as TE from 'fp-ts/TaskEither'
 import * as O from 'fp-ts/Option'
 import { pipe } from 'fp-ts/function'
 
+// Add webkitAudioContext to Window interface
+declare global {
+  interface Window {
+    webkitAudioContext: typeof AudioContext
+  }
+}
+
 export interface TTSError {
   type: 'API_ERROR' | 'NETWORK_ERROR' | 'AUDIO_ERROR' | 'QUOTA_EXCEEDED'
   message: string
@@ -117,7 +124,9 @@ const setCachedAudio = (
           
           if (cacheKeys.length >= CACHE_MAX_SIZE) {
             const oldestKey = cacheKeys[0]
-            store.delete(oldestKey)
+            if (oldestKey) {
+              store.delete(oldestKey as IDBValidKey)
+            }
           }
           
           store.put({
@@ -136,7 +145,8 @@ const decodeAudioBuffer = (
 ): TE.TaskEither<TTSError, AudioBuffer> =>
   TE.tryCatch(
     async () => {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)()
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext
+      const audioContext = new AudioContextClass()
       return await audioContext.decodeAudioData(arrayBuffer)
     },
     (error) => createTTSError('AUDIO_ERROR', 'Failed to decode audio', undefined, error)
@@ -147,7 +157,8 @@ const playAudioBuffer = (
 ): TE.TaskEither<TTSError, void> =>
   TE.tryCatch(
     async () => {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)()
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext
+      const audioContext = new AudioContextClass()
       const source = audioContext.createBufferSource()
       source.buffer = audioBuffer
       source.connect(audioContext.destination)

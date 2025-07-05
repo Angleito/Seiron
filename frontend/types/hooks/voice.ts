@@ -4,7 +4,7 @@ import { Observable } from 'rxjs'
 import * as E from 'fp-ts/Either'
 import * as TE from 'fp-ts/TaskEither'
 import * as O from 'fp-ts/Option'
-import { TTSError, TTSState, ElevenLabsConfig, AudioContext, CacheContext } from '../api/elevenlabs'
+import { TTSError, TTSState, ElevenLabsConfig } from '../api/elevenlabs'
 import { SpeechRecognitionState, SpeechRecognitionConfig, VoiceCommand, VoiceCommandResult } from '../api/speech'
 
 // Speech Recognition Hook Types

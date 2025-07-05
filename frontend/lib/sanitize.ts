@@ -202,7 +202,7 @@ export function sanitizeUserInput(content: string): string {
 export function validateSanitizedContent(
   original: string,
   sanitized: string,
-  config: SanitizeConfig = SANITIZE_CONFIGS.TEXT_ONLY
+  _config: SanitizeConfig = SANITIZE_CONFIGS.TEXT_ONLY
 ): boolean {
   // Check if content was significantly altered (potential XSS attempt)
   const originalLength = original.length;
@@ -282,9 +282,9 @@ export function sanitizeAndValidate(
  */
 export function createSanitizedComponent(
   content: string,
-  config: SanitizeConfig = SANITIZE_CONFIGS.TEXT_ONLY
+  configType: SanitizeConfig = SANITIZE_CONFIGS.TEXT_ONLY
 ): { __html: string } {
-  const sanitized = sanitizeHtml(content, config);
+  const sanitized = sanitizeHtml(content, configType);
   return { __html: sanitized };
 }
 
@@ -293,9 +293,9 @@ export function createSanitizedComponent(
  */
 export function useSanitizedContent(
   content: string,
-  config: SanitizeConfig = SANITIZE_CONFIGS.TEXT_ONLY
+  configType: SanitizeConfig = SANITIZE_CONFIGS.TEXT_ONLY
 ): { sanitized: string; isValid: boolean; warnings: string[] } {
-  const result = sanitizeAndValidate(content, config);
+  const result = sanitizeAndValidate(content, configType);
   
   // Log warnings in development
   if (process.env.NODE_ENV === 'development' && result.warnings.length > 0) {

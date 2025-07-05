@@ -5,12 +5,10 @@
 
 import * as E from 'fp-ts/Either'
 import * as TE from 'fp-ts/TaskEither'
-import { pipe } from 'fp-ts/function'
-import { logger, safeInfo, safeWarn, safeError } from '../logger'
+import { safeInfo, safeWarn, safeError } from '../logger'
 import { 
   isWebCryptoAvailable, 
-  getEncryptionInfo,
-  generateSecurePassword 
+  getEncryptionInfo
 } from './encryption'
 import { 
   initializeSecureSession,
@@ -18,7 +16,6 @@ import {
   secureLocalStorage,
   secureSessionStorage 
 } from './secureStorage'
-import { getSensitiveDataStats } from './dataFilter'
 
 // ============================================================================
 // Types
@@ -55,7 +52,6 @@ const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
 }
 
 const SECURITY_CHECK_INTERVAL = 60 * 60 * 1000 // 1 hour
-const MAX_STORED_LOGS = 100
 const MAX_ENCRYPTION_FAILURES = 5
 
 // ============================================================================

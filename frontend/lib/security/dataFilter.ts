@@ -4,8 +4,6 @@
  */
 
 import * as E from 'fp-ts/Either'
-import * as O from 'fp-ts/Option'
-import { pipe } from 'fp-ts/function'
 
 // ============================================================================
 // Types

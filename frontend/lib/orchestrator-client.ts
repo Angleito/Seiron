@@ -1,4 +1,4 @@
-import { UserIntent, TaskResult, AgentStreamEvent, Either } from '@types/agent'
+import { UserIntent, TaskResult, AgentStreamEvent, Either } from '../types/agent'
 import { logger } from './logger'
 import { 
   AdapterAction, 
@@ -6,16 +6,14 @@ import {
   AdapterType, 
   getAdapterFactory,
   SAKOperationResult,
+  SAKTool,
   HiveAnalyticsResult,
   HiveSearchResult,
   HiveCreditUsage,
   MCPNetworkStatus,
   MCPWalletBalance,
   MCPTransactionResult,
-  MCPContractQueryResult,
-  SeiAgentKitAdapter,
-  HiveIntelligenceAdapter,
-  SeiMCPAdapter
+  MCPContractQueryResult
 } from './adapters'
 import { WebSocketManager, WebSocketManagerImpl } from './services/WebSocketManager'
 
@@ -278,11 +276,11 @@ export class Orchestrator {
           break
         case 'hive':
           if (action.action === 'search') {
-            result = await this.executeHiveSearch(action.params.query, action.params.metadata)
+            result = await this.executeHiveSearch(action.params.query as string, action.params.metadata as Record<string, unknown> | undefined)
           } else if (action.action === 'analytics') {
-            result = await this.getHiveAnalytics(action.params.query, action.params.walletAddress)
+            result = await this.getHiveAnalytics(action.params.query as string, action.params.walletAddress as string | undefined)
           } else if (action.action === 'portfolio_analysis') {
-            result = await this.getHivePortfolioAnalysis(action.params.walletAddress, action.params)
+            result = await this.getHivePortfolioAnalysis(action.params.walletAddress as string, action.params)
           } else if (action.action === 'credits') {
             result = await this.getHiveCreditUsage()
           } else {
@@ -296,11 +294,11 @@ export class Orchestrator {
           if (action.action === 'get_network_status') {
             result = await this.getMCPNetworkStatus()
           } else if (action.action === 'get_wallet_balance') {
-            result = await this.getMCPWalletBalance(action.params.address)
+            result = await this.getMCPWalletBalance(action.params.address as string)
           } else if (action.action === 'send_transaction') {
             result = await this.executeMCPTransaction(action.params)
           } else if (action.action === 'query_contract') {
-            result = await this.queryMCPContract(action.params.contractAddress, action.params.query)
+            result = await this.queryMCPContract(action.params.contractAddress as string, action.params.query as Record<string, unknown>)
           } else {
             return { 
               _tag: 'Left', 
@@ -436,7 +434,11 @@ export class Orchestrator {
   }
 
   async createAdapter(type: AdapterType, config?: Record<string, unknown>) {
-    return this.adapterFactory.createAdapter(type, config)
+    const adapterConfig = config ? {
+      apiEndpoint: config.apiEndpoint as string || this.config.apiEndpoint,
+      timeout: config.timeout as number | undefined
+    } : undefined
+    return this.adapterFactory.createAdapter(type, adapterConfig)
   }
 
   async destroyAdapter(type: AdapterType): Promise<void> {

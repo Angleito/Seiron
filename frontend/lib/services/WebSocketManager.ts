@@ -1,4 +1,4 @@
-import { AgentStreamEvent } from '@types/agent'
+import { AgentStreamEvent } from '../../types/agent'
 import { logger } from '../logger'
 
 export interface WebSocketConfig {
@@ -252,5 +252,3 @@ export class WebSocketManagerImpl implements WebSocketManager {
     }
   }
 }
-
-export { WebSocketManagerImpl }

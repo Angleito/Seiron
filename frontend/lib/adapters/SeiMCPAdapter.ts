@@ -1,4 +1,4 @@
-import { Either } from '@types/agent'
+import { Either } from '../../types/agent'
 import { 
   AdapterConfig, 
   AdapterHealth, 

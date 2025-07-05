@@ -1,4 +1,4 @@
-import { Either } from '@types/agent'
+import { Either } from '../../types/agent'
 import { 
   AdapterConfig, 
   AdapterHealth, 
@@ -124,7 +124,7 @@ export class SeiAgentKitAdapterImpl implements SeiAgentKitAdapter {
       if (result.success && !result.metadata?.dragonBallMessage) {
         result.metadata = {
           ...result.metadata,
-          dragonBallMessage: this.generateDragonBallMessage(toolName, result.data)
+          dragonBallMessage: this.generateDragonBallMessage(toolName)
         }
       }
       
@@ -201,7 +201,7 @@ export class SeiAgentKitAdapterImpl implements SeiAgentKitAdapter {
     }
   }
 
-  private generateDragonBallMessage(toolName: string, data: any): string {
+  private generateDragonBallMessage(toolName: string): string {
     // Generate themed messages based on tool type
     const dragonBallMessages = {
       // Trading related
@@ -241,7 +241,10 @@ export class SeiAgentKitAdapterImpl implements SeiAgentKitAdapter {
     }
 
     const messages = dragonBallMessages[category as keyof typeof dragonBallMessages]
-    return messages[Math.floor(Math.random() * messages.length)]
+    if (!messages || messages.length === 0) {
+      return dragonBallMessages.default[0]!
+    }
+    return messages[Math.floor(Math.random() * messages.length)]!
   }
 }
 
