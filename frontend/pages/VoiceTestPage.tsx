@@ -4,11 +4,13 @@ import { useState } from 'react'
 export default function VoiceTestPage() {
   const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([])
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _handleVoiceCommand = (_transcript: string) => {
     console.log('Voice command received:', _transcript)
     setMessages(prev => [...prev, { role: 'user', content: _transcript }])
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _handleAIResponse = (_response: string) => {
     console.log('AI response:', _response)
     setMessages(prev => [...prev, { role: 'assistant', content: _response }])
@@ -25,7 +27,8 @@ export default function VoiceTestPage() {
           <h2 className="text-2xl mb-4">Voice Controls</h2>
           <VoiceInterface 
             elevenLabsConfig={{
-              apiUrl: import.meta.env.VITE_API_URL || 'http://localhost:8000'
+              apiKey: import.meta.env.VITE_ELEVENLABS_API_KEY || '',
+              voiceId: import.meta.env.VITE_ELEVENLABS_VOICE_ID || ''
             }}
           />
         </div>

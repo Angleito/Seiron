@@ -70,7 +70,7 @@ export function useTouchGestures(
 
   // Handle multi-touch gestures
   const handleMultiTouch = useCallback((touches: TouchList) => {
-    if (touches.length === 2) {
+    if (touches.length === 2 && touches[0] && touches[1]) {
       const touch1 = { x: touches[0].clientX, y: touches[0].clientY }
       const touch2 = { x: touches[1].clientX, y: touches[1].clientY }
       
@@ -110,6 +110,8 @@ export function useTouchGestures(
   // Handle touch start
   const handleTouchStart = useCallback((event: TouchEvent) => {
     const touch = event.touches[0]
+    if (!touch) return
+    
     const position = { x: touch.clientX, y: touch.clientY }
     
     setIsTouching(true)
@@ -159,6 +161,8 @@ export function useTouchGestures(
     if (!touchStartRef.current) return
 
     const touch = event.touches[0]
+    if (!touch) return
+    
     const position = { x: touch.clientX, y: touch.clientY }
     
     setTouchPosition(position)
@@ -190,7 +194,7 @@ export function useTouchGestures(
   }, [targetRef, handleMultiTouch])
 
   // Handle touch end
-  const handleTouchEnd = useCallback((event: TouchEvent) => {
+  const handleTouchEnd = useCallback((_event: TouchEvent) => {
     if (!touchStartRef.current) return
 
     const endTime = Date.now()
@@ -284,6 +288,8 @@ export function useTouchGestures(
 
       return () => clearTimeout(timeout)
     }
+    // Return undefined when no cleanup is needed
+    return undefined
   }, [gesture])
 
   return {

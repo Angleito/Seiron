@@ -202,7 +202,7 @@ export function getResponsiveValue<T>(
   
   for (let i = currentIndex - 1; i >= 0; i--) {
     const bp = breakpointOrder[i]
-    if (values[bp] !== undefined) {
+    if (bp && values[bp] !== undefined) {
       return values[bp]!
     }
   }

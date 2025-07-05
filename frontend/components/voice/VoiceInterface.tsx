@@ -72,7 +72,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
     if (error) {
       const errorMessage = pipe(
         O.fromNullable(error),
-        O.map(e => new Error(typeof e === 'string' ? e : e.message || 'Unknown error')),
+        O.map(e => new Error(typeof e === 'string' ? e : (e as any).message || 'Unknown error')),
         O.getOrElse(() => new Error('Unknown error'))
       )
       setState(prev => ({ ...prev, lastError: errorMessage }))

@@ -26,7 +26,8 @@ export const VoiceEnabledChatContainer = React.memo(function VoiceEnabledChatCon
   
   // ElevenLabs configuration - now using backend proxy - memoized
   const elevenLabsConfig: ElevenLabsConfig = useMemo(() => ({
-    apiUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+    apiKey: process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY || '',
+    voiceId: process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID || '',
     modelId: 'eleven_monolingual_v1',
     voiceSettings: {
       stability: 0.5,

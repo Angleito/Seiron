@@ -199,18 +199,26 @@ export function useTransactionFlow(options: UseTransactionFlowOptions = {}) {
       // Step 5: Sign transaction
       updateState({ step: 'signing' });
       
-      const hash = await walletClient.sendTransaction({
+      // Prepare transaction parameters, excluding conflicting fee fields
+      const txParams: any = {
         account: address,
         chain,
         to: request.to,
         data: request.data,
         value: request.value,
         gas: request.gas,
-        gasPrice: request.gasPrice,
-        maxFeePerGas: request.maxFeePerGas,
-        maxPriorityFeePerGas: request.maxPriorityFeePerGas,
         nonce: request.nonce,
-      });
+      };
+
+      // Use either legacy gasPrice OR EIP-1559 fees, not both
+      if (request.maxFeePerGas && request.maxPriorityFeePerGas) {
+        txParams.maxFeePerGas = request.maxFeePerGas;
+        txParams.maxPriorityFeePerGas = request.maxPriorityFeePerGas;
+      } else if (request.gasPrice) {
+        txParams.gasPrice = request.gasPrice;
+      }
+
+      const hash = await walletClient.sendTransaction(txParams);
 
       // Check if aborted
       if (signal.aborted) {

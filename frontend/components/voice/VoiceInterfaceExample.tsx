@@ -12,7 +12,8 @@ const VoiceInterfaceExample: React.FC = () => {
 
   // ElevenLabs configuration - now using backend proxy
   const elevenLabsConfig: ElevenLabsConfig = {
-    apiUrl: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+    apiKey: import.meta.env.VITE_ELEVENLABS_API_KEY || '',
+    voiceId: import.meta.env.VITE_ELEVENLABS_VOICE_ID || '',
     modelId: 'eleven_monolingual_v1',
     voiceSettings: {
       stability: 0.5,

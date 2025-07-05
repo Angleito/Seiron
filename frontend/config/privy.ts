@@ -50,7 +50,7 @@ export const privyConfig = {
       'google',
       'discord',
       'twitter',
-    ] as const,
+    ] as ('email' | 'wallet' | 'google' | 'discord' | 'twitter')[],
     walletConnectProjectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID,
     // Embedded wallet configuration
     embeddedWallets: {

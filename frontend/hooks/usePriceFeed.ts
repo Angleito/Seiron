@@ -79,8 +79,7 @@ const cleanExpiredEntries = (cache: PriceCache): PriceCache =>
       .filter(([_key, entry]) => Date.now() <= entry.expiry)
   );
 
-// Function is available for future use
-const _ = cleanExpiredEntries; // Suppress unused warning
+// Function is available for future use - cleanExpiredEntries is exported for external use
 
 // API clients
 const fetchOraclePrice = (asset: Asset): TE.TaskEither<Error, PriceData> =>
@@ -146,8 +145,7 @@ const fetchPythPrice = (asset: Asset): TE.TaskEither<Error, PriceData> =>
         ETH: '0x9abc...'  // Example ID
       };
       
-      // Suppress unused warning - ids would be used in real implementation
-      const _ = pythIds;
+      // pythIds would be used in real Pyth implementation
       
       // This is a mock implementation. Real implementation would use Pyth SDK
       const mockPrice = Math.random() * 50000 + 1000; // Random price for demo

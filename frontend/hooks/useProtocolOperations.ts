@@ -55,8 +55,7 @@ export function useProtocolOperations() {
   // Protocol wrapper commented out due to missing files
   const symphonyWrapper = null
   
-  // Suppress unused warnings
-  const _ = { publicClient, symphonyWrapper }
+  // publicClient and symphonyWrapper will be used when protocol wrappers are implemented
 
   const getSwapQuote = useCallback(async (_request: SwapQuoteRequest) => {
     // TODO: Implement protocol wrapper when available
