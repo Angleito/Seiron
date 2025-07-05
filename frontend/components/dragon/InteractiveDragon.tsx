@@ -2,8 +2,8 @@
 
 import React, { useRef, useEffect, useState } from 'react'
 import { DragonInteractionProvider, useDragonInteraction, useDragonAnimationClasses } from './DragonInteractionController'
-import { useDragonState, useDragonOrientation, useDragonAnimation } from '@/hooks/useDragonInteraction'
-import { useAnimationPerformance } from '@/hooks/useAnimationPerformance'
+import { useDragonState, useDragonOrientation, useDragonAnimation } from '@hooks/useDragonInteraction'
+import { useAnimationPerformance } from '@hooks/useAnimationPerformance'
 
 interface InteractiveDragonProps {
   size?: 'sm' | 'md' | 'lg' | 'xl'

@@ -1,7 +1,5 @@
-'use client'
-
 // Remove next/image import - using standard img tag for Vite
-import { cn } from '@/lib/utils'
+import { cn } from '@lib/utils'
 import { motion } from 'framer-motion'
 
 type SeironImageVariant = 'hero' | 'background' | 'corner' | 'watermark'

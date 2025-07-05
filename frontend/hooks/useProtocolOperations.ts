@@ -5,7 +5,7 @@ import type { SwapExecuteRequest, SwapQuoteRequest } from '@/src/protocols/sei/t
 import { pipe } from 'fp-ts/function'
 import * as TE from 'fp-ts/TaskEither'
 import { useState, useCallback } from 'react'
-import { logger } from '@/lib/logger'
+import { logger } from '@lib/logger'
 
 export interface ProtocolTransaction {
   id: string

@@ -6,9 +6,9 @@
  */
 
 import React, { useState, useCallback, useRef, useEffect } from 'react'
-import { EnhancedDragonCharacter } from '@/components/dragon'
-import { useKeyboardNavigation } from '@/components/dragon/hooks'
-import type { DragonState, DragonMood, InteractionType } from '@/components/dragon/types'
+import { EnhancedDragonCharacter } from '@components/dragon'
+import { useKeyboardNavigation } from '@components/dragon/hooks'
+import type { DragonState, DragonMood, InteractionType } from '@components/dragon/types'
 
 export function AccessibleDragon() {
   const [currentState, setCurrentState] = useState<DragonState>('idle')

@@ -8,6 +8,7 @@ import { useEnhancedMouseTracking } from './hooks/useEnhancedMouseTracking'
 import { useEnhancedTouchGestures } from './hooks/useEnhancedTouchGestures'
 import { useKeyboardNavigation } from './hooks/useKeyboardNavigation'
 import { useAnimationPerformance } from './hooks/useAnimationPerformance'
+import { DragonErrorBoundary } from '@components/error-boundaries'
 import type { 
   DragonState, 
   DragonMood, 
@@ -187,7 +188,7 @@ const InteractionFeedback: React.FC<{
 }
 
 // Main Enhanced Dragon Interaction System
-export const EnhancedDragonInteractionSystem: React.FC<EnhancedDragonInteractionSystemProps> = ({
+const EnhancedDragonInteractionSystemContent: React.FC<EnhancedDragonInteractionSystemProps> = ({
   size = 'lg',
   initialState = 'idle',
   initialMood = 'neutral',
@@ -510,6 +511,14 @@ export const EnhancedDragonInteractionSystem: React.FC<EnhancedDragonInteraction
         </div>
       )}
     </div>
+  )
+}
+
+export const EnhancedDragonInteractionSystem: React.FC<EnhancedDragonInteractionSystemProps> = (props) => {
+  return (
+    <DragonErrorBoundary>
+      <EnhancedDragonInteractionSystemContent {...props} />
+    </DragonErrorBoundary>
   )
 }
 

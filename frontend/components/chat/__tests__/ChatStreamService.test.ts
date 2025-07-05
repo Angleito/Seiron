@@ -7,7 +7,7 @@ import * as O from 'fp-ts/Option'
 import { ChatStreamService, StreamMessage, TypingIndicator, ConnectionStatus } from '../ChatStreamService'
 
 // Mock the orchestrator
-jest.mock('@/lib/orchestrator-client', () => ({
+jest.mock('@lib/orchestrator-client', () => ({
   getOrchestrator: jest.fn(() => ({
     connectWebSocket: jest.fn(),
     disconnectWebSocket: jest.fn(),

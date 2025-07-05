@@ -6,8 +6,8 @@
  */
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react'
-import { EnhancedDragonCharacter } from '@/components/dragon'
-import type { DragonState, DragonMood } from '@/components/dragon/types'
+import { EnhancedDragonCharacter } from '@components/dragon'
+import type { DragonState, DragonMood } from '@components/dragon/types'
 
 interface Trade {
   id: string
@@ -410,11 +410,11 @@ export function TradingInterfaceDragon() {
             <div className="bg-blue-900/20 border border-blue-500/30 rounded-xl p-6">
               <h3 className="text-lg font-semibold text-blue-400 mb-4">Dragon Behavior</h3>
               <div className="space-y-2 text-sm text-blue-300">
-                <div><strong>Gains > 10%:</strong> Powering up with intense energy</div>
+                <div><strong>Gains &gt; 10%:</strong> Powering up with intense energy</div>
                 <div><strong>Gains 5-10%:</strong> Ready and excited</div>
                 <div><strong>Trading:</strong> Active and engaged</div>
                 <div><strong>Sideways:</strong> Arms crossed, waiting</div>
-                <div><strong>Losses > 10%:</strong> Sleeping until recovery</div>
+                <div><strong>Losses &gt; 10%:</strong> Sleeping until recovery</div>
                 <div><strong>High volume:</strong> More dragon balls and effects</div>
               </div>
             </div>

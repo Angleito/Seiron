@@ -2,8 +2,8 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { Subscription } from 'rxjs'
 import * as E from 'fp-ts/Either'
 import { ChatStreamService, StreamMessage, TypingIndicator, ConnectionStatus } from './ChatStreamService'
-import { AdapterAction } from '@/lib/orchestrator-client'
-import { logger } from '@/lib/logger'
+import { AdapterAction } from '@lib/orchestrator-client'
+import { logger } from '@lib/logger'
 
 export interface UseChatStreamOptions {
   apiEndpoint?: string

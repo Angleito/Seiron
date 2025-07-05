@@ -1,5 +1,5 @@
 import { defineChain } from 'viem'
-import { logger } from '@/lib/logger'
+import { logger } from '@lib/logger'
 
 // Sei Network chain configuration
 export const seiMainnet = defineChain({

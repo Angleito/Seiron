@@ -3,7 +3,7 @@
 import { useReducer, useCallback, useEffect, useRef } from 'react'
 import type { DragonState, DragonMood, DragonAnimationHookReturn } from '../types'
 import { POWER_LEVELS, ANIMATION_TIMING } from '../constants'
-import { logger } from '@/lib/logger'
+import { logger } from '@lib/logger'
 
 type DragonAction = 
   | { type: 'SET_STATE'; state: DragonState }

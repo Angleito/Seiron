@@ -1,10 +1,8 @@
-version: '3.8'
-
 services:
   # Redis for L2 cache
   redis:
     image: redis:7-alpine
-    container_name: ai-portfolio-redis
+    container_name: seiron-redis-dev
     ports:
       - "6379:6379"
     volumes:
@@ -16,12 +14,13 @@ services:
       timeout: 5s
       retries: 5
 
-  # API Server (development mode)
-  api:
+  # Backend API Server (Development)
+  backend:
     build:
-      context: .
-      dockerfile: Dockerfile.dev
-    container_name: ai-portfolio-api
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: seiron-backend-dev
     ports:
       - "3001:3001"
     environment:
@@ -31,40 +30,50 @@ services:
       - SEI_RPC_URL=${SEI_RPC_URL:-https://evm-rpc.sei-apis.com}
       - WALLET_ADDRESS=${WALLET_ADDRESS}
       - PRIVATE_KEY=${PRIVATE_KEY}
-      - DEBUG=ai-portfolio:*
+      - DEBUG=seiron:*
     volumes:
-      - ./src:/app/src
+      - ./backend:/app
+      - /app/node_modules
       - ./cache:/app/cache
       - ./logs:/app/logs
     depends_on:
       redis:
         condition: service_healthy
     restart: unless-stopped
-    command: ["tsx", "watch", "src/api/simple-server.ts"]
 
-  # Frontend (development mode)
+  # Frontend (Development with Vite HMR)
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
-    container_name: ai-portfolio-frontend
+    container_name: seiron-frontend-dev
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://localhost:3001
-      - NEXT_PUBLIC_WS_URL=ws://localhost:3001
+      - VITE_API_URL=http://localhost:3001
+      - VITE_WS_URL=ws://localhost:3001
+      - VITE_PRIVY_APP_ID=${VITE_PRIVY_APP_ID}
+      - VITE_PRIVY_CLIENT_ID=${VITE_PRIVY_CLIENT_ID}
+      - VITE_WALLETCONNECT_PROJECT_ID=${VITE_WALLETCONNECT_PROJECT_ID}
+      - VITE_SEI_RPC_URL=${VITE_SEI_RPC_URL:-https://evm-rpc.sei-apis.com}
+      - VITE_ORCHESTRATOR_API=http://localhost:3001
+      - VITE_ORCHESTRATOR_WS=ws://localhost:3001
+      - VITE_ELEVENLABS_API_KEY=${VITE_ELEVENLABS_API_KEY}
+      - VITE_ELEVENLABS_VOICE_ID=${VITE_ELEVENLABS_VOICE_ID}
+      - VITE_VOICE_ENABLED=${VITE_VOICE_ENABLED:-true}
     volumes:
       - ./frontend:/app
       - /app/node_modules
-      - /app/.next
+      - ./frontend/dist:/app/dist
     depends_on:
-      - api
-    restart: unless-stopped
+      - backend
+    stdin_open: true
+    tty: true
 
 volumes:
   redis-data:
 
 networks:
   default:
-    name: ai-portfolio-network
+    name: seiron-network-dev

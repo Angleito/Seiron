@@ -185,10 +185,12 @@ router.post('/message', [
 /**
  * POST /api/chat/orchestrate
  * Process chat message through orchestrator (migrated from frontend API route)
+ * Note: This endpoint doesn't require wallet validation as it may be used before wallet connection
  */
 router.post('/orchestrate', [
   body('message').notEmpty().withMessage('Message is required'),
-  body('sessionId').notEmpty().withMessage('Session ID is required')
+  body('sessionId').notEmpty().withMessage('Session ID is required'),
+  body('walletAddress').optional().isEthereumAddress().withMessage('Valid wallet address required if provided')
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

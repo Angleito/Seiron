@@ -2,14 +2,14 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { Send, Bot, Loader2, Sparkles, Search, TrendingUp, Activity, Zap } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { AgentMessage, AgentStreamEvent } from '@/types/agent'
-import { getOrchestrator } from '@/lib/orchestrator-client'
+import { cn } from '@lib/utils'
+import { AgentMessage, AgentStreamEvent } from '@types/agent'
+import { getOrchestrator } from '@lib/orchestrator-client'
 import { ChatStreamService, StreamMessage, TypingIndicator, ConnectionStatus } from './ChatStreamService'
 import { Subscription } from 'rxjs'
 import * as E from 'fp-ts/Either'
-import { logger } from '@/lib/logger'
-import { SeironImage } from '@/components/SeironImage'
+import { logger } from '@lib/logger'
+import { SeironImage } from '@components/SeironImage'
 
 // New adapter-related types
 interface HiveInsight {

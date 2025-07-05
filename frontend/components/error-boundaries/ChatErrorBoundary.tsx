@@ -1,4 +1,4 @@
-import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { ErrorBoundary } from '@components/ErrorBoundary'
 import { ReactNode } from 'react'
 import { MessageSquareOff, RefreshCw } from 'lucide-react'
 

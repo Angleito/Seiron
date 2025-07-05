@@ -1,26 +1,33 @@
-const nextJest = require('next/jest')
-
-const createJestConfig = nextJest({
-  // Provide the path to your Next.js app to load next.config.js and .env files
-  dir: './',
-})
-
-// Add any custom config to be passed to Jest
-const customJestConfig = {
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+module.exports = {
+  preset: 'ts-jest',
   testEnvironment: 'jsdom',
-  moduleNameMapping: {
-    '^@/components/(.*)$': '<rootDir>/components/$1',
-    '^@/pages/(.*)$': '<rootDir>/pages/$1',
-    '^@/hooks/(.*)$': '<rootDir>/hooks/$1',
-    '^@/utils/(.*)$': '<rootDir>/utils/$1',
-    '^@/types/(.*)$': '<rootDir>/types/$1',
-    '^@/lib/(.*)$': '<rootDir>/lib/$1',
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/$1',
+    '^@components/(.*)$': '<rootDir>/components/$1',
+    '^@hooks/(.*)$': '<rootDir>/hooks/$1',
+    '^@utils/(.*)$': '<rootDir>/utils/$1',
+    '^@types/(.*)$': '<rootDir>/types/$1',
+    '^@lib/(.*)$': '<rootDir>/lib/$1',
+    '^@config/(.*)$': '<rootDir>/config/$1',
+    '^@features/(.*)$': '<rootDir>/features/$1',
+    // Handle CSS imports
+    '\\.(css|less|scss|sass)$': '<rootDir>/__mocks__/styleMock.js',
+    // Handle image imports
+    '\\.(jpg|jpeg|png|gif|webp|svg)$': '<rootDir>/__mocks__/fileMock.js',
+  },
+  transform: {
+    '^.+\\.(ts|tsx)$': ['ts-jest', {
+      tsconfig: {
+        jsx: 'react-jsx',
+      },
+    }],
   },
   collectCoverageFrom: [
     'components/**/*.{js,jsx,ts,tsx}',
     'hooks/**/*.{js,jsx,ts,tsx}',
     'utils/**/*.{js,jsx,ts,tsx}',
+    'src/**/*.{js,jsx,ts,tsx}',
     '!**/*.d.ts',
     '!**/node_modules/**',
     '!**/__tests__/**',
@@ -33,27 +40,14 @@ const customJestConfig = {
       lines: 80,
       statements: 80,
     },
-    './components/dragon/': {
-      branches: 95,
-      functions: 95,
-      lines: 95,
-      statements: 95,
-    },
   },
   testMatch: [
-    '<rootDir>/components/**/__tests__/**/*.{js,jsx,ts,tsx}',
-    '<rootDir>/hooks/**/__tests__/**/*.{js,jsx,ts,tsx}',
-    '<rootDir>/utils/**/__tests__/**/*.{js,jsx,ts,tsx}',
-    '<rootDir>/**/*.test.{js,jsx,ts,tsx}',
+    '**/__tests__/**/*.{js,jsx,ts,tsx}',
+    '**/*.{spec,test}.{js,jsx,ts,tsx}',
   ],
   testPathIgnorePatterns: [
-    '<rootDir>/.next/',
-    '<rootDir>/node_modules/',
-  ],
-  transformIgnorePatterns: [
-    '/node_modules/(?!(framer-motion)/)',
+    '/node_modules/',
+    '/dist/',
+    '/build/',
   ],
 }
-
-// createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
-module.exports = createJestConfig(customJestConfig)

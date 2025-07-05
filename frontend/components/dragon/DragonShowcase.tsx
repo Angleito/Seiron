@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { EnhancedDragonCharacter } from './EnhancedDragonCharacter'
 import { DragonPresets, createDragonConfig, detectDeviceType } from './index'
 import type { DragonState, DragonMood, PerformanceMode } from './types'
-import { logger } from '@/lib/logger'
+import { logger } from '@lib/logger'
 
 
 export function DragonShowcase() {

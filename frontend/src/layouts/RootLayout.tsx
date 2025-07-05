@@ -1,6 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import { Toaster } from 'sonner'
-import { LocalFontProvider } from '@/components/ui/LocalFontProvider'
+import { LocalFontProvider } from '@components/ui/LocalFontProvider'
 
 export function RootLayout() {
   return (

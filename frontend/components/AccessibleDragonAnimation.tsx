@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { ResponsiveDragonAnimation } from './ResponsiveDragonAnimation'
-import { useResponsive } from '@/hooks/useResponsive'
+import { useResponsive } from '@hooks/useResponsive'
 
 interface AccessibleDragonAnimationProps {
   className?: string

@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { Search, TrendingUp, AlertTriangle, Target, BarChart3, Brain, Sparkles } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { getOrchestrator } from '@/lib/orchestrator-client'
-import { logger } from '@/lib/logger'
+import { cn } from '@lib/utils'
+import { getOrchestrator } from '@lib/orchestrator-client'
+import { logger } from '@lib/logger'
 
 interface HiveInsight {
   id: string

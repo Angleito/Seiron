@@ -1,7 +1,8 @@
 import { createBrowserRouter } from 'react-router-dom'
 import { RootLayout } from './layouts/RootLayout'
 import { Suspense, lazy } from 'react'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { LoadingSpinner } from '@components/ui/LoadingSpinner'
+import { PageErrorBoundary } from '@components/error-boundaries'
 
 // Lazy load pages for code splitting
 const HomePage = lazy(() => import('./pages/HomePage'))
@@ -13,10 +14,12 @@ const VoiceTestPage = lazy(() => import('./pages/VoiceTestPage'))
 const AgentTestPage = lazy(() => import('./pages/AgentTestPage'))
 const AnimationDemoPage = lazy(() => import('./pages/AnimationDemoPage'))
 
-const PageLoader = ({ children }: { children: React.ReactNode }) => (
-  <Suspense fallback={<LoadingSpinner />}>
-    {children}
-  </Suspense>
+const PageLoader = ({ children, pageName }: { children: React.ReactNode, pageName?: string }) => (
+  <PageErrorBoundary pageName={pageName}>
+    <Suspense fallback={<LoadingSpinner />}>
+      {children}
+    </Suspense>
+  </PageErrorBoundary>
 )
 
 export const router = createBrowserRouter([
@@ -27,7 +30,7 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: (
-          <PageLoader>
+          <PageLoader pageName="Home">
             <HomePage />
           </PageLoader>
         ),
@@ -35,7 +38,7 @@ export const router = createBrowserRouter([
       {
         path: 'dashboard',
         element: (
-          <PageLoader>
+          <PageLoader pageName="Dashboard">
             <DashboardPage />
           </PageLoader>
         ),
@@ -43,7 +46,7 @@ export const router = createBrowserRouter([
       {
         path: 'demo',
         element: (
-          <PageLoader>
+          <PageLoader pageName="Demo">
             <DemoPage />
           </PageLoader>
         ),
@@ -51,7 +54,7 @@ export const router = createBrowserRouter([
       {
         path: 'dragon-demo',
         element: (
-          <PageLoader>
+          <PageLoader pageName="Dragon Demo">
             <DragonDemoPage />
           </PageLoader>
         ),
@@ -59,7 +62,7 @@ export const router = createBrowserRouter([
       {
         path: 'dragon-showcase',
         element: (
-          <PageLoader>
+          <PageLoader pageName="Dragon Showcase">
             <DragonShowcasePage />
           </PageLoader>
         ),
@@ -67,7 +70,7 @@ export const router = createBrowserRouter([
       {
         path: 'voice-test',
         element: (
-          <PageLoader>
+          <PageLoader pageName="Voice Test">
             <VoiceTestPage />
           </PageLoader>
         ),
@@ -75,7 +78,7 @@ export const router = createBrowserRouter([
       {
         path: 'agent-test',
         element: (
-          <PageLoader>
+          <PageLoader pageName="Agent Test">
             <AgentTestPage />
           </PageLoader>
         ),
@@ -83,7 +86,7 @@ export const router = createBrowserRouter([
       {
         path: 'animation-demo',
         element: (
-          <PageLoader>
+          <PageLoader pageName="Animation Demo">
             <AnimationDemoPage />
           </PageLoader>
         ),

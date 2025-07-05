@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { EnhancedDragonAnimation } from './EnhancedDragonAnimation'
-import { useDragonAnimation, DragonState, DragonMood } from '@/hooks/useDragonAnimation'
+import { useDragonAnimation, DragonState, DragonMood } from '@hooks/useDragonAnimation'
 
 export function DragonAnimationShowcase() {
   const [showAdvanced, setShowAdvanced] = useState(false)

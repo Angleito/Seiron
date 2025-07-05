@@ -136,7 +136,7 @@ CMD ["npm", "test"]
 # ============================================
 # Build metadata
 # ============================================
-LABEL maintainer="Sei Portfolio Backend Team"
-LABEL description="Sei AI Portfolio Manager Backend API"
+LABEL maintainer="Seiron Team"
+LABEL description="Seiron AI Dragon Trading Assistant Backend API"
 LABEL version="1.0.0"
-LABEL org.opencontainers.image.source="https://github.com/your-org/sei-portfolio-backend"
+LABEL org.opencontainers.image.source="https://github.com/seiron/seiron-backend"

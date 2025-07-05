@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Bot, Shield, TrendingUp, Zap, Star, Eye, Sparkles } from 'lucide-react'
-import { SeironImage } from '@/components/dragon/SeironImage'
+import { SeironImage } from '@components/dragon/SeironImage'
 
 export default function HomePage() {
   return (

@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { OptimizedFloatingDragonLogo } from '@/components/OptimizedFloatingDragonLogo'
-import { OptimizedCirclingDragonBalls } from '@/components/OptimizedCirclingDragonBalls'
-import { AnimationPerformanceDebugger } from '@/components/AnimationPerformanceDebugger'
-import { FloatingDragonLogo } from '@/components/FloatingDragonLogo'
-import { CirclingDragonBalls } from '@/components/CirclingDragonBalls'
-import type { QualityLevel } from '@/hooks/useAnimationPerformance'
+import { OptimizedFloatingDragonLogo } from '@components/OptimizedFloatingDragonLogo'
+import { OptimizedCirclingDragonBalls } from '@components/OptimizedCirclingDragonBalls'
+import { AnimationPerformanceDebugger } from '@components/AnimationPerformanceDebugger'
+import { FloatingDragonLogo } from '@components/FloatingDragonLogo'
+import { CirclingDragonBalls } from '@components/CirclingDragonBalls'
+import type { QualityLevel } from '@hooks/useAnimationPerformance'
 
 export default function DemoPage() {
   const [showOptimized, setShowOptimized] = useState(true)

@@ -1,4 +1,4 @@
-import { DragonShowcase } from '@/components/dragon/DragonShowcase'
+import { DragonShowcase } from '@components/dragon/DragonShowcase'
 
 export default function DragonShowcasePage() {
   return <DragonShowcase />

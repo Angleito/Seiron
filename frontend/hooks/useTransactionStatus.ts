@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { usePublicClient, useBlockNumber } from 'wagmi';
 import { Hash, TransactionReceipt, Transaction } from 'viem';
-import { logger } from '@/lib/logger';
+import { logger } from '@lib/logger';
 
 export type TransactionStatus = 
   | 'pending'

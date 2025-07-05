@@ -1,6 +1,6 @@
 'use client'
 
-import { useResponsive, getResponsiveValue } from '@/hooks/useResponsive'
+import { useResponsive, getResponsiveValue } from '@hooks/useResponsive'
 import { FloatingDragonLogo } from './FloatingDragonLogo'
 import { CirclingDragonBalls } from './CirclingDragonBalls'
 import { useState, useEffect } from 'react'

@@ -1,10 +1,10 @@
 'use client'
 
 import { useContext } from 'react'
-import { useDragonInteraction as useInteractionContext } from '@/components/dragon/DragonInteractionController'
+import { useDragonInteraction as useInteractionContext } from '@components/dragon/DragonInteractionController'
 
 // Re-export the hook from the controller for cleaner imports
-export { useDragonInteraction } from '@/components/dragon/DragonInteractionController'
+export { useDragonInteraction } from '@components/dragon/DragonInteractionController'
 
 // Additional dragon-specific hooks can be added here
 export function useDragonState() {

@@ -6,9 +6,9 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import { EnhancedDragonCharacter, detectDeviceType } from '@/components/dragon'
-import { useAnimationPerformance } from '@/components/dragon/hooks'
-import type { DragonState, PerformanceMode } from '@/components/dragon/types'
+import { EnhancedDragonCharacter, detectDeviceType } from '@components/dragon'
+import { useAnimationPerformance } from '@components/dragon/hooks'
+import type { DragonState, PerformanceMode } from '@components/dragon/types'
 
 export function HighPerformanceDragon() {
   const [currentFPS, setCurrentFPS] = useState(60)

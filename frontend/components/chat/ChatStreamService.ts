@@ -24,9 +24,9 @@ import * as O from 'fp-ts/Option'
 import * as TE from 'fp-ts/TaskEither'
 import * as A from 'fp-ts/Array'
 import { pipe } from 'fp-ts/function'
-import { AgentMessage, AgentStreamEvent, AgentType } from '@/types/agent'
-import { getOrchestrator, AdapterAction } from '@/lib/orchestrator-client'
-import { logger } from '@/lib/logger'
+import { AgentMessage, AgentStreamEvent, AgentType } from '@types/agent'
+import { getOrchestrator, AdapterAction } from '@lib/orchestrator-client'
+import { logger } from '@lib/logger'
 
 // Enhanced message types for streaming
 export interface StreamMessage extends AgentMessage {
@@ -369,12 +369,14 @@ export class ChatStreamService {
     return new Observable(observer => {
       const sendTask = TE.tryCatch(
         async () => {
-          const response = await fetch('/api/chat', {
+          const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+          const response = await fetch(`${apiBaseUrl}/chat/orchestrate`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               message: message.content,
               sessionId: this.config.sessionId,
+              walletAddress: message.metadata?.walletAddress,
               metadata: message.metadata
             })
           })

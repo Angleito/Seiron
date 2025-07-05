@@ -1,8 +1,8 @@
-import { ChatInterface } from '@/components/chat/chat-interface'
-import { PortfolioSidebar } from '@/components/portfolio/portfolio-sidebar'
-import { WalletConnect } from '@/components/wallet/wallet-connect'
-import { SeironImage } from '@/components/dragon/SeironImage'
-import { SeironImage as SeironWatermark } from '@/components/SeironImage'
+import { ChatInterface } from '@components/chat/chat-interface'
+import { PortfolioSidebar } from '@components/portfolio/portfolio-sidebar'
+import { WalletConnect } from '@components/wallet/wallet-connect'
+import { SeironImage } from '@components/dragon/SeironImage'
+import { SeironImage as SeironWatermark } from '@components/SeironImage'
 
 export default function DashboardPage() {
   return (

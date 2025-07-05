@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { formatEther, formatUnits } from 'viem';
 import { useWaitForTransactionReceipt } from '@privy-io/wagmi';
 import { CheckCircle, XCircle, Loader2, AlertTriangle } from 'lucide-react';
-import { useWalletOperations } from '@/hooks/useWalletOperations';
-import { logger } from '@/lib/logger';
+import { useWalletOperations } from '@hooks/useWalletOperations';
+import { logger } from '@lib/logger';
 
 interface TransactionDetails {
   id: string;

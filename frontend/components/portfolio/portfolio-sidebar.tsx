@@ -1,10 +1,10 @@
 'use client'
 
 import { TrendingUp, TrendingDown, DollarSign, Coins, Activity, Zap, Search, Shield, Target } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from '@lib/utils'
 import { useState, useEffect } from 'react'
-import { getOrchestrator } from '@/lib/orchestrator-client'
-import { logger } from '@/lib/logger'
+import { getOrchestrator } from '@lib/orchestrator-client'
+import { logger } from '@lib/logger'
 
 interface Asset {
   symbol: string

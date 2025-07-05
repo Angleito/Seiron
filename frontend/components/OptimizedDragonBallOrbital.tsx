@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import { useDragonInteraction } from './dragon/DragonInteractionController'
-import { useOrbitalPerformance, useAdaptiveOrbitalQuality } from '@/hooks/useOrbitalPerformance'
+import { useOrbitalPerformance, useAdaptiveOrbitalQuality } from '@hooks/useOrbitalPerformance'
 import {
   DragonBallState,
   Vector2D,
@@ -17,7 +17,7 @@ import {
   generateOrbitalParams,
   calculateWishPath,
   SpatialGrid
-} from '@/utils/dragonBallPhysics'
+} from '@utils/dragonBallPhysics'
 
 interface OptimizedDragonBallOrbitalProps {
   radius?: number

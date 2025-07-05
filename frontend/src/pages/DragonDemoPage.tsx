@@ -1,4 +1,4 @@
-import { InteractiveDragon } from '@/components/dragon/InteractiveDragon'
+import { InteractiveDragon } from '@components/dragon/InteractiveDragon'
 import { useState } from 'react'
 
 export default function DragonDemoPage() {

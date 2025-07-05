@@ -1,231 +1,54 @@
-version: '3.8'
-
 services:
-  # Sei Chain Test Network
-  sei-testnet:
-    image: seiprotocol/sei-chain:latest
-    container_name: sei-testnet
-    ports:
-      - "26657:26657"  # Tendermint RPC
-      - "1317:1317"    # REST API
-      - "9090:9090"    # gRPC
-      - "26656:26656"  # P2P
-    environment:
-      - CHAIN_ID=sei-testnet-integration
-      - MONIKER=integration-test-node
-      - LOG_LEVEL=info
-    volumes:
-      - sei-testnet-data:/root/.sei
-    networks:
-      - sei-test-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:26657/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-
-  # Redis for caching and session management
+  # Redis for testing
   redis:
     image: redis:7-alpine
-    container_name: redis-test
+    container_name: seiron-redis-test
     ports:
-      - "6379:6379"
-    volumes:
-      - redis-test-data:/data
-    networks:
-      - sei-test-network
-    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+      - "6380:6379"
+    command: redis-server --save "" --appendonly no
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
-  # PostgreSQL for persistent test data
-  postgres:
-    image: postgres:14-alpine
-    container_name: postgres-test
-    environment:
-      POSTGRES_DB: sei_agent_test
-      POSTGRES_USER: testuser
-      POSTGRES_PASSWORD: testpass
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-test-data:/var/lib/postgresql/data
-      - ./test/fixtures/postgres:/docker-entrypoint-initdb.d
-    networks:
-      - sei-test-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U testuser -d sei_agent_test"]
-      interval: 10s
-      timeout: 5s
+      interval: 5s
+      timeout: 3s
       retries: 5
 
-  # Protocol Mock Services
-  symphony-mock:
-    image: node:18-alpine
-    container_name: symphony-mock
-    working_dir: /app
-    volumes:
-      - ./test/mocks/symphony:/app
-    ports:
-      - "8001:8001"
-    networks:
-      - sei-test-network
-    command: ["npm", "start"]
-    environment:
-      - NODE_ENV=test
-      - PORT=8001
-    depends_on:
-      - sei-testnet
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  takara-mock:
-    image: node:18-alpine
-    container_name: takara-mock
-    working_dir: /app
-    volumes:
-      - ./test/mocks/takara:/app
-    ports:
-      - "8002:8002"
-    networks:
-      - sei-test-network
-    command: ["npm", "start"]
-    environment:
-      - NODE_ENV=test
-      - PORT=8002
-    depends_on:
-      - sei-testnet
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8002/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Main Integration Test Runner
-  test-runner:
+  # Backend Test Runner
+  backend-test:
     build:
-      context: .
-      dockerfile: Dockerfile.test
-    container_name: integration-test-runner
+      context: ./backend
+      dockerfile: Dockerfile
+      target: test
+    container_name: seiron-backend-test
+    environment:
+      - NODE_ENV=test
+      - REDIS_URL=redis://redis:6379
+      - SEI_RPC_URL=https://evm-rpc-testnet.sei-apis.com
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - ./backend/coverage:/app/coverage
     depends_on:
-      sei-testnet:
-        condition: service_healthy
       redis:
         condition: service_healthy
-      postgres:
-        condition: service_healthy
-      symphony-mock:
-        condition: service_healthy
-      takara-mock:
-        condition: service_healthy
-    environment:
-      - NODE_ENV=test
-      - CI=true
-      - SEI_RPC_URL=http://sei-testnet:26657
-      - SEI_REST_URL=http://sei-testnet:1317
-      - SEI_GRPC_URL=http://sei-testnet:9090
-      - REDIS_URL=redis://redis:6379
-      - DATABASE_URL=postgresql://testuser:testpass@postgres:5432/sei_agent_test
-      - SYMPHONY_API_URL=http://symphony-mock:8001
-      - TAKARA_API_URL=http://takara-mock:8002
-      - TEST_TIMEOUT=60000
-      - MAX_WORKERS=4
-      - PARALLEL_TESTS=true
-    volumes:
-      - ./test-results:/app/test-results
-      - ./coverage:/app/coverage
-      - ./logs:/app/logs
-    networks:
-      - sei-test-network
-    command: ["npm", "run", "test:integration:docker"]
+    command: ["npm", "test"]
 
-  # Performance Test Runner
-  performance-test-runner:
+  # Frontend Test Runner
+  frontend-test:
     build:
-      context: .
-      dockerfile: Dockerfile.test
-    container_name: performance-test-runner
-    depends_on:
-      sei-testnet:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: seiron-frontend-test
     environment:
       - NODE_ENV=test
-      - CI=true
-      - SEI_RPC_URL=http://sei-testnet:26657
-      - REDIS_URL=redis://redis:6379
-      - DATABASE_URL=postgresql://testuser:testpass@postgres:5432/sei_agent_test
-      - PERFORMANCE_TEST=true
-      - LOAD_TEST_DURATION=300
-      - CONCURRENT_USERS=50
     volumes:
-      - ./performance-results:/app/performance-results
-      - ./logs:/app/logs
-    networks:
-      - sei-test-network
-    command: ["npm", "run", "test:performance:docker"]
-    profiles:
-      - performance
-
-  # Test Metrics Collector
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: prometheus-test
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./test/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus-test-data:/prometheus
-    networks:
-      - sei-test-network
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=1h'
-      - '--web.enable-lifecycle'
-    profiles:
-      - monitoring
-
-  # Test Results Dashboard
-  grafana:
-    image: grafana/grafana:latest
-    container_name: grafana-test
-    ports:
-      - "3000:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=testpass
-    volumes:
-      - ./test/monitoring/grafana:/etc/grafana/provisioning
-      - grafana-test-data:/var/lib/grafana
-    networks:
-      - sei-test-network
-    depends_on:
-      - prometheus
-    profiles:
-      - monitoring
-
-networks:
-  sei-test-network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
+      - ./frontend:/app
+      - /app/node_modules
+      - ./frontend/coverage:/app/coverage
+    command: ["npm", "test"]
 
 volumes:
-  sei-testnet-data:
-  redis-test-data:
-  postgres-test-data:
-  prometheus-test-data:
-  grafana-test-data:
+  test-data:
+
+networks:
+  default:
+    name: seiron-network-test

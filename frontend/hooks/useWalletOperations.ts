@@ -1,8 +1,8 @@
 import { useWalletClient, usePublicClient } from '@privy-io/wagmi'
 import { usePrivy } from '@privy-io/react-auth'
 import { parseEther, encodeFunctionData, type Address } from 'viem'
-import { seiMainnet } from '@/config/privy'
-import { logger } from '@/lib/logger'
+import { seiMainnet } from '@config/privy'
+import { logger } from '@lib/logger'
 
 export interface TransactionRequest {
   to: Address

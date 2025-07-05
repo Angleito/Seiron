@@ -2,17 +2,18 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Send, Mic, MicOff, Sparkles, AlertCircle } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from '@lib/utils'
 import { useChatStream } from './useChatStream'
 import { StreamMessage } from './ChatStreamService'
-import { VoiceInterface, useVoiceInterfaceAudio } from '@/components/voice'
-import { ElevenLabsConfig } from '@/hooks/voice/useElevenLabsTTS'
-import { logger } from '@/lib/logger'
+import { VoiceInterface, useVoiceInterfaceAudio } from '@components/voice'
+import { ElevenLabsConfig } from '@hooks/voice/useElevenLabsTTS'
+import { ChatErrorBoundary, VoiceErrorBoundary } from '@components/error-boundaries'
+import { logger } from '@lib/logger'
 
 // Generate unique session ID
 const generateSessionId = () => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
-export function VoiceEnabledChat() {
+function VoiceEnabledChatContent() {
   const [input, setInput] = useState('')
   const [sessionId] = useState(generateSessionId())
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(false)
@@ -250,15 +251,17 @@ export function VoiceEnabledChat() {
       
       {/* Voice Interface */}
       {isVoiceEnabled && (
-        <div className="border-t border-gray-800 bg-gray-900 p-4">
-          <VoiceInterface
-            elevenLabsConfig={elevenLabsConfig}
-            onTranscriptChange={handleTranscriptChange}
-            onError={handleVoiceError}
-            autoReadResponses={true}
-            className="max-w-4xl mx-auto"
-          />
-        </div>
+        <VoiceErrorBoundary onReset={() => setIsVoiceEnabled(false)}>
+          <div className="border-t border-gray-800 bg-gray-900 p-4">
+            <VoiceInterface
+              elevenLabsConfig={elevenLabsConfig}
+              onTranscriptChange={handleTranscriptChange}
+              onError={handleVoiceError}
+              autoReadResponses={true}
+              className="max-w-4xl mx-auto"
+            />
+          </div>
+        </VoiceErrorBoundary>
       )}
       
       {/* Input Area */}
@@ -291,5 +294,13 @@ export function VoiceEnabledChat() {
         )}
       </div>
     </div>
+  )
+}
+
+export function VoiceEnabledChat() {
+  return (
+    <ChatErrorBoundary>
+      <VoiceEnabledChatContent />
+    </ChatErrorBoundary>
   )
 }

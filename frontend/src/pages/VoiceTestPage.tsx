@@ -1,5 +1,5 @@
-import VoiceInterface from '@/components/voice/VoiceInterface'
-import { ChatInterface } from '@/components/chat/chat-interface'
+import VoiceInterface from '@components/voice/VoiceInterface'
+import { ChatInterface } from '@components/chat/chat-interface'
 import { useState } from 'react'
 
 export default function VoiceTestPage() {

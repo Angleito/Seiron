@@ -3,7 +3,7 @@
 import { usePrivy, useWallets } from '@privy-io/react-auth'
 import { Wallet, Power, LogOut } from 'lucide-react'
 import { useState } from 'react'
-import { logger } from '@/lib/logger'
+import { logger } from '@lib/logger'
 
 export function WalletConnectButton() {
   const { ready, authenticated, login, logout, user } = usePrivy()

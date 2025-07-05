@@ -16,7 +16,7 @@ import {
   generateOrbitalParams,
   calculateWishPath,
   SpatialGrid
-} from '@/utils/dragonBallPhysics'
+} from '@utils/dragonBallPhysics'
 
 interface DragonBallOrbitalSystemProps {
   radius?: number

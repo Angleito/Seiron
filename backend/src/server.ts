@@ -16,6 +16,10 @@ import { SocketService } from './services/SocketService';
 import { PortfolioService } from './services/PortfolioService';
 import { AIService } from './services/AIService';
 import { ConfirmationService } from './services/ConfirmationService';
+import { OrchestratorService } from './services/OrchestratorService';
+import { SeiIntegrationService } from './services/SeiIntegrationService';
+import { PortfolioAnalyticsService } from './services/PortfolioAnalyticsService';
+import { RealTimeDataService } from './services/RealTimeDataService';
 import { errorHandler } from './middleware/errorHandler';
 import { validateWallet } from './middleware/validateWallet';
 
@@ -53,6 +57,19 @@ const socketService = new SocketService(io);
 const confirmationService = new ConfirmationService(socketService);
 const portfolioService = new PortfolioService(socketService, confirmationService);
 const aiService = new AIService();
+const realTimeDataService = new RealTimeDataService(socketService);
+const seiIntegrationService = new SeiIntegrationService();
+const portfolioAnalyticsService = new PortfolioAnalyticsService(
+  portfolioService,
+  aiService,
+  seiIntegrationService
+);
+const orchestratorService = new OrchestratorService(
+  seiIntegrationService,
+  portfolioAnalyticsService,
+  realTimeDataService,
+  socketService
+);
 
 // Make services available in request context
 app.use((req, _res, next) => {
@@ -60,13 +77,25 @@ app.use((req, _res, next) => {
     socket: socketService,
     portfolio: portfolioService,
     ai: aiService,
-    confirmation: confirmationService
+    confirmation: confirmationService,
+    orchestrator: orchestratorService,
+    seiIntegration: seiIntegrationService,
+    portfolioAnalytics: portfolioAnalyticsService,
+    realTimeData: realTimeDataService
   };
   next();
 });
 
 // Routes
-app.use('/api/chat', validateWallet, chatRouter);
+// Chat router - orchestrate endpoint doesn't require wallet validation
+app.use('/api/chat', (req, res, next) => {
+  // Skip wallet validation for orchestrate endpoint
+  if (req.path === '/orchestrate' && req.method === 'POST') {
+    return next();
+  }
+  return validateWallet(req, res, next);
+}, chatRouter);
+
 app.use('/api/portfolio', validateWallet, portfolioRouter);
 app.use('/api/ai', validateWallet, aiRouter);
 app.use('/api', validateWallet, confirmationRouter);

@@ -9,7 +9,7 @@ import { TransactionPreview, TransactionPreviewData } from './TransactionPreview
 import { RiskWarning, RiskAssessmentData } from './RiskWarning';
 import { useTransactionFlow } from '../../hooks/useTransactionFlow';
 import { useTransactionStatus } from '../../hooks/useTransactionStatus';
-import { logger } from '@/lib/logger';
+import { logger } from '@lib/logger';
 
 export function TransactionDemo() {
   const { address } = useAccount();

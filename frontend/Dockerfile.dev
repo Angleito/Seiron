@@ -1,22 +1,28 @@
-# Development Dockerfile for Frontend
+# Development Dockerfile for Vite
 FROM node:20-alpine
 
-RUN apk add --no-cache tini python3 make g++
+# Install build dependencies
+RUN apk add --no-cache python3 make g++ py3-pip
 
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install all dependencies including devDependencies
+RUN npm install --legacy-peer-deps
+
+# Copy source code
+COPY . .
 
 # Set environment
 ENV NODE_ENV=development
 
+# Expose Vite dev server port
 EXPOSE 3000
 
-# Use tini for proper signal handling
-ENTRYPOINT ["/sbin/tini", "--"]
+# Enable Vite HMR for Docker
+ENV VITE_HOST=0.0.0.0
 
-CMD ["npm", "run", "dev"]
+# Run Vite dev server
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

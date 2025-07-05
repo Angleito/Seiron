@@ -18,7 +18,7 @@ import * as O from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
 import * as A from 'fp-ts/Array';
 import { pipe } from 'fp-ts/function';
-import { logger } from '@/lib/logger';
+import { logger } from '@lib/logger';
 import { isDeepStrictEqual } from 'util';
 
 // Types

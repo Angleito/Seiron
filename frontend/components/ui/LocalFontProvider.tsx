@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { logger } from '@/lib/logger'
+import { logger } from '@lib/logger'
 
 export function LocalFontProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
