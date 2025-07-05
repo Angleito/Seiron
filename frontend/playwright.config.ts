@@ -70,7 +70,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         // reducedMotion: 'reduce',
-        forcedColors: 'active',
+        // forcedColors: 'active', // Removed as this property is not recognized
       },
       testMatch: '**/accessibility/*.spec.ts',
     },

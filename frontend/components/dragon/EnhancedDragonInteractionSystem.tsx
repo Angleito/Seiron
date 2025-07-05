@@ -237,8 +237,8 @@ const EnhancedDragonInteractionSystemContent: React.FC<EnhancedDragonInteraction
   // Performance monitoring
   const { performanceMode, metrics } = useAnimationPerformance(enablePerformanceOptimization)
 
-  // Event handlers
-  const handleStateChange = useCallback((state: DragonState) => {
+  // Event handlers (available for future use but currently not connected to UI)
+  const _handleStateChange = useCallback((state: DragonState) => {
     setCurrentState(state)
     onStateChange?.(state)
     onInteractionEvent?.('hover', { state })
@@ -251,13 +251,13 @@ const EnhancedDragonInteractionSystemContent: React.FC<EnhancedDragonInteraction
     })
   }, [onStateChange, onInteractionEvent])
 
-  const handleMoodChange = useCallback((mood: DragonMood) => {
+  const _handleMoodChange = useCallback((mood: DragonMood) => {
     setCurrentMood(mood)
     onMoodChange?.(mood)
     onInteractionEvent?.('hover', { mood })
   }, [onMoodChange, onInteractionEvent])
 
-  const handlePowerLevelChange = useCallback((level: number) => {
+  const _handlePowerLevelChange = useCallback((level: number) => {
     setPowerLevel(level)
     onPowerLevelChange?.(level)
     onInteractionEvent?.('hover', { level })
@@ -271,7 +271,7 @@ const EnhancedDragonInteractionSystemContent: React.FC<EnhancedDragonInteraction
     }
   }, [onPowerLevelChange, onInteractionEvent])
 
-  const handleDragonPartClick = useCallback((part: DragonPart, _event: MouseEvent) => {
+  const _handleDragonPartClick = useCallback((part: DragonPart, _event: MouseEvent) => {
     const responseTime = Date.now() - interactionStartTimeRef.current
     
     // Update interaction stats
@@ -314,7 +314,7 @@ const EnhancedDragonInteractionSystemContent: React.FC<EnhancedDragonInteraction
     )
   }, [onInteractionEvent])
 
-  const handleGestureDetected = useCallback((gesture: TouchGesture, part?: DragonPart) => {
+  const _handleGestureDetected = useCallback((gesture: TouchGesture, part?: DragonPart) => {
     setInteractionStats(prev => ({
       ...prev,
       gestureStats: {

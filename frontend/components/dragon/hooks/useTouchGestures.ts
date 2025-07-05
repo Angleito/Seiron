@@ -3,8 +3,9 @@
 import { useState, useRef, useCallback } from 'react'
 import type { TouchGesture, TouchGestureHookReturn } from '../types'
 import { INTERACTION_ZONES } from '../constants'
-import { pipe } from 'fp-ts/function'
-import * as O from 'fp-ts/Option'
+// Removed unused imports
+// import { pipe } from 'fp-ts/function'
+// import * as O from 'fp-ts/Option'
 
 interface UseTouchGesturesOptions {
   enabled?: boolean
@@ -58,12 +59,15 @@ export function useTouchGestures({
     return Math.atan2(dy, dx) * 180 / Math.PI
   }, [])
 
-  const getTouchCenter = useCallback((touches: TouchList): { x: number; y: number } => {
+  const getTouchCenter = useCallback((touches: React.TouchList | TouchList): { x: number; y: number } => {
     let x = 0, y = 0
-    const touchArray = Array.from(touches)
+    const touchArray: Touch[] = []
+    for (let i = 0; i < touches.length; i++) {
+      touchArray.push(touches[i])
+    }
     for (let i = 0; i < touchArray.length; i++) {
-      x += touchArray[i].clientX
-      y += touchArray[i].clientY
+      x += touchArray[i]?.clientX || 0
+      y += touchArray[i]?.clientY || 0
     }
     return { x: x / touchArray.length, y: y / touchArray.length }
   }, [])

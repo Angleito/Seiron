@@ -274,8 +274,8 @@ try {
       return false
     }
   }
-  window.addEventListener('test' as any, null as any, options)
-  window.removeEventListener('test', null as any, options)
+  window.addEventListener('test' as any, null as any, options as any)
+  window.removeEventListener('test', null as any, options as any)
 } catch (e) {}
 
 export const passiveEventOptions = passiveSupported ? { passive: true } : false
