@@ -55,7 +55,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         config={{
           appearance: privyConfig.config.appearance,
           loginMethods: privyConfig.config.loginMethods,
-          walletConnectProjectId: privyConfig.config.walletConnectProjectId,
+          walletConnectCloudProjectId: privyConfig.config.walletConnectProjectId,
           embeddedWallets: privyConfig.config.embeddedWallets,
           defaultChain: privyConfig.config.defaultChain,
           supportedChains: privyConfig.config.supportedChains,

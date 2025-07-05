@@ -1,8 +1,8 @@
 import { ChatInterface } from '@components/chat/chat-interface'
 import { PortfolioSidebar } from '@components/portfolio/portfolio-sidebar'
 import { WalletConnect } from '@components/wallet/wallet-connect'
-import { SeironImage } from '@components/dragon/SeironImage'
-import { SeironImage as SeironWatermark } from '@components/SeironImage'
+import { SeironImage } from '@components/SeironImage'
+import SeironSprite from '@components/SeironSprite'
 
 export default function DashboardPage() {
   return (
@@ -41,7 +41,7 @@ export default function DashboardPage() {
 
         {/* Background watermark */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <SeironWatermark 
+          <SeironImage 
             variant="watermark"
             className="transform translate-x-16 translate-y-8"
           />
@@ -49,7 +49,7 @@ export default function DashboardPage() {
 
         {/* Floating Dragon in bottom right */}
         <div className="absolute bottom-4 right-4 z-10">
-          <SeironImage 
+          <SeironSprite 
             variant="corner"
             className="opacity-90 hover:opacity-100 transition-opacity"
           />

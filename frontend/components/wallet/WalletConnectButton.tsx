@@ -80,7 +80,7 @@ export function WalletConnectButton() {
               {activeWallet?.walletClientType || 'Unknown Wallet'}
             </div>
             {user?.email && (
-              <div className="text-sm text-gray-400 mt-1">{user.email}</div>
+              <div className="text-sm text-gray-400 mt-1">{String(user.email)}</div>
             )}
           </div>
 

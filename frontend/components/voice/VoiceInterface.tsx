@@ -3,6 +3,7 @@ import { useSpeechRecognition } from '../../hooks/voice/useSpeechRecognition'
 import { useElevenLabsTTS, ElevenLabsConfig } from '../../hooks/voice/useElevenLabsTTS'
 import * as E from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
+import * as O from 'fp-ts/Option'
 import { logger } from '../../lib/logger'
 
 export interface VoiceInterfaceProps {
@@ -43,7 +44,6 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
     error: speechError,
     startListening,
     stopListening,
-    clearTranscript,
     isSupported: isSpeechSupported
   } = useSpeechRecognition()
 
@@ -51,8 +51,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
     isSpeaking,
     isLoading: isTTSLoading,
     error: ttsError,
-    speak,
-    stop: stopSpeaking
+    speak
   } = useElevenLabsTTS(elevenLabsConfig)
 
   // Update playing audio state
@@ -71,7 +70,11 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
   useEffect(() => {
     const error = speechError || ttsError
     if (error) {
-      const errorMessage = new Error(error.message)
+      const errorMessage = pipe(
+        O.fromNullable(error),
+        O.map(e => new Error(typeof e === 'string' ? e : e.message || 'Unknown error')),
+        O.getOrElse(() => new Error('Unknown error'))
+      )
       setState(prev => ({ ...prev, lastError: errorMessage }))
       onError?.(errorMessage)
     }
@@ -113,6 +116,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
     setState(prev => ({ ...prev, isSpeakerEnabled: !prev.isSpeakerEnabled }))
   }, [])
 
+  // Expose playAudioResponse for external use
   const playAudioResponse = useCallback(async (text: string) => {
     if (!state.isSpeakerEnabled) return
 
@@ -130,6 +134,13 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
       )
     )
   }, [state.isSpeakerEnabled, speak, onError])
+
+  // Store playAudioResponse in a ref for external access
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).__voiceInterfacePlayAudio__ = playAudioResponse
+    }
+  }, [playAudioResponse])
 
   const microphoneButtonClasses = useMemo(() => {
     const baseClasses = 'relative p-4 rounded-full transition-all duration-300 transform hover:scale-110'

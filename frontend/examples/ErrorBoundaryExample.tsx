@@ -5,8 +5,7 @@ import {
   useErrorHandler,
   PageErrorBoundary,
   ChatErrorBoundary,
-  VoiceErrorBoundary,
-  DragonErrorBoundary
+  VoiceErrorBoundary
 } from '@components/error-boundaries'
 import { useAsyncError } from '@hooks/useAsyncError'
 
@@ -202,15 +201,15 @@ export function ErrorBoundaryExample() {
               </div>
             </VoiceErrorBoundary>
             
-            {/* Dragon Error Boundary */}
-            <DragonErrorBoundary>
+            {/* Generic Error Boundary */}
+            <ErrorBoundary name="Generic Dragon">
               <div className="p-4 bg-gray-800 rounded">
                 <h3 className="font-semibold mb-2">Dragon Component</h3>
                 <p className="text-sm text-gray-400">
-                  This would be wrapped in a DragonErrorBoundary
+                  This would be wrapped in a generic ErrorBoundary
                 </p>
               </div>
-            </DragonErrorBoundary>
+            </ErrorBoundary>
           </div>
         </section>
         

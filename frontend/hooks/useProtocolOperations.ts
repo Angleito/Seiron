@@ -54,13 +54,16 @@ export function useProtocolOperations() {
 
   // Protocol wrapper commented out due to missing files
   const symphonyWrapper = null
+  
+  // Suppress unused warnings
+  const _ = { publicClient, symphonyWrapper }
 
-  const getSwapQuote = useCallback(async (request: SwapQuoteRequest) => {
+  const getSwapQuote = useCallback(async (_request: SwapQuoteRequest) => {
     // TODO: Implement protocol wrapper when available
     throw new Error('Protocol wrapper not implemented - missing protocol adapter files')
   }, [])
 
-  const prepareSwap = useCallback(async (request: SwapExecuteRequest) => {
+  const prepareSwap = useCallback(async (_request: SwapExecuteRequest) => {
     // TODO: Implement protocol wrapper when available
     throw new Error('Protocol wrapper not implemented - missing protocol adapter files')
   }, [address])

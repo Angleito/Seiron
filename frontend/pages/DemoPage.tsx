@@ -1,9 +1,5 @@
 import { useState } from 'react'
-import { OptimizedFloatingDragonLogo } from '@components/OptimizedFloatingDragonLogo'
-import { OptimizedCirclingDragonBalls } from '@components/OptimizedCirclingDragonBalls'
-import { AnimationPerformanceDebugger } from '@components/AnimationPerformanceDebugger'
-import { FloatingDragonLogo } from '@components/FloatingDragonLogo'
-import { CirclingDragonBalls } from '@components/CirclingDragonBalls'
+import SeironSprite from '@components/SeironSprite'
 import type { QualityLevel } from '@hooks/useAnimationPerformance'
 
 export default function DemoPage() {
@@ -79,22 +75,11 @@ export default function DemoPage() {
               Floating Dragon Logo
             </h2>
             <div className="flex justify-center items-center min-h-[400px]">
-              {showOptimized ? (
-                <OptimizedFloatingDragonLogo 
-                  size="lg"
-                  showDragonBalls={true}
-                  enablePerformanceMonitoring={true}
-                  onQualityChange={(quality: string) => {
-                    const numericQuality = quality === 'high' ? 75 : quality === 'medium' ? 50 : 25;
-                    setCurrentQuality(numericQuality);
-                  }}
-                />
-              ) : (
-                <FloatingDragonLogo 
-                  size="lg"
-                  showDragonBalls={true}
-                />
-              )}
+              <SeironSprite 
+                variant="logo"
+                size="lg"
+                animated={true}
+              />
             </div>
             <div className="mt-4 text-sm text-gray-400">
               {showOptimized ? (
@@ -121,20 +106,19 @@ export default function DemoPage() {
               Circling Dragon Balls
             </h2>
             <div className="flex justify-center items-center min-h-[400px]">
-              {showOptimized ? (
-                <OptimizedCirclingDragonBalls 
-                  radius={150}
-                  speed="normal"
-                  interactive={true}
-                  enablePerformanceMonitoring={true}
+              <div className="relative">
+                <SeironSprite 
+                  variant="logo"
+                  size="lg"
+                  animated={true}
                 />
-              ) : (
-                <CirclingDragonBalls 
-                  radius={150}
-                  speed="normal"
-                  interactive={true}
-                />
-              )}
+                <div className="absolute inset-0 animate-spin-slow opacity-30">
+                  <div className="text-2xl absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2">⭐</div>
+                  <div className="text-2xl absolute right-0 top-1/2 transform translate-x-2 -translate-y-1/2">⭐</div>
+                  <div className="text-2xl absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-2">⭐</div>
+                  <div className="text-2xl absolute left-0 top-1/2 transform -translate-x-2 -translate-y-1/2">⭐</div>
+                </div>
+              </div>
             </div>
             <div className="mt-4 text-sm text-gray-400">
               {showOptimized ? (

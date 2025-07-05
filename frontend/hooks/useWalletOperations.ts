@@ -4,7 +4,7 @@ import { parseEther, encodeFunctionData, type Address } from 'viem'
 import { seiMainnet } from '@config/privy'
 import { logger } from '@lib/logger'
 
-export interface TransactionRequest {
+export interface WalletTransactionRequest {
   to: Address
   value?: bigint
   data?: `0x${string}`
@@ -26,7 +26,7 @@ export function useWalletOperations() {
   const publicClient = usePublicClient()
 
   const prepareTransaction = async (
-    request: TransactionRequest
+    request: WalletTransactionRequest
   ): Promise<PreparedTransaction | null> => {
     if (!walletClient || !publicClient) {
       logger.error('Wallet or public client not available')
@@ -56,7 +56,7 @@ export function useWalletOperations() {
     }
   }
 
-  const sendTransaction = async (request: TransactionRequest) => {
+  const sendTransaction = async (request: WalletTransactionRequest) => {
     if (!walletClient) {
       throw new Error('Wallet not connected')
     }

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useMemo } from 'react'
-import { usePrivy, useWallets } from '@privy-io/react-auth'
+import { usePrivy } from '@privy-io/react-auth'
 import { useAccount, useDisconnect } from 'wagmi'
 import * as E from 'fp-ts/Either'
 import * as O from 'fp-ts/Option'
@@ -193,7 +193,7 @@ export const walletReducer = (state: WalletState, action: WalletAction): WalletS
     case 'DISCONNECT':
       return pipe(
         state,
-        (s) => {
+        (_s) => {
           // Clear state asynchronously without blocking
           clearWalletState().catch(error => 
             logger.error('Failed to clear wallet state after disconnect:', error)
@@ -434,4 +434,4 @@ export const getChainId = (state: WalletState): O.Option<number> =>
 // Export additional types for testing
 // ============================================================================
 
-export type { AnalyticsEvent }
+// AnalyticsEvent already exported above

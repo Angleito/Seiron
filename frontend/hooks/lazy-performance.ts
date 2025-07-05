@@ -1,4 +1,5 @@
-import { lazy, Suspense } from 'react'
+// Performance hooks lazy loader
+// import { lazy, Suspense } from 'react' // Currently unused
 
 /**
  * Lazy-loaded performance monitoring hooks

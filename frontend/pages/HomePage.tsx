@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Bot, Shield, TrendingUp, Zap, Star, Eye, Sparkles } from 'lucide-react'
-import { SeironImage } from '@components/dragon/SeironImage'
+import SeironSprite from '@components/SeironSprite'
 
 export default function HomePage() {
   return (
@@ -17,7 +17,7 @@ export default function HomePage() {
             
             {/* Dragon Image with fiery effects */}
             <div className="relative z-10">
-              <SeironImage 
+              <SeironSprite 
                 variant="hero"
                 className="drop-shadow-2xl"
               />

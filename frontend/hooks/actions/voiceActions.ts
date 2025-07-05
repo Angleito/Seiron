@@ -1,7 +1,7 @@
 // Voice state action creators using functional patterns
 import * as O from 'fp-ts/Option'
 import { SpeechError, SpeechRecognitionAction } from '../voice/useSpeechRecognition'
-import { createActionCreator } from '../utils/stateUtils'
+// import { createActionCreator } from '../utils/stateUtils' // Unused import removed
 
 // Action creators with proper typing
 export const voiceActions = {
@@ -78,7 +78,7 @@ export type VoiceThunkAction = (
 
 export const voiceThunks = {
   initializeVoiceRecognition: (): VoiceThunkAction => 
-    async (dispatch, getState) => {
+    async (dispatch, _getState) => {
       try {
         // Check browser support
         if (typeof window === 'undefined') {
@@ -108,7 +108,7 @@ export const voiceThunks = {
     },
     
   processVoiceInput: (transcript: string): VoiceThunkAction =>
-    async (dispatch, getState) => {
+    async (dispatch, _getState) => {
       try {
         // Process and clean transcript
         const cleanedTranscript = transcript.trim().toLowerCase()

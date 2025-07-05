@@ -7,7 +7,7 @@ const logger = {
   error: (message: string, ...args: unknown[]) => console.error(message, ...args)
 }
 import * as O from 'fp-ts/Option'
-import { pipe } from 'fp-ts/function'
+// import { pipe } from 'fp-ts/function' // Currently unused
 
 // Export types for compatibility
 export type QualityLevel = number; // 0-100 quality level

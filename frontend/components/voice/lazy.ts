@@ -8,14 +8,14 @@ import { lazy } from 'react'
 // Main voice interface component
 export const LazyVoiceInterface = lazy(() =>
   import('./VoiceInterface').then(module => ({
-    default: module.VoiceInterface || module.default
+    default: module.default
   }))
 )
 
 // Voice interface example
 export const LazyVoiceInterfaceExample = lazy(() =>
   import('./VoiceInterfaceExample').then(module => ({
-    default: module.VoiceInterfaceExample || module.default
+    default: module.default
   }))
 )
 
@@ -23,7 +23,12 @@ export const LazyVoiceInterfaceExample = lazy(() =>
  * Voice feature availability checker
  */
 export const checkVoiceFeatureAvailability = () => {
-  if (typeof window === 'undefined') return false
+  if (typeof window === 'undefined') return {
+    hasWebSpeech: false,
+    hasAudioContext: false,
+    hasMediaDevices: false,
+    isSupported: false
+  }
   
   const hasWebSpeech = 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window
   const hasAudioContext = 'AudioContext' in window || 'webkitAudioContext' in window
@@ -42,9 +47,9 @@ export const checkVoiceFeatureAvailability = () => {
  */
 export const preloadVoiceComponents = () => {
   // Only preload if voice features are supported
-  const { isSupported } = checkVoiceFeatureAvailability()
+  const availability = checkVoiceFeatureAvailability()
   
-  if (isSupported) {
+  if (availability.isSupported) {
     // Preload voice interface
     import('./VoiceInterface')
     

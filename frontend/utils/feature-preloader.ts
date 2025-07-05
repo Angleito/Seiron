@@ -95,15 +95,14 @@ export const FeaturePreloader = {
 
       case 'chat-features':
         loadPromises.push(
-          import('../components/chat/ChatInterface'),
+          import('../components/chat/chat-interface'),
           import('../components/chat/VoiceEnabledChat')
         )
         break
 
       case 'portfolio-features':
         loadPromises.push(
-          import('../components/portfolio/PortfolioOverview'),
-          import('../components/portfolio/PortfolioAnalytics')
+          import('../components/portfolio/portfolio-sidebar')
         )
         break
     }

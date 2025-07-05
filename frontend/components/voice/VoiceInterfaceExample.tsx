@@ -44,7 +44,9 @@ const VoiceInterfaceExample: React.FC = () => {
         setMessages(prev => [...prev, { role: 'assistant', content: response }])
         
         // Play the response audio
-        await playResponse(response)
+        if (response) {
+          await playResponse(response)
+        }
       } catch (error) {
         console.error('Error processing voice input:', error)
       } finally {
@@ -60,7 +62,7 @@ const VoiceInterfaceExample: React.FC = () => {
   }, [])
 
   // Simulate AI response (replace with actual implementation)
-  const simulateAIResponse = async (input: string): Promise<string> => {
+  const simulateAIResponse = async (_input: string): Promise<string> => {
     await new Promise(resolve => setTimeout(resolve, 1000))
     
     const responses = [
@@ -71,7 +73,7 @@ const VoiceInterfaceExample: React.FC = () => {
       "I've analyzed your request. The dragon's wisdom suggests a balanced approach."
     ]
     
-    return responses[Math.floor(Math.random() * responses.length)]
+    return responses[Math.floor(Math.random() * responses.length)] || 'Dragon wisdom flows through the cosmos.'
   }
 
   return (

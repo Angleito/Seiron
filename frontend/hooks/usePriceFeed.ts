@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Observable, Subject, BehaviorSubject, merge, interval, throwError, of, timer } from 'rxjs';
+import { Observable, Subject, BehaviorSubject, merge, interval, of } from 'rxjs';
 import { 
   switchMap, 
   map, 
@@ -9,7 +9,6 @@ import {
   shareReplay,
   takeUntil,
   tap,
-  filter,
   debounceTime,
   startWith,
   scan
@@ -17,7 +16,7 @@ import {
 import * as E from 'fp-ts/Either';
 import * as O from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
-import * as A from 'fp-ts/Array';
+// import * as A from 'fp-ts/Array'; // Currently unused
 import { pipe } from 'fp-ts/function';
 import { logger } from '@lib/logger';
 import { isDeepStrictEqual } from 'util';
@@ -77,8 +76,11 @@ const clearPriceCache = (): PriceCache => new Map();
 const cleanExpiredEntries = (cache: PriceCache): PriceCache => 
   new Map(
     Array.from(cache.entries())
-      .filter(([_, entry]) => Date.now() <= entry.expiry)
+      .filter(([_key, entry]) => Date.now() <= entry.expiry)
   );
+
+// Function is available for future use
+const _ = cleanExpiredEntries; // Suppress unused warning
 
 // API clients
 const fetchOraclePrice = (asset: Asset): TE.TaskEither<Error, PriceData> =>
@@ -143,6 +145,9 @@ const fetchPythPrice = (asset: Asset): TE.TaskEither<Error, PriceData> =>
         BTC: '0x5678...', // Example ID
         ETH: '0x9abc...'  // Example ID
       };
+      
+      // Suppress unused warning - ids would be used in real implementation
+      const _ = pythIds;
       
       // This is a mock implementation. Real implementation would use Pyth SDK
       const mockPrice = Math.random() * 50000 + 1000; // Random price for demo
@@ -248,7 +253,7 @@ export function usePriceFeed(config: PriceFeedConfig) {
     const allPrices$ = merge(...priceObservables).pipe(
       scan((acc, update) => ({ ...acc, ...update }), {} as Record<Asset, PriceData>),
       debounceTime(100), // Batch updates
-      distinctUntilChanged(isDeepStrictEqual),
+      distinctUntilChanged((a, b) => isDeepStrictEqual(a, b)),
       tap(prices => {
         priceSubject$.current.next(prices);
       }),
