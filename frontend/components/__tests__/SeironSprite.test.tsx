@@ -139,7 +139,7 @@ describe('SeironSprite', () => {
   describe('Component Rendering', () => {
     test('renders without crashing', () => {
       render(<SeironSprite {...defaultProps} />);
-      expect(screen.getByRole('img', { hidden: true })).toBeInTheDocument();
+      expect(document.querySelector('canvas')).toBeInTheDocument();
     });
 
     test('renders with correct size classes', () => {

@@ -270,7 +270,7 @@ export class ChatStreamService {
   }
   
   private handleMessageEvent(event: AgentStreamEvent): void {
-    if (event.type === 'message' && event.data) {
+    if ((event.type as any) === 'message' && event.data) {
       const messageData = event.data as Partial<StreamMessage>
       
       const message: StreamMessage = {

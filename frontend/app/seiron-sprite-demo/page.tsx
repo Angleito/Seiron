@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import SeironSprite from '@/components/SeironSprite'
+import { SeironSprite } from '@/components'
 
 export default function SeironSpriteDemoPage() {
   const [size, setSize] = useState<'sm' | 'md' | 'lg' | 'xl'>('lg')

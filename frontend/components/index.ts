@@ -39,6 +39,7 @@ export type {
 // Seiron Sprite System
 export { default as SeironSprite } from './SeironSprite';
 export { default as SeironSpriteExample } from './SeironSpriteExample';
+export { default as SeironSpriteExamples } from './examples/SeironSpriteExamples';
 
 // Seiron Sprite Types and Configuration
 export type {

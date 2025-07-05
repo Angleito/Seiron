@@ -255,18 +255,23 @@ export function SeironSprite({
         return
       }
       
-      // Check GPU capabilities
-      const debugInfo = (gl as WebGLRenderingContext).getExtension('WEBGL_debug_renderer_info')
-      if (debugInfo) {
-        const renderer = (gl as WebGLRenderingContext).getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
-        const vendor = (gl as WebGLRenderingContext).getParameter(debugInfo.UNMASKED_VENDOR_WEBGL)
+      // Check GPU capabilities (safely)
+      try {
+        const debugInfo = (gl as WebGLRenderingContext).getExtension('WEBGL_debug_renderer_info')
+        if (debugInfo) {
+          const renderer = (gl as WebGLRenderingContext).getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+          const vendor = (gl as WebGLRenderingContext).getParameter(debugInfo.UNMASKED_VENDOR_WEBGL)
         
-        // Simple heuristic for low-end devices
-        const isLowEnd = /intel|software|mesa|llvm/i.test(renderer) || 
-                         /qualcomm|adreno [0-5]/i.test(renderer) ||
-                         navigator.hardwareConcurrency <= 2
-        
-        setIsLowEndDevice(isLowEnd)
+          // Simple heuristic for low-end devices
+          const isLowEnd = /intel|software|mesa|llvm/i.test(renderer) || 
+                           /qualcomm|adreno [0-5]/i.test(renderer) ||
+                           (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2)
+          
+          setIsLowEndDevice(isLowEnd)
+        }
+      } catch (e) {
+        // GPU detection failed, assume standard device
+        setIsLowEndDevice(false)
       }
       
       // Check battery status
