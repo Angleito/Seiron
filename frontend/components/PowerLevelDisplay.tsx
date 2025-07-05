@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Zap, TrendingUp, Crown, Star } from 'lucide-react'
+import { Zap, Crown, Star } from 'lucide-react'
 import { cn } from '@lib/utils'
 
 interface PowerLevelConfig {
@@ -188,13 +188,15 @@ export function PowerLevelDisplay({
 
   // Handle tier changes
   useEffect(() => {
+    if (!currentConfig) return
+    
     if (previousTier && previousTier !== currentConfig.tier) {
       setIsLevelingUp(true)
       onTierChange?.(currentConfig.tier)
       setTimeout(() => setIsLevelingUp(false), 2000)
     }
     setPreviousTier(currentConfig.tier)
-  }, [currentConfig.tier, previousTier, onTierChange])
+  }, [currentConfig?.tier, previousTier, onTierChange, currentConfig])
 
   const sizeClasses = {
     sm: 'text-sm p-3',
@@ -215,6 +217,14 @@ export function PowerLevelDisplay({
       return `${(level / 1000).toFixed(1)}K`
     }
     return level.toLocaleString()
+  }
+
+  if (!currentConfig) {
+    return (
+      <div className={cn("relative p-4 border border-gray-300 rounded-lg", className)}>
+        <p className="text-gray-500">Loading power level...</p>
+      </div>
+    )
   }
 
   return (

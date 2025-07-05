@@ -79,13 +79,13 @@ const DragonBallProgress: React.FC<DragonBallProgressProps> = ({
         {/* Main Ball */}
         <div className={`absolute inset-0 bg-gradient-to-br ${colorClass} ${shadowClass} rounded-full`}>
           {/* Inner Light */}
-          <div className={`absolute inset-1 bg-gradient-to-br ${isActive || isPartial ? colorClass.replace('300', '100').replace('600', '300') : 'from-sei-gray-100 to-sei-gray-200'} rounded-full opacity-70`}></div>
+          <div className={`absolute inset-1 bg-gradient-to-br ${isActive || isPartial ? colorClass?.replace('300', '100').replace('600', '300') : 'from-sei-gray-100 to-sei-gray-200'} rounded-full opacity-70`}></div>
           
           {/* Stars */}
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="relative">
-              {Array.from({ length: starCounts[index] }, (_, starIndex) => {
-                const angle = (starIndex * (360 / starCounts[index])) * (Math.PI / 180);
+              {Array.from({ length: starCounts[index] ?? 0 }, (_, starIndex) => {
+                const angle = (starIndex * (360 / (starCounts[index] ?? 1))) * (Math.PI / 180);
                 const radius = size === 'sm' ? 6 : size === 'md' ? 8 : 12;
                 const x = Math.cos(angle) * radius;
                 const y = Math.sin(angle) * radius;

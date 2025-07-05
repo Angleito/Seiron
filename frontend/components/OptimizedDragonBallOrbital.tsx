@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react'
+import React, { useRef, useEffect, useState, useCallback } from 'react'
 import { useDragonInteraction } from './dragon/DragonInteractionController'
 import { useOrbitalPerformance, useAdaptiveOrbitalQuality } from '@hooks/useOrbitalPerformance'
 import {
@@ -15,8 +15,7 @@ import {
   updateBallPhysics,
   calculateOrbitalSpeed,
   generateOrbitalParams,
-  calculateWishPath,
-  SpatialGrid
+  spatialGridOps
 } from '@utils/dragonBallPhysics'
 
 interface OptimizedDragonBallOrbitalProps {
@@ -48,16 +47,15 @@ export function OptimizedDragonBallOrbital({
   showPerformanceStats = false
 }: OptimizedDragonBallOrbitalProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationFrameRef = useRef<number>()
   const lastTimeRef = useRef<number>(0)
   const frameCountRef = useRef<number>(0)
-  const spatialGrid = useRef(new SpatialGrid())
+  const spatialGridRef = useRef(spatialGridOps.createSpatialGrid())
   
-  const { state: dragonState, intensity, performanceMode } = useDragonInteraction()
+  const { state: dragonState, intensity } = useDragonInteraction()
   
   // Performance monitoring
-  const { metrics, isOptimal } = useOrbitalPerformance({
+  const { metrics } = useOrbitalPerformance({
     onPerformanceChange: (m) => {
       if (m.performanceScore < 70) {
         console.warn('Dragon Ball Orbital System performance degraded:', m)
@@ -98,7 +96,6 @@ export function OptimizedDragonBallOrbital({
   const [hoveredBallId, setHoveredBallId] = useState<number | null>(null)
   const [clickPosition, setClickPosition] = useState<Vector2D | null>(null)
   const [isWishing, setIsWishing] = useState(false)
-  const [wishProgress, setWishProgress] = useState(0)
   
   // Optimized physics update with frame skipping
   const updatePhysics = useCallback((currentTime: number) => {
@@ -120,16 +117,18 @@ export function OptimizedDragonBallOrbital({
     
     // Clear spatial grid
     if (adaptiveQuality.enableCollisions) {
-      spatialGrid.current.clear()
+      spatialGridRef.current = spatialGridOps.clearSpatialGrid()
     }
     
     setDragonBalls(prevBalls => {
       const centerMass = dragonState === 'active' ? 2000 : 1000
+      
+      // Build spatial grid from all balls for collision detection
+      if (adaptiveQuality.enableCollisions) {
+        spatialGridRef.current = spatialGridOps.buildSpatialGrid(prevBalls, 50)
+      }
+      
       const newBalls = prevBalls.map((ball, index) => {
-        // Add to spatial grid if collisions enabled
-        if (adaptiveQuality.enableCollisions) {
-          spatialGrid.current.add(ball)
-        }
         
         const forces: Vector2D[] = []
         
@@ -207,16 +206,19 @@ export function OptimizedDragonBallOrbital({
       // Collision detection if enabled
       if (adaptiveQuality.enableCollisions && !isWishing) {
         for (let i = 0; i < newBalls.length; i++) {
-          const nearbyBalls = spatialGrid.current.getNearby(newBalls[i].position)
+          if (!newBalls[i]) continue
+          const nearbyBalls = spatialGridOps.getNearbyBalls(spatialGridRef.current, newBalls[i].position, 50)
           
           for (const other of nearbyBalls) {
-            if (other.id <= newBalls[i].id) continue
+            if (!newBalls[i] || other.id <= newBalls[i].id) continue
             
             const j = newBalls.findIndex(b => b.id === other.id)
-            if (detectCollision(newBalls[i], newBalls[j], ballSize / 2)) {
+            if (j >= 0 && detectCollision(newBalls[i], newBalls[j], ballSize / 2)) {
               const { v1, v2 } = resolveCollision(newBalls[i], newBalls[j])
-              newBalls[i].velocity = v1
-              newBalls[j].velocity = v2
+              if (newBalls[i] && newBalls[j]) {
+                newBalls[i].velocity = v1
+                newBalls[j].velocity = v2
+              }
             }
           }
         }
@@ -251,7 +253,7 @@ export function OptimizedDragonBallOrbital({
   }, [updatePhysics])
   
   // Handle interactions
-  const handleBallClick = useCallback((ballId: number, event: React.MouseEvent) => {
+  const handleBallClick = useCallback((_ballId: number, event: React.MouseEvent) => {
     event.stopPropagation()
     const rect = containerRef.current?.getBoundingClientRect()
     if (!rect) return

@@ -1,7 +1,13 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { logger } from '@lib/logger'
+import { useReducer, useEffect, useRef, useCallback } from 'react'
+// Note: Logger import will be resolved by build system
+const logger = {
+  debug: (message: string, ...args: unknown[]) => console.debug(message, ...args),
+  error: (message: string, ...args: unknown[]) => console.error(message, ...args)
+}
+import * as O from 'fp-ts/Option'
+import { pipe } from 'fp-ts/function'
 
 // Export types for compatibility
 export type QualityLevel = number; // 0-100 quality level
@@ -18,17 +24,157 @@ interface PerformanceMetrics {
   fps: number
   frameTime: number
   droppedFrames: number
-  gpuMemory?: number
-  cpuUsage?: number
-  memoryUsage?: number
-  networkLatency?: number
+  gpuMemory: O.Option<number>
+  cpuUsage: O.Option<number>
+  memoryUsage: O.Option<number>
+  networkLatency: O.Option<number>
   lastUpdate: number
 }
+
+interface AnimationPerformanceState {
+  performanceMode: PerformanceMode
+  metrics: PerformanceMetrics
+  isLowPerformance: boolean
+  isMonitoring: boolean
+  qualityLevel: number
+  shouldReduceMotion: boolean
+  deviceCapabilities: O.Option<DeviceCapabilities>
+}
+
+interface DeviceCapabilities {
+  hardwareConcurrency: number
+  deviceMemory: number
+  connection: string
+  reducedMotion: boolean
+  colorGamut: string
+  hdr: boolean
+}
+
+// Action types for the reducer
+export type AnimationPerformanceAction =
+  | { type: 'SET_PERFORMANCE_MODE'; payload: PerformanceMode }
+  | { type: 'UPDATE_METRICS'; payload: Partial<PerformanceMetrics> }
+  | { type: 'SET_LOW_PERFORMANCE'; payload: boolean }
+  | { type: 'SET_MONITORING'; payload: boolean }
+  | { type: 'SET_QUALITY_LEVEL'; payload: number }
+  | { type: 'SET_REDUCED_MOTION'; payload: boolean }
+  | { type: 'SET_DEVICE_CAPABILITIES'; payload: DeviceCapabilities }
+  | { type: 'UPDATE_FPS'; payload: number }
+  | { type: 'UPDATE_FRAME_TIME'; payload: number }
+  | { type: 'INCREMENT_DROPPED_FRAMES'; payload: number }
+  | { type: 'RESET_METRICS' }
 
 interface UseAnimationPerformanceOptions {
   targetFPS?: number
   measureInterval?: number
   autoAdjust?: boolean
+}
+
+// Animation Performance Reducer
+const animationPerformanceReducer = (
+  state: AnimationPerformanceState,
+  action: AnimationPerformanceAction
+): AnimationPerformanceState => {
+  switch (action.type) {
+    case 'SET_PERFORMANCE_MODE':
+      return {
+        ...state,
+        performanceMode: action.payload
+      }
+    case 'UPDATE_METRICS':
+      return {
+        ...state,
+        metrics: {
+          ...state.metrics,
+          ...action.payload,
+          lastUpdate: Date.now()
+        }
+      }
+    case 'SET_LOW_PERFORMANCE':
+      return {
+        ...state,
+        isLowPerformance: action.payload
+      }
+    case 'SET_MONITORING':
+      return {
+        ...state,
+        isMonitoring: action.payload
+      }
+    case 'SET_QUALITY_LEVEL':
+      return {
+        ...state,
+        qualityLevel: Math.max(0, Math.min(100, action.payload))
+      }
+    case 'SET_REDUCED_MOTION':
+      return {
+        ...state,
+        shouldReduceMotion: action.payload
+      }
+    case 'SET_DEVICE_CAPABILITIES':
+      return {
+        ...state,
+        deviceCapabilities: O.some(action.payload)
+      }
+    case 'UPDATE_FPS':
+      return {
+        ...state,
+        metrics: {
+          ...state.metrics,
+          fps: action.payload,
+          lastUpdate: Date.now()
+        }
+      }
+    case 'UPDATE_FRAME_TIME':
+      return {
+        ...state,
+        metrics: {
+          ...state.metrics,
+          frameTime: action.payload,
+          lastUpdate: Date.now()
+        }
+      }
+    case 'INCREMENT_DROPPED_FRAMES':
+      return {
+        ...state,
+        metrics: {
+          ...state.metrics,
+          droppedFrames: state.metrics.droppedFrames + action.payload,
+          lastUpdate: Date.now()
+        }
+      }
+    case 'RESET_METRICS':
+      return {
+        ...state,
+        metrics: {
+          ...initialMetrics,
+          lastUpdate: Date.now()
+        }
+      }
+    default:
+      return state
+  }
+}
+
+// Initial state
+const initialMetrics: PerformanceMetrics = {
+  fps: 60,
+  frameTime: 16.67,
+  droppedFrames: 0,
+  gpuMemory: O.none,
+  cpuUsage: O.none,
+  memoryUsage: O.none,
+  networkLatency: O.none,
+  lastUpdate: Date.now()
+}
+
+const initialAnimationState: AnimationPerformanceState = {
+  performanceMode: 'full',
+  metrics: initialMetrics,
+  isLowPerformance: false,
+  isMonitoring: true,
+  qualityLevel: 75,
+  shouldReduceMotion: false,
+  deviceCapabilities: O.none
 }
 
 export function useAnimationPerformance(options: UseAnimationPerformanceOptions = {}) {
@@ -38,17 +184,7 @@ export function useAnimationPerformance(options: UseAnimationPerformanceOptions 
     autoAdjust = true
   } = options
 
-  const [performanceMode, setPerformanceMode] = useState<PerformanceMode>('full')
-  const [metrics, setMetrics] = useState<PerformanceMetrics>({
-    fps: 60,
-    frameTime: 16.67,
-    droppedFrames: 0,
-    cpuUsage: 0,
-    memoryUsage: 0,
-    networkLatency: 0,
-    lastUpdate: Date.now()
-  })
-  const [isLowPerformance, setIsLowPerformance] = useState(false)
+  const [state, dispatch] = useReducer(animationPerformanceReducer, initialAnimationState)
 
   const frameCountRef = useRef(0)
   const lastTimeRef = useRef(performance.now())
@@ -69,37 +205,29 @@ export function useAnimationPerformance(options: UseAnimationPerformanceOptions 
       const frameTime = deltaTime / frameCountRef.current
       
       // Only update if values have changed significantly
-      setMetrics(prev => {
-        const newFps = Math.round(fps)
-        const newFrameTime = Math.round(frameTime * 100) / 100
-        
-        if (prev.fps === newFps && prev.frameTime === newFrameTime && prev.droppedFrames === droppedFramesRef.current) {
-          return prev // No update needed
-        }
-        
-        return {
-          ...prev,
+      const newFps = Math.round(fps)
+      const newFrameTime = Math.round(frameTime * 100) / 100
+      
+      if (state.metrics.fps !== newFps || state.metrics.frameTime !== newFrameTime || state.metrics.droppedFrames !== droppedFramesRef.current) {
+        dispatch({ type: 'UPDATE_METRICS', payload: {
           fps: newFps,
           frameTime: newFrameTime,
           droppedFrames: droppedFramesRef.current
-        }
-      })
+        }})
+      }
 
-      // Auto-adjust performance mode with state change prevention
+      // Auto-adjust performance mode
       if (autoAdjust) {
-        setPerformanceMode(prev => {
-          if (fps < targetFPS * 0.5 && prev !== 'minimal') {
-            setIsLowPerformance(true)
-            return 'minimal'
-          } else if (fps < targetFPS * 0.8 && prev !== 'reduced') {
-            setIsLowPerformance(true)
-            return 'reduced'
-          } else if (fps >= targetFPS * 0.8 && prev !== 'full') {
-            setIsLowPerformance(false)
-            return 'full'
-          }
-          return prev // No change needed
-        })
+        if (fps < targetFPS * 0.5 && state.performanceMode !== 'minimal') {
+          dispatch({ type: 'SET_PERFORMANCE_MODE', payload: 'minimal' })
+          dispatch({ type: 'SET_LOW_PERFORMANCE', payload: true })
+        } else if (fps < targetFPS * 0.8 && state.performanceMode !== 'reduced') {
+          dispatch({ type: 'SET_PERFORMANCE_MODE', payload: 'reduced' })
+          dispatch({ type: 'SET_LOW_PERFORMANCE', payload: true })
+        } else if (fps >= targetFPS * 0.8 && state.performanceMode !== 'full') {
+          dispatch({ type: 'SET_PERFORMANCE_MODE', payload: 'full' })
+          dispatch({ type: 'SET_LOW_PERFORMANCE', payload: false })
+        }
       }
 
       // Reset counters
@@ -118,7 +246,7 @@ export function useAnimationPerformance(options: UseAnimationPerformanceOptions 
         const adapter = await (navigator as any).gpu.requestAdapter()
         if (adapter && 'limits' in adapter) {
           const gpuMemory = adapter.limits.maxBufferSize / (1024 * 1024 * 1024) // Convert to GB
-          setMetrics(prev => ({ ...prev, gpuMemory }))
+          dispatch({ type: 'UPDATE_METRICS', payload: { gpuMemory: O.some(gpuMemory) }})
         }
       } catch (error) {
         logger.debug('GPU memory check not available')
@@ -228,12 +356,15 @@ export function useAnimationPerformance(options: UseAnimationPerformanceOptions 
     }
 
     // Determine initial performance mode based on capabilities
+    dispatch({ type: 'SET_DEVICE_CAPABILITIES', payload: capabilities })
+    dispatch({ type: 'SET_REDUCED_MOTION', payload: capabilities.reducedMotion })
+    
     if (capabilities.reducedMotion) {
-      setPerformanceMode('minimal')
+      dispatch({ type: 'SET_PERFORMANCE_MODE', payload: 'minimal' })
     } else if (capabilities.hardwareConcurrency < 4 || capabilities.deviceMemory < 4) {
-      setPerformanceMode('reduced')
+      dispatch({ type: 'SET_PERFORMANCE_MODE', payload: 'reduced' })
     } else {
-      setPerformanceMode('full')
+      dispatch({ type: 'SET_PERFORMANCE_MODE', payload: 'full' })
     }
 
     return capabilities
@@ -246,12 +377,12 @@ export function useAnimationPerformance(options: UseAnimationPerformanceOptions 
 
   // Manual performance mode control
   const setMode = useCallback((mode: PerformanceMode) => {
-    setPerformanceMode(mode)
+    dispatch({ type: 'SET_PERFORMANCE_MODE', payload: mode })
   }, [])
 
   // Performance hints for specific animations
   const shouldAnimate = useCallback((animationType: 'complex' | 'simple' | 'particle') => {
-    switch (performanceMode) {
+    switch (state.performanceMode) {
       case 'minimal':
         return animationType === 'simple'
       case 'reduced':
@@ -261,11 +392,11 @@ export function useAnimationPerformance(options: UseAnimationPerformanceOptions 
       default:
         return true
     }
-  }, [performanceMode])
+  }, [state.performanceMode])
 
   // Get optimized animation duration
   const getAnimationDuration = useCallback((baseDuration: number) => {
-    switch (performanceMode) {
+    switch (state.performanceMode) {
       case 'minimal':
         return baseDuration * 0.5 // Faster animations
       case 'reduced':
@@ -275,11 +406,11 @@ export function useAnimationPerformance(options: UseAnimationPerformanceOptions 
       default:
         return baseDuration
     }
-  }, [performanceMode])
+  }, [state.performanceMode])
 
   // Get particle count based on performance
   const getParticleCount = useCallback((baseCount: number) => {
-    switch (performanceMode) {
+    switch (state.performanceMode) {
       case 'minimal':
         return Math.floor(baseCount * 0.2)
       case 'reduced':
@@ -289,44 +420,58 @@ export function useAnimationPerformance(options: UseAnimationPerformanceOptions 
       default:
         return baseCount
     }
-  }, [performanceMode])
+  }, [state.performanceMode])
+
+  const resetMetrics = useCallback(() => {
+    // Reset frame counting
+    frameCountRef.current = 0
+    droppedFramesRef.current = 0
+    lastTimeRef.current = performance.now()
+    
+    dispatch({ type: 'RESET_METRICS' })
+  }, [])
+
+  const startMonitoring = useCallback(() => {
+    dispatch({ type: 'SET_MONITORING', payload: true })
+  }, [])
+
+  const stopMonitoring = useCallback(() => {
+    dispatch({ type: 'SET_MONITORING', payload: false })
+  }, [])
+
+  const forceQualityLevel = useCallback((level: number) => {
+    dispatch({ type: 'SET_QUALITY_LEVEL', payload: level })
+  }, [])
 
   return {
-    performanceMode,
-    metrics,
-    isLowPerformance,
+    performanceMode: state.performanceMode,
+    metrics: state.metrics,
+    isLowPerformance: state.isLowPerformance,
     setMode,
     shouldAnimate,
     getAnimationDuration,
     getParticleCount,
-    deviceCapabilities: getDeviceCapabilities(),
-    // Additional compatibility properties for debugger
-    qualityLevel: 75, // Default quality level
-    isMonitoring: true,
-    shouldReduceMotion: false,
-    startMonitoring: () => {},
-    stopMonitoring: () => {},
-    forceQualityLevel: (level: number) => {},
-    resetMetrics: () => {
-      // Reset frame counting
-      frameCountRef.current = 0
-      droppedFramesRef.current = 0
-      lastTimeRef.current = performance.now()
-      
-      setMetrics({
-        fps: 60,
-        frameTime: 16.67,
-        droppedFrames: 0,
-        lastUpdate: Date.now(),
-        cpuUsage: 0,
-        networkLatency: 0
-      })
-    }
+    deviceCapabilities: O.getOrElse(() => getDeviceCapabilities())(state.deviceCapabilities),
+    // Additional properties
+    qualityLevel: state.qualityLevel,
+    isMonitoring: state.isMonitoring,
+    shouldReduceMotion: state.shouldReduceMotion,
+    startMonitoring,
+    stopMonitoring,
+    forceQualityLevel,
+    resetMetrics,
+    // Functional getters using fp-ts Option
+    getGPUMemory: () => state.metrics.gpuMemory,
+    getCPUUsage: () => state.metrics.cpuUsage,
+    getMemoryUsage: () => state.metrics.memoryUsage,
+    getNetworkLatency: () => state.metrics.networkLatency,
+    hasGPUInfo: () => O.isSome(state.metrics.gpuMemory),
+    getDeviceCapabilities: () => state.deviceCapabilities
   }
 }
 
 // Hook for throttling animations based on performance
-export function useAnimationThrottle(callback: () => void, dependencies: any[] = []) {
+export function useAnimationThrottle(callback: () => void, dependencies: unknown[] = []) {
   const { performanceMode, metrics } = useAnimationPerformance()
   const animationFrameRef = useRef<number>()
   const lastExecutionRef = useRef(0)

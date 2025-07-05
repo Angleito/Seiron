@@ -1,4 +1,4 @@
-import type { DragonAnimationConfig, DragonBallConfig, ResponsiveBreakpoint, PerformanceMode } from './types';
+import type { DragonAnimationConfig, DragonBallConfig, ResponsiveBreakpointConfig, PerformanceMode } from './types';
 
 // Dragon Size Configuration
 export const DRAGON_SIZE_CONFIG = {
@@ -116,7 +116,7 @@ export const DRAGON_BALL_PRESETS: Record<string, DragonBallConfig> = {
 } as const;
 
 // Responsive Breakpoints
-export const RESPONSIVE_BREAKPOINTS: ResponsiveBreakpoint[] = [
+export const RESPONSIVE_BREAKPOINTS: ResponsiveBreakpointConfig[] = [
   {
     name: 'xs',
     minWidth: 0,

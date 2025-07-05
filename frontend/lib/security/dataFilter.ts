@@ -15,11 +15,11 @@ export interface FilterConfig {
   maskSensitiveData: boolean
   allowedFields: string[]
   sensitivePatterns: RegExp[]
-  customFilters: Array<(data: any) => any>
+  customFilters: Array<(data: unknown) => unknown>
 }
 
 export interface FilterResult {
-  filtered: any
+  filtered: unknown
   sensitiveFieldsDetected: string[]
   redactedCount: number
 }
@@ -86,7 +86,7 @@ const isSensitiveField = (fieldName: string, patterns: RegExp[]): boolean => {
 /**
  * Mask sensitive string values
  */
-const maskValue = (value: any): string => {
+const maskValue = (value: unknown): string => {
   if (typeof value === 'string') {
     if (value.length <= 4) return '***'
     if (value.length <= 8) return `${value.slice(0, 2)}***`
@@ -98,7 +98,7 @@ const maskValue = (value: any): string => {
 /**
  * Check if value appears to be sensitive data
  */
-const isValueSensitive = (value: any): boolean => {
+const isValueSensitive = (value: unknown): boolean => {
   if (typeof value === 'string') {
     // Check for common sensitive data patterns
     const sensitiveValuePatterns = [
@@ -188,11 +188,11 @@ const filterObject = (
  * Filter an array recursively
  */
 const filterArray = (
-  arr: any[],
+  arr: unknown[],
   config: FilterConfig,
   path: string[] = []
 ): FilterResult => {
-  const filtered: any[] = []
+  const filtered: unknown[] = []
   let sensitiveFieldsDetected: string[] = []
   let redactedCount = 0
 
@@ -237,7 +237,7 @@ const filterArray = (
  * Filter sensitive data from any input
  */
 export const filterSensitiveData = (
-  data: any,
+  data: unknown,
   config: Partial<FilterConfig> = {}
 ): FilterResult => {
   const finalConfig = { ...DEFAULT_CONFIG, ...config }
@@ -281,7 +281,7 @@ export const filterSensitiveData = (
 /**
  * Safe console.log that filters sensitive data
  */
-export const safeLog = (message: string, data?: any, config?: Partial<FilterConfig>): void => {
+export const safeLog = (message: string, data?: unknown, config?: Partial<FilterConfig>): void => {
   if (data === undefined) {
     console.log(message)
     return
@@ -299,20 +299,20 @@ export const safeLog = (message: string, data?: any, config?: Partial<FilterConf
  * Create a custom filter function
  */
 export const createCustomFilter = (config: Partial<FilterConfig> = {}) => {
-  return (data: any) => filterSensitiveData(data, config)
+  return (data: unknown) => filterSensitiveData(data, config)
 }
 
 /**
  * Prepare data for safe logging (returns just the filtered data)
  */
-export const prepareForLogging = (data: any, config?: Partial<FilterConfig>): any => {
+export const prepareForLogging = (data: unknown, config?: Partial<FilterConfig>): unknown => {
   return filterSensitiveData(data, config).filtered
 }
 
 /**
  * Check if data contains sensitive information
  */
-export const containsSensitiveData = (data: any, config?: Partial<FilterConfig>): boolean => {
+export const containsSensitiveData = (data: unknown, config?: Partial<FilterConfig>): boolean => {
   const result = filterSensitiveData(data, config)
   return result.sensitiveFieldsDetected.length > 0
 }
@@ -320,7 +320,7 @@ export const containsSensitiveData = (data: any, config?: Partial<FilterConfig>)
 /**
  * Get statistics about sensitive data detection
  */
-export const getSensitiveDataStats = (data: any, config?: Partial<FilterConfig>): {
+export const getSensitiveDataStats = (data: unknown, config?: Partial<FilterConfig>): {
   hasSensitiveData: boolean
   sensitiveFieldsCount: number
   sensitiveFields: string[]
@@ -342,7 +342,7 @@ export const getSensitiveDataStats = (data: any, config?: Partial<FilterConfig>)
 /**
  * Validate that data is safe for logging
  */
-export const validateSafeForLogging = (data: any): E.Either<string, any> => {
+export const validateSafeForLogging = (data: unknown): E.Either<string, unknown> => {
   if (containsSensitiveData(data)) {
     return E.left('Data contains sensitive information and should not be logged')
   }
@@ -352,7 +352,7 @@ export const validateSafeForLogging = (data: any): E.Either<string, any> => {
 /**
  * Validate and prepare data for logging
  */
-export const validateAndPrepareForLogging = (data: any, config?: Partial<FilterConfig>): E.Either<string, any> => {
+export const validateAndPrepareForLogging = (data: unknown, config?: Partial<FilterConfig>): E.Either<string, unknown> => {
   try {
     const filtered = prepareForLogging(data, config)
     return E.right(filtered)

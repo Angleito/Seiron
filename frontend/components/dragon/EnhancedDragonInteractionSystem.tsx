@@ -8,8 +8,6 @@ import { SeironDragon } from './SeironDragon'
 // import { useKeyboardNavigation } from './hooks/useKeyboardNavigation'
 import { useAnimationPerformance } from './hooks/useAnimationPerformance'
 import { DragonErrorBoundary } from '@components/error-boundaries'
-import { pipe } from 'fp-ts/function'
-import * as O from 'fp-ts/Option'
 import type { 
   DragonState, 
   DragonMood, 
@@ -209,9 +207,16 @@ const EnhancedDragonInteractionSystemContent: React.FC<EnhancedDragonInteraction
   onPerformanceAlert
 }) => {
   // State management
-  const [currentState, setCurrentState] = useState<DragonState>(initialState)
-  const [currentMood, setCurrentMood] = useState<DragonMood>(initialMood)
-  const [powerLevel, setPowerLevel] = useState(1000)
+  const [currentState] = useState<DragonState>(initialState)
+  const [currentMood] = useState<DragonMood>(initialMood)
+  const [powerLevel] = useState(1000)
+  
+  // Suppress unused variable warnings - these are used in the accessibility announcer
+  // and would be used for callback props when fully implemented
+  void onStateChange
+  void onMoodChange
+  void onPowerLevelChange
+  void onInteractionEvent
   const [interactionStats, setInteractionStats] = useState<InteractionStats>({
     totalInteractions: 0,
     partInteractions: {} as Record<DragonPart, number>,

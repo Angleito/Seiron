@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import * as O from 'fp-ts/Option'
+import { pipe } from 'fp-ts/function'
 import { useAnimationPerformance, type QualityLevel } from '../hooks/useAnimationPerformance'
 
 interface AnimationPerformanceDebuggerProps {
@@ -135,11 +137,11 @@ export function AnimationPerformanceDebugger({
             <div className="space-y-1 text-xs">
               <div className="flex justify-between">
                 <span className="text-gray-400">CPU Usage:</span>
-                <span className="text-white font-mono">{metrics.cpuUsage}%</span>
+                <span className="text-white font-mono">{pipe(metrics.cpuUsage, O.getOrElse(() => 0))}%</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Memory:</span>
-                <span className="text-white font-mono">{metrics.memoryUsage}%</span>
+                <span className="text-white font-mono">{pipe(metrics.memoryUsage, O.getOrElse(() => 0))}%</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Reduced Motion:</span>

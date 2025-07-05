@@ -402,7 +402,7 @@ describe('usePriceFeed', () => {
   describe('Observable streams', () => {
     it('should provide price stream for all assets', async () => {
       const assets: Asset[] = ['SEI', 'BTC'];
-      const emissions: any[] = [];
+      const emissions: unknown[] = [];
 
       (global.fetch as jest.Mock).mockImplementation((url: string) => {
         const assetMatch = url.match(/asset=(\w+)/);
@@ -435,7 +435,7 @@ describe('usePriceFeed', () => {
 
     it('should provide individual asset price stream', async () => {
       const asset: Asset = 'ETH';
-      const emissions: any[] = [];
+      const emissions: unknown[] = [];
 
       (global.fetch as jest.Mock).mockImplementation(() => {
         return Promise.resolve({

@@ -6,7 +6,7 @@ import { WagmiProvider, createConfig } from '@privy-io/wagmi'
 import { http } from 'viem'
 import { privyConfig, seiMainnet } from '@config/privy'
 import { DragonInteractionProvider } from '@components/dragon/DragonInteractionController'
-import { WalletProvider } from '@/contexts/WalletContext'
+import { WalletProvider } from '../contexts/WalletContext'
 import { RootErrorBoundary } from '@components/error-boundaries'
 import { logger } from '@lib/logger'
 

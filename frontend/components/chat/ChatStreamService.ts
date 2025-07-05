@@ -20,9 +20,9 @@ import * as A from 'fp-ts/Array'
 import * as Ord from 'fp-ts/Ord'
 import * as N from 'fp-ts/number'
 import { pipe } from 'fp-ts/function'
-import { AgentMessage, AgentStreamEvent, AgentType } from '@/types/agent'
-import { getOrchestrator, AdapterAction } from '@/lib/orchestrator-client'
-import { logger } from '@/lib/logger'
+import { AgentMessage, AgentStreamEvent, AgentType } from '../../types/agent'
+import { getOrchestrator, AdapterAction } from '@lib/orchestrator-client'
+import { logger } from '@lib/logger'
 
 // Enhanced message types for streaming
 export interface StreamMessage extends AgentMessage {

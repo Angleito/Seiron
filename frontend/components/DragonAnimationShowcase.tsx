@@ -1,16 +1,14 @@
 'use client'
 
-import React, { useState, useMemo, useCallback } from 'react'
+import React, { useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { EnhancedDragonAnimation } from './EnhancedDragonAnimation'
 import { useDragonAnimation, DragonState, DragonMood } from '@hooks/useDragonAnimation'
 
 function DragonAnimationShowcaseInternal() {
-  const [showAdvanced, setShowAdvanced] = useState(false)
   const {
     dragonState,
     dragonMood,
-    controls,
     setDragonState,
     setDragonMood,
     triggerSpecialAnimation,

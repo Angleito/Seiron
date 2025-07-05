@@ -14,8 +14,12 @@
     "test:performance": "jest --config=jest.performance.config.js",
     "test:accessibility": "jest --config=jest.accessibility.config.js",
     "test:visual": "jest --config=jest.visual.config.js",
-    "test:all": "npm run test && npm run test:performance && npm run test:accessibility",
-    "test:ci": "jest --ci --coverage --watchAll=false"
+    "test:bundle": "node scripts/test-bundle-optimization.js",
+    "test:lazy": "node scripts/test-lazy-loading.js",
+    "test:all": "npm run test && npm run test:performance && npm run test:accessibility && npm run test:bundle",
+    "test:ci": "jest --ci --coverage --watchAll=false",
+    "analyze:bundle": "npm run build && npx vite-bundle-analyzer dist",
+    "preload:features": "node scripts/preload-features.js"
   },
   "overrides": {
     "ox": "0.8.1",

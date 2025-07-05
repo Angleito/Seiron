@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { Send, Sparkles, Search, TrendingUp, Activity, Zap } from 'lucide-react'
 import { cn } from '@lib/utils'
-import { AgentStreamEvent } from '@/types/agent'
+import { AgentStreamEvent } from '../../types/agent'
 import { getOrchestrator } from '@lib/orchestrator-client'
 import { ChatStreamService, StreamMessage, TypingIndicator, ConnectionStatus } from './ChatStreamService'
 import { Subscription } from 'rxjs'

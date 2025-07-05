@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ResponsiveDragonAnimation } from './ResponsiveDragonAnimation'
 import { useResponsive } from '@hooks/useResponsive'
 
@@ -22,7 +22,7 @@ export function AccessibleDragonAnimation({
   highContrastMode = 'auto'
 }: AccessibleDragonAnimationProps) {
   const { prefersReducedMotion, isHighContrast } = useResponsive()
-  const [dragonState, setDragonState] = useState<'idle' | 'active' | 'powered'>('idle')
+  const [dragonState] = useState<'idle' | 'active' | 'powered'>('idle')
   const [announcement, setAnnouncement] = useState('')
   const announcementTimeoutRef = useRef<NodeJS.Timeout>()
 
@@ -30,21 +30,21 @@ export function AccessibleDragonAnimation({
   const shouldUseHighContrast = highContrastMode === 'always' || 
     (highContrastMode === 'auto' && isHighContrast)
 
-  // Make announcements for screen readers
-  const announce = (message: string) => {
-    if (!announceStateChanges) return
-    
-    setAnnouncement(message)
-    
-    // Clear announcement after a delay to allow re-announcement of same message
-    if (announcementTimeoutRef.current) {
-      clearTimeout(announcementTimeoutRef.current)
-    }
-    
-    announcementTimeoutRef.current = setTimeout(() => {
-      setAnnouncement('')
-    }, 100)
-  }
+  // Make announcements for screen readers (currently unused but available for future use)
+  // const announce = (message: string) => {
+  //   if (!announceStateChanges) return
+  //   
+  //   setAnnouncement(message)
+  //   
+  //   // Clear announcement after a delay to allow re-announcement of same message
+  //   if (announcementTimeoutRef.current) {
+  //     clearTimeout(announcementTimeoutRef.current)
+  //   }
+  //   
+  //   announcementTimeoutRef.current = setTimeout(() => {
+  //     setAnnouncement('')
+  //   }, 100)
+  // }
 
   // Keyboard navigation instructions
   const keyboardInstructions = `

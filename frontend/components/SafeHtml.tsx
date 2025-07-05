@@ -1,4 +1,3 @@
-import React from 'react';
 import { sanitizeHtml, sanitizeText, sanitizeChatMessage, sanitizeVoiceTranscript, sanitizeTransactionDescription, SanitizeConfig, SANITIZE_CONFIGS } from '@lib/sanitize';
 
 interface SafeHtmlProps {

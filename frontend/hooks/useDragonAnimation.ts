@@ -1,7 +1,12 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
-import { useAnimation, AnimationControls } from 'framer-motion'
+import { useEffect, useReducer, useCallback, useRef } from 'react'
+import { useAnimation } from 'framer-motion'
+import * as O from 'fp-ts/Option'
+import { pipe } from 'fp-ts/function'
+
+// Use ReturnType to infer the type from useAnimation hook
+type AnimationControls = ReturnType<typeof useAnimation>
 
 export type DragonState = 'idle' | 'attention' | 'ready' | 'active' | 'sleeping' | 'awakening'
 export type DragonMood = 'neutral' | 'happy' | 'excited' | 'powerful' | 'mystical'
@@ -13,6 +18,31 @@ interface DragonAnimationConfig {
   enableTimeBasedStates?: boolean
 }
 
+interface DragonAnimationState {
+  dragonState: DragonState
+  dragonMood: DragonMood
+  powerLevel: number
+  isCharging: boolean
+  lastTransitionTime: number
+  activeTimeouts: number[]
+  activeIntervals: number[]
+}
+
+// Action types for the reducer
+export type DragonAnimationAction =
+  | { type: 'SET_DRAGON_STATE'; payload: DragonState }
+  | { type: 'SET_DRAGON_MOOD'; payload: DragonMood }
+  | { type: 'SET_POWER_LEVEL'; payload: number }
+  | { type: 'SET_IS_CHARGING'; payload: boolean }
+  | { type: 'INCREMENT_POWER'; payload: number }
+  | { type: 'DECREMENT_POWER'; payload: number }
+  | { type: 'ADD_TIMEOUT'; payload: number }
+  | { type: 'ADD_INTERVAL'; payload: number }
+  | { type: 'CLEAR_TIMEOUTS' }
+  | { type: 'CLEAR_INTERVALS' }
+  | { type: 'UPDATE_TRANSITION_TIME' }
+  | { type: 'RESET_STATE' }
+
 interface DragonAnimationReturn {
   dragonState: DragonState
   dragonMood: DragonMood
@@ -22,6 +52,90 @@ interface DragonAnimationReturn {
   triggerSpecialAnimation: (animation: string) => void
   powerLevel: number
   isCharging: boolean
+  // Functional getters
+  canTransition: () => boolean
+  getStateHistory: () => DragonState[]
+  getPowerPercentage: () => number
+}
+
+// Dragon Animation Reducer
+const dragonAnimationReducer = (
+  state: DragonAnimationState,
+  action: DragonAnimationAction
+): DragonAnimationState => {
+  switch (action.type) {
+    case 'SET_DRAGON_STATE':
+      return {
+        ...state,
+        dragonState: action.payload,
+        lastTransitionTime: Date.now()
+      }
+    case 'SET_DRAGON_MOOD':
+      return {
+        ...state,
+        dragonMood: action.payload
+      }
+    case 'SET_POWER_LEVEL':
+      return {
+        ...state,
+        powerLevel: Math.max(0, Math.min(100, action.payload))
+      }
+    case 'SET_IS_CHARGING':
+      return {
+        ...state,
+        isCharging: action.payload
+      }
+    case 'INCREMENT_POWER':
+      return {
+        ...state,
+        powerLevel: Math.min(100, state.powerLevel + action.payload)
+      }
+    case 'DECREMENT_POWER':
+      return {
+        ...state,
+        powerLevel: Math.max(0, state.powerLevel - action.payload)
+      }
+    case 'ADD_TIMEOUT':
+      return {
+        ...state,
+        activeTimeouts: [...state.activeTimeouts, action.payload]
+      }
+    case 'ADD_INTERVAL':
+      return {
+        ...state,
+        activeIntervals: [...state.activeIntervals, action.payload]
+      }
+    case 'CLEAR_TIMEOUTS':
+      return {
+        ...state,
+        activeTimeouts: []
+      }
+    case 'CLEAR_INTERVALS':
+      return {
+        ...state,
+        activeIntervals: []
+      }
+    case 'UPDATE_TRANSITION_TIME':
+      return {
+        ...state,
+        lastTransitionTime: Date.now()
+      }
+    case 'RESET_STATE':
+      return initialDragonState
+    default:
+      return state
+  }
+}
+
+// Initial state
+const initialDragonState: DragonAnimationState = {
+  dragonState: 'idle',
+  dragonMood: 'neutral',
+  powerLevel: 0,
+  isCharging: false,
+  lastTransitionTime: Date.now(),
+  activeTimeouts: [],
+  activeIntervals: []
 }
 
 export function useDragonAnimation({
@@ -30,13 +144,11 @@ export function useDragonAnimation({
   proximityThreshold = 300,
   enableTimeBasedStates = true
 }: DragonAnimationConfig = {}): DragonAnimationReturn {
-  const [dragonState, setDragonState] = useState<DragonState>('idle')
-  const [dragonMood, setDragonMood] = useState<DragonMood>('neutral')
-  const [powerLevel, setPowerLevel] = useState(0)
-  const [isCharging, setIsCharging] = useState(false)
+  const [state, dispatch] = useReducer(dragonAnimationReducer, initialDragonState)
   const controls = useAnimation()
   const timeoutRefs = useRef<NodeJS.Timeout[]>([])
   const intervalRefs = useRef<NodeJS.Timeout[]>([])
+  const stateHistoryRef = useRef<DragonState[]>(['idle'])
 
   // Time-based state changes
   useEffect(() => {
@@ -47,21 +159,21 @@ export function useDragonAnimation({
       
       // Dragon sleeps late at night (11 PM - 5 AM)
       if (hour >= 23 || hour < 5) {
-        setDragonState('sleeping')
-        setDragonMood('neutral')
+        dispatch({ type: 'SET_DRAGON_STATE', payload: 'sleeping' })
+        dispatch({ type: 'SET_DRAGON_MOOD', payload: 'neutral' })
       } 
       // Dragon awakens in the morning (5 AM - 7 AM)
       else if (hour >= 5 && hour < 7) {
-        setDragonState('awakening')
-        setDragonMood('happy')
+        dispatch({ type: 'SET_DRAGON_STATE', payload: 'awakening' })
+        dispatch({ type: 'SET_DRAGON_MOOD', payload: 'happy' })
       }
       // Dragon is most active during day (9 AM - 5 PM)
       else if (hour >= 9 && hour < 17) {
-        setDragonMood('excited')
+        dispatch({ type: 'SET_DRAGON_MOOD', payload: 'excited' })
       }
       // Dragon is mystical during twilight (6 PM - 8 PM)
       else if (hour >= 18 && hour < 20) {
-        setDragonMood('mystical')
+        dispatch({ type: 'SET_DRAGON_MOOD', payload: 'mystical' })
       }
     }
 
@@ -80,38 +192,42 @@ export function useDragonAnimation({
 
   // Auto state transitions
   useEffect(() => {
-    if (!enableAutoState || dragonState === 'sleeping') return
+    if (!enableAutoState || state.dragonState === 'sleeping') return
 
     const stateTransitions = {
       idle: () => {
         const random = Math.random()
         if (random < 0.1) {
-          setDragonState('attention')
-          setTimeout(() => setDragonState('idle'), 3000)
+          dispatch({ type: 'SET_DRAGON_STATE', payload: 'attention' })
+          const timeout = setTimeout(() => {
+            dispatch({ type: 'SET_DRAGON_STATE', payload: 'idle' })
+          }, 3000)
+          timeoutRefs.current.push(timeout)
         }
       },
       attention: () => {
         const random = Math.random()
         if (random < 0.3) {
-          setDragonState('ready')
+          dispatch({ type: 'SET_DRAGON_STATE', payload: 'ready' })
         } else if (random < 0.1) {
-          setDragonState('idle')
+          dispatch({ type: 'SET_DRAGON_STATE', payload: 'idle' })
         }
       },
       ready: () => {
         const random = Math.random()
         if (random < 0.2) {
-          setDragonState('active')
-          setIsCharging(true)
-          setTimeout(() => {
-            setIsCharging(false)
-            setDragonState('idle')
+          dispatch({ type: 'SET_DRAGON_STATE', payload: 'active' })
+          dispatch({ type: 'SET_IS_CHARGING', payload: true })
+          const timeout = setTimeout(() => {
+            dispatch({ type: 'SET_IS_CHARGING', payload: false })
+            dispatch({ type: 'SET_DRAGON_STATE', payload: 'idle' })
           }, 5000)
+          timeoutRefs.current.push(timeout)
         }
       }
     }
 
-    const transition = stateTransitions[dragonState as keyof typeof stateTransitions]
+    const transition = stateTransitions[state.dragonState as keyof typeof stateTransitions]
     if (transition) {
       const timeout = setTimeout(transition, 3000 + Math.random() * 4000)
       timeoutRefs.current.push(timeout)
@@ -124,13 +240,13 @@ export function useDragonAnimation({
         }
       }
     }
-  }, [dragonState, enableAutoState])
+  }, [state.dragonState, enableAutoState])
 
   // Power level management
   useEffect(() => {
-    if (dragonState === 'active' && isCharging) {
+    if (state.dragonState === 'active' && state.isCharging) {
       const interval = setInterval(() => {
-        setPowerLevel(prev => Math.min(prev + 10, 100))
+        dispatch({ type: 'INCREMENT_POWER', payload: 10 })
       }, 100)
       intervalRefs.current.push(interval)
       
@@ -143,7 +259,7 @@ export function useDragonAnimation({
       }
     } else {
       const interval = setInterval(() => {
-        setPowerLevel(prev => Math.max(prev - 5, 0))
+        dispatch({ type: 'DECREMENT_POWER', payload: 5 })
       }, 200)
       intervalRefs.current.push(interval)
       
@@ -155,7 +271,7 @@ export function useDragonAnimation({
         }
       }
     }
-  }, [dragonState, isCharging])
+  }, [state.dragonState, state.isCharging])
 
   // Trigger special animations based on state and mood
   useEffect(() => {
@@ -204,18 +320,18 @@ export function useDragonAnimation({
       }
     }
 
-    const config = animationConfig[dragonState]?.[dragonMood]
+    const config = animationConfig[state.dragonState]?.[state.dragonMood]
     if (config) {
       controls.start({
         ...config,
         transition: {
-          duration: dragonState === 'active' ? 2 : 3,
-          repeat: dragonState === 'active' || dragonState === 'ready' ? Infinity : 0,
+          duration: state.dragonState === 'active' ? 2 : 3,
+          repeat: state.dragonState === 'active' || state.dragonState === 'ready' ? Infinity : 0,
           ease: "easeInOut"
         }
       })
     }
-  }, [dragonState, dragonMood, controls])
+  }, [state.dragonState, state.dragonMood, controls])
 
   // Special animation triggers
   const triggerSpecialAnimation = useCallback((animation: string) => {
@@ -248,7 +364,7 @@ export function useDragonAnimation({
         })
         break
       case 'powerUp':
-        setIsCharging(true)
+        dispatch({ type: 'SET_IS_CHARGING', payload: true })
         controls.start({
           scale: [1, 1.5, 1.3],
           filter: [
@@ -258,7 +374,9 @@ export function useDragonAnimation({
           ],
           transition: { duration: 3, ease: "easeInOut" }
         })
-        const timeout = setTimeout(() => setIsCharging(false), 3000)
+        const timeout = setTimeout(() => {
+          dispatch({ type: 'SET_IS_CHARGING', payload: false })
+        }, 3000)
         timeoutRefs.current.push(timeout)
         break
     }
@@ -284,14 +402,45 @@ export function useDragonAnimation({
     }
   }, [])
 
+  // Action creators
+  const setDragonState = useCallback((newState: DragonState) => {
+    stateHistoryRef.current.push(newState)
+    if (stateHistoryRef.current.length > 10) {
+      stateHistoryRef.current = stateHistoryRef.current.slice(-10)
+    }
+    dispatch({ type: 'SET_DRAGON_STATE', payload: newState })
+  }, [])
+
+  const setDragonMood = useCallback((mood: DragonMood) => {
+    dispatch({ type: 'SET_DRAGON_MOOD', payload: mood })
+  }, [])
+
+  // Functional getters
+  const canTransition = useCallback(() => {
+    const timeSinceLastTransition = Date.now() - state.lastTransitionTime
+    return timeSinceLastTransition > 1000 // Minimum 1 second between transitions
+  }, [state.lastTransitionTime])
+
+  const getStateHistory = useCallback(() => {
+    return [...stateHistoryRef.current]
+  }, [])
+
+  const getPowerPercentage = useCallback(() => {
+    return state.powerLevel / 100
+  }, [state.powerLevel])
+
   return {
-    dragonState,
-    dragonMood,
+    dragonState: state.dragonState,
+    dragonMood: state.dragonMood,
     controls,
     setDragonState,
     setDragonMood,
     triggerSpecialAnimation,
-    powerLevel,
-    isCharging
+    powerLevel: state.powerLevel,
+    isCharging: state.isCharging,
+    // Functional getters
+    canTransition,
+    getStateHistory,
+    getPowerPercentage
   }
 }

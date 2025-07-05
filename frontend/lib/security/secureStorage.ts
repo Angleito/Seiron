@@ -152,7 +152,7 @@ export class SecureStorage {
   /**
    * Store data securely
    */
-  async setItem(key: string, value: any): Promise<E.Either<Error, void>> {
+  async setItem(key: string, value: unknown): Promise<E.Either<Error, void>> {
     if (!this.storage) {
       return E.left(new Error('Storage not available'))
     }

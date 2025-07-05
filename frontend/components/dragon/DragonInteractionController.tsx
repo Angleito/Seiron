@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useReducer, useEffect, useRef, useCallback } from 'react'
 import { useMouseTracking } from './hooks/useMouseTracking'
 import { useTouchGestures } from './hooks/useTouchGestures'
-import { useAnimationPerformance } from './hooks/useAnimationPerformance'
+import { useAnimationPerformance } from '../../hooks/useAnimationPerformance'
 
 // Dragon interaction states
 export type DragonState = 'idle' | 'attention' | 'ready' | 'active'
@@ -148,8 +148,8 @@ export function DragonInteractionProvider({
   
   // Update performance mode
   useEffect(() => {
-    const mappedMode = performanceMode === 'quality' ? 'full' : 
-                      performanceMode === 'balanced' ? 'reduced' : 'minimal'
+    const mappedMode = performanceMode === 'full' ? 'full' : 
+                      performanceMode === 'reduced' ? 'reduced' : 'minimal'
     dispatch({ type: 'SET_PERFORMANCE_MODE', payload: mappedMode })
   }, [performanceMode])
   

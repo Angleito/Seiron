@@ -1,60 +1,31 @@
-import { UserIntent, TaskResult, AgentStreamEvent, Either } from '@/types/agent'
+import { UserIntent, TaskResult, AgentStreamEvent, Either } from '@types/agent'
 import { logger } from './logger'
+import { 
+  AdapterAction, 
+  AdapterActionResult, 
+  AdapterType, 
+  getAdapterFactory,
+  SAKOperationResult,
+  HiveAnalyticsResult,
+  HiveSearchResult,
+  HiveCreditUsage,
+  MCPNetworkStatus,
+  MCPWalletBalance,
+  MCPTransactionResult,
+  MCPContractQueryResult,
+  SeiAgentKitAdapter,
+  HiveIntelligenceAdapter,
+  SeiMCPAdapter
+} from './adapters'
+import { WebSocketManager, WebSocketManagerImpl } from './services/WebSocketManager'
 
-// New adapter-related types
-export interface AdapterAction {
-  type: 'sak' | 'hive' | 'mcp'
-  action: string
-  params: Record<string, any>
-  description: string
-}
-
-export interface SAKOperationResult<T = any> {
-  success: boolean
-  data?: T
-  error?: {
-    code: string
-    message: string
-    details?: any
-  }
-  metadata?: {
-    gasUsed?: number
-    txHash?: string
-    blockNumber?: number
-    timestamp?: number
-    dragonBallMessage?: string
-  }
-}
-
-export interface HiveAnalyticsResult {
-  insights: Array<{
-    id: string
-    type: string
-    title: string
-    description: string
-    confidence: number
-  }>
-  recommendations: Array<{
-    id: string
-    type: string
-    title: string
-    priority: string
-    expectedImpact: number
-  }>
-  metadata: {
-    queryId: string
-    creditsUsed: number
-    timestamp: number
-  }
-}
-
-export interface MCPNetworkStatus {
-  blockNumber: number
-  networkStatus: 'healthy' | 'congested' | 'offline'
-  gasPrice: string
-  validators: number
-  totalSupply: string
-}
+// Re-export types for backward compatibility
+export type { 
+  AdapterAction, 
+  SAKOperationResult, 
+  HiveAnalyticsResult,
+  MCPNetworkStatus 
+} from './adapters'
 
 export interface OrchestratorConfig {
   apiEndpoint: string
@@ -64,14 +35,28 @@ export interface OrchestratorConfig {
 
 export class Orchestrator {
   private config: OrchestratorConfig
-  private ws: WebSocket | null = null
-  private eventHandlers: Map<string, Set<(event: AgentStreamEvent) => void>> = new Map()
+  private wsManager: WebSocketManager
+  private adapterFactory: ReturnType<typeof getAdapterFactory>
 
   constructor(config: OrchestratorConfig) {
     this.config = {
       timeout: 30000, // 30 seconds default
       ...config,
     }
+    
+    // Initialize WebSocket manager
+    this.wsManager = new WebSocketManagerImpl({
+      wsEndpoint: this.config.wsEndpoint,
+      reconnectInterval: 5000,
+      maxReconnectAttempts: 5,
+      heartbeatInterval: 30000,
+    })
+    
+    // Initialize adapter factory
+    this.adapterFactory = getAdapterFactory({
+      apiEndpoint: this.config.apiEndpoint,
+      timeout: this.config.timeout,
+    })
   }
 
   async processIntent(intent: UserIntent): Promise<Either<string, TaskResult>> {
@@ -104,28 +89,26 @@ export class Orchestrator {
   // Sei Agent Kit Integration Methods
   // ============================================================================
 
+  private async ensureAdapterConnected(type: AdapterType): Promise<void> {
+    let adapter = this.adapterFactory.getAdapter(type)
+    if (!adapter) {
+      adapter = this.adapterFactory.createAdapter(type)
+    }
+    
+    if (!adapter.isConnected()) {
+      await adapter.connect()
+    }
+  }
+
   async executeSAKAction<T>(
     toolName: string,
-    params: Record<string, any>,
-    context?: Record<string, any>
+    params: Record<string, unknown>,
+    context?: Record<string, unknown>
   ): Promise<Either<string, SAKOperationResult<T>>> {
     try {
-      const response = await fetch(`${this.config.apiEndpoint}/sak/execute`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ toolName, params, context }),
-        signal: AbortSignal.timeout(this.config.timeout!),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        return { _tag: 'Left', left: error.message || 'Failed to execute SAK action' }
-      }
-
-      const result = await response.json()
-      return { _tag: 'Right', right: result }
+      await this.ensureAdapterConnected('sak')
+      const adapter = this.adapterFactory.getSAKAdapter()!
+      return await adapter.executeTool(toolName, params, context)
     } catch (error) {
       return { 
         _tag: 'Left', 
@@ -134,23 +117,17 @@ export class Orchestrator {
     }
   }
 
-  async listSAKTools(): Promise<Either<string, any[]>> {
+  async listSAKTools(): Promise<Either<string, SAKTool[]>> {
     try {
-      const response = await fetch(`${this.config.apiEndpoint}/sak/tools`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        signal: AbortSignal.timeout(this.config.timeout!),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        return { _tag: 'Left', left: error.message || 'Failed to list SAK tools' }
+      await this.ensureAdapterConnected('sak')
+      const adapter = this.adapterFactory.getSAKAdapter()!
+      const result = await adapter.listTools()
+      
+      if (result._tag === 'Right') {
+        return { _tag: 'Right', right: result.right }
+      } else {
+        return result
       }
-
-      const result = await response.json()
-      return { _tag: 'Right', right: result.tools || [] }
     } catch (error) {
       return { 
         _tag: 'Left', 
@@ -165,25 +142,12 @@ export class Orchestrator {
 
   async executeHiveSearch(
     query: string,
-    metadata?: Record<string, any>
-  ): Promise<Either<string, any>> {
+    metadata?: Record<string, unknown>
+  ): Promise<Either<string, HiveSearchResult>> {
     try {
-      const response = await fetch(`${this.config.apiEndpoint}/hive/search`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ query, metadata }),
-        signal: AbortSignal.timeout(this.config.timeout!),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        return { _tag: 'Left', left: error.message || 'Failed to execute Hive search' }
-      }
-
-      const result = await response.json()
-      return { _tag: 'Right', right: result }
+      await this.ensureAdapterConnected('hive')
+      const adapter = this.adapterFactory.getHiveAdapter()!
+      return await adapter.search(query, metadata)
     } catch (error) {
       return { 
         _tag: 'Left', 
@@ -197,22 +161,9 @@ export class Orchestrator {
     walletAddress?: string
   ): Promise<Either<string, HiveAnalyticsResult>> {
     try {
-      const response = await fetch(`${this.config.apiEndpoint}/hive/analytics`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ query, walletAddress }),
-        signal: AbortSignal.timeout(this.config.timeout!),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        return { _tag: 'Left', left: error.message || 'Failed to get Hive analytics' }
-      }
-
-      const result = await response.json()
-      return { _tag: 'Right', right: result }
+      await this.ensureAdapterConnected('hive')
+      const adapter = this.adapterFactory.getHiveAdapter()!
+      return await adapter.getAnalytics(query, walletAddress)
     } catch (error) {
       return { 
         _tag: 'Left', 
@@ -223,25 +174,12 @@ export class Orchestrator {
 
   async getHivePortfolioAnalysis(
     walletAddress: string,
-    additionalParams?: Record<string, any>
+    additionalParams?: Record<string, unknown>
   ): Promise<Either<string, HiveAnalyticsResult>> {
     try {
-      const response = await fetch(`${this.config.apiEndpoint}/hive/portfolio-analysis`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ walletAddress, ...additionalParams }),
-        signal: AbortSignal.timeout(this.config.timeout!),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        return { _tag: 'Left', left: error.message || 'Failed to get Hive portfolio analysis' }
-      }
-
-      const result = await response.json()
-      return { _tag: 'Right', right: result }
+      await this.ensureAdapterConnected('hive')
+      const adapter = this.adapterFactory.getHiveAdapter()!
+      return await adapter.getPortfolioAnalysis(walletAddress, additionalParams)
     } catch (error) {
       return { 
         _tag: 'Left', 
@@ -250,23 +188,11 @@ export class Orchestrator {
     }
   }
 
-  async getHiveCreditUsage(): Promise<Either<string, any>> {
+  async getHiveCreditUsage(): Promise<Either<string, HiveCreditUsage>> {
     try {
-      const response = await fetch(`${this.config.apiEndpoint}/hive/credits`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        signal: AbortSignal.timeout(this.config.timeout!),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        return { _tag: 'Left', left: error.message || 'Failed to get Hive credit usage' }
-      }
-
-      const result = await response.json()
-      return { _tag: 'Right', right: result }
+      await this.ensureAdapterConnected('hive')
+      const adapter = this.adapterFactory.getHiveAdapter()!
+      return await adapter.getCreditUsage()
     } catch (error) {
       return { 
         _tag: 'Left', 
@@ -281,21 +207,9 @@ export class Orchestrator {
 
   async getMCPNetworkStatus(): Promise<Either<string, MCPNetworkStatus>> {
     try {
-      const response = await fetch(`${this.config.apiEndpoint}/mcp/network-status`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        signal: AbortSignal.timeout(this.config.timeout!),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        return { _tag: 'Left', left: error.message || 'Failed to get MCP network status' }
-      }
-
-      const result = await response.json()
-      return { _tag: 'Right', right: result }
+      await this.ensureAdapterConnected('mcp')
+      const adapter = this.adapterFactory.getMCPAdapter()!
+      return await adapter.getNetworkStatus()
     } catch (error) {
       return { 
         _tag: 'Left', 
@@ -304,24 +218,11 @@ export class Orchestrator {
     }
   }
 
-  async getMCPWalletBalance(address: string): Promise<Either<string, any>> {
+  async getMCPWalletBalance(address: string): Promise<Either<string, MCPWalletBalance>> {
     try {
-      const response = await fetch(`${this.config.apiEndpoint}/mcp/balance`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ address }),
-        signal: AbortSignal.timeout(this.config.timeout!),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        return { _tag: 'Left', left: error.message || 'Failed to get MCP wallet balance' }
-      }
-
-      const result = await response.json()
-      return { _tag: 'Right', right: result }
+      await this.ensureAdapterConnected('mcp')
+      const adapter = this.adapterFactory.getMCPAdapter()!
+      return await adapter.getWalletBalance(address)
     } catch (error) {
       return { 
         _tag: 'Left', 
@@ -331,25 +232,12 @@ export class Orchestrator {
   }
 
   async executeMCPTransaction(
-    transactionRequest: Record<string, any>
-  ): Promise<Either<string, any>> {
+    transactionRequest: Record<string, unknown>
+  ): Promise<Either<string, MCPTransactionResult>> {
     try {
-      const response = await fetch(`${this.config.apiEndpoint}/mcp/transaction`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(transactionRequest),
-        signal: AbortSignal.timeout(this.config.timeout!),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        return { _tag: 'Left', left: error.message || 'Failed to execute MCP transaction' }
-      }
-
-      const result = await response.json()
-      return { _tag: 'Right', right: result }
+      await this.ensureAdapterConnected('mcp')
+      const adapter = this.adapterFactory.getMCPAdapter()!
+      return await adapter.sendTransaction(transactionRequest)
     } catch (error) {
       return { 
         _tag: 'Left', 
@@ -360,25 +248,12 @@ export class Orchestrator {
 
   async queryMCPContract(
     contractAddress: string,
-    query: Record<string, any>
-  ): Promise<Either<string, any>> {
+    query: Record<string, unknown>
+  ): Promise<Either<string, MCPContractQueryResult>> {
     try {
-      const response = await fetch(`${this.config.apiEndpoint}/mcp/contract/query`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ contractAddress, query }),
-        signal: AbortSignal.timeout(this.config.timeout!),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        return { _tag: 'Left', left: error.message || 'Failed to query MCP contract' }
-      }
-
-      const result = await response.json()
-      return { _tag: 'Right', right: result }
+      await this.ensureAdapterConnected('mcp')
+      const adapter = this.adapterFactory.getMCPAdapter()!
+      return await adapter.queryContract(contractAddress, query)
     } catch (error) {
       return { 
         _tag: 'Left', 
@@ -391,102 +266,181 @@ export class Orchestrator {
   // Generic Adapter Action Execution
   // ============================================================================
 
-  async executeAdapterAction(action: AdapterAction): Promise<Either<string, any>> {
-    switch (action.type) {
-      case 'sak':
-        return this.executeSAKAction(action.action, action.params)
-      case 'hive':
-        if (action.action === 'search') {
-          return this.executeHiveSearch(action.params.query, action.params.metadata)
-        } else if (action.action === 'analytics') {
-          return this.getHiveAnalytics(action.params.query, action.params.walletAddress)
-        } else if (action.action === 'portfolio_analysis') {
-          return this.getHivePortfolioAnalysis(action.params.walletAddress, action.params)
-        }
-        break
-      case 'mcp':
-        if (action.action === 'get_network_status') {
-          return this.getMCPNetworkStatus()
-        } else if (action.action === 'get_wallet_balance') {
-          return this.getMCPWalletBalance(action.params.address)
-        } else if (action.action === 'send_transaction') {
-          return this.executeMCPTransaction(action.params)
-        } else if (action.action === 'query_contract') {
-          return this.queryMCPContract(action.params.contractAddress, action.params.query)
-        }
-        break
-    }
+  async executeAdapterAction(action: AdapterAction): Promise<Either<string, AdapterActionResult>> {
+    const startTime = Date.now()
     
-    return { 
-      _tag: 'Left', 
-      left: `Unsupported adapter action: ${action.type}.${action.action}` 
-    }
-  }
-
-  connectWebSocket(sessionId: string): void {
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      return
-    }
-
-    this.ws = new WebSocket(`${this.config.wsEndpoint}/chat/${sessionId}`)
-
-    this.ws.onopen = () => {
-      logger.info('WebSocket connected to orchestrator')
-    }
-
-    this.ws.onmessage = (event) => {
-      try {
-        const streamEvent: AgentStreamEvent = JSON.parse(event.data)
-        this.emitEvent(streamEvent.type, streamEvent)
-      } catch (error) {
-        logger.error('Failed to parse WebSocket message:', error)
+    try {
+      let result: Either<string, unknown>
+      
+      switch (action.type) {
+        case 'sak':
+          result = await this.executeSAKAction(action.action, action.params)
+          break
+        case 'hive':
+          if (action.action === 'search') {
+            result = await this.executeHiveSearch(action.params.query, action.params.metadata)
+          } else if (action.action === 'analytics') {
+            result = await this.getHiveAnalytics(action.params.query, action.params.walletAddress)
+          } else if (action.action === 'portfolio_analysis') {
+            result = await this.getHivePortfolioAnalysis(action.params.walletAddress, action.params)
+          } else if (action.action === 'credits') {
+            result = await this.getHiveCreditUsage()
+          } else {
+            return { 
+              _tag: 'Left', 
+              left: `Unsupported Hive action: ${action.action}` 
+            }
+          }
+          break
+        case 'mcp':
+          if (action.action === 'get_network_status') {
+            result = await this.getMCPNetworkStatus()
+          } else if (action.action === 'get_wallet_balance') {
+            result = await this.getMCPWalletBalance(action.params.address)
+          } else if (action.action === 'send_transaction') {
+            result = await this.executeMCPTransaction(action.params)
+          } else if (action.action === 'query_contract') {
+            result = await this.queryMCPContract(action.params.contractAddress, action.params.query)
+          } else {
+            return { 
+              _tag: 'Left', 
+              left: `Unsupported MCP action: ${action.action}` 
+            }
+          }
+          break
+        default:
+          return { 
+            _tag: 'Left', 
+            left: `Unsupported adapter type: ${action.type}` 
+          }
       }
-    }
-
-    this.ws.onerror = (error) => {
-      logger.error('WebSocket error:', error)
-    }
-
-    this.ws.onclose = () => {
-      logger.info('WebSocket disconnected')
-      // Attempt to reconnect after 5 seconds
-      setTimeout(() => {
-        if (sessionId) {
-          this.connectWebSocket(sessionId)
+      
+      const executionTime = Date.now() - startTime
+      
+      if (result._tag === 'Right') {
+        const actionResult: AdapterActionResult = {
+          success: true,
+          data: result.right,
+          metadata: {
+            executionTime,
+            adapterType: action.type,
+            action: action.action,
+            timestamp: Date.now(),
+          }
         }
-      }, 5000)
+        return { _tag: 'Right', right: actionResult }
+      } else {
+        const actionResult: AdapterActionResult = {
+          success: false,
+          error: {
+            code: 'ADAPTER_ACTION_FAILED',
+            message: result.left,
+          },
+          metadata: {
+            executionTime,
+            adapterType: action.type,
+            action: action.action,
+            timestamp: Date.now(),
+          }
+        }
+        return { _tag: 'Right', right: actionResult }
+      }
+    } catch (error) {
+      const executionTime = Date.now() - startTime
+      const actionResult: AdapterActionResult = {
+        success: false,
+        error: {
+          code: 'ADAPTER_ACTION_ERROR',
+          message: error instanceof Error ? error.message : 'Unknown error occurred',
+        },
+        metadata: {
+          executionTime,
+          adapterType: action.type,
+          action: action.action,
+          timestamp: Date.now(),
+        }
+      }
+      return { _tag: 'Right', right: actionResult }
     }
   }
 
-  disconnectWebSocket(): void {
-    if (this.ws) {
-      this.ws.close()
-      this.ws = null
+  // ============================================================================
+  // WebSocket Management
+  // ============================================================================
+
+  async connectWebSocket(sessionId: string): Promise<void> {
+    try {
+      await this.wsManager.connect(sessionId)
+    } catch (error) {
+      logger.error('Failed to connect WebSocket:', error)
+      throw error
+    }
+  }
+
+  async disconnectWebSocket(): Promise<void> {
+    try {
+      await this.wsManager.disconnect()
+    } catch (error) {
+      logger.error('Failed to disconnect WebSocket:', error)
+      throw error
+    }
+  }
+
+  isWebSocketConnected(): boolean {
+    return this.wsManager.isConnected()
+  }
+
+  getWebSocketConnectionState() {
+    return this.wsManager.getConnectionState()
+  }
+
+  async sendWebSocketMessage(message: unknown): Promise<void> {
+    try {
+      await this.wsManager.sendMessage(message)
+    } catch (error) {
+      logger.error('Failed to send WebSocket message:', error)
+      throw error
     }
   }
 
   on(eventType: string, handler: (event: AgentStreamEvent) => void): () => void {
-    if (!this.eventHandlers.has(eventType)) {
-      this.eventHandlers.set(eventType, new Set())
-    }
-    
-    this.eventHandlers.get(eventType)!.add(handler)
-
-    // Return unsubscribe function
-    return () => {
-      this.eventHandlers.get(eventType)?.delete(handler)
-    }
+    return this.wsManager.on(eventType, handler)
   }
 
-  private emitEvent(eventType: string, event: AgentStreamEvent): void {
-    const handlers = this.eventHandlers.get(eventType) || new Set()
-    handlers.forEach(handler => {
-      try {
-        handler(event)
-      } catch (error) {
-        logger.error('Event handler error:', error)
-      }
-    })
+  off(eventType: string, handler: (event: AgentStreamEvent) => void): void {
+    this.wsManager.off(eventType, handler)
+  }
+
+  // ============================================================================
+  // Adapter Management
+  // ============================================================================
+
+  async getAdapterHealth(): Promise<Map<AdapterType, unknown>> {
+    return await this.adapterFactory.getHealthStatus()
+  }
+
+  async connectAllAdapters(): Promise<void> {
+    await this.adapterFactory.connectAll()
+  }
+
+  async disconnectAllAdapters(): Promise<void> {
+    await this.adapterFactory.disconnectAll()
+  }
+
+  getAdapter(type: AdapterType) {
+    return this.adapterFactory.getAdapter(type)
+  }
+
+  getAllAdapters() {
+    return this.adapterFactory.getAllAdapters()
+  }
+
+  async createAdapter(type: AdapterType, config?: Record<string, unknown>) {
+    return this.adapterFactory.createAdapter(type, config)
+  }
+
+  async destroyAdapter(type: AdapterType): Promise<void> {
+    await this.adapterFactory.destroyAdapter(type)
   }
 }
 

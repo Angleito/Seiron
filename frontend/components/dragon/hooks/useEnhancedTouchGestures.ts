@@ -4,14 +4,11 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { useTouchGestures } from './useTouchGestures'
 import type { 
   TouchGesture, 
-  TouchGestureHookReturn, 
   DragonPart,
   EnhancedTouchGestureReturn 
 } from '../types'
-import { INTERACTION_ZONES } from '../constants'
 import { pipe } from 'fp-ts/function'
 import * as O from 'fp-ts/Option'
-import * as A from 'fp-ts/Array'
 
 interface UseEnhancedTouchGesturesOptions {
   enabled?: boolean
@@ -53,7 +50,6 @@ export function useEnhancedTouchGestures({
   onGestureRecognized,
   enableHapticFeedback = true,
   enableGestureTrails = false,
-  touchTargetExpansion = INTERACTION_ZONES.touch.comfort,
   multiTouchEnabled = true
 }: UseEnhancedTouchGesturesOptions = {}): EnhancedTouchGestureReturn & {
   gestureTrails: GestureTrail[]
@@ -239,7 +235,7 @@ export function useEnhancedTouchGestures({
   }, [enableGestureTrails])
 
   // Multi-touch gesture handling
-  const handleMultiTouch = useCallback((touches: TouchList, type: 'start' | 'move' | 'end') => {
+  const handleMultiTouch = useCallback((touches: TouchList | React.TouchList, type: 'start' | 'move' | 'end') => {
     if (!multiTouchEnabled) return
 
     setMultiTouchState(prev => {
@@ -398,7 +394,7 @@ export function useEnhancedTouchGestures({
     )
   }, [])
 
-  const handleSVGTouch = useCallback((part: DragonPart, event: React.TouchEvent) => {
+  const handleSVGTouch = useCallback((_part: DragonPart, event: React.TouchEvent) => {
     gestureStartTimeRef.current = Date.now()
     
     // Handle multi-touch
@@ -429,7 +425,7 @@ export function useEnhancedTouchGestures({
     if (enableGestureTrails) {
       trailCleanupRef.current = setInterval(() => {
         setGestureTrails(prev => 
-          prev.filter(trail => Date.now() - trail.points[0].timestamp < 2000)
+          prev.filter(trail => trail.points[0] && Date.now() - trail.points[0].timestamp < 2000)
         )
       }, 1000)
 
@@ -439,6 +435,9 @@ export function useEnhancedTouchGestures({
         }
       }
     }
+    
+    // Return empty cleanup function when gesture trails are disabled
+    return () => {}
   }, [enableGestureTrails])
 
   // Enhanced gesture handlers for multi-touch
@@ -446,15 +445,15 @@ export function useEnhancedTouchGestures({
     ...baseTouchGestures.gestureHandlers,
     onTouchStart: (e: React.TouchEvent) => {
       gestureStartTimeRef.current = Date.now()
-      handleMultiTouch(e.touches as any, 'start')
+      handleMultiTouch(e.touches, 'start')
       baseTouchGestures.gestureHandlers.onTouchStart(e)
     },
     onTouchMove: (e: React.TouchEvent) => {
-      handleMultiTouch(e.touches as any, 'move')
+      handleMultiTouch(e.touches, 'move')
       baseTouchGestures.gestureHandlers.onTouchMove(e)
     },
     onTouchEnd: (e: React.TouchEvent) => {
-      handleMultiTouch(e.changedTouches as any, 'end')
+      handleMultiTouch(e.changedTouches, 'end')
       baseTouchGestures.gestureHandlers.onTouchEnd(e)
     }
   }
@@ -462,7 +461,6 @@ export function useEnhancedTouchGestures({
   return {
     ...baseTouchGestures,
     gestureHandlers: enhancedGestureHandlers,
-    svgTouchTargets,
     expandTouchTarget,
     handleSVGTouch,
     gestureTrails,

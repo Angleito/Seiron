@@ -3,7 +3,7 @@
 import { useResponsive, getResponsiveValue } from '@hooks/useResponsive'
 import { FloatingDragonLogo } from './FloatingDragonLogo'
 import { CirclingDragonBalls } from './CirclingDragonBalls'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 interface ResponsiveDragonAnimationProps {
   className?: string
@@ -48,12 +48,10 @@ export function ResponsiveDragonAnimation({
   const {
     breakpoint,
     isPortrait,
-    isLandscape,
     isTouchDevice,
     prefersReducedMotion,
     isLowBattery,
     width,
-    height,
     pixelRatio
   } = useResponsive()
 

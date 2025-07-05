@@ -5,7 +5,6 @@ import {
   AlertTriangle, 
   Shield, 
   Info, 
-  X,
   ChevronRight,
   Flame,
   TrendingDown,
@@ -13,7 +12,6 @@ import {
   ShieldAlert,
   ShieldCheck,
   ShieldX,
-  Ban,
   CheckCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';

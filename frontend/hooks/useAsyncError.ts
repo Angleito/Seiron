@@ -37,7 +37,7 @@ export function useAsyncError() {
  * })
  * ```
  */
-export function withAsyncErrorBoundary<T extends (...args: any[]) => Promise<any>>(
+export function withAsyncErrorBoundary<T extends (...args: unknown[]) => Promise<unknown>>(
   asyncFn: T
 ): T {
   return (async (...args) => {

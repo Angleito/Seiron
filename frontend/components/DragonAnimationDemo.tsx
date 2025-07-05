@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { AccessibleDragonAnimation } from './AccessibleDragonAnimation'
-import { ResponsiveDragonAnimation } from './ResponsiveDragonAnimation'
 import { useResponsive } from '@hooks/useResponsive'
 import { useDragonGestures } from '@hooks/useDragonGestures'
 import { usePerformanceMonitor } from '@hooks/usePerformanceMonitor'
@@ -25,7 +24,8 @@ export function DragonAnimationDemo() {
     }
   })
 
-  const gestures = useDragonGestures({
+  // Set up gesture handling (currently not used in UI but handles interactions)
+  useDragonGestures({
     onTap: () => {
       setLastGesture('Tap detected!')
       setDragonPower(prev => Math.min(prev + 10, 100))

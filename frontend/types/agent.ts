@@ -58,7 +58,7 @@ export interface AgentMessage {
     dragonBallMessage?: string
     adapterType?: string
     agentId?: string
-    [key: string]: any
+    [key: string]: unknown
   }
 }
 

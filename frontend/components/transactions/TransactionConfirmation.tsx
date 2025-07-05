@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { formatEther, formatUnits } from 'viem';
 import { 
-  CheckCircle, 
   XCircle, 
   Loader2, 
   AlertTriangle, 
@@ -11,11 +10,10 @@ import {
   Zap,
   TrendingUp,
   TrendingDown,
-  Info,
-  ExternalLink
+  Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { sanitizeTransactionDescription, useSanitizedContent, SANITIZE_CONFIGS } from '@lib/sanitize';
+import { useSanitizedContent, SANITIZE_CONFIGS } from '@lib/sanitize';
 
 // Safe text renderer for transaction confirmation
 function SafeTransactionText({ text, className = "" }: { text: string; className?: string }) {

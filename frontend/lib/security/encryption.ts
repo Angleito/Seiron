@@ -305,7 +305,7 @@ export const encryptWithSessionKey = (
 /**
  * Validate encrypted data structure
  */
-export const validateEncryptedData = (data: any): E.Either<Error, EncryptedData> => {
+export const validateEncryptedData = (data: unknown): E.Either<Error, EncryptedData> => {
   if (!data || typeof data !== 'object') {
     return E.left(new Error('Invalid encrypted data: not an object'))
   }

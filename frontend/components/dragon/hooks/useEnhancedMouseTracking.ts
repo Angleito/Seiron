@@ -4,15 +4,34 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { useMouseTracking } from './useMouseTracking'
 import type { 
   EnhancedMouseTrackingReturn, 
-  SVGInteractionState, 
-  DragonPart,
-  SVGInteractionZones
+  DragonPart
 } from '../types'
 import { INTERACTION_ZONES } from '../constants'
 
+interface ExtendedSVGInteractionZones {
+  head?: { x: number; y: number; radius: number };
+  eyes?: {
+    left?: { x: number; y: number; radius?: number };
+    right?: { x: number; y: number; radius?: number };
+  };
+  body?: {
+    segments?: Array<{ x: number; y: number; width: number; height: number }>;
+  };
+  limbs?: {
+    frontArms?: Array<{ d: string; bounds: { x: number; y: number; width: number; height: number } }>;
+    rearArms?: Array<{ d: string; bounds: { x: number; y: number; width: number; height: number } }>;
+  };
+  tail?: {
+    segments?: Array<{ d: string; bounds: { x: number; y: number; width: number; height: number } }>;
+  };
+  dragonBalls?: {
+    positions?: Array<{ cx: number; cy: number; r: number }>;
+  };
+}
+
 interface UseEnhancedMouseTrackingOptions {
-  elementRef: React.RefObject<SVGElement | HTMLElement>
-  svgZones?: SVGInteractionZones
+  elementRef: React.RefObject<HTMLElement>
+  svgZones?: ExtendedSVGInteractionZones
   enabled?: boolean
   smoothing?: number
   eyeTrackingEnabled?: boolean
@@ -57,7 +76,7 @@ interface MagneticCursorState {
 }
 
 // Default SVG zones (same as in useSVGInteraction)
-const DEFAULT_SVG_ZONES: SVGInteractionZones = {
+const DEFAULT_SVG_ZONES: ExtendedSVGInteractionZones = {
   head: { x: 250, y: 150, radius: 60 },
   eyes: {
     left: { x: 220, y: 130, radius: 15 },
@@ -128,11 +147,11 @@ export function useEnhancedMouseTracking({
     proximityThreshold
   })
 
-  // Enhanced state management
-  const [svgState, setSvgState] = useState<SVGInteractionState>({
-    hoveredPart: null,
-    activePart: null,
-    focusedPart: null,
+  // Enhanced state management - using custom interface to avoid type conflicts
+  const [svgState, setSvgState] = useState({
+    hoveredPart: null as DragonPart | null,
+    activePart: null as DragonPart | null,
+    focusedPart: null as DragonPart | null,
     cursorPosition: { x: 0, y: 0 },
     eyeRotation: { 
       left: { x: 0, y: 0 }, 
@@ -140,7 +159,7 @@ export function useEnhancedMouseTracking({
     },
     headRotation: { x: 0, y: 0 },
     isKeyboardNavigating: false,
-    touchTargets: new Map()
+    touchTargets: new Map<string, { x: number; y: number }>()
   })
 
   const [eyeTracking, setEyeTracking] = useState<EyeTrackingState>({
@@ -228,7 +247,7 @@ export function useEnhancedMouseTracking({
     if (svgZones.limbs?.frontArms) {
       for (let i = 0; i < svgZones.limbs.frontArms.length; i++) {
         const arm = svgZones.limbs.frontArms[i]
-        if (isPointInRect(localX, localY, arm.bounds)) {
+        if (arm && isPointInRect(localX, localY, arm.bounds)) {
           return i === 0 ? 'left-arm' : 'right-arm'
         }
       }
@@ -237,7 +256,7 @@ export function useEnhancedMouseTracking({
     if (svgZones.limbs?.rearArms) {
       for (let i = 0; i < svgZones.limbs.rearArms.length; i++) {
         const leg = svgZones.limbs.rearArms[i]
-        if (isPointInRect(localX, localY, leg.bounds)) {
+        if (leg && isPointInRect(localX, localY, leg.bounds)) {
           return i === 0 ? 'left-leg' : 'right-leg'
         }
       }
@@ -622,11 +641,13 @@ export function useEnhancedMouseTracking({
 
       return () => clearTimeout(openTimeout)
     }
+    
+    // Return empty cleanup function for other states
+    return () => {}
   }, [eyeTracking.leftEye.blinkState, eyeTracking.rightEye.blinkState])
 
   return {
     ...baseMouseTracking,
-    svgState,
     getElementAtPosition,
     updateEyeTracking,
     updateHeadRotation,

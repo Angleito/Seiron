@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react'
+import React, { useRef, useEffect, useState, useCallback } from 'react'
 import { useDragonInteraction } from './dragon/DragonInteractionController'
 import {
   DragonBallState,
@@ -15,7 +15,7 @@ import {
   calculateOrbitalSpeed,
   generateOrbitalParams,
   calculateWishPath,
-  SpatialGrid
+  spatialGridOps
 } from '@utils/dragonBallPhysics'
 
 interface DragonBallOrbitalSystemProps {
@@ -51,7 +51,7 @@ export function DragonBallOrbitalSystem({
   const containerRef = useRef<HTMLDivElement>(null)
   const animationFrameRef = useRef<number>()
   const lastTimeRef = useRef<number>(0)
-  const spatialGrid = useRef(new SpatialGrid())
+  const spatialGridRef = useRef(spatialGridOps.createSpatialGrid())
   const wishAnimationRef = useRef<number>()
   const cleanupFunctionsRef = useRef<(() => void)[]>([])
   
@@ -110,7 +110,7 @@ export function DragonBallOrbitalSystem({
   }, [interactive])
   
   // Handle ball click
-  const handleBallClick = useCallback((ballId: number, event: React.MouseEvent) => {
+  const handleBallClick = useCallback((_ballId: number, event: React.MouseEvent) => {
     if (!interactive) return
     
     event.stopPropagation()
@@ -174,13 +174,17 @@ export function DragonBallOrbitalSystem({
     if (!deltaTime || deltaTime <= 0) return
     
     // Clear spatial grid
-    spatialGrid.current.clear()
+    spatialGridRef.current = spatialGridOps.clearSpatialGrid()
     
     setDragonBalls(prevBalls => {
       const centerMass = dragonState === 'active' ? 2000 : 1000
+      
+      // Build spatial grid from all balls for collision detection
+      if (collisionEnabled) {
+        spatialGridRef.current = spatialGridOps.buildSpatialGrid(prevBalls, 50)
+      }
+      
       const newBalls = prevBalls.map((ball, index) => {
-        // Add to spatial grid
-        spatialGrid.current.add(ball)
         
         const forces: Vector2D[] = []
         
@@ -259,10 +263,11 @@ export function DragonBallOrbitalSystem({
       // Collision detection and response
       if (collisionEnabled && !isWishing) {
         for (let i = 0; i < newBalls.length; i++) {
-          const nearbyBalls = spatialGrid.current.getNearby(newBalls[i].position)
+          if (!newBalls[i]) continue
+          const nearbyBalls = spatialGridOps.getNearbyBalls(spatialGridRef.current, newBalls[i].position, 50)
           
           for (const other of nearbyBalls) {
-            if (other.id <= newBalls[i].id) continue // Avoid duplicate checks
+            if (!newBalls[i] || other.id <= newBalls[i].id) continue // Avoid duplicate checks
             
             const j = newBalls.findIndex(b => b.id === other.id)
             if (j >= 0 && detectCollision(newBalls[i], newBalls[j], ballSize / 2)) {
@@ -300,7 +305,7 @@ export function DragonBallOrbitalSystem({
       }
       
       // Clear spatial grid
-      spatialGrid.current.clear()
+      spatialGridRef.current = spatialGridOps.clearSpatialGrid()
       
       // Execute cleanup functions
       cleanupFunctionsRef.current.forEach(cleanup => cleanup())
@@ -329,7 +334,7 @@ export function DragonBallOrbitalSystem({
       }
       
       // Clear spatial grid and reset references
-      spatialGrid.current.clear()
+      spatialGridRef.current = spatialGridOps.clearSpatialGrid()
       
       // Clear dragon balls state to prevent memory leaks
       setDragonBalls([])
@@ -376,7 +381,7 @@ export function DragonBallOrbitalSystem({
       )}
       
       {/* Dragon Balls */}
-      {dragonBalls.map((ball, index) => {
+      {dragonBalls.map((ball) => {
         const ballConfig = DRAGON_BALLS.find(b => b.id === ball.id)
         if (!ballConfig) return null
         
@@ -391,7 +396,7 @@ export function DragonBallOrbitalSystem({
               >
                 <g transform={`translate(${radius}, ${radius})`}>
                   <path
-                    d={`M ${ball.trail.map((pos, i) => 
+                    d={`M ${ball.trail.map((pos) => 
                       `${pos.x},${pos.y}`
                     ).join(' L ')}`}
                     fill="none"

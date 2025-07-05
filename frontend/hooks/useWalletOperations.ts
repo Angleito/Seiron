@@ -95,7 +95,7 @@ export function useWalletOperations() {
     }
   }
 
-  const signTypedData = async (typedData: any) => {
+  const signTypedData = async (typedData: Record<string, unknown>) => {
     if (!walletClient) {
       throw new Error('Wallet not connected')
     }

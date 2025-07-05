@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Activity, TrendingUp, TrendingDown, Zap, Users, DollarSign } from 'lucide-react'
+import { Activity, TrendingUp, Zap, Users, DollarSign } from 'lucide-react'
 import { cn } from '@lib/utils'
 import { getOrchestrator } from '@lib/orchestrator-client'
 import { logger } from '@lib/logger'

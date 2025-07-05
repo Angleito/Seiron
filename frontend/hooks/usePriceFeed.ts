@@ -48,35 +48,37 @@ export interface PriceFeedConfig {
   retryDelay?: number; // milliseconds, default 1000
 }
 
-// Price cache implementation
-class PriceCache {
-  private cache = new Map<Asset, { data: PriceData; expiry: number }>();
-  
-  constructor(private timeout: number) {}
-  
-  get(asset: Asset): O.Option<PriceData> {
-    const cached = this.cache.get(asset);
-    if (!cached) return O.none;
-    
-    if (Date.now() > cached.expiry) {
-      this.cache.delete(asset);
-      return O.none;
-    }
-    
-    return O.some(cached.data);
-  }
-  
-  set(data: PriceData): void {
-    this.cache.set(data.asset, {
-      data,
-      expiry: Date.now() + this.timeout
-    });
-  }
-  
-  clear(): void {
-    this.cache.clear();
-  }
+// Functional Price Cache Types
+interface CacheEntry {
+  readonly data: PriceData;
+  readonly expiry: number;
 }
+
+type PriceCache = Map<Asset, CacheEntry>;
+
+// Functional Price Cache Operations
+const createPriceCache = (): PriceCache => new Map();
+
+const getCachedPrice = (cache: PriceCache, asset: Asset): O.Option<PriceData> =>
+  pipe(
+    O.fromNullable(cache.get(asset)),
+    O.filter(cached => Date.now() <= cached.expiry),
+    O.map(cached => cached.data)
+  );
+
+const setCachedPrice = (cache: PriceCache, data: PriceData, timeout: number): PriceCache =>
+  new Map(cache).set(data.asset, {
+    data,
+    expiry: Date.now() + timeout
+  });
+
+const clearPriceCache = (): PriceCache => new Map();
+
+const cleanExpiredEntries = (cache: PriceCache): PriceCache => 
+  new Map(
+    Array.from(cache.entries())
+      .filter(([_, entry]) => Date.now() <= entry.expiry)
+  );
 
 // API clients
 const fetchOraclePrice = (asset: Asset): TE.TaskEither<Error, PriceData> =>
@@ -181,7 +183,7 @@ export function usePriceFeed(config: PriceFeedConfig) {
     lastUpdate: null
   });
   
-  const cache = useRef(new PriceCache(cacheTimeout));
+  const cache = useRef(createPriceCache());
   const destroy$ = useRef(new Subject<void>());
   const priceSubject$ = useRef(new BehaviorSubject<Record<Asset, PriceData | null>>(state.prices));
   
@@ -191,7 +193,7 @@ export function usePriceFeed(config: PriceFeedConfig) {
       startWith(0), // Start immediately
       switchMap(() => {
         // Check cache first
-        const cached = cache.current.get(asset);
+        const cached = getCachedPrice(cache.current, asset);
         if (O.isSome(cached)) {
           return of(cached.value);
         }
@@ -202,7 +204,7 @@ export function usePriceFeed(config: PriceFeedConfig) {
             .then(E.fold(
               (error) => reject(error),
               (data) => {
-                cache.current.set(data);
+                cache.current = setCachedPrice(cache.current, data, cacheTimeout);
                 resolve(data);
               }
             ))
@@ -278,13 +280,13 @@ export function usePriceFeed(config: PriceFeedConfig) {
       subscription.unsubscribe();
       destroy.next();
       destroy.complete();
-      cache.current.clear();
+      cache.current = clearPriceCache();
     };
   }, [assets, createPriceObservable]);
   
   // Manual refresh function
   const refresh = useCallback(() => {
-    cache.current.clear();
+    cache.current = clearPriceCache();
     destroy$.current.next();
     destroy$.current = new Subject<void>();
     

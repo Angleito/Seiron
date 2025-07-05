@@ -106,7 +106,7 @@ const DragonLoader: React.FC<DragonLoaderProps> = ({
                   animationDelay: `${index * 0.2}s`
                 }}
               >
-                <div className={`absolute inset-1 bg-gradient-to-br ${colors[colorIndex].replace('300', '100').replace('600', '300')} rounded-full opacity-70`}></div>
+                <div className={`absolute inset-1 bg-gradient-to-br ${colors[colorIndex]?.replace('300', '100').replace('600', '300')} rounded-full opacity-70`}></div>
               </div>
             );
           })}

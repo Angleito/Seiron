@@ -1,6 +1,7 @@
 import { Component, ErrorInfo, ReactNode } from 'react'
 import { AlertTriangle, RefreshCw, Home, Mail } from 'lucide-react'
-import { logger } from '@lib/logger'
+import { safeError } from '@lib/logger'
+import { prepareForLogging, PRODUCTION_FILTER_CONFIG } from '@lib/security/dataFilter'
 
 interface Props {
   children: ReactNode
@@ -34,14 +35,18 @@ export class RootErrorBoundary extends Component<Props, State> {
   }
 
   override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log critical error
-    logger.error('Critical application error:', {
+    // Log critical error with sensitive data filtering
+    const safeErrorData = prepareForLogging({
       errorId: this.state.errorId,
       error: error.message,
       stack: error.stack,
       componentStack: errorInfo.componentStack,
-      timestamp: new Date().toISOString()
-    })
+      timestamp: new Date().toISOString(),
+      url: window.location.pathname, // Don't include query params or hash
+      userAgent: navigator.userAgent
+    }, PRODUCTION_FILTER_CONFIG)
+
+    safeError('Critical application error:', safeErrorData)
 
     this.setState({ errorInfo })
 
@@ -49,8 +54,9 @@ export class RootErrorBoundary extends Component<Props, State> {
     if (process.env.NODE_ENV === 'production') {
       // Example: Sentry.captureException(error, { 
       //   contexts: { 
-      //     react: errorInfo,
-      //     errorId: this.state.errorId 
+      //     react: { componentStack: errorInfo.componentStack },
+      //     errorId: this.state.errorId,
+      //     url: window.location.pathname // Safe URL without sensitive params
       //   } 
       // })
     }
@@ -59,7 +65,25 @@ export class RootErrorBoundary extends Component<Props, State> {
   handleReload = () => {
     // Clear any cached state before reloading
     try {
+      // Clear session storage but preserve secure storage keys
+      const keysToPreserve = ['seiron_key_salt'] // Keep encryption salt
+      const preservedData: Record<string, string> = {}
+      
+      keysToPreserve.forEach(key => {
+        const value = localStorage.getItem(key)
+        if (value) {
+          preservedData[key] = value
+        }
+      })
+      
       sessionStorage.clear()
+      localStorage.clear()
+      
+      // Restore preserved keys
+      Object.entries(preservedData).forEach(([key, value]) => {
+        localStorage.setItem(key, value)
+      })
+      
       localStorage.setItem('last_error_reload', Date.now().toString())
     } catch (e) {
       // Ignore storage errors

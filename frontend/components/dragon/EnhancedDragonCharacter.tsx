@@ -189,24 +189,18 @@ function EnhancedDragonCharacterInternal({
     mouseY.set(e.clientY - centerY)
   }, [interactive, enableCursorTracking, reducedMotion, mouseX, mouseY])
 
-  // Callback effects
+  // Combined callback effects - optimized to reduce re-renders
   useEffect(() => {
     onStateChange?.(dragon.state)
-  }, [dragon.state, onStateChange])
-
-  useEffect(() => {
     onMoodChange?.(dragon.mood)
-  }, [dragon.mood, onMoodChange])
-
-  useEffect(() => {
     onPowerLevelChange?.(dragon.powerLevel)
-  }, [dragon.powerLevel, onPowerLevelChange])
+  }, [dragon.state, dragon.mood, dragon.powerLevel, onStateChange, onMoodChange, onPowerLevelChange])
 
   // Auto-transition based on proximity
   useEffect(() => {
     if (!autoStates || !mouseTracking.isMouseActive) return
 
-    let transitionTimer: number
+    let transitionTimer: number | undefined
     
     if (mouseTracking.isInProximity && dragon.state === 'idle') {
       transitionTimer = window.setTimeout(() => {
@@ -218,12 +212,12 @@ function EnhancedDragonCharacterInternal({
       }, 100)
     }
     
-    if (transitionTimer) {
+    if (transitionTimer !== undefined) {
       animationTimersRef.current.push(transitionTimer)
     }
     
     return () => {
-      if (transitionTimer) {
+      if (transitionTimer !== undefined) {
         clearTimeout(transitionTimer)
         const index = animationTimersRef.current.indexOf(transitionTimer)
         if (index > -1) {

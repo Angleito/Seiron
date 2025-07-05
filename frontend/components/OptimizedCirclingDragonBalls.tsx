@@ -288,7 +288,6 @@ export function OptimizedCirclingDragonBalls({
 // Separate DragonBall component for better performance
 function DragonBall({ 
   ball, 
-  size, 
   features, 
   qualityLevel, 
   index 

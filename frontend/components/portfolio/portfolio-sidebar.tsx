@@ -1,8 +1,8 @@
 'use client'
 
-import { TrendingUp, TrendingDown, DollarSign, Coins, Activity, Zap, Search, Shield, Target } from 'lucide-react'
+import { TrendingUp, TrendingDown, DollarSign, Coins, Activity, Zap, Search } from 'lucide-react'
 import { cn } from '@lib/utils'
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { getOrchestrator } from '@lib/orchestrator-client'
 import { logger } from '@lib/logger'
 
@@ -58,7 +58,7 @@ interface HiveAnalyticsData {
   }>
 }
 
-export function PortfolioSidebar() {
+function PortfolioSidebarInternal() {
   const [realTimeBalance, setRealTimeBalance] = useState<RealTimeBalance | null>(null)
   const [hiveAnalytics, setHiveAnalytics] = useState<HiveAnalyticsData | null>(null)
   const [seiProtocols, setSeiProtocols] = useState<SeiProtocolInfo[]>([])
@@ -70,7 +70,7 @@ export function PortfolioSidebar() {
   const totalChange = 5.23
   const powerLevel = realTimeBalance?.powerLevel || 9000
   
-  const assets: Asset[] = realTimeBalance ? 
+  const assets: Asset[] = useMemo(() => realTimeBalance ? 
     realTimeBalance.balances.map(balance => ({
       symbol: balance.symbol,
       name: balance.name,
@@ -84,7 +84,7 @@ export function PortfolioSidebar() {
     { symbol: 'ETH', name: 'Ethereum', balance: 15.8, value: 42000, change24h: -1.23, powerLevel: 4200000 },
     { symbol: 'SEI', name: 'Sei', balance: 50000, value: 15000, change24h: 8.92, powerLevel: 1500000, seiProtocol: 'native' },
     { symbol: 'USDC', name: 'USD Coin', balance: 15930.50, value: 15930.50, change24h: 0.01, powerLevel: 1593050 },
-  ]
+  ], [realTimeBalance])
 
   // Initialize real-time connections
   useEffect(() => {
@@ -122,7 +122,7 @@ export function PortfolioSidebar() {
     }
   }, [])
 
-  const fetchRealTimeData = async () => {
+  const fetchRealTimeData = useCallback(async () => {
     setIsLoading(true)
     try {
       // This would trigger MCP adapter to fetch real-time balance
@@ -141,9 +141,9 @@ export function PortfolioSidebar() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
-  const requestHiveAnalysis = async () => {
+  const requestHiveAnalysis = useCallback(async () => {
     setIsLoading(true)
     try {
       // This would trigger Hive Intelligence adapter for portfolio analysis
@@ -164,7 +164,7 @@ export function PortfolioSidebar() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [assets])
 
   return (
     <div className="h-full bg-gradient-to-b from-sei-gray-50 to-sei-gray-100 p-6 overflow-y-auto">
@@ -430,3 +430,6 @@ export function PortfolioSidebar() {
     </div>
   )
 }
+
+// Export memoized component
+export const PortfolioSidebar = React.memo(PortfolioSidebarInternal)

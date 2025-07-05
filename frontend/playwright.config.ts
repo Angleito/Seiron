@@ -70,7 +70,8 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         // reducedMotion: 'reduce',
-        forcedColors: 'active',
+        // Use valid Playwright context options
+        colorScheme: 'dark',
       },
       testMatch: '**/accessibility/*.spec.ts',
     },

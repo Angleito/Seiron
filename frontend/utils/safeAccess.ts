@@ -21,13 +21,13 @@ export const safeExec = <T, R>(fn: ((arg: T) => R) | undefined, arg: T): O.Optio
 export const safeMethodCall = <T, K extends keyof T, R>(
   obj: T | undefined, 
   method: K, 
-  ...args: T[K] extends (...args: any[]) => R ? Parameters<T[K]> : never
+  ...args: T[K] extends (...args: unknown[]) => R ? Parameters<T[K]> : never
 ): O.Option<R> => {
   if (!obj || typeof obj[method] !== 'function') {
     return O.none
   }
   try {
-    const result = (obj[method] as any)(...args)
+    const result = (obj[method] as (...args: unknown[]) => R)(...args)
     return O.some(result)
   } catch {
     return O.none
@@ -35,8 +35,13 @@ export const safeMethodCall = <T, K extends keyof T, R>(
 }
 
 // Safe touch event access
-export const safeTouchAccess = (e: TouchEvent | React.TouchEvent, index: number = 0): O.Option<Touch> =>
-  safeArrayAccess(e.touches as Touch[], index)
+export const safeTouchAccess = (e: TouchEvent | React.TouchEvent, index: number = 0): O.Option<Touch | React.Touch> => {
+  const touches = e.touches
+  if (!touches || index >= touches.length) {
+    return O.none
+  }
+  return O.fromNullable(touches[index])
+}
 
 // Safe DOM element access with getBoundingClientRect
 export const safeBoundingRect = (element: Element | null): O.Option<DOMRect> =>

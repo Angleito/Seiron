@@ -70,6 +70,9 @@ export function CirclingDragonBalls({
         container.removeEventListener('mouseleave', handleMouseLeave)
       }
     }
+    
+    // Return empty cleanup function if no container
+    return () => {}
   }, [interactive])
 
   return (

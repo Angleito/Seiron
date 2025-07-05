@@ -25,7 +25,7 @@ interface KeyboardNavigationState {
   focusIndex: number
   isNavigating: boolean
   lastNavigationTime: number
-  navigationHistory: DragonPart[]
+  navigationHistory: (DragonPart | null)[]
   focusMode: 'sequential' | 'spatial' | 'direct'
 }
 
@@ -167,15 +167,15 @@ export function useKeyboardNavigation({
 
     setNavigationState(prev => ({
       ...prev,
-      currentFocus: nextPart,
+      currentFocus: nextPart ?? null,
       focusIndex: nextIndex,
       isNavigating: true,
       lastNavigationTime: Date.now(),
-      navigationHistory: [...prev.navigationHistory.slice(-9), nextPart]
+      navigationHistory: [...prev.navigationHistory.slice(-9), nextPart ?? null]
     }))
 
     // Update focus indicator
-    const position = getElementPosition(nextPart)
+    const position = nextPart ? getElementPosition(nextPart) : null
     if (position) {
       setFocusIndicator({
         visible: true,
@@ -186,11 +186,11 @@ export function useKeyboardNavigation({
     }
 
     // Announce to screen reader
-    const announcement = announcementConfig[nextPart] || `${nextPart} selected`
+    const announcement = nextPart ? (announcementConfig[nextPart] || `${nextPart} selected`) : 'No selection'
     announceToScreenReader(announcement)
 
     // Callback
-    onPartFocus?.(nextPart)
+    onPartFocus?.(nextPart ?? null)
 
     // Focus the actual element for proper accessibility
     pipe(
@@ -213,11 +213,11 @@ export function useKeyboardNavigation({
 
     setNavigationState(prev => ({
       ...prev,
-      currentFocus: prevPart,
+      currentFocus: prevPart ?? null,
       focusIndex: prevIndex,
       isNavigating: true,
       lastNavigationTime: Date.now(),
-      navigationHistory: [...prev.navigationHistory.slice(-9), prevPart]
+      navigationHistory: [...prev.navigationHistory.slice(-9), prevPart ?? null]
     }))
 
     // Update focus indicator
@@ -232,11 +232,11 @@ export function useKeyboardNavigation({
     }
 
     // Announce to screen reader
-    const announcement = announcementConfig[prevPart] || `${prevPart} selected`
+    const announcement = prevPart ? (announcementConfig[prevPart] || `${prevPart} selected`) : 'No selection'
     announceToScreenReader(announcement)
 
     // Callback
-    onPartFocus?.(prevPart)
+    onPartFocus?.(prevPart ?? null)
 
     // Focus the actual element
     pipe(
@@ -257,11 +257,11 @@ export function useKeyboardNavigation({
 
     setNavigationState(prev => ({
       ...prev,
-      currentFocus: part,
+      currentFocus: part ?? null,
       focusIndex: index,
       isNavigating: true,
       lastNavigationTime: Date.now(),
-      navigationHistory: [...prev.navigationHistory.slice(-9), part]
+      navigationHistory: [...prev.navigationHistory.slice(-9), part ?? null]
     }))
 
     // Update focus indicator

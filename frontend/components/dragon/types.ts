@@ -10,6 +10,21 @@ export type PerformanceMode = 'quality' | 'balanced' | 'performance';
 
 export type OrbitPattern = 'circular' | 'elliptical' | 'complex' | 'chaotic';
 
+export type DragonPart = 'head' | 'left-eye' | 'right-eye' | 'body' | 'left-arm' | 'right-arm' | 'left-leg' | 'right-leg' | 'tail' | 'wings' | 'dragon-ball';
+
+export type InteractionType = 'click' | 'hover' | 'touch' | 'keyboard';
+
+export type ResponsiveBreakpoint = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
+
+export interface ResponsiveBreakpointConfig {
+  name: ResponsiveBreakpoint;
+  minWidth: number;
+  maxWidth?: number;
+  dragonSize: string;
+  particleCount: number;
+  animationQuality: string;
+}
+
 export interface DragonPose {
   state: DragonState;
   mood: DragonMood;
@@ -51,201 +66,68 @@ export interface EnhancedDragonCharacterProps {
   dragonBallConfig?: Partial<DragonBallConfig>;
   onStateChange?: (state: DragonState) => void;
   onMoodChange?: (mood: DragonMood) => void;
-  onPowerLevelChange?: (level: number) => void;
-  onInteraction?: (type: InteractionType) => void;
+  onInteraction?: (event: DragonInteractionEvent) => void;
   className?: string;
-  armsVariant?: 'crossed' | 'ready' | 'attack' | 'defensive' | 'open';
   enableCursorTracking?: boolean;
-  autoStates?: boolean; // Auto-transition between states
+  autoStates?: boolean;
+  onPowerLevelChange?: (level: number) => void;
 }
-
-export type InteractionType = 
-  | 'hover' 
-  | 'leave' 
-  | 'click' 
-  | 'double-click'
-  | 'long-press'
-  | 'drag-start'
-  | 'drag-end'
-  | 'gesture-swipe'
-  | 'gesture-pinch'
-  | 'keyboard-focus'
-  | 'proximity-enter'
-  | 'proximity-leave';
 
 export interface DragonInteractionEvent {
   type: InteractionType;
-  target: 'dragon' | 'dragon-ball' | 'aura' | 'particles';
-  position?: { x: number; y: number };
-  data?: any;
+  part: DragonPart;
+  position: { x: number; y: number };
   timestamp: number;
+  context?: Record<string, unknown>;
 }
 
 export interface OrbitPhysics {
-  angle: number;
   radius: number;
   speed: number;
-  eccentricity: number; // 0-1 for elliptical orbits
-  phase: number; // offset phase
-  momentum: { x: number; y: number };
-  attractors: Array<{ x: number; y: number; force: number }>;
+  angle: number;
+  centerX: number;
+  centerY: number;
+  pattern: OrbitPattern;
 }
 
 export interface DragonBallState {
-  id: number; // 1-7 stars
-  physics: OrbitPhysics;
-  isHovered: boolean;
-  isInteracting: boolean;
-  powerLevel: number;
+  id: number;
+  position: { x: number; y: number };
+  orbit: OrbitPhysics;
+  collected: boolean;
   glowIntensity: number;
-  trailLength: number;
+  powerLevel: number;
 }
 
 export interface PerformanceMetrics {
   fps: number;
-  frameDrops: number;
-  averageFrameTime: number;
+  frameTime: number;
+  renderTime: number;
+  cpuUsage: number;
   memoryUsage: number;
-  gpuUtilization: number;
-  lastUpdated: number;
-  // Additional compatibility properties
-  cpuUsage?: number;
-  networkLatency?: number;
-}
-
-export interface ResponsiveBreakpoint {
-  name: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
-  minWidth: number;
-  maxWidth?: number;
-  dragonSize: 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
-  particleCount: number;
-  animationQuality: PerformanceMode;
+  batterySaving: boolean;
+  qualityLevel: number;
 }
 
 export interface TouchGesture {
-  type: 'tap' | 'long-press' | 'swipe' | 'pinch' | 'rotate';
+  type: 'tap' | 'swipe' | 'pinch' | 'rotate' | 'long-press';
   startTime: number;
   duration: number;
   startPosition: { x: number; y: number };
   endPosition: { x: number; y: number };
   distance: number;
   velocity: { x: number; y: number };
-  scale?: number; // for pinch
-  rotation?: number; // for rotate
+  scale?: number;
+  rotation?: number;
 }
 
 export interface AccessibilityConfig {
+  enableKeyboardNav: boolean;
   enableScreenReader: boolean;
-  enableKeyboardNavigation: boolean;
-  announceStateChanges: boolean;
-  highContrastMode: 'auto' | 'enabled' | 'disabled';
-  reducedMotionOverride?: boolean;
-  focusIndicators: boolean;
-  ariaLabels: {
-    dragon: string;
-    dragonBalls: string;
-    powerLevel: string;
-    interactionHint: string;
-  };
-}
-
-// Animation Hook Types
-export interface DragonAnimationHookReturn {
-  state: DragonState;
-  mood: DragonMood;
-  powerLevel: number;
-  isTransitioning: boolean;
-  performanceMetrics: PerformanceMetrics;
-  actions: {
-    setState: (state: DragonState) => void;
-    setMood: (mood: DragonMood) => void;
-    powerUp: () => void;
-    powerDown: () => void;
-    triggerSpecialAnimation: (type: 'roar' | 'spin' | 'pulse' | 'shake') => void;
-    resetToIdle: () => void;
-  };
-}
-
-export interface MouseTrackingHookReturn {
-  mousePosition: { x: number; y: number };
-  isMouseActive: boolean;
-  distanceFromDragon: number;
-  angleFromDragon: number;
-  targetDirection: { x: number; y: number };
-  isInProximity: boolean;
-}
-
-export interface TouchGestureHookReturn {
-  gestures: TouchGesture[];
-  isGestureActive: boolean;
-  currentGesture: TouchGesture | null;
-  gestureHandlers: {
-    onTouchStart: (e: React.TouchEvent) => void;
-    onTouchMove: (e: React.TouchEvent) => void;
-    onTouchEnd: (e: React.TouchEvent) => void;
-  };
-}
-
-export interface PerformanceHookReturn {
-  performanceMode: PerformanceMode;
-  metrics: PerformanceMetrics;
-  isOptimizing: boolean;
-  qualityLevel: number; // 0-100
-  actions: {
-    setPerformanceMode: (mode: PerformanceMode) => void;
-    enableAutoOptimization: () => void;
-    disableAutoOptimization: () => void;
-    resetMetrics: () => void;
-  };
-}
-
-// Dragon part types for interaction
-export type DragonPart = 
-  | 'head' 
-  | 'left-eye' 
-  | 'right-eye' 
-  | 'body' 
-  | 'left-arm' 
-  | 'right-arm' 
-  | 'left-leg' 
-  | 'right-leg' 
-  | 'tail' 
-  | 'wings' 
-  | 'dragon-ball';
-
-// SVG-specific types for enhanced interaction
-export interface SVGInteractionZones {
-  head: SVGElement | null;
-  body: SVGElement | null;
-  leftArm: SVGElement | null;
-  rightArm: SVGElement | null;
-  dragonBalls: SVGElement[] | null;
-}
-
-export interface SVGInteractionState {
-  activeZone: DragonPart | null;
-  hoverPosition: { x: number; y: number } | null;
-  clickPosition: { x: number; y: number } | null;
-  isInteracting: boolean;
-}
-
-export interface SVGAccessibilityProps {
-  ariaLabel?: string;
-  ariaDescribedBy?: string;
-  tabIndex?: number;
-  role?: string;
-  focusable?: boolean;
-}
-
-export interface EnhancedMouseTrackingReturn extends MouseTrackingHookReturn {
-  getElementAtPosition: (x: number, y: number) => DragonPart | null;
-  updateEyeTracking: (mousePosition: { x: number; y: number }) => void;
-  updateHeadRotation: (mousePosition: { x: number; y: number }) => void;
-}
-
-export interface EnhancedTouchGestureReturn extends TouchGestureHookReturn {
-  expandTouchTarget: (part: DragonPart, expansion: number) => void;
-  handleTouch: (part: DragonPart, event: React.TouchEvent) => void;
+  enableMotionReduction: boolean;
+  enableHighContrast: boolean;
+  focusIndicatorStyle: React.CSSProperties;
+  announcements: Record<DragonPart, string>;
 }
 
 export interface KeyboardNavigationConfig {
@@ -255,3 +137,121 @@ export interface KeyboardNavigationConfig {
   keyBindings: Record<string, (part: DragonPart) => void>;
 }
 
+export interface SVGInteractionZones {
+  [key: string]: {
+    bounds: DOMRect;
+    part: DragonPart;
+    interactive: boolean;
+    accessibilityLabel: string;
+  };
+}
+
+export interface SVGInteractionState {
+  hoveredPart: DragonPart | null;
+  activePart: DragonPart | null;
+  touchTargets: Map<DragonPart, DOMRect>;
+  interactionHistory: DragonInteractionEvent[];
+}
+
+export interface SVGAccessibilityProps {
+  role: string;
+  'aria-label': string;
+  'aria-describedby': string;
+  'aria-live': 'polite' | 'assertive' | 'off';
+  tabIndex: number;
+  onKeyDown?: (event: React.KeyboardEvent) => void;
+  onFocus?: () => void;
+  onBlur?: () => void;
+}
+
+// Hook Return Types
+export interface DragonAnimationHookReturn {
+  pose: DragonPose;
+  setPose: (pose: Partial<DragonPose>) => void;
+  transitionTo: (state: DragonState, mood?: DragonMood) => void;
+  powerUp: () => void;
+  isAnimating: boolean;
+  performanceMetrics: PerformanceMetrics;
+  actions: {
+    setPowerLevel: (level: number) => void;
+    triggerPowerUp: () => void;
+    resetAnimation: () => void;
+  };
+}
+
+export interface MouseTrackingHookReturn {
+  mousePosition: { x: number; y: number };
+  isHovering: boolean;
+  hoveredPart: DragonPart | null;
+  eyePosition: { x: number; y: number };
+  proximityLevel: number;
+  cursorInside: boolean;
+  isMouseActive: boolean;
+  distanceFromDragon: number;
+  angleFromDragon: number;
+  targetDirection: { x: number; y: number };
+  isInProximity: boolean;
+}
+
+export interface TouchGestureHookReturn {
+  gestureHandlers: {
+    onTouchStart: (e: React.TouchEvent) => void;
+    onTouchMove: (e: React.TouchEvent) => void;
+    onTouchEnd: (e: React.TouchEvent) => void;
+  };
+  currentGesture: TouchGesture | null;
+  gestureHistory: TouchGesture[];
+  isGestureActive: boolean;
+}
+
+export interface PerformanceHookReturn {
+  metrics: PerformanceMetrics;
+  qualityLevel: number;
+  setQualityLevel: (level: number) => void;
+  enableBatterySaving: () => void;
+  disableBatterySaving: () => void;
+  resetMetrics: () => void;
+}
+
+// Enhanced Interaction Types
+export interface EyeTrackingState {
+  leftEye: { x: number; y: number };
+  rightEye: { x: number; y: number };
+  tracking: boolean;
+  blinkState: 'open' | 'closing' | 'closed' | 'opening';
+  attentionLevel: number;
+}
+
+export interface CursorEffect {
+  id: string;
+  type: 'trail' | 'glow' | 'ripple' | 'magnetic';
+  position: { x: number; y: number };
+  intensity: number;
+  color: string;
+  timestamp: number;
+}
+
+export interface MagneticCursorState {
+  isActive: boolean;
+  targetElement: Element | null;
+  magneticStrength: number;
+  snapDistance: number;
+  currentOffset: { x: number; y: number };
+}
+
+export interface EnhancedMouseTrackingReturn extends MouseTrackingHookReturn {
+  eyeTracking: EyeTrackingState;
+  cursorEffects: CursorEffect[];
+  magneticCursor: MagneticCursorState;
+  proximityZone: 'none' | 'outer' | 'inner';
+  performanceMetrics: PerformanceMetrics;
+  svgState?: SVGInteractionState;
+}
+
+export interface EnhancedTouchGestureReturn extends TouchGestureHookReturn {
+  gestureTrails: TouchGesture[];
+  multiTouchState: Record<string, unknown>;
+  specialGestures: Record<string, unknown>;
+  performanceMetrics: PerformanceMetrics;
+  svgTouchTargets?: Map<DragonPart, DOMRect>;
+}

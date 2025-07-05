@@ -27,7 +27,6 @@ export function EnhancedDragonAnimation({
   enableGestures = true
 }: EnhancedDragonAnimationProps) {
   const [dragonState, setDragonState] = useState<DragonState>('idle')
-  const [isHovered, setIsHovered] = useState(false)
   const controls = useAnimation()
   const containerRef = useRef<HTMLDivElement>(null)
   const config = sizeConfig[size]
@@ -342,12 +341,21 @@ export function EnhancedDragonAnimation({
           {/* Floating Animation Layer */}
           <motion.div
             className="absolute inset-0"
-            animate={floatingAnimation}
+            animate={{
+              y: floatingAnimation.y,
+              x: floatingAnimation.x,
+              rotate: floatingAnimation.rotate,
+            }}
+            transition={floatingAnimation.transition}
           >
             {/* Wind Drift Layer */}
             <motion.div
               className="absolute inset-0"
-              animate={windDriftAnimation}
+              animate={{
+                x: windDriftAnimation.x,
+                skewX: windDriftAnimation.skewX,
+              }}
+              transition={windDriftAnimation.transition}
             >
               {/* 3D Rotation Layer */}
               <motion.div
