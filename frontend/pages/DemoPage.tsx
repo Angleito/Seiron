@@ -4,17 +4,16 @@ import type { QualityLevel } from '@hooks/useAnimationPerformance'
 
 export default function DemoPage() {
   const [showOptimized, setShowOptimized] = useState(true)
-  const [currentQuality, setCurrentQuality] = useState<QualityLevel>(75)
+  const [_currentQuality, _setCurrentQuality] = useState<QualityLevel>(75)
   const [showDebugger, setShowDebugger] = useState(true)
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-red-900/20 to-gray-900">
-      {/* Performance Debugger */}
+      {/* Performance Debugger - Component not available */}
       {showDebugger && (
-        <AnimationPerformanceDebugger 
-          position="top-right"
-          expanded={true}
-        />
+        <div className="fixed top-4 right-4 p-4 bg-gray-800 rounded-lg border border-red-500/30">
+          <p className="text-red-400 text-sm">Performance Debugger would go here</p>
+        </div>
       )}
       
       {/* Header */}
@@ -58,11 +57,7 @@ export default function DemoPage() {
             </div>
             
             <div className="text-white">
-              Current Quality: <span className={`font-bold ${
-                currentQuality > 75 ? 'text-green-400' :
-                currentQuality > 50 ? 'text-yellow-400' :
-                'text-orange-400'
-              }`}>{currentQuality}%</span>
+              Current Quality: <span className="font-bold text-green-400">75%</span>
             </div>
           </div>
         </div>

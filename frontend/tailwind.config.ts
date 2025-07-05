@@ -106,6 +106,8 @@ const config: Config = {
         // Touch gesture feedback
         "touch-ripple": "touch-ripple 0.6s ease-out",
         "swipe-hint": "swipe-hint 1s ease-in-out infinite",
+        // Slow spin animation
+        "spin-slow": "spin 3s linear infinite",
       },
       keyframes: {
         "dragon-pulse": {
