@@ -15,29 +15,26 @@ export * from './collectors/oracle';
 
 // AI model training utilities - excluding types that are re-exported from types/index.ts
 export { 
-  prepareTrainingData,
+  preprocessDataset,
   validateDataset,
-  DataPreparationConfig,
-  DataPreparationResult
+  PreprocessConfig,
+  TrainingDataset
 } from './training/prepare';
 export * from './training/openai';
 
 // Utilities - excluding types that are re-exported from types/index.ts
 export * from './utils/math';
 export {
-  formatDate,
-  parseDate,
-  getTimestamp,
-  getISOString,
-  addDays,
-  addHours,
-  addMinutes,
-  startOfDay,
-  endOfDay,
-  isWithinRange,
-  getDurationMs,
-  formatDuration,
-  createTimeRange
+  formatTimestamp,
+  getRelativeTime,
+  getStartOfDay,
+  getEndOfDay,
+  getTimeRangeForPeriod,
+  parsePeriodToMs,
+  roundToInterval,
+  generateTimeSeries,
+  TimeRange,
+  TimePeriod
 } from './utils/time';
 export * from './utils/sei';
 
