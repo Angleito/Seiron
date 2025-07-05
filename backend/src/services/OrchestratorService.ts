@@ -3,6 +3,8 @@ import * as TE from 'fp-ts/TaskEither';
 import * as E from 'fp-ts/Either';
 import * as O from 'fp-ts/Option';
 import { EventEmitter } from 'events';
+import { performance } from 'perf_hooks';
+import { createServiceLogger } from './LoggingService';
 // import type { Orchestrator } from '../../../src/orchestrator/core';
 import type { SeiIntegrationService } from './SeiIntegrationService';
 import type { PortfolioAnalyticsService } from './PortfolioAnalyticsService';
@@ -232,6 +234,7 @@ export class OrchestratorService extends EventEmitter {
   private portfolioAnalytics: PortfolioAnalyticsService;
   private realTimeData: RealTimeDataService;
   private socketService: SocketService;
+  private logger = createServiceLogger('OrchestratorService');
   
   // Task management
   private taskPipelines: Map<string, TaskPipeline> = new Map();
@@ -255,7 +258,6 @@ export class OrchestratorService extends EventEmitter {
     config?: BackendOrchestratorConfig
   ) {
     super();
-    super();
     this.seiIntegration = seiIntegration;
     this.portfolioAnalytics = portfolioAnalytics;
     this.realTimeData = realTimeData;
@@ -265,6 +267,19 @@ export class OrchestratorService extends EventEmitter {
     this.stats = this.initializeStats();
     this.setupOrchestratorEventHandlers();
     this.startTaskProcessor();
+    
+    this.logger.info('OrchestratorService initialized', {
+      maxConcurrentTasks: this.config.core.maxConcurrentTasks,
+      taskTimeout: this.config.core.taskTimeout,
+      adaptersEnabled: {
+        hive: this.config.adapters.hive.enabled,
+        sak: this.config.adapters.sak.enabled,
+        mcp: this.config.adapters.mcp.enabled
+      },
+      realTimeEnabled: this.config.realTime.enabled,
+      analyticsEnabled: this.config.analytics.enabled,
+      timestamp: new Date().toISOString()
+    });
   }
 
   // ============================================================================
@@ -279,6 +294,18 @@ export class OrchestratorService extends EventEmitter {
   ): TE.TaskEither<OrchestrationError, OrchestrationResult> => {
     const startTime = Date.now();
     
+    this.logger.info('Processing intent', {
+      intentId: intent.id,
+      userId: intent.userId,
+      walletAddress: intent.walletAddress,
+      intentType: intent.type,
+      intentAction: intent.action,
+      priority: intent.priority,
+      parametersCount: Object.keys(intent.parameters).length,
+      hasConstraints: !!intent.constraints,
+      timestamp: new Date().toISOString()
+    });
+    
     return pipe(
       this.validateIntent(intent),
       TE.chain(() => this.createTaskPipeline(intent)),
@@ -288,6 +315,15 @@ export class OrchestratorService extends EventEmitter {
       TE.map(result => {
         const executionTime = Date.now() - startTime;
         this.updateStats(intent, result, executionTime);
+        
+        this.logger.info('Intent processing completed', {
+          intentId: intent.id,
+          success: result.success,
+          executionTime,
+          adaptersUsed: result.metadata.adaptersUsed,
+          tasksExecuted: result.metadata.tasksExecuted,
+          gasUsed: result.metadata.gasUsed
+        });
         
         this.emit('orchestration:completed', {
           intentId: intent.id,
@@ -303,6 +339,19 @@ export class OrchestratorService extends EventEmitter {
             executionTime
           }
         };
+      }),
+      TE.mapLeft(error => {
+        const executionTime = Date.now() - startTime;
+        this.logger.error('Intent processing failed', {
+          intentId: intent.id,
+          error: error.message,
+          errorCode: error.code,
+          errorComponent: error.component,
+          executionTime,
+          recoverable: error.recoverable,
+          retryable: error.retryable
+        });
+        return error;
       })
     );
   };
@@ -440,8 +489,16 @@ export class OrchestratorService extends EventEmitter {
    */
   private validateIntent = (
     intent: EnhancedUserIntent
-  ): TE.TaskEither<OrchestrationError, EnhancedUserIntent> =>
-    TE.tryCatch(
+  ): TE.TaskEither<OrchestrationError, EnhancedUserIntent> => {
+    const startTime = performance.now();
+    
+    this.logger.debug('Validating intent', {
+      intentId: intent.id,
+      intentType: intent.type,
+      intentAction: intent.action
+    });
+    
+    return TE.tryCatch(
       async () => {
         // Basic validation
         if (!intent.id || !intent.userId || !intent.walletAddress) {
@@ -463,18 +520,42 @@ export class OrchestratorService extends EventEmitter {
           throw new Error('Max gas cost must be positive');
         }
         
+        const duration = performance.now() - startTime;
+        this.logger.debug('Intent validation completed', {
+          intentId: intent.id,
+          duration: Math.round(duration),
+          valid: true
+        });
+        
         return intent;
       },
-      error => this.createOrchestrationError('INTENT_VALIDATION_FAILED', `Intent validation failed: ${error}`, 'validation')
+      error => {
+        const duration = performance.now() - startTime;
+        this.logger.error('Intent validation failed', {
+          intentId: intent.id,
+          duration: Math.round(duration),
+          error: error instanceof Error ? error.message : String(error)
+        });
+        return this.createOrchestrationError('INTENT_VALIDATION_FAILED', `Intent validation failed: ${error}`, 'validation');
+      }
     );
+  };
 
   /**
    * Create task pipeline from intent
    */
   private createTaskPipeline = (
     intent: EnhancedUserIntent
-  ): TE.TaskEither<OrchestrationError, TaskPipeline> =>
-    TE.tryCatch(
+  ): TE.TaskEither<OrchestrationError, TaskPipeline> => {
+    const startTime = performance.now();
+    
+    this.logger.debug('Creating task pipeline', {
+      intentId: intent.id,
+      intentType: intent.type,
+      intentAction: intent.action
+    });
+    
+    return TE.tryCatch(
       async () => {
         const pipelineId = `pipeline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         const steps = await this.generateTaskSteps(intent);
@@ -498,6 +579,17 @@ export class OrchestratorService extends EventEmitter {
         
         this.taskPipelines.set(pipelineId, pipeline);
         
+        const duration = performance.now() - startTime;
+        this.logger.info('Task pipeline created', {
+          pipelineId,
+          intentId: intent.id,
+          totalSteps: steps.length,
+          estimatedDuration: pipeline.metadata.estimatedDuration,
+          priority: pipeline.priority,
+          duration: Math.round(duration),
+          stepTypes: steps.map(s => s.type)
+        });
+        
         this.emit('orchestration:pipeline:created', {
           pipelineId,
           intentId: intent.id,
@@ -507,16 +599,34 @@ export class OrchestratorService extends EventEmitter {
         
         return pipeline;
       },
-      error => this.createOrchestrationError('PIPELINE_CREATION_FAILED', `Failed to create task pipeline: ${error}`, 'orchestrator')
+      error => {
+        const duration = performance.now() - startTime;
+        this.logger.error('Pipeline creation failed', {
+          intentId: intent.id,
+          duration: Math.round(duration),
+          error: error instanceof Error ? error.message : String(error)
+        });
+        return this.createOrchestrationError('PIPELINE_CREATION_FAILED', `Failed to create task pipeline: ${error}`, 'orchestrator');
+      }
     );
+  };
 
   /**
    * Execute task pipeline
    */
   private executePipeline = (
     pipeline: TaskPipeline
-  ): TE.TaskEither<OrchestrationError, OrchestrationResult> =>
-    TE.tryCatch(
+  ): TE.TaskEither<OrchestrationError, OrchestrationResult> => {
+    const startTime = performance.now();
+    
+    this.logger.info('Executing task pipeline', {
+      pipelineId: pipeline.id,
+      intentId: pipeline.intentId,
+      totalSteps: pipeline.steps.length,
+      priority: pipeline.priority
+    });
+    
+    return TE.tryCatch(
       async () => {
         pipeline.status = 'running';
         pipeline.startedAt = new Date();
@@ -527,7 +637,20 @@ export class OrchestratorService extends EventEmitter {
         let totalGasUsed = 0;
         let tasksExecuted = 0;
         
-        for (const step of pipeline.steps) {
+        for (let i = 0; i < pipeline.steps.length; i++) {
+          const step = pipeline.steps[i];
+          const stepStartTime = performance.now();
+          
+          this.logger.debug('Executing pipeline step', {
+            pipelineId: pipeline.id,
+            stepId: step.id,
+            stepType: step.type,
+            stepIndex: i + 1,
+            totalSteps: pipeline.steps.length,
+            adapter: step.adapter,
+            operation: step.operation
+          });
+          
           try {
             step.status = 'running';
             step.startTime = new Date();
@@ -538,6 +661,15 @@ export class OrchestratorService extends EventEmitter {
             step.endTime = new Date();
             step.result = stepResult;
             
+            const stepDuration = performance.now() - stepStartTime;
+            this.logger.debug('Pipeline step completed', {
+              pipelineId: pipeline.id,
+              stepId: step.id,
+              stepDuration: Math.round(stepDuration),
+              hasResult: !!stepResult,
+              gasUsed: stepResult?.gasUsed
+            });
+            
             results.push(stepResult);
             if (step.adapter) adaptersUsed.add(step.adapter);
             if (stepResult.gasUsed) totalGasUsed += stepResult.gasUsed;
@@ -546,6 +678,7 @@ export class OrchestratorService extends EventEmitter {
             pipeline.metadata.completedSteps++;
             
           } catch (error) {
+            const stepDuration = performance.now() - stepStartTime;
             step.status = 'failed';
             step.endTime = new Date();
             step.error = error instanceof Error ? error.message : 'Unknown error';
@@ -553,9 +686,25 @@ export class OrchestratorService extends EventEmitter {
             
             pipeline.metadata.failedSteps++;
             
+            this.logger.error('Pipeline step failed', {
+              pipelineId: pipeline.id,
+              stepId: step.id,
+              stepDuration: Math.round(stepDuration),
+              error: step.error,
+              retryCount: step.retryCount,
+              maxRetries: step.maxRetries,
+              isRetryable: this.isRetryableError(error),
+              isCritical: this.isCriticalStep(step)
+            });
+            
             // Retry logic
             if (step.retryCount < step.maxRetries && this.isRetryableError(error)) {
               step.status = 'pending';
+              this.logger.info('Retrying pipeline step', {
+                pipelineId: pipeline.id,
+                stepId: step.id,
+                retryAttempt: step.retryCount + 1
+              });
               // Re-add to queue for retry
               continue;
             }
@@ -573,7 +722,8 @@ export class OrchestratorService extends EventEmitter {
         
         this.taskPipelines.set(pipeline.id, pipeline);
         
-        return {
+        const totalDuration = performance.now() - startTime;
+        const result = {
           intentId: pipeline.intentId,
           success: pipeline.metadata.failedSteps === 0,
           data: results.length === 1 ? results[0] : results,
@@ -584,27 +734,92 @@ export class OrchestratorService extends EventEmitter {
             gasUsed: totalGasUsed || undefined
           }
         };
+        
+        this.logger.info('Pipeline execution completed', {
+          pipelineId: pipeline.id,
+          intentId: pipeline.intentId,
+          success: result.success,
+          totalDuration: Math.round(totalDuration),
+          actualDuration: pipeline.metadata.actualDuration,
+          completedSteps: pipeline.metadata.completedSteps,
+          failedSteps: pipeline.metadata.failedSteps,
+          adaptersUsed: Array.from(adaptersUsed),
+          totalGasUsed
+        });
+        
+        return result;
       },
-      error => this.createOrchestrationError('PIPELINE_EXECUTION_FAILED', `Pipeline execution failed: ${error}`, 'orchestrator')
+      error => {
+        const duration = performance.now() - startTime;
+        this.logger.error('Pipeline execution failed', {
+          pipelineId: pipeline.id,
+          intentId: pipeline.intentId,
+          duration: Math.round(duration),
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined
+        });
+        return this.createOrchestrationError('PIPELINE_EXECUTION_FAILED', `Pipeline execution failed: ${error}`, 'orchestrator');
+      }
     );
+  };
 
   /**
    * Execute individual task step
    */
   private async executeTaskStep(step: TaskStep, pipeline: TaskPipeline): Promise<any> {
-    switch (step.type) {
-      case 'adapter_call':
-        return this.executeAdapterCall(step);
-      case 'validation':
-        return this.executeValidationStep(step, pipeline);
-      case 'analytics':
-        return this.executeAnalyticsStep(step, pipeline);
-      case 'notification':
-        return this.executeNotificationStep(step, pipeline);
-      case 'confirmation':
-        return this.executeConfirmationStep(step, pipeline);
-      default:
-        throw new Error(`Unknown step type: ${step.type}`);
+    const stepStartTime = performance.now();
+    
+    this.logger.debug('Executing task step', {
+      stepId: step.id,
+      stepType: step.type,
+      adapter: step.adapter,
+      operation: step.operation,
+      pipelineId: pipeline.id
+    });
+    
+    try {
+      let result;
+      
+      switch (step.type) {
+        case 'adapter_call':
+          result = await this.executeAdapterCall(step);
+          break;
+        case 'validation':
+          result = await this.executeValidationStep(step, pipeline);
+          break;
+        case 'analytics':
+          result = await this.executeAnalyticsStep(step, pipeline);
+          break;
+        case 'notification':
+          result = await this.executeNotificationStep(step, pipeline);
+          break;
+        case 'confirmation':
+          result = await this.executeConfirmationStep(step, pipeline);
+          break;
+        default:
+          throw new Error(`Unknown step type: ${step.type}`);
+      }
+      
+      const duration = performance.now() - stepStartTime;
+      this.logger.debug('Task step executed successfully', {
+        stepId: step.id,
+        stepType: step.type,
+        duration: Math.round(duration),
+        hasResult: !!result,
+        resultType: typeof result
+      });
+      
+      return result;
+    } catch (error) {
+      const duration = performance.now() - stepStartTime;
+      this.logger.error('Task step execution failed', {
+        stepId: step.id,
+        stepType: step.type,
+        duration: Math.round(duration),
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      throw error;
     }
   }
 

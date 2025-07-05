@@ -30,6 +30,7 @@ import { createDragonSwapAdapter, DragonSwapAdapter } from '../adapters/DragonSw
 import { SocketService } from './SocketService';
 import { ConfirmationService } from './ConfirmationService';
 import logger from '../utils/logger';
+import { createServiceLogger } from './LoggingService';
 
 // Legacy interfaces for backward compatibility
 export interface PortfolioData {
@@ -68,8 +69,14 @@ export class PortfolioService {
   private cacheManager: PortfolioCacheManager;
   private socketService?: SocketService;
   private confirmationService?: ConfirmationService;
+  private serviceLogger = createServiceLogger('PortfolioService');
 
   constructor(socketService?: SocketService, confirmationService?: ConfirmationService) {
+    this.serviceLogger.info('Initializing PortfolioService', {
+      hasSocketService: !!socketService,
+      hasConfirmationService: !!confirmationService
+    });
+    
     this.portfolioState = new PortfolioState();
     this.positionTracker = new PositionTracker(this.portfolioState);
     this.analytics = new PortfolioAnalytics(this.portfolioState);
@@ -78,14 +85,29 @@ export class PortfolioService {
     this.confirmationService = confirmationService;
 
     this.setupEventListeners();
+    this.serviceLogger.info('PortfolioService initialization completed');
   }
 
   /**
    * Initialize adapters with wallet client
    */
   public initializeAdapters(walletClient: any): void {
-    this.yeiAdapter = createYeiFinanceAdapter(this.publicClient, walletClient);
-    this.dragonSwapAdapter = createDragonSwapAdapter(this.publicClient, walletClient);
+    this.serviceLogger.info('Initializing portfolio adapters');
+    this.serviceLogger.startTimer('initializeAdapters');
+    
+    try {
+      this.yeiAdapter = createYeiFinanceAdapter(this.publicClient, walletClient);
+      this.dragonSwapAdapter = createDragonSwapAdapter(this.publicClient, walletClient);
+      
+      this.serviceLogger.endTimer('initializeAdapters');
+      this.serviceLogger.info('Portfolio adapters initialized successfully', {
+        hasYeiAdapter: !!this.yeiAdapter,
+        hasDragonSwapAdapter: !!this.dragonSwapAdapter
+      });
+    } catch (error) {
+      this.serviceLogger.error('Failed to initialize portfolio adapters', {}, error as Error);
+      throw error;
+    }
   }
 
   /**
@@ -93,10 +115,24 @@ export class PortfolioService {
    */
   public initializeUser = (walletAddress: WalletAddress): AsyncResult<void> =>
     pipe(
-      this.portfolioState.initializeUser(walletAddress),
-      TE.chain(() => this.positionTracker.startTracking(walletAddress)),
+      TE.Do,
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.info('Initializing user portfolio state', { walletAddress, method: 'initializeUser' });
+        this.serviceLogger.startTimer('initializeUser');
+      })),
+      TE.chain(() => this.serviceLogger.logTaskEither(
+        this.portfolioState.initializeUser(walletAddress),
+        'initializeUser.portfolioState',
+        { walletAddress }
+      )),
+      TE.chain(() => this.serviceLogger.logTaskEither(
+        this.positionTracker.startTracking(walletAddress),
+        'initializeUser.positionTracker',
+        { walletAddress }
+      )),
       TE.map(() => {
-        logger.info(`Portfolio service initialized for ${walletAddress}`);
+        this.serviceLogger.endTimer('initializeUser', { walletAddress });
+        this.serviceLogger.info('Portfolio service initialized for user', { walletAddress });
       })
     );
 
@@ -105,8 +141,25 @@ export class PortfolioService {
    */
   public getPortfolioData = (walletAddress: WalletAddress): AsyncResult<PortfolioData> =>
     pipe(
-      this.getOrUpdatePortfolioSnapshot(walletAddress),
-      TE.map(snapshot => this.convertSnapshotToLegacyData(snapshot))
+      TE.Do,
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.info('Fetching portfolio data', { walletAddress, method: 'getPortfolioData' });
+        this.serviceLogger.startTimer('getPortfolioData');
+      })),
+      TE.chain(() => this.serviceLogger.logTaskEither(
+        this.getOrUpdatePortfolioSnapshot(walletAddress),
+        'getPortfolioData',
+        { walletAddress }
+      )),
+      TE.map(snapshot => {
+        const data = this.convertSnapshotToLegacyData(snapshot);
+        this.serviceLogger.endTimer('getPortfolioData', { 
+          walletAddress,
+          totalValueUSD: data.totalValueUSD,
+          positionsCount: data.lendingPositions.length + data.liquidityPositions.length
+        });
+        return data;
+      })
     );
 
   /**
@@ -114,8 +167,19 @@ export class PortfolioService {
    */
   public getPortfolioSnapshot = (walletAddress: WalletAddress): AsyncResult<PortfolioSnapshot> =>
     pipe(
-      this.getOrUpdatePortfolioSnapshot(walletAddress),
-      TE.map(snapshot => snapshot)
+      TE.Do,
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.info('Getting portfolio snapshot', { walletAddress, method: 'getPortfolioSnapshot' });
+        this.serviceLogger.startTimer('getPortfolioSnapshot');
+      })),
+      TE.chain(() => this.getOrUpdatePortfolioSnapshot(walletAddress)),
+      TE.map(snapshot => {
+        this.serviceLogger.endTimer('getPortfolioSnapshot', { 
+          walletAddress,
+          totalValueUSD: snapshot.totalValueUSD
+        });
+        return snapshot;
+      })
     );
 
   /**
@@ -123,19 +187,38 @@ export class PortfolioService {
    */
   public getPortfolioSummary = (walletAddress: WalletAddress): AsyncResult<PortfolioSummary> =>
     pipe(
-      this.getPortfolioMetrics(walletAddress),
-      TE.map(metrics => ({
-        totalValue: metrics.totalValue,
-        totalSupplied: metrics.totalSupplied,
-        totalBorrowed: metrics.totalBorrowed,
-        totalLiquidity: metrics.totalLiquidity,
-        healthFactor: metrics.healthFactor,
-        apy: {
-          lending: 5.5, // Would get from actual calculations
-          liquidity: 12.3,
-          total: 8.5
-        }
-      }))
+      TE.Do,
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.info('Getting portfolio summary', { walletAddress, method: 'getPortfolioSummary' });
+        this.serviceLogger.startTimer('getPortfolioSummary');
+      })),
+      TE.chain(() => this.serviceLogger.logTaskEither(
+        this.getPortfolioMetrics(walletAddress),
+        'getPortfolioSummary',
+        { walletAddress }
+      )),
+      TE.map(metrics => {
+        const summary = {
+          totalValue: metrics.totalValue,
+          totalSupplied: metrics.totalSupplied,
+          totalBorrowed: metrics.totalBorrowed,
+          totalLiquidity: metrics.totalLiquidity,
+          healthFactor: metrics.healthFactor,
+          apy: {
+            lending: 5.5, // Would get from actual calculations
+            liquidity: 12.3,
+            total: 8.5
+          }
+        };
+        
+        this.serviceLogger.endTimer('getPortfolioSummary', { 
+          walletAddress,
+          totalValue: summary.totalValue,
+          healthFactor: summary.healthFactor
+        });
+        
+        return summary;
+      })
     );
 
   /**
@@ -143,8 +226,27 @@ export class PortfolioService {
    */
   public getPortfolioMetrics = (walletAddress: WalletAddress): AsyncResult<PortfolioMetrics> =>
     pipe(
-      this.getOrUpdatePortfolioSnapshot(walletAddress),
-      TE.map(snapshot => this.analytics.calculateMetrics(snapshot))
+      TE.Do,
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.info('Calculating portfolio metrics', { walletAddress, method: 'getPortfolioMetrics' });
+        this.serviceLogger.startTimer('getPortfolioMetrics');
+      })),
+      TE.chain(() => this.getOrUpdatePortfolioSnapshot(walletAddress)),
+      TE.map(snapshot => {
+        const metrics = this.analytics.calculateMetrics(snapshot);
+        this.serviceLogger.endTimer('getPortfolioMetrics', { 
+          walletAddress,
+          totalValue: metrics.totalValue,
+          riskScore: metrics.riskScore
+        });
+        this.serviceLogger.info('Portfolio metrics calculated', {
+          walletAddress,
+          totalValue: metrics.totalValue,
+          totalSupplied: metrics.totalSupplied,
+          totalBorrowed: metrics.totalBorrowed
+        });
+        return metrics;
+      })
     );
 
   /**
@@ -154,15 +256,57 @@ export class PortfolioService {
     walletAddress: WalletAddress,
     period: '1h' | '1d' | '7d' | '30d' | '90d' | '1y' | 'all' = '7d'
   ): AsyncResult<PortfolioPerformance> =>
-    this.analytics.calculatePerformance(walletAddress, period);
+    pipe(
+      TE.Do,
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.info('Getting portfolio performance', { 
+          walletAddress, 
+          period,
+          method: 'getPortfolioPerformance'
+        });
+        this.serviceLogger.startTimer('getPortfolioPerformance');
+      })),
+      TE.chain(() => this.serviceLogger.logTaskEither(
+        this.analytics.calculatePerformance(walletAddress, period),
+        'getPortfolioPerformance',
+        { walletAddress, period }
+      )),
+      TE.map(performance => {
+        this.serviceLogger.endTimer('getPortfolioPerformance', { 
+          walletAddress,
+          period,
+          totalReturn: performance.totalReturn,
+          winRate: performance.winRate
+        });
+        return performance;
+      })
+    );
 
   /**
    * Get portfolio risk metrics
    */
   public getRiskMetrics = (walletAddress: WalletAddress): AsyncResult<RiskMetrics> =>
     pipe(
-      this.getOrUpdatePortfolioSnapshot(walletAddress),
-      TE.map(snapshot => this.positionTracker.calculateRiskMetrics(snapshot))
+      TE.Do,
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.info('Calculating risk metrics', { walletAddress, method: 'getRiskMetrics' });
+        this.serviceLogger.startTimer('getRiskMetrics');
+      })),
+      TE.chain(() => this.getOrUpdatePortfolioSnapshot(walletAddress)),
+      TE.map(snapshot => {
+        const riskMetrics = this.positionTracker.calculateRiskMetrics(snapshot);
+        this.serviceLogger.endTimer('getRiskMetrics', { 
+          walletAddress,
+          riskScore: riskMetrics.riskScore,
+          healthFactor: riskMetrics.healthFactor
+        });
+        this.serviceLogger.info('Risk metrics calculated', {
+          walletAddress,
+          riskScore: riskMetrics.riskScore,
+          liquidationRisk: riskMetrics.liquidationRisk
+        });
+        return riskMetrics;
+      })
     );
 
   /**
@@ -177,27 +321,106 @@ export class PortfolioService {
     risks: RiskMetrics;
     detailed?: any;
   }> =>
-    this.analytics.getAnalytics(walletAddress, forceRefresh);
+    pipe(
+      TE.Do,
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.info('Getting analytics dashboard', { 
+          walletAddress, 
+          forceRefresh,
+          method: 'getAnalyticsDashboard'
+        });
+        this.serviceLogger.startTimer('getAnalyticsDashboard');
+      })),
+      TE.chain(() => this.serviceLogger.logTaskEither(
+        this.analytics.getAnalytics(walletAddress, forceRefresh),
+        'getAnalyticsDashboard',
+        { walletAddress, forceRefresh }
+      )),
+      TE.map(dashboard => {
+        this.serviceLogger.endTimer('getAnalyticsDashboard', { 
+          walletAddress,
+          performancePeriodsCount: dashboard.performance.length,
+          totalValue: dashboard.metrics.totalValue
+        });
+        return dashboard;
+      })
+    );
 
   /**
    * Force refresh portfolio data
    */
   public refreshPortfolio = (walletAddress: WalletAddress): AsyncResult<PortfolioSnapshot> =>
     pipe(
-      this.cacheManager.invalidateUser(walletAddress),
-      TE.chain(() => this.fetchFreshPortfolioData(walletAddress)),
-      TE.chain(snapshot => this.updatePortfolioState(walletAddress, snapshot)),
-      TE.chain(() => this.sendRealTimeUpdate(walletAddress, 'portfolio_refreshed')),
-      TE.map(snapshot => snapshot)
+      TE.Do,
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.info('Force refreshing portfolio', { walletAddress, method: 'refreshPortfolio' });
+        this.serviceLogger.startTimer('refreshPortfolio');
+      })),
+      TE.chain(() => this.serviceLogger.logTaskEither(
+        this.cacheManager.invalidateUser(walletAddress),
+        'refreshPortfolio.invalidateCache',
+        { walletAddress }
+      )),
+      TE.chain(() => this.serviceLogger.logTaskEither(
+        this.fetchFreshPortfolioData(walletAddress),
+        'refreshPortfolio.fetchFreshData',
+        { walletAddress }
+      )),
+      TE.chain(snapshot => this.serviceLogger.logTaskEither(
+        this.updatePortfolioState(walletAddress, snapshot),
+        'refreshPortfolio.updateState',
+        { walletAddress, totalValueUSD: snapshot.totalValueUSD }
+      )),
+      TE.chain(snapshot => this.serviceLogger.logTaskEither(
+        this.sendRealTimeUpdate(walletAddress, 'portfolio_refreshed'),
+        'refreshPortfolio.sendUpdate',
+        { walletAddress }
+      )),
+      TE.map(snapshot => {
+        this.serviceLogger.endTimer('refreshPortfolio', { 
+          walletAddress,
+          totalValueUSD: snapshot.totalValueUSD,
+          netWorth: snapshot.netWorth
+        });
+        this.serviceLogger.info('Portfolio refresh completed', { 
+          walletAddress,
+          totalValueUSD: snapshot.totalValueUSD
+        });
+        return snapshot;
+      })
     );
 
   /**
    * Get position tracking data
    */
-  public getPositionTracking = (walletAddress: WalletAddress) => ({
-    trackedPositions: this.positionTracker.getTrackedPositions(walletAddress),
-    activeAlerts: this.positionTracker.getActiveAlerts(walletAddress)
-  });
+  public getPositionTracking = (walletAddress: WalletAddress) => {
+    this.serviceLogger.info('Getting position tracking data', { walletAddress, method: 'getPositionTracking' });
+    this.serviceLogger.startTimer('getPositionTracking');
+    
+    try {
+      const result = {
+        trackedPositions: this.positionTracker.getTrackedPositions(walletAddress),
+        activeAlerts: this.positionTracker.getActiveAlerts(walletAddress)
+      };
+      
+      this.serviceLogger.endTimer('getPositionTracking', { 
+        walletAddress,
+        trackedPositionsCount: result.trackedPositions.length,
+        activeAlertsCount: result.activeAlerts.length
+      });
+      
+      this.serviceLogger.info('Position tracking data retrieved', {
+        walletAddress,
+        trackedPositions: result.trackedPositions.length,
+        activeAlerts: result.activeAlerts.length
+      });
+      
+      return result;
+    } catch (error) {
+      this.serviceLogger.error('Failed to get position tracking data', { walletAddress }, error as Error);
+      throw error;
+    }
+  };
 
   /**
    * Create pending lending operation that requires confirmation
@@ -328,11 +551,29 @@ export class PortfolioService {
    */
   public cleanupUser = (walletAddress: WalletAddress): AsyncResult<void> =>
     pipe(
-      this.positionTracker.stopTracking(walletAddress),
-      TE.chain(() => this.portfolioState.clearUser(walletAddress)),
-      TE.chain(() => this.cacheManager.invalidateUser(walletAddress)),
+      TE.Do,
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.info('Cleaning up user portfolio state', { walletAddress });
+        this.serviceLogger.startTimer('cleanupUser');
+      })),
+      TE.chain(() => this.serviceLogger.logTaskEither(
+        this.positionTracker.stopTracking(walletAddress),
+        'cleanupUser.stopTracking',
+        { walletAddress }
+      )),
+      TE.chain(() => this.serviceLogger.logTaskEither(
+        this.portfolioState.clearUser(walletAddress),
+        'cleanupUser.clearState',
+        { walletAddress }
+      )),
+      TE.chain(() => this.serviceLogger.logTaskEither(
+        this.cacheManager.invalidateUser(walletAddress),
+        'cleanupUser.invalidateCache',
+        { walletAddress }
+      )),
       TE.map(() => {
-        logger.info(`Cleaned up portfolio service for ${walletAddress}`);
+        this.serviceLogger.endTimer('cleanupUser', { walletAddress });
+        this.serviceLogger.info('Portfolio service cleanup completed', { walletAddress });
       })
     );
 
@@ -340,8 +581,18 @@ export class PortfolioService {
    * Cleanup all resources
    */
   public cleanup = (): void => {
-    this.positionTracker.cleanup();
-    this.portfolioState.cleanup();
+    this.serviceLogger.info('Cleaning up all portfolio service resources');
+    this.serviceLogger.startTimer('cleanup');
+    
+    try {
+      this.positionTracker.cleanup();
+      this.portfolioState.cleanup();
+      
+      this.serviceLogger.endTimer('cleanup');
+      this.serviceLogger.info('Portfolio service cleanup completed');
+    } catch (error) {
+      this.serviceLogger.error('Error during portfolio service cleanup', {}, error as Error);
+    }
   };
 
   // ===================== Private Methods =====================
@@ -381,11 +632,20 @@ export class PortfolioService {
 
   private getOrUpdatePortfolioSnapshot = (walletAddress: WalletAddress): AsyncResult<PortfolioSnapshot> =>
     pipe(
-      this.cacheManager.getCachedPortfolio(walletAddress),
+      TE.Do,
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.debug('Checking cached portfolio data', { walletAddress });
+      })),
+      TE.chain(() => this.cacheManager.getCachedPortfolio(walletAddress)),
       TE.chain(cached => {
         if (cached) {
+          this.serviceLogger.debug('Using cached portfolio data', { 
+            walletAddress,
+            cacheAge: Date.now() - new Date(cached.timestamp).getTime()
+          });
           return TE.right(cached);
         }
+        this.serviceLogger.debug('Cache miss, fetching fresh portfolio data', { walletAddress });
         return this.fetchFreshPortfolioData(walletAddress);
       }),
       TE.chain(snapshot => this.updatePortfolioState(walletAddress, snapshot))
@@ -394,10 +654,30 @@ export class PortfolioService {
   private fetchFreshPortfolioData = (walletAddress: WalletAddress): AsyncResult<PortfolioSnapshot> =>
     pipe(
       TE.Do,
-      TE.bind('lendingPositions', () => this.getLendingPositions(walletAddress)),
-      TE.bind('liquidityPositions', () => this.getLiquidityPositions(walletAddress)),
-      TE.bind('tokenBalances', () => this.getTokenBalances(walletAddress)),
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.info('Fetching fresh portfolio data', { walletAddress });
+        this.serviceLogger.startTimer('fetchFreshPortfolioData');
+      })),
+      TE.bind('lendingPositions', () => {
+        this.serviceLogger.debug('Fetching lending positions', { walletAddress });
+        return this.getLendingPositions(walletAddress);
+      }),
+      TE.bind('liquidityPositions', () => {
+        this.serviceLogger.debug('Fetching liquidity positions', { walletAddress });
+        return this.getLiquidityPositions(walletAddress);
+      }),
+      TE.bind('tokenBalances', () => {
+        this.serviceLogger.debug('Fetching token balances', { walletAddress });
+        return this.getTokenBalances(walletAddress);
+      }),
       TE.map(({ lendingPositions, liquidityPositions, tokenBalances }) => {
+        this.serviceLogger.debug('Calculating portfolio metrics', {
+          walletAddress,
+          lendingPositionsCount: lendingPositions.length,
+          liquidityPositionsCount: liquidityPositions.length,
+          tokenBalancesCount: tokenBalances.length
+        });
+
         const totalSuppliedUSD = lendingPositions
           .filter(p => p.type === 'supply')
           .reduce((sum, p) => sum + p.valueUSD, 0);
@@ -429,8 +709,24 @@ export class PortfolioService {
           timestamp: new Date().toISOString()
         };
 
+        this.serviceLogger.info('Portfolio calculations completed', {
+          walletAddress,
+          totalValueUSD,
+          totalSuppliedUSD,
+          totalBorrowedUSD,
+          totalLiquidityUSD,
+          netWorth,
+          healthFactor
+        });
+
         // Cache the fresh data
         this.cacheManager.cachePortfolio(walletAddress, snapshot)();
+        this.serviceLogger.debug('Portfolio data cached', { walletAddress });
+
+        this.serviceLogger.endTimer('fetchFreshPortfolioData', { 
+          walletAddress,
+          totalValueUSD
+        });
 
         return snapshot;
       })
@@ -447,19 +743,38 @@ export class PortfolioService {
 
   private getLendingPositions = (walletAddress: WalletAddress): AsyncResult<LendingPosition[]> =>
     pipe(
-      this.cacheManager.getCachedLendingPositions(walletAddress),
+      TE.Do,
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.debug('Fetching lending positions', { walletAddress });
+      })),
+      TE.chain(() => this.cacheManager.getCachedLendingPositions(walletAddress)),
       TE.chain(cached => {
         if (cached) {
+          this.serviceLogger.debug('Using cached lending positions', { 
+            walletAddress,
+            positionsCount: cached.length
+          });
           return TE.right(cached);
         }
-        return this.yeiAdapter
-          ? this.yeiAdapter.getUserPositions(walletAddress)
-          : TE.right([]);
+        
+        if (!this.yeiAdapter) {
+          this.serviceLogger.warn('YEI adapter not initialized', { walletAddress });
+          return TE.right([]);
+        }
+        
+        this.serviceLogger.debug('Fetching fresh lending positions from YEI', { walletAddress });
+        return this.yeiAdapter.getUserPositions(walletAddress);
       }),
       TE.chain(positions => 
         pipe(
           this.cacheManager.cacheLendingPositions(walletAddress, positions),
-          TE.map(() => positions)
+          TE.map(() => {
+            this.serviceLogger.debug('Lending positions cached', { 
+              walletAddress,
+              positionsCount: positions.length
+            });
+            return positions;
+          })
         )
       )
     );
@@ -540,22 +855,70 @@ export class PortfolioService {
     operation: string,
     params: any
   ): AsyncResult<string> => {
+    this.serviceLogger.info('Executing operation', {
+      type,
+      operation,
+      walletAddress: params.walletAddress,
+      amount: params.amount
+    });
+    this.serviceLogger.startTimer(`executeOperation_${type}_${operation}`);
+    
+    let result: AsyncResult<string>;
+    
     if (type === 'lending' && this.yeiAdapter) {
-      return (this.yeiAdapter as any)[operation](params);
+      this.serviceLogger.debug('Using YEI adapter for lending operation', { operation });
+      result = (this.yeiAdapter as any)[operation](params);
     } else if (type === 'liquidity' && this.dragonSwapAdapter) {
-      return (this.dragonSwapAdapter as any)[operation](params);
+      this.serviceLogger.debug('Using DragonSwap adapter for liquidity operation', { operation });
+      result = (this.dragonSwapAdapter as any)[operation](params);
+    } else {
+      const error = new Error(`${type} adapter not initialized`);
+      this.serviceLogger.error('Adapter not available', { type, operation }, error);
+      return TE.left(error);
     }
-    return TE.left(new Error(`${type} adapter not initialized`));
+    
+    return pipe(
+      result,
+      TE.map(txHash => {
+        this.serviceLogger.endTimer(`executeOperation_${type}_${operation}`, {
+          txHash,
+          type,
+          operation
+        });
+        this.serviceLogger.info('Operation executed successfully', {
+          type,
+          operation,
+          txHash
+        });
+        return txHash;
+      }),
+      TE.mapLeft(error => {
+        this.serviceLogger.error(`Operation failed: ${type}.${operation}`, { type, operation }, error);
+        return error;
+      })
+    );
   };
 
   private waitForTransactionConfirmation = (txHash: string): AsyncResult<void> =>
-    TE.tryCatch(
-      async () => {
-        // Mock transaction confirmation - would actually wait for blockchain confirmation // TODO: REMOVE_MOCK - Mock-related keywords
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        logger.info(`Transaction confirmed: ${txHash}`);
-      },
-      (error) => new Error(`Transaction confirmation failed: ${error}`)
+    pipe(
+      TE.Do,
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.info('Waiting for transaction confirmation', { txHash });
+        this.serviceLogger.startTimer('waitForTransactionConfirmation');
+      })),
+      TE.chain(() => TE.tryCatch(
+        async () => {
+          // Mock transaction confirmation - would actually wait for blockchain confirmation
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          this.serviceLogger.endTimer('waitForTransactionConfirmation', { txHash });
+          this.serviceLogger.info('Transaction confirmed', { txHash });
+        },
+        (error) => {
+          this.serviceLogger.error('Transaction confirmation failed', { txHash }, error as Error);
+          return new Error(`Transaction confirmation failed: ${error}`);
+        }
+      ))
     );
 
   private sendRealTimeUpdate = (

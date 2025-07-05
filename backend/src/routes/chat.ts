@@ -4,11 +4,22 @@ import { pipe } from 'fp-ts/function';
 import * as TE from 'fp-ts/TaskEither';
 import * as E from 'fp-ts/Either';
 import { EnhancedUserIntent, OrchestrationResult } from '../services/OrchestratorService';
+import { createServiceLogger } from '../services/LoggingService';
+import { performance } from 'perf_hooks';
 
 const router = Router();
+const logger = createServiceLogger('ChatRoute');
 
 // Parse user message to extract intent
 function parseUserIntent(message: string, sessionId: string, walletAddress?: string): EnhancedUserIntent {
+  const startTime = performance.now();
+  
+  logger.debug('Parsing user intent', {
+    sessionId,
+    walletAddress,
+    messageLength: message.length,
+    timestamp: new Date().toISOString()
+  });
   // Simple intent parsing - in production, use NLP
   const lowerMessage = message.toLowerCase()
   
@@ -73,7 +84,7 @@ function parseUserIntent(message: string, sessionId: string, walletAddress?: str
     action = 'assess_risk'
   }
 
-  return {
+  const intent = {
     id: `intent-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     userId: sessionId,
     walletAddress: walletAddress || '0x0000000000000000000000000000000000000000',
@@ -86,11 +97,31 @@ function parseUserIntent(message: string, sessionId: string, walletAddress?: str
       timestamp: new Date(),
       source: 'chat',
     },
-  }
+  };
+  
+  const duration = performance.now() - startTime;
+  logger.debug('User intent parsed', {
+    sessionId,
+    walletAddress,
+    intentId: intent.id,
+    intentType: type,
+    intentAction: action,
+    parameterKeys: Object.keys(parameters),
+    duration: Math.round(duration)
+  });
+  
+  return intent;
 }
 
 // Format agent response for chat
 function formatAgentResponse(result: OrchestrationResult, agentType?: string): string {
+  logger.debug('Formatting agent response', {
+    agentType,
+    hasError: !!result.error,
+    hasData: !!result.data,
+    intentId: result.intentId,
+    executionTime: result.metadata?.executionTime
+  });
   if (result.error) {
     return `The dragon encountered turbulence: ${result.error.message}. ${
       result.error.recoverable ? "Seiron will try a different mystical approach." : "Please speak your wish more clearly."
@@ -145,7 +176,15 @@ function formatAgentResponse(result: OrchestrationResult, agentType?: string): s
       response = `🐉 Seiron has fulfilled your wish! ${JSON.stringify(data)}`
   }
 
-  return response || `🐉 The dragon has completed your task successfully!`
+  const finalResponse = response || `🐉 The dragon has completed your task successfully!`;
+  
+  logger.debug('Agent response formatted', {
+    agentType,
+    responseLength: finalResponse.length,
+    intentId: result.intentId
+  });
+  
+  return finalResponse;
 }
 
 /**
@@ -156,26 +195,100 @@ router.post('/message', [
   body('message').notEmpty().withMessage('Message is required'),
   body('walletAddress').isEthereumAddress().withMessage('Valid wallet address required')
 ], async (req, res) => {
+  const startTime = performance.now();
+  const requestId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  
+  logger.info('Received chat message request', {
+    requestId,
+    walletAddress: req.body.walletAddress,
+    messageLength: req.body.message?.length || 0,
+    timestamp: new Date().toISOString()
+  });
+  
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    logger.warn('Chat message validation failed', {
+      requestId,
+      errors: errors.array(),
+      walletAddress: req.body.walletAddress
+    });
     return res.status(400).json({ errors: errors.array() });
   }
 
   const { message, walletAddress } = req.body;
 
-  // Get current portfolio data for context
-  const portfolioResult = await req.services.portfolio.getPortfolioData(walletAddress)();
-  const portfolioData = portfolioResult._tag === 'Right' ? portfolioResult.right : undefined;
-
-  const result = await req.services.ai.processMessageEnhanced(message, walletAddress, portfolioData)();
-
-  if (result._tag === 'Left') {
-    return res.json({ success: false, error: result.left.message });
+  try {
+    // Get current portfolio data for context
+    const portfolioStartTime = performance.now();
+    const portfolioResult = await req.services.portfolio.getPortfolioData(walletAddress)();
+    const portfolioData = portfolioResult._tag === 'Right' ? portfolioResult.right : undefined;
+    const portfolioDuration = performance.now() - portfolioStartTime;
+    
+    logger.debug('Portfolio data retrieved', {
+      requestId,
+      walletAddress,
+      hasPortfolioData: !!portfolioData,
+      portfolioDuration: Math.round(portfolioDuration),
+      portfolioValue: portfolioData?.totalValueUSD
+    });
+    
+    // Process message with AI
+    const aiStartTime = performance.now();
+    const result = await req.services.ai.processMessageEnhanced(message, walletAddress, portfolioData)();
+    const aiDuration = performance.now() - aiStartTime;
+    
+    if (result._tag === 'Left') {
+      logger.error('AI message processing failed', {
+        requestId,
+        walletAddress,
+        error: result.left.message,
+        duration: Math.round(performance.now() - startTime)
+      });
+      return res.json({ success: false, error: result.left.message });
+    }
+    
+    logger.info('AI message processed successfully', {
+      requestId,
+      walletAddress,
+      aiDuration: Math.round(aiDuration),
+      totalDuration: Math.round(performance.now() - startTime),
+      responseLength: result.right.message.length,
+      hasCommand: !!result.right.command,
+      confidence: result.right.confidence
+    });
+    
+    // Send real-time update via Socket.io
+    try {
+      await req.services.socket.sendChatResponse(walletAddress, result.right)();
+      logger.debug('Socket.io update sent', {
+        requestId,
+        walletAddress
+      });
+    } catch (socketError) {
+      logger.warn('Socket.io update failed', {
+        requestId,
+        walletAddress,
+        error: socketError instanceof Error ? socketError.message : String(socketError)
+      });
+    }
+    
+    res.json({ success: true, data: result.right });
+    
+  } catch (error) {
+    const duration = performance.now() - startTime;
+    logger.error('Chat message endpoint error', {
+      requestId,
+      walletAddress,
+      duration: Math.round(duration),
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error processing message'
+    });
   }
-
-  // Send real-time update via Socket.io
-  req.services.socket.sendChatResponse(walletAddress, result.right);
-  res.json({ success: true, data: result.right });
 
 });
 
@@ -189,8 +302,24 @@ router.post('/orchestrate', [
   body('sessionId').notEmpty().withMessage('Session ID is required'),
   body('walletAddress').optional().isEthereumAddress().withMessage('Valid wallet address required if provided')
 ], async (req, res) => {
+  const startTime = performance.now();
+  const requestId = `orch-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  
+  logger.info('Received orchestrate request', {
+    requestId,
+    sessionId: req.body.sessionId,
+    walletAddress: req.body.walletAddress,
+    messageLength: req.body.message?.length || 0,
+    timestamp: new Date().toISOString()
+  });
+  
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    logger.warn('Orchestrate validation failed', {
+      requestId,
+      errors: errors.array(),
+      sessionId: req.body.sessionId
+    });
     return res.status(400).json({ errors: errors.array() });
   }
 
@@ -198,12 +327,35 @@ router.post('/orchestrate', [
 
   try {
     // Parse user intent
+    const intentStartTime = performance.now();
     const intent = parseUserIntent(message, sessionId, walletAddress);
+    const intentDuration = performance.now() - intentStartTime;
+    
+    logger.debug('Intent parsed for orchestration', {
+      requestId,
+      intentId: intent.id,
+      intentType: intent.type,
+      intentAction: intent.action,
+      intentPriority: intent.priority,
+      intentDuration: Math.round(intentDuration)
+    });
 
     // Process intent through orchestrator
+    const orchestratorStartTime = performance.now();
     const result = await req.services.orchestrator.processIntent(intent)();
+    const orchestratorDuration = performance.now() - orchestratorStartTime;
 
     if (result._tag === 'Left') {
+      logger.error('Orchestrator processing failed', {
+        requestId,
+        intentId: intent.id,
+        error: result.left.message,
+        errorCode: result.left.code,
+        errorComponent: result.left.component,
+        orchestratorDuration: Math.round(orchestratorDuration),
+        totalDuration: Math.round(performance.now() - startTime)
+      });
+      
       return res.json({
         message: `Seiron could not understand your wish: ${result.left.message}. Please speak more clearly to the dragon.`,
         timestamp: new Date().toISOString(),
@@ -215,9 +367,24 @@ router.post('/orchestrate', [
     // Format the response based on the agent that handled it
     const orchestrationResult = result.right;
     const agentType = orchestrationResult.metadata?.adaptersUsed?.[0] || 'orchestrator';
+    const formattedMessage = formatAgentResponse(orchestrationResult, agentType);
+    
+    const totalDuration = performance.now() - startTime;
+    
+    logger.info('Orchestration completed successfully', {
+      requestId,
+      intentId: intent.id,
+      agentType,
+      adaptersUsed: orchestrationResult.metadata?.adaptersUsed || [],
+      tasksExecuted: orchestrationResult.metadata?.tasksExecuted || 0,
+      orchestratorDuration: Math.round(orchestratorDuration),
+      totalDuration: Math.round(totalDuration),
+      responseLength: formattedMessage.length,
+      gasUsed: orchestrationResult.metadata?.gasUsed
+    });
 
     const response = {
-      message: formatAgentResponse(orchestrationResult, agentType),
+      message: formattedMessage,
       timestamp: new Date().toISOString(),
       agentType,
       intentId: orchestrationResult.intentId,
@@ -232,7 +399,16 @@ router.post('/orchestrate', [
     return res.json(response);
 
   } catch (error: any) {
-    console.error('Chat orchestrate API error:', error);
+    const duration = performance.now() - startTime;
+    logger.error('Chat orchestrate API error', {
+      requestId,
+      sessionId,
+      walletAddress,
+      duration: Math.round(duration),
+      error: error.message,
+      stack: error.stack
+    });
+    
     return res.status(500).json({ 
       error: 'Failed to process message',
       message: 'The dragon encountered mystical interference. Please try summoning again.',
@@ -245,14 +421,48 @@ router.post('/orchestrate', [
  * Get conversation history for wallet
  */
 router.get('/history', async (req, res) => {
+  const requestId = `hist-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   const { walletAddress } = req.query;
 
+  logger.info('Received chat history request', {
+    requestId,
+    walletAddress,
+    timestamp: new Date().toISOString()
+  });
+
   if (!walletAddress || typeof walletAddress !== 'string') {
+    logger.warn('Chat history request missing wallet address', {
+      requestId,
+      providedWalletAddress: walletAddress
+    });
     return res.status(400).json({ error: 'Wallet address is required' });
   }
 
-  const history = req.services.ai.getConversationHistory(walletAddress);
-  res.json({ success: true, data: history });
+  try {
+    const history = req.services.ai.getConversationHistory(walletAddress);
+    
+    logger.info('Chat history retrieved successfully', {
+      requestId,
+      walletAddress,
+      messageCount: history.length,
+      oldestMessage: history[0]?.timestamp,
+      newestMessage: history[history.length - 1]?.timestamp
+    });
+    
+    res.json({ success: true, data: history });
+  } catch (error) {
+    logger.error('Failed to retrieve chat history', {
+      requestId,
+      walletAddress,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to retrieve chat history' 
+    });
+  }
 });
 
 /**
@@ -262,20 +472,56 @@ router.get('/history', async (req, res) => {
 router.delete('/history', [
   body('walletAddress').isEthereumAddress().withMessage('Valid wallet address required')
 ], async (req, res) => {
+  const requestId = `clear-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  
+  logger.info('Received clear chat history request', {
+    requestId,
+    walletAddress: req.body.walletAddress,
+    timestamp: new Date().toISOString()
+  });
+  
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    logger.warn('Clear chat history validation failed', {
+      requestId,
+      errors: errors.array()
+    });
     return res.status(400).json({ errors: errors.array() });
   }
 
   const { walletAddress } = req.body;
 
-  const result = await req.services.ai.clearConversationHistory(walletAddress)();
+  try {
+    const result = await req.services.ai.clearConversationHistory(walletAddress)();
 
-  if (result._tag === 'Left') {
-    return res.json({ success: false, error: result.left.message });
+    if (result._tag === 'Left') {
+      logger.error('Failed to clear chat history', {
+        requestId,
+        walletAddress,
+        error: result.left.message
+      });
+      return res.json({ success: false, error: result.left.message });
+    }
+
+    logger.info('Chat history cleared successfully', {
+      requestId,
+      walletAddress
+    });
+    
+    res.json({ success: true, message: 'Conversation history cleared' });
+  } catch (error) {
+    logger.error('Clear chat history endpoint error', {
+      requestId,
+      walletAddress,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    res.status(500).json({
+      success: false,
+      error: 'Failed to clear conversation history'
+    });
   }
-
-  res.json({ success: true, message: 'Conversation history cleared' });
 
 });
 
@@ -286,25 +532,78 @@ router.delete('/history', [
 router.post('/analysis', [
   body('walletAddress').isEthereumAddress().withMessage('Valid wallet address required')
 ], async (req, res) => {
+  const startTime = performance.now();
+  const requestId = `analysis-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  
+  logger.info('Received portfolio analysis request', {
+    requestId,
+    walletAddress: req.body.walletAddress,
+    timestamp: new Date().toISOString()
+  });
+  
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    logger.warn('Portfolio analysis validation failed', {
+      requestId,
+      errors: errors.array()
+    });
     return res.status(400).json({ errors: errors.array() });
   }
 
   const { walletAddress } = req.body;
 
-  const result = await pipe(
-    req.services.portfolio.getPortfolioData(walletAddress),
-    TE.chain(portfolioData => 
-      req.services.ai.generatePortfolioAnalysis(portfolioData, walletAddress)
-    )
-  )();
+  try {
+    const portfolioStartTime = performance.now();
+    const result = await pipe(
+      req.services.portfolio.getPortfolioData(walletAddress),
+      TE.chain(portfolioData => {
+        const portfolioDuration = performance.now() - portfolioStartTime;
+        logger.debug('Portfolio data retrieved for analysis', {
+          requestId,
+          walletAddress,
+          portfolioDuration: Math.round(portfolioDuration),
+          portfolioValue: portfolioData.totalValueUSD,
+          lendingPositions: portfolioData.lendingPositions?.length || 0
+        });
+        
+        return req.services.ai.generatePortfolioAnalysis(portfolioData, walletAddress);
+      })
+    )();
 
-  if (result._tag === 'Left') {
-    return res.json({ success: false, error: (result.left as Error).message });
+    if (result._tag === 'Left') {
+      logger.error('Portfolio analysis generation failed', {
+        requestId,
+        walletAddress,
+        error: (result.left as Error).message,
+        duration: Math.round(performance.now() - startTime)
+      });
+      return res.json({ success: false, error: (result.left as Error).message });
+    }
+
+    const totalDuration = performance.now() - startTime;
+    logger.info('Portfolio analysis generated successfully', {
+      requestId,
+      walletAddress,
+      totalDuration: Math.round(totalDuration),
+      analysisLength: result.right.length
+    });
+    
+    res.json({ success: true, data: result.right });
+  } catch (error) {
+    const duration = performance.now() - startTime;
+    logger.error('Portfolio analysis endpoint error', {
+      requestId,
+      walletAddress,
+      duration: Math.round(duration),
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate portfolio analysis'
+    });
   }
-
-  res.json({ success: true, data: result.right });
 
 });
 

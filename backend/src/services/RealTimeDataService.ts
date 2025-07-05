@@ -6,6 +6,7 @@ import { EventEmitter } from 'events';
 import { WebSocket } from 'ws';
 import type { SeiIntegrationService } from './SeiIntegrationService';
 import type { SocketService } from './SocketService';
+import { createServiceLogger } from './LoggingService';
 // Import types from SeiIntegrationService
 import type { 
   BlockchainState, 
@@ -206,6 +207,7 @@ export class RealTimeDataService extends EventEmitter {
   private config: RealTimeConfig;
   private seiIntegration: SeiIntegrationService;
   private socketService: SocketService;
+  private serviceLogger = createServiceLogger('RealTimeDataService');
   
   // Stream management
   private activeStreams: Map<string, DataStream> = new Map();
@@ -238,12 +240,27 @@ export class RealTimeDataService extends EventEmitter {
     config?: RealTimeConfig
   ) {
     super();
+    
+    this.serviceLogger.info('Initializing RealTimeDataService', {
+      hasCustomConfig: !!config
+    });
+    
     this.seiIntegration = seiIntegration;
     this.socketService = socketService;
     this.config = config || this.getDefaultConfig();
     
+    this.serviceLogger.info('RealTimeDataService configuration', {
+      enabledStreams: Object.entries(this.config.dataStreams)
+        .filter(([_, stream]) => stream.enabled)
+        .map(([name]) => name),
+      cachingEnabled: this.config.caching.enabled,
+      alertsEnabled: this.config.alerts.enabled
+    });
+    
     this.setupRealTimeEventHandlers();
     this.startPerformanceMonitoring();
+    
+    this.serviceLogger.info('RealTimeDataService initialization completed');
   }
 
   // ============================================================================
@@ -261,9 +278,37 @@ export class RealTimeDataService extends EventEmitter {
     
     return pipe(
       TE.Do,
-      TE.bind('streams', () => this.initializeStreams(walletAddress, types)),
-      TE.bind('validation', ({ streams }) => this.validateStreamSetup(streams)),
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.info('Starting data streams', {
+          walletAddress,
+          streamTypes: types,
+          method: 'startDataStreams'
+        });
+        this.serviceLogger.startTimer('startDataStreams');
+      })),
+      TE.bind('streams', () => this.serviceLogger.logTaskEither(
+        this.initializeStreams(walletAddress, types),
+        'startDataStreams.initializeStreams',
+        { walletAddress, streamTypes: types }
+      )),
+      TE.bind('validation', ({ streams }) => this.serviceLogger.logTaskEither(
+        this.validateStreamSetup(streams),
+        'startDataStreams.validateStreams',
+        { walletAddress, streamCount: streams.length }
+      )),
       TE.map(({ streams }) => {
+        this.serviceLogger.endTimer('startDataStreams', {
+          walletAddress,
+          streamCount: streams.length
+        });
+        
+        this.serviceLogger.info('Data streams started successfully', {
+          walletAddress,
+          streamCount: streams.length,
+          streamIds: streams.map(s => s.id),
+          types: streams.map(s => s.type)
+        });
+        
         this.emit('realtime:streams:started', {
           walletAddress,
           streamCount: streams.length,
@@ -272,6 +317,13 @@ export class RealTimeDataService extends EventEmitter {
         });
         
         return streams;
+      }),
+      TE.mapLeft(error => {
+        this.serviceLogger.error('Failed to start data streams', {
+          walletAddress,
+          streamTypes: types
+        }, error as Error);
+        return error;
       })
     );
   };
@@ -280,73 +332,149 @@ export class RealTimeDataService extends EventEmitter {
    * Stop data streams for a wallet
    */
   public stopDataStreams = (walletAddress: string): TE.TaskEither<RealTimeError, void> =>
-    TE.tryCatch(
-      async () => {
-        const streamsToStop = Array.from(this.activeStreams.values())
-          .filter(stream => stream.walletAddress === walletAddress);
-        
-        for (const stream of streamsToStop) {
-          this.stopStream(stream.id);
+    pipe(
+      TE.Do,
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.info('Stopping data streams', { walletAddress });
+        this.serviceLogger.startTimer('stopDataStreams');
+      })),
+      TE.chain(() => TE.tryCatch(
+        async () => {
+          const streamsToStop = Array.from(this.activeStreams.values())
+            .filter(stream => stream.walletAddress === walletAddress);
+          
+          this.serviceLogger.debug('Found streams to stop', {
+            walletAddress,
+            streamCount: streamsToStop.length,
+            streamIds: streamsToStop.map(s => s.id)
+          });
+          
+          for (const stream of streamsToStop) {
+            this.serviceLogger.debug('Stopping stream', {
+              streamId: stream.id,
+              streamType: stream.type
+            });
+            this.stopStream(stream.id);
+          }
+          
+          this.pendingUpdates.delete(walletAddress);
+          
+          this.serviceLogger.endTimer('stopDataStreams', {
+            walletAddress,
+            streamCount: streamsToStop.length
+          });
+          
+          this.serviceLogger.info('Data streams stopped successfully', {
+            walletAddress,
+            streamCount: streamsToStop.length
+          });
+          
+          this.emit('realtime:streams:stopped', {
+            walletAddress,
+            streamCount: streamsToStop.length,
+            timestamp: new Date()
+          });
+        },
+        error => {
+          this.serviceLogger.error('Failed to stop data streams', { walletAddress }, error as Error);
+          return this.createRealTimeError('STREAM_STOP_FAILED', `Failed to stop streams: ${error}`, 'stream');
         }
-        
-        this.pendingUpdates.delete(walletAddress);
-        
-        this.emit('realtime:streams:stopped', {
-          walletAddress,
-          streamCount: streamsToStop.length,
-          timestamp: new Date()
-        });
-      },
-      error => this.createRealTimeError('STREAM_STOP_FAILED', `Failed to stop streams: ${error}`, 'stream')
+      ))
     );
 
   /**
    * Get connection status for a wallet
    */
   public getConnectionStatus = (walletAddress: string): TE.TaskEither<RealTimeError, ConnectionStatus> =>
-    TE.tryCatch(
-      async () => {
-        const adapterStatus = await this.seiIntegration.getIntegrationStatus()();
-        const userStreams = Array.from(this.activeStreams.values())
-          .filter(stream => stream.walletAddress === walletAddress);
-        
-        const socketStatus = { connected: this.socketService.isUserConnected(walletAddress) };
-        const performance = this.calculatePerformanceMetrics(walletAddress);
-        const alerts = this.generateAlerts(walletAddress, performance);
-
-        return {
+    pipe(
+      TE.Do,
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.info('Getting connection status', {
           walletAddress,
-          adapters: {
-            hive: {
-              connected: adapterStatus._tag === 'Right' ? adapterStatus.right.hive.connected : false,
-              lastActivity: adapterStatus._tag === 'Right' ? adapterStatus.right.hive.lastActivity : undefined,
-              creditRemaining: adapterStatus._tag === 'Right' ? adapterStatus.right.hive.creditUsage?.remaining : undefined,
-              error: adapterStatus._tag === 'Right' ? adapterStatus.right.hive.error : undefined
+          method: 'getConnectionStatus'
+        });
+        this.serviceLogger.startTimer('getConnectionStatus');
+      })),
+      TE.chain(() => TE.tryCatch(
+        async () => {
+          this.serviceLogger.debug('Fetching adapter status', { walletAddress });
+          const adapterStatus = await this.seiIntegration.getIntegrationStatus()();
+          
+          const userStreams = Array.from(this.activeStreams.values())
+            .filter(stream => stream.walletAddress === walletAddress);
+          
+          this.serviceLogger.debug('Checking socket connection', { walletAddress });
+          const socketConnected = this.socketService.isUserConnected(walletAddress);
+          
+          this.serviceLogger.debug('Calculating performance metrics', { walletAddress });
+          const performance = this.calculatePerformanceMetrics(walletAddress);
+          
+          this.serviceLogger.debug('Generating alerts', { walletAddress });
+          const alerts = this.generateAlerts(walletAddress, performance);
+
+          const connectionStatus = {
+            walletAddress,
+            adapters: {
+              hive: {
+                connected: adapterStatus._tag === 'Right' ? adapterStatus.right.hive.connected : false,
+                lastActivity: adapterStatus._tag === 'Right' ? adapterStatus.right.hive.lastActivity : undefined,
+                creditRemaining: adapterStatus._tag === 'Right' ? adapterStatus.right.hive.creditUsage?.remaining : undefined,
+                error: adapterStatus._tag === 'Right' ? adapterStatus.right.hive.error : undefined
+              },
+              sak: {
+                connected: adapterStatus._tag === 'Right' ? adapterStatus.right.sak.connected : false,
+                activeTools: adapterStatus._tag === 'Right' ? adapterStatus.right.sak.availableTools || 0 : 0,
+                lastOperation: adapterStatus._tag === 'Right' ? adapterStatus.right.sak.lastOperation : undefined,
+                error: adapterStatus._tag === 'Right' ? adapterStatus.right.sak.error : undefined
+              },
+              mcp: {
+                connected: adapterStatus._tag === 'Right' ? adapterStatus.right.mcp.connected : false,
+                subscriptions: adapterStatus._tag === 'Right' ? adapterStatus.right.mcp.subscriptions || [] : [],
+                lastBlockNumber: adapterStatus._tag === 'Right' ? adapterStatus.right.mcp.lastBlockNumber : undefined,
+                error: adapterStatus._tag === 'Right' ? adapterStatus.right.mcp.error : undefined
+              }
             },
-            sak: {
-              connected: adapterStatus._tag === 'Right' ? adapterStatus.right.sak.connected : false,
-              activeTools: adapterStatus._tag === 'Right' ? adapterStatus.right.sak.availableTools || 0 : 0,
-              lastOperation: adapterStatus._tag === 'Right' ? adapterStatus.right.sak.lastOperation : undefined,
-              error: adapterStatus._tag === 'Right' ? adapterStatus.right.sak.error : undefined
+            streams: {
+              active: userStreams.filter(s => s.status === 'active').length,
+              total: userStreams.length,
+              byType: this.groupStreamsByType(userStreams),
+              byPriority: this.groupStreamsByPriority(userStreams)
             },
-            mcp: {
-              connected: adapterStatus._tag === 'Right' ? adapterStatus.right.mcp.connected : false,
-              subscriptions: adapterStatus._tag === 'Right' ? adapterStatus.right.mcp.subscriptions || [] : [],
-              lastBlockNumber: adapterStatus._tag === 'Right' ? adapterStatus.right.mcp.lastBlockNumber : undefined,
-              error: adapterStatus._tag === 'Right' ? adapterStatus.right.mcp.error : undefined
-            }
-          },
-          streams: {
-            active: userStreams.filter(s => s.status === 'active').length,
-            total: userStreams.length,
-            byType: this.groupStreamsByType(userStreams),
-            byPriority: this.groupStreamsByPriority(userStreams)
-          },
-          performance,
-          alerts
-        };
-      },
-      error => this.createRealTimeError('STATUS_CHECK_FAILED', `Failed to get connection status: ${error}`, 'network')
+            performance,
+            alerts
+          };
+          
+          this.serviceLogger.endTimer('getConnectionStatus', {
+            walletAddress,
+            activeStreams: connectionStatus.streams.active,
+            alertCount: alerts.length,
+            avgLatency: performance.avgLatency
+          });
+          
+          this.serviceLogger.info('Connection status retrieved', {
+            walletAddress,
+            adaptersConnected: {
+              hive: connectionStatus.adapters.hive.connected,
+              sak: connectionStatus.adapters.sak.connected,
+              mcp: connectionStatus.adapters.mcp.connected
+            },
+            activeStreams: connectionStatus.streams.active,
+            totalStreams: connectionStatus.streams.total,
+            performanceStatus: {
+              avgLatency: performance.avgLatency,
+              successRate: performance.successRate,
+              errorRate: performance.errorRate
+            },
+            alertCount: alerts.length
+          });
+          
+          return connectionStatus;
+        },
+        error => {
+          this.serviceLogger.error('Failed to get connection status', { walletAddress }, error as Error);
+          return this.createRealTimeError('STATUS_CHECK_FAILED', `Failed to get connection status: ${error}`, 'network');
+        }
+      ))
     );
 
   /**
@@ -364,23 +492,86 @@ export class RealTimeDataService extends EventEmitter {
     
     return pipe(
       TE.Do,
-      TE.bind('blockchainData', () => this.fetchBlockchainData()),
-      TE.bind('walletData', () => this.fetchWalletData(walletAddress)),
-      TE.bind('portfolioData', () => this.fetchPortfolioData(walletAddress)),
-      TE.bind('syncResult', ({ blockchainData, walletData, portfolioData }) => 
-        this.performDataSynchronization(walletAddress, {
-          blockchain: blockchainData,
-          wallet: walletData,
-          portfolio: portfolioData
-        }, options)
-      ),
-      TE.map(({ syncResult }) => ({
-        ...syncResult,
-        performanceMetrics: {
-          ...syncResult.performanceMetrics,
-          syncTime: Date.now() - startTime
-        }
-      }))
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.info('Starting data synchronization', {
+          walletAddress,
+          options,
+          method: 'synchronizeData'
+        });
+        this.serviceLogger.startTimer('synchronizeData');
+      })),
+      TE.bind('blockchainData', () => {
+        this.serviceLogger.debug('Fetching blockchain data for sync', { walletAddress });
+        return this.serviceLogger.logTaskEither(
+          this.fetchBlockchainData(),
+          'synchronizeData.fetchBlockchainData',
+          { walletAddress }
+        );
+      }),
+      TE.bind('walletData', () => {
+        this.serviceLogger.debug('Fetching wallet data for sync', { walletAddress });
+        return this.serviceLogger.logTaskEither(
+          this.fetchWalletData(walletAddress),
+          'synchronizeData.fetchWalletData',
+          { walletAddress }
+        );
+      }),
+      TE.bind('portfolioData', () => {
+        this.serviceLogger.debug('Fetching portfolio data for sync', { walletAddress });
+        return this.serviceLogger.logTaskEither(
+          this.fetchPortfolioData(walletAddress),
+          'synchronizeData.fetchPortfolioData',
+          { walletAddress }
+        );
+      }),
+      TE.bind('syncResult', ({ blockchainData, walletData, portfolioData }) => {
+        this.serviceLogger.debug('Performing data synchronization', {
+          walletAddress,
+          hasBlockchainData: !!blockchainData,
+          hasWalletData: !!walletData,
+          hasPortfolioData: !!portfolioData
+        });
+        return this.serviceLogger.logTaskEither(
+          this.performDataSynchronization(walletAddress, {
+            blockchain: blockchainData,
+            wallet: walletData,
+            portfolio: portfolioData
+          }, options),
+          'synchronizeData.performSync',
+          { walletAddress }
+        );
+      }),
+      TE.map(({ syncResult }) => {
+        const totalSyncTime = Date.now() - startTime;
+        
+        this.serviceLogger.endTimer('synchronizeData', {
+          walletAddress,
+          syncTime: totalSyncTime,
+          conflictsResolved: syncResult.conflictsResolved,
+          dataPointsSynchronized: syncResult.dataPointsSynchronized
+        });
+        
+        this.serviceLogger.info('Data synchronization completed', {
+          walletAddress,
+          success: syncResult.success,
+          conflictsResolved: syncResult.conflictsResolved,
+          dataPointsSynchronized: syncResult.dataPointsSynchronized,
+          totalSyncTime,
+          errorCount: syncResult.errors.length
+        });
+        
+        return {
+          ...syncResult,
+          performanceMetrics: {
+            ...syncResult.performanceMetrics,
+            syncTime: totalSyncTime
+          }
+        };
+      }),
+      TE.mapLeft(error => {
+        this.serviceLogger.error('Data synchronization failed', { walletAddress }, error as Error);
+        return error;
+      })
     );
   };
 
@@ -392,14 +583,61 @@ export class RealTimeDataService extends EventEmitter {
     walletAddress?: string,
     maxAge: number = 30000 // 30 seconds default
   ): TE.TaskEither<RealTimeError, T> => {
+    this.serviceLogger.info('Getting real-time data', {
+      type,
+      walletAddress,
+      maxAge,
+      method: 'getRealTimeData'
+    });
+    this.serviceLogger.startTimer('getRealTimeData');
+    
     const cacheKey = this.generateCacheKey(type, walletAddress);
     const cached = this.getFromCache<T>(cacheKey);
     
     if (cached && Date.now() - cached.timestamp < maxAge) {
+      this.serviceLogger.endTimer('getRealTimeData', {
+        type,
+        walletAddress,
+        cacheHit: true,
+        cacheAge: Date.now() - cached.timestamp
+      });
+      
+      this.serviceLogger.debug('Returning cached data', {
+        type,
+        walletAddress,
+        cacheAge: Date.now() - cached.timestamp,
+        maxAge
+      });
+      
       return TE.right(cached.data);
     }
     
-    return this.fetchFreshData<T>(type, walletAddress);
+    this.serviceLogger.debug('Cache miss, fetching fresh data', {
+      type,
+      walletAddress,
+      cacheKey,
+      hasCached: !!cached,
+      cacheAge: cached ? Date.now() - cached.timestamp : null
+    });
+    
+    return pipe(
+      this.fetchFreshData<T>(type, walletAddress),
+      TE.map(data => {
+        this.serviceLogger.endTimer('getRealTimeData', {
+          type,
+          walletAddress,
+          cacheHit: false
+        });
+        return data;
+      }),
+      TE.mapLeft(error => {
+        this.serviceLogger.error('Failed to get real-time data', {
+          type,
+          walletAddress
+        }, error as Error);
+        return error;
+      })
+    );
   };
 
   /**
@@ -412,25 +650,75 @@ export class RealTimeDataService extends EventEmitter {
   ): TE.TaskEither<RealTimeError, string> => {
     const subscriptionId = `sub-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
-    return TE.tryCatch(
-      async () => {
-        // Register subscription
-        this.on(`update:${walletAddress}`, (update: RealTimeUpdate) => {
-          if (updateTypes.includes(update.type)) {
-            callback(update);
-          }
-        });
-        
-        this.emit('realtime:subscription:created', {
-          subscriptionId,
+    return pipe(
+      TE.Do,
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.info('Creating real-time subscription', {
           walletAddress,
           updateTypes,
-          timestamp: new Date()
+          subscriptionId,
+          method: 'subscribeToUpdates'
         });
-        
-        return subscriptionId;
-      },
-      error => this.createRealTimeError('SUBSCRIPTION_FAILED', `Failed to create subscription: ${error}`, 'stream')
+        this.serviceLogger.startTimer('subscribeToUpdates');
+      })),
+      TE.chain(() => TE.tryCatch(
+        async () => {
+          this.serviceLogger.debug('Registering subscription event handler', {
+            subscriptionId,
+            walletAddress,
+            updateTypes
+          });
+          
+          // Register subscription
+          this.on(`update:${walletAddress}`, (update: RealTimeUpdate) => {
+            if (updateTypes.includes(update.type)) {
+              this.serviceLogger.debug('Calling subscription callback', {
+                subscriptionId,
+                updateId: update.id,
+                updateType: update.type,
+                walletAddress
+              });
+              
+              try {
+                callback(update);
+              } catch (callbackError) {
+                this.serviceLogger.error('Subscription callback error', {
+                  subscriptionId,
+                  updateId: update.id,
+                  updateType: update.type
+                }, callbackError as Error);
+              }
+            }
+          });
+          
+          this.serviceLogger.endTimer('subscribeToUpdates', {
+            subscriptionId,
+            walletAddress
+          });
+          
+          this.serviceLogger.info('Subscription created successfully', {
+            subscriptionId,
+            walletAddress,
+            updateTypes
+          });
+          
+          this.emit('realtime:subscription:created', {
+            subscriptionId,
+            walletAddress,
+            updateTypes,
+            timestamp: new Date()
+          });
+          
+          return subscriptionId;
+        },
+        error => {
+          this.serviceLogger.error('Failed to create subscription', {
+            walletAddress,
+            updateTypes
+          }, error as Error);
+          return this.createRealTimeError('SUBSCRIPTION_FAILED', `Failed to create subscription: ${error}`, 'stream');
+        }
+      ))
     );
   };
 
@@ -442,25 +730,57 @@ export class RealTimeDataService extends EventEmitter {
     eventsProcessed: number;
     avgLatency: number;
   }> =>
-    TE.tryCatch(
-      async () => {
-        const totalEventsProcessed = Array.from(this.performanceMetrics.values())
-          .reduce((sum, metrics) => sum + metrics.successCount + metrics.errorCount, 0);
-        
-        const latencies = Array.from(this.performanceMetrics.values())
-          .flatMap(metrics => metrics.latencies);
-        
-        const avgLatency = latencies.length > 0 
-          ? latencies.reduce((sum, lat) => sum + lat, 0) / latencies.length 
-          : 0;
+    pipe(
+      TE.Do,
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.info('Getting stream statistics', { method: 'getStreamStatistics' });
+        this.serviceLogger.startTimer('getStreamStatistics');
+      })),
+      TE.chain(() => TE.tryCatch(
+        async () => {
+          this.serviceLogger.debug('Calculating stream statistics', {
+            totalStreams: this.activeStreams.size,
+            metricsCount: this.performanceMetrics.size
+          });
+          
+          const totalEventsProcessed = Array.from(this.performanceMetrics.values())
+            .reduce((sum, metrics) => sum + metrics.successCount + metrics.errorCount, 0);
+          
+          const latencies = Array.from(this.performanceMetrics.values())
+            .flatMap(metrics => metrics.latencies);
+          
+          const avgLatency = latencies.length > 0 
+            ? latencies.reduce((sum, lat) => sum + lat, 0) / latencies.length 
+            : 0;
 
-        return {
-          activeStreams: Array.from(this.activeStreams.values()).filter(s => s.status === 'active').length,
-          eventsProcessed: totalEventsProcessed,
-          avgLatency
-        };
-      },
-      error => this.createRealTimeError('STATS_RETRIEVAL_FAILED', `Failed to get stream statistics: ${error}`, 'stream')
+          const activeStreamsCount = Array.from(this.activeStreams.values()).filter(s => s.status === 'active').length;
+          
+          const statistics = {
+            activeStreams: activeStreamsCount,
+            eventsProcessed: totalEventsProcessed,
+            avgLatency
+          };
+          
+          this.serviceLogger.endTimer('getStreamStatistics', {
+            activeStreams: activeStreamsCount,
+            eventsProcessed: totalEventsProcessed
+          });
+          
+          this.serviceLogger.info('Stream statistics calculated', {
+            activeStreams: activeStreamsCount,
+            totalStreams: this.activeStreams.size,
+            eventsProcessed: totalEventsProcessed,
+            avgLatency: Math.round(avgLatency * 100) / 100,
+            latencyDataPoints: latencies.length
+          });
+          
+          return statistics;
+        },
+        error => {
+          this.serviceLogger.error('Failed to get stream statistics', {}, error as Error);
+          return this.createRealTimeError('STATS_RETRIEVAL_FAILED', `Failed to get stream statistics: ${error}`, 'stream');
+        }
+      ))
     );
 
   /**
@@ -567,21 +887,64 @@ export class RealTimeDataService extends EventEmitter {
   private startStream(stream: DataStream): void {
     const intervalMs = stream.metadata.interval || 30000;
     
+    this.serviceLogger.info('Starting data stream', {
+      streamId: stream.id,
+      streamType: stream.type,
+      walletAddress: stream.walletAddress,
+      interval: intervalMs,
+      priority: stream.priority
+    });
+    
     const interval = setInterval(async () => {
       try {
-        if (this.shouldSkipUpdate(stream)) return;
+        if (this.shouldSkipUpdate(stream)) {
+          this.serviceLogger.debug('Skipping stream update', {
+            streamId: stream.id,
+            reason: 'circuit_breaker_or_paused'
+          });
+          return;
+        }
+        
+        this.serviceLogger.debug('Fetching stream data', {
+          streamId: stream.id,
+          streamType: stream.type
+        });
         
         const update = await this.fetchStreamData(stream);
         if (update) {
+          this.serviceLogger.debug('Processing stream update', {
+            updateId: update.id,
+            streamId: stream.id,
+            latency: update.metadata.latency
+          });
+          
           await this.processUpdate(update);
           this.updateStreamMetrics(stream, true);
+          
+          this.serviceLogger.debug('Stream update processed successfully', {
+            updateId: update.id,
+            streamId: stream.id
+          });
+        } else {
+          this.serviceLogger.debug('No data returned from stream', {
+            streamId: stream.id
+          });
         }
       } catch (error) {
+        this.serviceLogger.error('Stream error occurred', {
+          streamId: stream.id,
+          streamType: stream.type
+        }, error as Error);
         this.handleStreamError(stream, error);
       }
     }, intervalMs);
     
     this.streamIntervals.set(stream.id, interval);
+    
+    this.serviceLogger.info('Data stream started', {
+      streamId: stream.id,
+      interval: intervalMs
+    });
   }
 
   /**
@@ -644,51 +1007,115 @@ export class RealTimeDataService extends EventEmitter {
   private async fetchStreamData(stream: DataStream): Promise<RealTimeUpdate | null> {
     const startTime = Date.now();
     
+    this.serviceLogger.debug('Fetching stream data', {
+      streamId: stream.id,
+      streamType: stream.type,
+      dataSource: stream.dataSource
+    });
+    
     try {
       let data: any = null;
       let source: 'hive' | 'sak' | 'mcp' | 'integration' = 'integration';
       
       switch (stream.type) {
         case 'blockchain':
+          this.serviceLogger.debug('Fetching blockchain state via MCP', { streamId: stream.id });
           const blockchainResult = await this.seiIntegration.getMCPBlockchainState()();
           if (blockchainResult._tag === 'Right') {
             data = blockchainResult.right;
             source = 'mcp';
+            this.serviceLogger.debug('Blockchain data fetched successfully', {
+              streamId: stream.id,
+              blockNumber: data.blockNumber
+            });
+          } else {
+            this.serviceLogger.warn('Failed to fetch blockchain data', {
+              streamId: stream.id,
+              error: blockchainResult.left
+            });
           }
           break;
           
         case 'wallet':
           if (stream.walletAddress) {
+            this.serviceLogger.debug('Fetching wallet balance via MCP', {
+              streamId: stream.id,
+              walletAddress: stream.walletAddress
+            });
             const walletResult = await this.seiIntegration.getMCPWalletBalance(stream.walletAddress)();
             if (walletResult._tag === 'Right') {
               data = walletResult.right;
               source = 'mcp';
+              this.serviceLogger.debug('Wallet data fetched successfully', {
+                streamId: stream.id,
+                walletAddress: stream.walletAddress,
+                totalBalance: data.totalValueUSD
+              });
+            } else {
+              this.serviceLogger.warn('Failed to fetch wallet data', {
+                streamId: stream.id,
+                walletAddress: stream.walletAddress,
+                error: walletResult.left
+              });
             }
           }
           break;
           
         case 'portfolio':
           if (stream.walletAddress) {
+            this.serviceLogger.debug('Fetching portfolio analysis via integration', {
+              streamId: stream.id,
+              walletAddress: stream.walletAddress
+            });
             const portfolioResult = await this.seiIntegration.generateIntegratedAnalysis(stream.walletAddress)();
             if (portfolioResult._tag === 'Right') {
               data = portfolioResult.right;
               source = 'integration';
+              this.serviceLogger.debug('Portfolio data fetched successfully', {
+                streamId: stream.id,
+                walletAddress: stream.walletAddress,
+                powerLevel: data.synthesis?.dragonBallTheme?.powerLevel
+              });
+            } else {
+              this.serviceLogger.warn('Failed to fetch portfolio data', {
+                streamId: stream.id,
+                walletAddress: stream.walletAddress,
+                error: portfolioResult.left
+              });
             }
           }
           break;
           
         case 'market':
+          this.serviceLogger.debug('Fetching market analytics via Hive', { streamId: stream.id });
           const marketResult = await this.seiIntegration.getHiveAnalytics('current market conditions and trends')();
           if (marketResult._tag === 'Right') {
             data = marketResult.right;
             source = 'hive';
+            this.serviceLogger.debug('Market data fetched successfully', {
+              streamId: stream.id
+            });
+          } else {
+            this.serviceLogger.warn('Failed to fetch market data', {
+              streamId: stream.id,
+              error: marketResult.left
+            });
           }
           break;
       }
       
-      if (!data) return null;
+      if (!data) {
+        this.serviceLogger.debug('No data available for stream', {
+          streamId: stream.id,
+          streamType: stream.type
+        });
+        return null;
+      }
       
       const latency = Date.now() - startTime;
+      const dataSize = JSON.stringify(data).length;
+      const powerLevel = this.calculateDragonBallPowerLevel(data, stream.type);
+      
       const update: RealTimeUpdate = {
         id: `update-${++this.sequenceNumber}`,
         timestamp: new Date(),
@@ -699,11 +1126,11 @@ export class RealTimeDataService extends EventEmitter {
         priority: this.mapStreamPriorityToUpdatePriority(stream.priority),
         metadata: {
           latency,
-          dataSize: JSON.stringify(data).length,
+          dataSize,
           cached: false,
           sequenceNumber: this.sequenceNumber,
           correlationId: `${stream.id}-${this.sequenceNumber}`,
-          dragonBallPowerLevel: this.calculateDragonBallPowerLevel(data, stream.type)
+          dragonBallPowerLevel: powerLevel
         },
         validation: {
           verified: true,
@@ -712,8 +1139,23 @@ export class RealTimeDataService extends EventEmitter {
         }
       };
       
+      this.serviceLogger.info('Stream data fetched and update created', {
+        updateId: update.id,
+        streamId: stream.id,
+        streamType: stream.type,
+        latency,
+        dataSize,
+        powerLevel,
+        priority: update.priority
+      });
+      
       return update;
     } catch (error) {
+      this.serviceLogger.error('Error fetching stream data', {
+        streamId: stream.id,
+        streamType: stream.type,
+        latency: Date.now() - startTime
+      }, error as Error);
       throw error;
     }
   }
@@ -722,19 +1164,49 @@ export class RealTimeDataService extends EventEmitter {
    * Process a real-time update
    */
   private async processUpdate(update: RealTimeUpdate): Promise<void> {
+    this.serviceLogger.debug('Processing real-time update', {
+      updateId: update.id,
+      updateType: update.type,
+      priority: update.priority,
+      walletAddress: update.walletAddress,
+      dataSize: update.metadata.dataSize,
+      latency: update.metadata.latency
+    });
+    
     try {
       // Cache the update
       if (this.config.caching.enabled) {
+        this.serviceLogger.debug('Caching update', { updateId: update.id });
         this.cacheUpdate(update);
       }
       
       // Validate update
       if (!this.validateUpdate(update)) {
-        throw new Error('Update validation failed');
+        const error = new Error('Update validation failed');
+        this.serviceLogger.error('Update validation failed', {
+          updateId: update.id,
+          updateType: update.type,
+          validationResult: {
+            hasId: !!update.id,
+            hasTimestamp: !!update.timestamp,
+            hasType: !!update.type,
+            hasData: !!update.data,
+            hasSource: !!update.source,
+            hasPriority: !!update.priority,
+            hasMetadata: !!update.metadata,
+            hasValidation: !!update.validation
+          }
+        }, error);
+        throw error;
       }
       
       // Send to socket service for real-time distribution
       if (update.walletAddress) {
+        this.serviceLogger.debug('Distributing update via socket', {
+          updateId: update.id,
+          walletAddress: update.walletAddress,
+          priority: update.priority
+        });
         await this.distributePriorityUpdate(update);
       }
       
@@ -743,12 +1215,26 @@ export class RealTimeDataService extends EventEmitter {
       this.emit('realtime:update:processed', update);
       
       // Process any pending synchronization
-      await this.processPendingUpdates(update.walletAddress);
+      if (update.walletAddress) {
+        await this.processPendingUpdates(update.walletAddress);
+      }
+      
+      this.serviceLogger.debug('Update processed successfully', {
+        updateId: update.id,
+        updateType: update.type,
+        processingTime: Date.now() - update.timestamp.getTime()
+      });
       
     } catch (error) {
+      this.serviceLogger.error('Error processing update', {
+        updateId: update.id,
+        updateType: update.type,
+        walletAddress: update.walletAddress
+      }, error as Error);
+      
       this.emit('realtime:update:error', {
         update,
-        error: error.message,
+        error: (error as Error).message,
         timestamp: new Date()
       });
     }
@@ -1113,17 +1599,46 @@ export class RealTimeDataService extends EventEmitter {
     }
     
     this.activeStreams.set(stream.id, stream);
+    
+    this.serviceLogger.debug('Stream metrics updated', {
+      streamId: stream.id,
+      streamType: stream.type,
+      success,
+      updateCount: stream.updateCount,
+      errorCount: stream.errorCount,
+      successRate: stream.metadata.performanceMetrics?.successRate
+    });
   }
 
   private handleStreamError(stream: DataStream, error: any): void {
+    this.serviceLogger.error('Stream error occurred', {
+      streamId: stream.id,
+      streamType: stream.type,
+      walletAddress: stream.walletAddress,
+      errorCount: stream.errorCount + 1,
+      updateCount: stream.updateCount
+    }, error);
+    
     this.updateStreamMetrics(stream, false);
     stream.metadata.lastError = error.message;
     
     // Update circuit breaker
     this.updateCircuitBreaker(stream.id, false);
     
+    // Check if stream should be paused due to too many errors
+    const errorRate = stream.errorCount / Math.max(stream.updateCount, 1);
+    if (errorRate > 0.5 && stream.updateCount > 10) {
+      this.serviceLogger.warn('Stream has high error rate, consider pausing', {
+        streamId: stream.id,
+        errorRate,
+        errorCount: stream.errorCount,
+        updateCount: stream.updateCount
+      });
+    }
+    
     this.emit('realtime:stream:error', {
       streamId: stream.id,
+      streamType: stream.type,
       error: error.message,
       timestamp: new Date()
     });

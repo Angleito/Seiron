@@ -7,12 +7,14 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { pipe } from 'fp-ts/function';
 import * as TE from 'fp-ts/TaskEither';
+import logger from './utils/logger';
 
 import { chatRouter } from './routes/chat';
 import { portfolioRouter } from './routes/portfolio';
 import { aiRouter } from './routes/ai';
 import { confirmationRouter } from './routes/confirmation';
 import voiceRouter from './routes/voice';
+import { websocketRouter } from './routes/websocket';
 import { SocketService } from './services/SocketService';
 import { PortfolioService } from './services/PortfolioService';
 import { AIService } from './services/AIService';
@@ -23,6 +25,14 @@ import { PortfolioAnalyticsService } from './services/PortfolioAnalyticsService'
 import { RealTimeDataService } from './services/RealTimeDataService';
 import { errorHandler } from './middleware/errorHandler';
 import { validateWallet } from './middleware/validateWallet';
+import { createWebSocketMiddleware } from './middleware/websocketMiddleware';
+import { 
+  requestIdMiddleware, 
+  requestBodyLogger, 
+  createMorganMiddleware, 
+  errorRequestLogger, 
+  requestCompletionLogger 
+} from './middleware/requestLogger';
 
 dotenv.config();
 
@@ -34,6 +44,13 @@ const io = new Server(server, {
     methods: ["GET", "POST"]
   }
 });
+
+// Request ID and logging middleware (before everything else)
+app.use(requestIdMiddleware);
+app.use(requestCompletionLogger);
+
+// HTTP request logging
+app.use(createMorganMiddleware());
 
 // Security middleware
 app.use(helmet());
@@ -53,8 +70,25 @@ app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Request/Response body logging (after body parsing)
+app.use(requestBodyLogger);
+
 // Initialize services
 const socketService = new SocketService(io);
+
+// Initialize WebSocket middleware
+const wsMiddleware = createWebSocketMiddleware({
+  rateLimitConfig: {
+    maxMessages: 100,
+    windowMs: 60000, // 1 minute
+    maxConnections: 10,
+    connectionWindowMs: 60000 // 1 minute
+  },
+  enableAuthLogging: true,
+  enableRateLimitLogging: true,
+  enableErrorLogging: true,
+  enablePerformanceLogging: true
+});
 const confirmationService = new ConfirmationService(socketService);
 const portfolioService = new PortfolioService(socketService, confirmationService);
 const aiService = new AIService();
@@ -130,83 +164,270 @@ app.use('/api/portfolio', validateWallet, portfolioRouter);
 app.use('/api/ai', validateWallet, aiRouter);
 app.use('/api', validateWallet, confirmationRouter);
 app.use('/api/voice', voiceRouter);
+app.use('/api/websocket', websocketRouter);
 
 // Health check
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    requestId: req.requestId 
+  });
 });
 
 // Error handling
+app.use(errorRequestLogger);
 app.use(errorHandler);
 
-// Socket.io connection handling
+// Socket.io middleware setup
+io.use(wsMiddleware.authenticationMiddleware);
+io.use(wsMiddleware.rateLimitMiddleware);
+io.use(wsMiddleware.errorHandlingMiddleware);
+
+// Create rate-limited message handlers
+const rateLimitedHandler = wsMiddleware.createMessageRateLimiter(socketService);
+const disconnectHandler = wsMiddleware.createDisconnectHandler(socketService);
+
+// Socket.io connection handling with comprehensive logging
 io.on('connection', (socket) => {
-  console.log(`Client connected: ${socket.id}`);
+  const user = wsMiddleware.getAuthenticatedUser(socket.id);
   
-  socket.on('join_portfolio', (walletAddress: string) => {
-    socketService.addUserSocket(walletAddress, socket);
-    socket.join(`portfolio_${walletAddress}`);
+  logger.info('Socket.IO client connected with enhanced logging', {
+    walletAddress: user?.walletAddress,
+    socketId: socket.id,
+    ipAddress: socket.handshake.address,
+    userAgent: socket.handshake.headers['user-agent'],
+    timestamp: new Date().toISOString()
   });
 
-  socket.on('chat_message', async (data) => {
-    const { walletAddress, message } = data;
+  // Enhanced room join with logging
+  socket.on('join_portfolio', rateLimitedHandler('join_portfolio', (walletAddress: string, socket) => {
+    try {
+      socketService.addUserSocket(walletAddress, socket);
+      socket.join(`portfolio_${walletAddress}`);
+      socketService.logRoomJoin(socket, `portfolio_${walletAddress}`);
+      
+      socket.emit('join_portfolio_result', { 
+        success: true, 
+        room: `portfolio_${walletAddress}`,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      socketService.logMessageDeliveryFailure('join_portfolio', error as Error, socket);
+      socket.emit('join_portfolio_result', { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
+    }
+  }));
+
+  // Enhanced chat message handling with logging
+  socket.on('chat_message', rateLimitedHandler('chat_message', async (data, socket) => {
+    try {
+      const { walletAddress, message } = data;
+      
+      logger.info('Processing chat message via socket', {
+        walletAddress,
+        socketId: socket.id,
+        messageLength: message?.length || 0,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Process chat message and emit response
+      const response = await aiService.processMessage(message, walletAddress)();
+      
+      if (response._tag === 'Left') {
+        const errorResponse = { success: false, error: response.left.message };
+        socket.emit('chat_response', errorResponse);
+        socketService.logMessageDeliveryFailure('chat_message', response.left, socket);
+      } else {
+        const successResponse = { success: true, data: response.right };
+        socket.emit('chat_response', successResponse);
+        
+        logger.info('Chat message processed successfully via socket', {
+          walletAddress,
+          socketId: socket.id,
+          responseLength: JSON.stringify(response.right).length,
+          timestamp: new Date().toISOString()
+        });
+      }
+    } catch (error) {
+      socketService.logMessageDeliveryFailure('chat_message', error as Error, socket);
+      socket.emit('chat_response', { success: false, error: 'Failed to process message' });
+    }
+  }));
+
+  // Enhanced confirmation handling with logging
+  socket.on('confirm_transaction', rateLimitedHandler('confirm_transaction', async (data, socket) => {
+    try {
+      const { transactionId, walletAddress } = data;
+      
+      logger.info('Processing transaction confirmation via socket', {
+        walletAddress,
+        socketId: socket.id,
+        transactionId,
+        timestamp: new Date().toISOString()
+      });
+      
+      const result = await confirmationService.confirmTransaction(transactionId, walletAddress)();
+      
+      if (result._tag === 'Left') {
+        const errorResponse = { success: false, error: result.left.message };
+        socket.emit('confirmation_result', errorResponse);
+        socketService.logMessageDeliveryFailure('confirm_transaction', result.left, socket);
+      } else {
+        const successResponse = { success: true, data: result.right };
+        socket.emit('confirmation_result', successResponse);
+        
+        logger.info('Transaction confirmation processed successfully via socket', {
+          walletAddress,
+          socketId: socket.id,
+          transactionId,
+          timestamp: new Date().toISOString()
+        });
+      }
+    } catch (error) {
+      socketService.logMessageDeliveryFailure('confirm_transaction', error as Error, socket);
+      socket.emit('confirmation_result', { success: false, error: 'Failed to process confirmation' });
+    }
+  }));
+
+  socket.on('reject_transaction', rateLimitedHandler('reject_transaction', async (data, socket) => {
+    try {
+      const { transactionId, walletAddress, reason } = data;
+      
+      logger.info('Processing transaction rejection via socket', {
+        walletAddress,
+        socketId: socket.id,
+        transactionId,
+        reason,
+        timestamp: new Date().toISOString()
+      });
+      
+      const result = await confirmationService.rejectTransaction(transactionId, walletAddress, reason)();
+      
+      if (result._tag === 'Left') {
+        const errorResponse = { success: false, error: result.left.message };
+        socket.emit('confirmation_result', errorResponse);
+        socketService.logMessageDeliveryFailure('reject_transaction', result.left, socket);
+      } else {
+        const successResponse = { success: true, data: result.right };
+        socket.emit('confirmation_result', successResponse);
+        
+        logger.info('Transaction rejection processed successfully via socket', {
+          walletAddress,
+          socketId: socket.id,
+          transactionId,
+          reason,
+          timestamp: new Date().toISOString()
+        });
+      }
+    } catch (error) {
+      socketService.logMessageDeliveryFailure('reject_transaction', error as Error, socket);
+      socket.emit('confirmation_result', { success: false, error: 'Failed to process rejection' });
+    }
+  }));
+
+  socket.on('get_pending_transactions', rateLimitedHandler('get_pending_transactions', async (walletAddress: string, socket) => {
+    try {
+      logger.info('Fetching pending transactions via socket', {
+        walletAddress,
+        socketId: socket.id,
+        timestamp: new Date().toISOString()
+      });
+      
+      const result = await confirmationService.getPendingTransactionsForWallet(walletAddress)();
+      
+      if (result._tag === 'Left') {
+        const errorResponse = { success: false, error: result.left.message };
+        socket.emit('pending_transactions', errorResponse);
+        socketService.logMessageDeliveryFailure('get_pending_transactions', result.left, socket);
+      } else {
+        const successResponse = { success: true, data: result.right };
+        socket.emit('pending_transactions', successResponse);
+        
+        logger.info('Pending transactions fetched successfully via socket', {
+          walletAddress,
+          socketId: socket.id,
+          transactionCount: result.right.length,
+          timestamp: new Date().toISOString()
+        });
+      }
+    } catch (error) {
+      socketService.logMessageDeliveryFailure('get_pending_transactions', error as Error, socket);
+      socket.emit('pending_transactions', { success: false, error: 'Failed to fetch pending transactions' });
+    }
+  }));
+
+  // Enhanced disconnect handling
+  socket.on('disconnect', (reason) => {
+    logger.info('Socket.IO client disconnected with enhanced logging', {
+      walletAddress: user?.walletAddress,
+      socketId: socket.id,
+      reason,
+      timestamp: new Date().toISOString()
+    });
     
-    // Process chat message and emit response
-    const response = await aiService.processMessage(message, walletAddress)();
-    
-    if (response._tag === 'Left') {
-      socket.emit('chat_response', { success: false, error: response.left.message });
-    } else {
-      socket.emit('chat_response', { success: true, data: response.right });
+    disconnectHandler(socket);
+  });
+
+  // Add periodic connection health check
+  const healthCheckInterval = setInterval(() => {
+    const connectionInfo = socketService.getSocketConnectionInfo(socket.id);
+    if (connectionInfo) {
+      const timeSinceLastActivity = Date.now() - connectionInfo.lastActivity.getTime();
+      
+      // If no activity for 5 minutes, send ping
+      if (timeSinceLastActivity > 5 * 60 * 1000) {
+        socket.emit('ping', { timestamp: new Date().toISOString() });
+        
+        logger.debug('Health check ping sent', {
+          walletAddress: connectionInfo.walletAddress,
+          socketId: socket.id,
+          timeSinceLastActivity,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+  }, 60000); // Check every minute
+
+  // Handle pong response
+  socket.on('pong', () => {
+    const connectionInfo = socketService.getSocketConnectionInfo(socket.id);
+    if (connectionInfo) {
+      connectionInfo.lastActivity = new Date();
+      
+      logger.debug('Health check pong received', {
+        walletAddress: connectionInfo.walletAddress,
+        socketId: socket.id,
+        timestamp: new Date().toISOString()
+      });
     }
   });
 
-  // Confirmation-related events
-  socket.on('confirm_transaction', async (data) => {
-    const { transactionId, walletAddress } = data;
-    
-    const result = await confirmationService.confirmTransaction(transactionId, walletAddress)();
-    
-    if (result._tag === 'Left') {
-      socket.emit('confirmation_result', { success: false, error: result.left.message });
-    } else {
-      socket.emit('confirmation_result', { success: true, data: result.right });
-    }
-  });
-
-  socket.on('reject_transaction', async (data) => {
-    const { transactionId, walletAddress, reason } = data;
-    
-    const result = await confirmationService.rejectTransaction(transactionId, walletAddress, reason)();
-    
-    if (result._tag === 'Left') {
-      socket.emit('confirmation_result', { success: false, error: result.left.message });
-    } else {
-      socket.emit('confirmation_result', { success: true, data: result.right });
-    }
-  });
-
-  socket.on('get_pending_transactions', async (walletAddress: string) => {
-    const result = await confirmationService.getPendingTransactionsForWallet(walletAddress)();
-    
-    if (result._tag === 'Left') {
-      socket.emit('pending_transactions', { success: false, error: result.left.message });
-    } else {
-      socket.emit('pending_transactions', { success: true, data: result.right });
-    }
-  });
-
+  // Clean up health check interval on disconnect
   socket.on('disconnect', () => {
-    console.log(`Client disconnected: ${socket.id}`);
-    socketService.removeUserSocket(socket);
+    clearInterval(healthCheckInterval);
   });
 });
 
 const PORT = process.env.PORT || 8000;
 
 server.listen(PORT, () => {
-  console.log(`🚀 Sei Portfolio Manager API running on port ${PORT}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.info('🚀 Sei Portfolio Manager API started', {
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development',
+    nodeVersion: process.version,
+    logLevel: process.env.LOG_LEVEL || 'info'
+  });
+  
+  // Log startup configuration
+  logger.info('Server configuration loaded', {
+    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+    redisUrl: process.env.REDIS_URL ? '[CONFIGURED]' : '[NOT CONFIGURED]',
+    openaiApiKey: process.env.OPENAI_API_KEY ? '[CONFIGURED]' : '[NOT CONFIGURED]',
+    seiRpcUrl: process.env.SEI_RPC_URL || 'https://sei-rpc.polkachu.com'
+  });
 });
 
 export { app, server, io };

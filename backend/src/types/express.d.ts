@@ -6,6 +6,7 @@ import { OrchestratorService } from '../services/OrchestratorService';
 import { SeiIntegrationService } from '../services/SeiIntegrationService';
 import { PortfolioAnalyticsService } from '../services/PortfolioAnalyticsService';
 import { RealTimeDataService } from '../services/RealTimeDataService';
+import { PerformanceTimer } from '../utils/logger';
 
 declare global {
   namespace Express {
@@ -21,6 +22,9 @@ declare global {
         realTimeData: RealTimeDataService;
       };
       walletAddress?: string;
+      requestId?: string;
+      startTime?: number;
+      performanceTimer?: PerformanceTimer;
     }
   }
 }

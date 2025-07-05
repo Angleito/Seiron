@@ -5,6 +5,7 @@ import * as O from 'fp-ts/Option';
 import { v4 as uuidv4 } from 'uuid';
 import { SocketService } from './SocketService';
 import logger from '../utils/logger';
+import { createServiceLogger } from './LoggingService';
 
 /**
  * Transaction to be confirmed
@@ -65,12 +66,20 @@ export class ConfirmationService {
   private readonly pendingTransactions: Map<string, PendingTransaction> = new Map();
   private readonly confirmationTimeout: number = 300000; // 5 minutes
   private readonly socketService?: SocketService;
+  private readonly serviceLogger = createServiceLogger('ConfirmationService');
 
   constructor(socketService?: SocketService) {
+    this.serviceLogger.info('Initializing ConfirmationService', {
+      hasSocketService: !!socketService,
+      confirmationTimeout: this.confirmationTimeout
+    });
+    
     this.socketService = socketService;
     
     // Start cleanup interval
     setInterval(() => this.cleanupExpiredTransactions(), 60000); // Every minute
+    
+    this.serviceLogger.info('ConfirmationService initialization completed');
   }
 
   /**
@@ -83,10 +92,35 @@ export class ConfirmationService {
     parameters: any
   ): TE.TaskEither<Error, PendingTransaction> =>
     pipe(
-      TE.tryCatch(
+      TE.Do,
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.info('Creating pending transaction', {
+          walletAddress,
+          type,
+          action,
+          amount: parameters.amount,
+          method: 'createPendingTransaction'
+        });
+        this.serviceLogger.startTimer('createPendingTransaction');
+      })),
+      TE.chain(() => TE.tryCatch(
         async () => {
           const transactionId = uuidv4();
+          
+          this.serviceLogger.debug('Analyzing transaction risks', {
+            transactionId,
+            type,
+            action
+          });
+          
           const risks = await this.analyzeTransactionRisks(type, action, parameters);
+          
+          this.serviceLogger.debug('Generating transaction summary', {
+            transactionId,
+            riskCount: risks.length,
+            highRiskCount: risks.filter(r => r.severity === 'high' || r.severity === 'critical').length
+          });
+          
           const summary = await this.generateTransactionSummary(type, action, parameters, risks);
 
           const pendingTransaction: PendingTransaction = {
@@ -103,9 +137,24 @@ export class ConfirmationService {
           };
 
           this.pendingTransactions.set(transactionId, pendingTransaction);
+          
+          this.serviceLogger.info('Pending transaction created', {
+            transactionId,
+            walletAddress,
+            type,
+            action,
+            riskCount: risks.length,
+            estimatedGas: summary.estimatedGas,
+            expiresInMinutes: this.confirmationTimeout / 60000
+          });
 
           // Send confirmation request via WebSocket
           if (this.socketService) {
+            this.serviceLogger.debug('Sending confirmation request via WebSocket', {
+              transactionId,
+              walletAddress
+            });
+            
             await this.socketService.sendPortfolioUpdate(walletAddress, {
               type: 'confirmation_required',
               data: {
@@ -114,13 +163,34 @@ export class ConfirmationService {
               },
               timestamp: new Date().toISOString()
             })();
+            
+            this.serviceLogger.debug('Confirmation request sent successfully', {
+              transactionId,
+              walletAddress
+            });
+          } else {
+            this.serviceLogger.warn('Socket service not available for confirmation request', {
+              transactionId,
+              walletAddress
+            });
           }
 
-          logger.info(`Created pending transaction ${transactionId} for ${walletAddress}`);
+          this.serviceLogger.endTimer('createPendingTransaction', {
+            transactionId,
+            walletAddress
+          });
+          
           return pendingTransaction;
         },
-        (error) => new Error(`Failed to create pending transaction: ${error}`)
-      )
+        (error) => {
+          this.serviceLogger.error('Failed to create pending transaction', {
+            walletAddress,
+            type,
+            action
+          }, error as Error);
+          return new Error(`Failed to create pending transaction: ${error}`);
+        }
+      ))
     );
 
   /**
@@ -131,18 +201,58 @@ export class ConfirmationService {
     walletAddress: string
   ): TE.TaskEither<Error, ConfirmationResult> =>
     pipe(
-      this.getPendingTransaction(transactionId),
+      TE.Do,
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.info('Confirming transaction', {
+          transactionId,
+          walletAddress,
+          method: 'confirmTransaction'
+        });
+        this.serviceLogger.startTimer('confirmTransaction');
+      })),
+      TE.chain(() => this.serviceLogger.logTaskEither(
+        this.getPendingTransaction(transactionId),
+        'confirmTransaction.getTransaction',
+        { transactionId, walletAddress }
+      )),
       TE.chain(transaction => {
+        this.serviceLogger.debug('Validating transaction confirmation', {
+          transactionId,
+          currentStatus: transaction.status,
+          walletMatch: transaction.walletAddress === walletAddress,
+          expired: Date.now() > transaction.expiresAt,
+          timeRemaining: transaction.expiresAt - Date.now()
+        });
+        
         if (transaction.walletAddress !== walletAddress) {
-          return TE.left(new Error('Unauthorized: wallet address mismatch'));
+          const error = new Error('Unauthorized: wallet address mismatch');
+          this.serviceLogger.error('Wallet address mismatch for transaction confirmation', {
+            transactionId,
+            expectedWallet: transaction.walletAddress,
+            providedWallet: walletAddress
+          }, error);
+          return TE.left(error);
         }
 
         if (transaction.status !== 'pending') {
-          return TE.left(new Error(`Transaction is already ${transaction.status}`));
+          const error = new Error(`Transaction is already ${transaction.status}`);
+          this.serviceLogger.warn('Attempted to confirm non-pending transaction', {
+            transactionId,
+            currentStatus: transaction.status,
+            walletAddress
+          });
+          return TE.left(error);
         }
 
         if (Date.now() > transaction.expiresAt) {
-          return TE.left(new Error('Transaction has expired'));
+          const error = new Error('Transaction has expired');
+          this.serviceLogger.warn('Attempted to confirm expired transaction', {
+            transactionId,
+            walletAddress,
+            expiresAt: new Date(transaction.expiresAt),
+            expiredBy: Date.now() - transaction.expiresAt
+          });
+          return TE.left(error);
         }
 
         return TE.right(transaction);
@@ -160,9 +270,23 @@ export class ConfirmationService {
           confirmed: true,
           timestamp: Date.now()
         };
+        
+        this.serviceLogger.info('Transaction confirmed successfully', {
+          transactionId,
+          walletAddress,
+          type: transaction.type,
+          action: transaction.action,
+          amount: transaction.parameters.amount,
+          confirmationDelay: Date.now() - transaction.createdAt
+        });
 
         // Notify via WebSocket
         if (this.socketService) {
+          this.serviceLogger.debug('Sending confirmation notification', {
+            transactionId,
+            walletAddress
+          });
+          
           this.socketService.sendPortfolioUpdate(walletAddress, {
             type: 'transaction_confirmed',
             data: result,
@@ -170,7 +294,11 @@ export class ConfirmationService {
           })();
         }
 
-        logger.info(`Transaction ${transactionId} confirmed by ${walletAddress}`);
+        this.serviceLogger.endTimer('confirmTransaction', {
+          transactionId,
+          walletAddress
+        });
+        
         return TE.right(result);
       })
     );
@@ -184,14 +312,46 @@ export class ConfirmationService {
     reason?: string
   ): TE.TaskEither<Error, ConfirmationResult> =>
     pipe(
-      this.getPendingTransaction(transactionId),
+      TE.Do,
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.info('Rejecting transaction', {
+          transactionId,
+          walletAddress,
+          reason,
+          method: 'rejectTransaction'
+        });
+        this.serviceLogger.startTimer('rejectTransaction');
+      })),
+      TE.chain(() => this.serviceLogger.logTaskEither(
+        this.getPendingTransaction(transactionId),
+        'rejectTransaction.getTransaction',
+        { transactionId, walletAddress }
+      )),
       TE.chain(transaction => {
+        this.serviceLogger.debug('Validating transaction rejection', {
+          transactionId,
+          currentStatus: transaction.status,
+          walletMatch: transaction.walletAddress === walletAddress
+        });
+        
         if (transaction.walletAddress !== walletAddress) {
-          return TE.left(new Error('Unauthorized: wallet address mismatch'));
+          const error = new Error('Unauthorized: wallet address mismatch');
+          this.serviceLogger.error('Wallet address mismatch for transaction rejection', {
+            transactionId,
+            expectedWallet: transaction.walletAddress,
+            providedWallet: walletAddress
+          }, error);
+          return TE.left(error);
         }
 
         if (transaction.status !== 'pending') {
-          return TE.left(new Error(`Transaction is already ${transaction.status}`));
+          const error = new Error(`Transaction is already ${transaction.status}`);
+          this.serviceLogger.warn('Attempted to reject non-pending transaction', {
+            transactionId,
+            currentStatus: transaction.status,
+            walletAddress
+          });
+          return TE.left(error);
         }
 
         return TE.right(transaction);
@@ -210,9 +370,25 @@ export class ConfirmationService {
           timestamp: Date.now(),
           reason
         };
+        
+        this.serviceLogger.info('Transaction rejected successfully', {
+          transactionId,
+          walletAddress,
+          type: transaction.type,
+          action: transaction.action,
+          amount: transaction.parameters.amount,
+          reason: reason || 'No reason provided',
+          rejectionDelay: Date.now() - transaction.createdAt
+        });
 
         // Notify via WebSocket
         if (this.socketService) {
+          this.serviceLogger.debug('Sending rejection notification', {
+            transactionId,
+            walletAddress,
+            reason
+          });
+          
           this.socketService.sendPortfolioUpdate(walletAddress, {
             type: 'transaction_rejected',
             data: result,
@@ -220,7 +396,11 @@ export class ConfirmationService {
           })();
         }
 
-        logger.info(`Transaction ${transactionId} rejected by ${walletAddress}: ${reason || 'No reason provided'}`);
+        this.serviceLogger.endTimer('rejectTransaction', {
+          transactionId,
+          walletAddress
+        });
+        
         return TE.right(result);
       })
     );
@@ -231,15 +411,41 @@ export class ConfirmationService {
   public getPendingTransaction = (
     transactionId: string
   ): TE.TaskEither<Error, PendingTransaction> =>
-    TE.tryCatch(
-      async () => {
-        const transaction = this.pendingTransactions.get(transactionId);
-        if (!transaction) {
-          throw new Error('Transaction not found');
+    pipe(
+      TE.Do,
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.debug('Getting pending transaction', {
+          transactionId,
+          method: 'getPendingTransaction'
+        });
+      })),
+      TE.chain(() => TE.tryCatch(
+        async () => {
+          const transaction = this.pendingTransactions.get(transactionId);
+          if (!transaction) {
+            const error = new Error('Transaction not found');
+            this.serviceLogger.warn('Transaction not found', {
+              transactionId,
+              totalPendingTransactions: this.pendingTransactions.size
+            });
+            throw error;
+          }
+          
+          this.serviceLogger.debug('Transaction found', {
+            transactionId,
+            status: transaction.status,
+            type: transaction.type,
+            walletAddress: transaction.walletAddress,
+            timeRemaining: transaction.expiresAt - Date.now()
+          });
+          
+          return transaction;
+        },
+        (error) => {
+          this.serviceLogger.error('Failed to get pending transaction', { transactionId }, error as Error);
+          return new Error(`Failed to get pending transaction: ${error}`);
         }
-        return transaction;
-      },
-      (error) => new Error(`Failed to get pending transaction: ${error}`)
+      ))
     );
 
   /**
@@ -248,19 +454,51 @@ export class ConfirmationService {
   public getPendingTransactionsForWallet = (
     walletAddress: string
   ): TE.TaskEither<Error, PendingTransaction[]> =>
-    TE.tryCatch(
-      async () => {
-        const transactions: PendingTransaction[] = [];
-        
-        for (const transaction of this.pendingTransactions.values()) {
-          if (transaction.walletAddress === walletAddress && transaction.status === 'pending') {
-            transactions.push(transaction);
+    pipe(
+      TE.Do,
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.info('Getting pending transactions for wallet', {
+          walletAddress,
+          method: 'getPendingTransactionsForWallet'
+        });
+        this.serviceLogger.startTimer('getPendingTransactionsForWallet');
+      })),
+      TE.chain(() => TE.tryCatch(
+        async () => {
+          const transactions: PendingTransaction[] = [];
+          const allTransactions = Array.from(this.pendingTransactions.values());
+          
+          this.serviceLogger.debug('Filtering pending transactions', {
+            walletAddress,
+            totalTransactions: allTransactions.length
+          });
+          
+          for (const transaction of allTransactions) {
+            if (transaction.walletAddress === walletAddress && transaction.status === 'pending') {
+              transactions.push(transaction);
+            }
           }
-        }
 
-        return transactions.sort((a, b) => b.createdAt - a.createdAt);
-      },
-      (error) => new Error(`Failed to get pending transactions: ${error}`)
+          const sortedTransactions = transactions.sort((a, b) => b.createdAt - a.createdAt);
+          
+          this.serviceLogger.endTimer('getPendingTransactionsForWallet', {
+            walletAddress,
+            transactionCount: sortedTransactions.length
+          });
+          
+          this.serviceLogger.info('Pending transactions retrieved', {
+            walletAddress,
+            pendingCount: sortedTransactions.length,
+            transactionIds: sortedTransactions.map(t => t.id)
+          });
+          
+          return sortedTransactions;
+        },
+        (error) => {
+          this.serviceLogger.error('Failed to get pending transactions for wallet', { walletAddress }, error as Error);
+          return new Error(`Failed to get pending transactions: ${error}`);
+        }
+      ))
     );
 
   /**
@@ -270,8 +508,26 @@ export class ConfirmationService {
     transactionId: string
   ): TE.TaskEither<Error, boolean> =>
     pipe(
-      this.getPendingTransaction(transactionId),
-      TE.map(transaction => transaction.status === 'confirmed')
+      TE.Do,
+      TE.tap(() => TE.fromIO(() => {
+        this.serviceLogger.debug('Checking transaction confirmation status', {
+          transactionId,
+          method: 'isTransactionConfirmed'
+        });
+      })),
+      TE.chain(() => this.getPendingTransaction(transactionId)),
+      TE.map(transaction => {
+        const isConfirmed = transaction.status === 'confirmed';
+        
+        this.serviceLogger.debug('Transaction confirmation status checked', {
+          transactionId,
+          isConfirmed,
+          currentStatus: transaction.status,
+          walletAddress: transaction.walletAddress
+        });
+        
+        return isConfirmed;
+      })
     );
 
   /**
@@ -280,6 +536,12 @@ export class ConfirmationService {
   private cleanupExpiredTransactions(): void {
     const now = Date.now();
     let cleanedCount = 0;
+    const expiredTransactions: string[] = [];
+    
+    this.serviceLogger.debug('Starting expired transaction cleanup', {
+      totalTransactions: this.pendingTransactions.size,
+      timestamp: new Date()
+    });
 
     for (const [transactionId, transaction] of this.pendingTransactions.entries()) {
       if (transaction.status === 'pending' && now > transaction.expiresAt) {
@@ -289,9 +551,25 @@ export class ConfirmationService {
         };
         
         this.pendingTransactions.set(transactionId, updatedTransaction);
+        expiredTransactions.push(transactionId);
+        
+        this.serviceLogger.debug('Transaction expired', {
+          transactionId,
+          walletAddress: transaction.walletAddress,
+          type: transaction.type,
+          action: transaction.action,
+          createdAt: new Date(transaction.createdAt),
+          expiresAt: new Date(transaction.expiresAt),
+          expiredBy: now - transaction.expiresAt
+        });
         
         // Notify via WebSocket
         if (this.socketService) {
+          this.serviceLogger.debug('Sending expiration notification', {
+            transactionId,
+            walletAddress: transaction.walletAddress
+          });
+          
           this.socketService.sendPortfolioUpdate(transaction.walletAddress, {
             type: 'transaction_expired',
             data: { transactionId },
@@ -304,7 +582,15 @@ export class ConfirmationService {
     }
 
     if (cleanedCount > 0) {
-      logger.info(`Marked ${cleanedCount} transactions as expired`);
+      this.serviceLogger.info('Expired transaction cleanup completed', {
+        expiredCount: cleanedCount,
+        expiredTransactionIds: expiredTransactions,
+        totalTransactions: this.pendingTransactions.size
+      });
+    } else {
+      this.serviceLogger.debug('No expired transactions found during cleanup', {
+        totalTransactions: this.pendingTransactions.size
+      });
     }
   }
 
@@ -316,64 +602,113 @@ export class ConfirmationService {
     action: string,
     parameters: any
   ): Promise<TransactionRisk[]> {
+    this.serviceLogger.debug('Analyzing transaction risks', {
+      type,
+      action,
+      amount: parameters.amount,
+      leverage: parameters.leverage
+    });
+    
     const risks: TransactionRisk[] = [];
 
     // Amount-based risks
     const amount = parseFloat(parameters.amount || '0');
     if (amount > 100000) {
-      risks.push({
-        severity: 'high',
+      const risk = {
+        severity: 'high' as const,
         type: 'large_amount',
         message: 'Very large transaction amount',
         impact: 'High financial exposure',
         mitigation: 'Consider splitting into smaller transactions'
+      };
+      risks.push(risk);
+      this.serviceLogger.warn('High amount risk detected', {
+        amount,
+        risk: risk.type,
+        severity: risk.severity
       });
     } else if (amount > 10000) {
-      risks.push({
-        severity: 'medium',
+      const risk = {
+        severity: 'medium' as const,
         type: 'medium_amount',
         message: 'Significant transaction amount',
         impact: 'Notable financial exposure'
+      };
+      risks.push(risk);
+      this.serviceLogger.debug('Medium amount risk detected', {
+        amount,
+        risk: risk.type
       });
     }
 
     // Leverage-based risks
     if (parameters.leverage && parameters.leverage > 5) {
-      risks.push({
-        severity: 'critical',
+      const risk = {
+        severity: 'critical' as const,
         type: 'high_leverage',
         message: 'Very high leverage ratio',
         impact: 'High liquidation risk',
         mitigation: 'Use lower leverage or add more collateral'
+      };
+      risks.push(risk);
+      this.serviceLogger.warn('Critical leverage risk detected', {
+        leverage: parameters.leverage,
+        risk: risk.type,
+        severity: risk.severity
       });
     } else if (parameters.leverage && parameters.leverage > 2) {
-      risks.push({
-        severity: 'high',
+      const risk = {
+        severity: 'high' as const,
         type: 'medium_leverage',
         message: 'High leverage ratio',
         impact: 'Increased liquidation risk',
         mitigation: 'Monitor position closely'
+      };
+      risks.push(risk);
+      this.serviceLogger.debug('High leverage risk detected', {
+        leverage: parameters.leverage,
+        risk: risk.type
       });
     }
 
     // Type-specific risks
     if (type === 'liquidity' && action === 'removeLiquidity') {
-      risks.push({
-        severity: 'low',
+      const risk = {
+        severity: 'low' as const,
         type: 'impermanent_loss',
         message: 'Potential impermanent loss',
         impact: 'May receive less value than initially deposited'
+      };
+      risks.push(risk);
+      this.serviceLogger.debug('Liquidity removal risk detected', {
+        risk: risk.type
       });
     }
 
     if (type === 'lending' && action === 'borrow') {
-      risks.push({
-        severity: 'medium',
+      const risk = {
+        severity: 'medium' as const,
         type: 'interest_rate',
         message: 'Variable interest rate',
         impact: 'Borrowing costs may increase over time'
+      };
+      risks.push(risk);
+      this.serviceLogger.debug('Interest rate risk detected', {
+        risk: risk.type
       });
     }
+
+    this.serviceLogger.info('Risk analysis completed', {
+      type,
+      action,
+      totalRisks: risks.length,
+      risksBySeverity: {
+        critical: risks.filter(r => r.severity === 'critical').length,
+        high: risks.filter(r => r.severity === 'high').length,
+        medium: risks.filter(r => r.severity === 'medium').length,
+        low: risks.filter(r => r.severity === 'low').length
+      }
+    });
 
     return risks;
   }

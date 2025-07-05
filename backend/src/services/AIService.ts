@@ -4,6 +4,7 @@ import * as E from 'fp-ts/Either';
 import OpenAI from 'openai';
 import { createServiceLogger } from './LoggingService';
 import { withErrorRecovery } from './ErrorHandlingService';
+import { performance } from 'perf_hooks';
 
 // Types will be defined locally for now
 export interface Command {
@@ -45,7 +46,10 @@ export class AIService {
       apiKey: process.env.OPENAI_API_KEY
     });
     this.chatInterface = new ChatInterface();
-    this.logger.info('AIService initialized with Dragon Ball Z theming');
+    this.logger.info('AIService initialized with Dragon Ball Z theming', {
+      hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+      initializationTime: new Date().toISOString()
+    });
   }
 
   /**
@@ -55,22 +59,74 @@ export class AIService {
     message: string,
     walletAddress: string,
     portfolioData?: any
-  ): TE.TaskEither<Error, AIResponse> =>
-    pipe(
+  ): TE.TaskEither<Error, AIResponse> => {
+    const startTime = performance.now();
+    const requestId = `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    this.logger.info('Processing message', {
+      requestId,
+      walletAddress,
+      messageLength: message.length,
+      hasPortfolioData: !!portfolioData,
+      timestamp: new Date().toISOString()
+    });
+    
+    return pipe(
       this.updateContext(walletAddress, message, portfolioData),
       TE.chain(() => this.parseCommand(message)),
-      TE.chain(command => this.generateResponse(message, command, walletAddress))
+      TE.chain(command => this.generateResponse(message, command, walletAddress)),
+      TE.map(response => {
+        const duration = performance.now() - startTime;
+        this.logger.info('Message processed successfully', {
+          requestId,
+          walletAddress,
+          duration: Math.round(duration),
+          responseLength: response.message.length,
+          hasCommand: !!response.command,
+          confidence: response.confidence
+        });
+        return response;
+      }),
+      TE.mapLeft(error => {
+        const duration = performance.now() - startTime;
+        this.logger.error('Message processing failed', {
+          requestId,
+          walletAddress,
+          duration: Math.round(duration),
+          error: error.message,
+          stack: error.stack
+        });
+        return error;
+      })
     );
+  };
 
   /**
    * Parse command from natural language
    */
-  private parseCommand = (message: string): TE.TaskEither<Error, Command | undefined> =>
-    pipe(
+  private parseCommand = (message: string): TE.TaskEither<Error, Command | undefined> => {
+    const startTime = performance.now();
+    
+    this.logger.debug('Parsing command from message', {
+      messageLength: message.length,
+      timestamp: new Date().toISOString()
+    });
+    
+    return pipe(
       this.chatInterface.parseCommand(message),
       TE.fromEither,
-      TE.orElse(() => TE.right(undefined))
+      TE.orElse(() => TE.right(undefined)),
+      TE.map(command => {
+        const duration = performance.now() - startTime;
+        this.logger.debug('Command parsing completed', {
+          duration: Math.round(duration),
+          commandType: command?.type,
+          hasCommand: !!command
+        });
+        return command;
+      })
     );
+  };
 
   /**
    * Generate AI response using OpenAI
@@ -79,26 +135,52 @@ export class AIService {
     message: string,
     command: Command | undefined,
     walletAddress: string
-  ): TE.TaskEither<Error, AIResponse> =>
-    TE.tryCatch(
+  ): TE.TaskEither<Error, AIResponse> => {
+    const startTime = performance.now();
+    const openAIStartTime = performance.now();
+    
+    return TE.tryCatch(
       async () => {
         const context = this.contexts.get(walletAddress);
         const systemPrompt = this.buildSystemPrompt(context);
-
+        
+        const messageHistory = context?.messages.slice(-10) || [];
+        const chatMessages = [
+          { role: 'system', content: systemPrompt },
+          ...messageHistory.map(m => ({ 
+            role: m.role as 'user' | 'assistant', 
+            content: m.content 
+          })),
+          { role: 'user', content: message }
+        ];
+        
+        this.logger.debug('Calling OpenAI API', {
+          walletAddress,
+          model: 'gpt-4',
+          messageCount: chatMessages.length,
+          historyLength: messageHistory.length,
+          systemPromptLength: systemPrompt.length,
+          hasCommand: !!command,
+          commandType: command?.type
+        });
+        
         const completion = await this.openai.chat.completions.create({
           model: 'gpt-4',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ...context?.messages.slice(-10).map(m => ({ 
-              role: m.role as 'user' | 'assistant', 
-              content: m.content 
-            })) || [],
-            { role: 'user', content: message }
-          ],
+          messages: chatMessages,
           temperature: 0.7,
           max_tokens: 500
         });
-
+        
+        const openAIDuration = performance.now() - openAIStartTime;
+        
+        this.logger.info('OpenAI API call completed', {
+          walletAddress,
+          duration: Math.round(openAIDuration),
+          usage: completion.usage,
+          finishReason: completion.choices[0]?.finish_reason,
+          responseLength: completion.choices[0]?.message?.content?.length || 0
+        });
+        
         const aiMessage = completion.choices[0]?.message?.content || 'I apologize, but I could not process your request.';
         
         // Update context with AI response
@@ -108,18 +190,50 @@ export class AIService {
             content: aiMessage,
             timestamp: new Date().toISOString()
           });
+          
+          this.logger.debug('Updated conversation context', {
+            walletAddress,
+            totalMessages: context.messages.length,
+            lastMessageRole: 'assistant'
+          });
         }
-
+        
+        const suggestions = this.generateSuggestions(message, context);
+        const confidence = command ? 0.9 : 0.7;
+        const reasoning = command ? `Detected command: ${command.type}` : 'General conversation';
+        
+        const totalDuration = performance.now() - startTime;
+        
+        this.logger.debug('AI response generated', {
+          walletAddress,
+          totalDuration: Math.round(totalDuration),
+          openAIDuration: Math.round(openAIDuration),
+          suggestionsCount: suggestions.length,
+          confidence,
+          reasoning
+        });
+        
         return {
           message: aiMessage,
           command,
-          suggestions: this.generateSuggestions(message, context),
-          confidence: command ? 0.9 : 0.7,
-          reasoning: command ? `Detected command: ${command.type}` : 'General conversation'
+          suggestions,
+          confidence,
+          reasoning
         };
       },
-      (error) => new Error(`Failed to generate AI response: ${error}`)
+      (error) => {
+        const duration = performance.now() - startTime;
+        this.logger.error('OpenAI API call failed', {
+          walletAddress,
+          duration: Math.round(duration),
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          hasCommand: !!command
+        });
+        return new Error(`Failed to generate AI response: ${error}`);
+      }
     );
+  };
 
   /**
    * Update conversation context
@@ -131,6 +245,7 @@ export class AIService {
   ): TE.TaskEither<Error, void> =>
     TE.of((() => {
       let context = this.contexts.get(walletAddress);
+      const isNewContext = !context;
       
       if (!context) {
         context = {
@@ -139,10 +254,21 @@ export class AIService {
           portfolioData
         };
         this.contexts.set(walletAddress, context);
+        
+        this.logger.debug('Created new chat context', {
+          walletAddress,
+          hasPortfolioData: !!portfolioData
+        });
       }
 
       if (portfolioData) {
         context.portfolioData = portfolioData;
+        this.logger.debug('Updated portfolio data in context', {
+          walletAddress,
+          portfolioValueUSD: portfolioData.totalValueUSD,
+          lendingPositions: portfolioData.lendingPositions?.length || 0,
+          liquidityPositions: portfolioData.liquidityPositions?.length || 0
+        });
       }
 
       context.messages.push({
@@ -152,9 +278,22 @@ export class AIService {
       });
 
       // Keep last 50 messages to prevent memory bloat
+      const originalLength = context.messages.length;
       if (context.messages.length > 50) {
         context.messages = context.messages.slice(-50);
+        this.logger.debug('Trimmed context messages', {
+          walletAddress,
+          originalLength,
+          newLength: context.messages.length
+        });
       }
+      
+      this.logger.debug('Updated chat context', {
+        walletAddress,
+        totalMessages: context.messages.length,
+        isNewContext,
+        messageLength: message.length
+      });
     })());
 
   /**
@@ -238,7 +377,16 @@ Use this context to provide personalized advice.`;
    * Get conversation history
    */
   public getConversationHistory = (walletAddress: string): ChatMessage[] => {
-    return this.contexts.get(walletAddress)?.messages || [];
+    const context = this.contexts.get(walletAddress);
+    const messages = context?.messages || [];
+    
+    this.logger.debug('Retrieved conversation history', {
+      walletAddress,
+      messageCount: messages.length,
+      contextExists: !!context
+    });
+    
+    return messages;
   };
 
   /**
@@ -247,9 +395,17 @@ Use this context to provide personalized advice.`;
   public clearConversationHistory = (walletAddress: string): TE.TaskEither<Error, void> =>
     TE.of((() => {
       const context = this.contexts.get(walletAddress);
+      const hadMessages = context?.messages.length || 0;
+      
       if (context) {
         context.messages = [];
       }
+      
+      this.logger.info('Cleared conversation history', {
+        walletAddress,
+        clearedMessageCount: hadMessages,
+        contextExists: !!context
+      });
     })());
 
   /**
@@ -257,9 +413,19 @@ Use this context to provide personalized advice.`;
    */
   public generatePortfolioAnalysis = (
     portfolioData: any,
-    _walletAddress: string
-  ): TE.TaskEither<Error, string> =>
-    TE.tryCatch(
+    walletAddress: string
+  ): TE.TaskEither<Error, string> => {
+    const startTime = performance.now();
+    
+    this.logger.info('Generating portfolio analysis', {
+      walletAddress,
+      portfolioValue: portfolioData.totalValueUSD,
+      lendingPositions: portfolioData.lendingPositions?.length || 0,
+      liquidityPositions: portfolioData.liquidityPositions?.length || 0,
+      timestamp: new Date().toISOString()
+    });
+    
+    return TE.tryCatch(
       async () => {
         const prompt = `Analyze this DeFi portfolio and provide insights:
 
@@ -274,17 +440,39 @@ Provide:
 
 Keep the analysis concise and actionable.`;
 
+        const apiStartTime = performance.now();
         const completion = await this.openai.chat.completions.create({
           model: 'gpt-4',
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.3,
           max_tokens: 800
         });
+        
+        const apiDuration = performance.now() - apiStartTime;
+        const totalDuration = performance.now() - startTime;
+        
+        this.logger.info('Portfolio analysis generated', {
+          walletAddress,
+          apiDuration: Math.round(apiDuration),
+          totalDuration: Math.round(totalDuration),
+          usage: completion.usage,
+          analysisLength: completion.choices[0]?.message?.content?.length || 0
+        });
 
         return completion.choices[0]?.message?.content || 'Unable to generate analysis.';
       },
-      (error) => new Error(`Failed to generate portfolio analysis: ${error}`)
+      (error) => {
+        const duration = performance.now() - startTime;
+        this.logger.error('Portfolio analysis generation failed', {
+          walletAddress,
+          duration: Math.round(duration),
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined
+        });
+        return new Error(`Failed to generate portfolio analysis: ${error}`);
+      }
     );
+  };
 
   /**
    * Generate enhanced portfolio analysis using all adapters
@@ -297,11 +485,27 @@ Keep the analysis concise and actionable.`;
       includeSAKData?: boolean;
       includeMCPRealtime?: boolean;
     } = {}
-  ): TE.TaskEither<Error, any> =>
-    pipe(
+  ): TE.TaskEither<Error, any> => {
+    const startTime = performance.now();
+    
+    this.logger.info('Generating enhanced portfolio analysis', {
+      walletAddress,
+      options,
+      portfolioValue: portfolioData.totalValueUSD,
+      timestamp: new Date().toISOString()
+    });
+    
+    return pipe(
       this.gatherAdapterData('analyze portfolio performance and recommendations', walletAddress),
-      TE.chain(adapterData => 
-        TE.tryCatch(
+      TE.chain(adapterData => {
+        this.logger.debug('Adapter data gathered for enhanced analysis', {
+          walletAddress,
+          hiveDataAvailable: !!adapterData.hiveData,
+          sakDataAvailable: !!adapterData.sakData,
+          mcpDataAvailable: !!adapterData.mcpData
+        });
+        
+        return TE.tryCatch(
           async () => {
             const baseAnalysisPrompt = `Analyze this DeFi portfolio with enhanced data sources:\n\nPortfolio Data:\n${JSON.stringify(portfolioData, null, 2)}`;
 
@@ -321,11 +525,23 @@ Keep the analysis concise and actionable.`;
 
             enhancedPrompt += `\n\nProvide:\n1. Comprehensive risk assessment\n2. AI-powered yield optimization suggestions\n3. Real-time market impact analysis\n4. Actionable rebalancing recommendations\n5. Dragon Ball Z themed power level assessment\n\nKeep the analysis detailed yet actionable.`;
 
+            const apiStartTime = performance.now();
             const completion = await this.openai.chat.completions.create({
               model: 'gpt-4',
               messages: [{ role: 'user', content: enhancedPrompt }],
               temperature: 0.3,
               max_tokens: 1200
+            });
+            
+            const apiDuration = performance.now() - apiStartTime;
+            const totalDuration = performance.now() - startTime;
+            
+            this.logger.info('Enhanced portfolio analysis completed', {
+              walletAddress,
+              apiDuration: Math.round(apiDuration),
+              totalDuration: Math.round(totalDuration),
+              usage: completion.usage,
+              analysisLength: completion.choices[0]?.message?.content?.length || 0
             });
 
             const analysisText = completion.choices[0]?.message?.content || 'Unable to generate enhanced analysis.';
@@ -338,10 +554,20 @@ Keep the analysis concise and actionable.`;
               analysisType: 'enhanced_comprehensive'
             };
           },
-          (error) => new Error(`Failed to generate enhanced portfolio analysis: ${error}`)
-        )
-      )
+          (error) => {
+            const duration = performance.now() - startTime;
+            this.logger.error('Enhanced portfolio analysis failed', {
+              walletAddress,
+              duration: Math.round(duration),
+              error: error instanceof Error ? error.message : String(error),
+              stack: error instanceof Error ? error.stack : undefined
+            });
+            return new Error(`Failed to generate enhanced portfolio analysis: ${error}`);
+          }
+        );
+      })
     );
+  };
 
   /**
    * Process message with enhanced features
@@ -351,6 +577,13 @@ Keep the analysis concise and actionable.`;
     walletAddress: string,
     portfolioData?: any
   ): TE.TaskEither<Error, AIResponse> => {
+    this.logger.debug('Processing enhanced message', {
+      walletAddress,
+      messageLength: message.length,
+      hasPortfolioData: !!portfolioData,
+      adapterStatus: this.getAdapterStatus()
+    });
+    
     // For now, use the same logic as processMessage
     // In the future, this can be enhanced with additional adapters
     return this.processMessage(message, walletAddress, portfolioData);
@@ -363,12 +596,29 @@ Keep the analysis concise and actionable.`;
     query: string,
     walletAddress: string
   ): TE.TaskEither<Error, any> => {
+    const startTime = performance.now();
+    
+    this.logger.debug('Gathering adapter data', {
+      query,
+      walletAddress,
+      adapterStatus: this.getAdapterStatus()
+    });
+    
     // Mock implementation for now
-    return TE.right({
+    const mockData = {
       hiveData: { query, insights: [], timestamp: new Date().toISOString() },
       sakData: { tools: [], executions: [], timestamp: new Date().toISOString() },
       mcpData: { state: 'connected', data: {}, timestamp: new Date().toISOString() }
+    };
+    
+    const duration = performance.now() - startTime;
+    this.logger.debug('Adapter data gathered', {
+      walletAddress,
+      duration: Math.round(duration),
+      dataKeys: Object.keys(mockData)
     });
+    
+    return TE.right(mockData);
   };
 
   /**
@@ -410,6 +660,14 @@ Keep the analysis concise and actionable.`;
     if (hiveAdapter) this.hiveAdapter = hiveAdapter;
     if (sakAdapter) this.sakAdapter = sakAdapter;
     if (mcpAdapter) this.mcpAdapter = mcpAdapter;
+    
+    this.logger.info('Adapters initialized', {
+      hiveAdapter: !!hiveAdapter,
+      sakAdapter: !!sakAdapter,
+      mcpAdapter: !!mcpAdapter,
+      mcpConnected: mcpAdapter?.isConnected(),
+      timestamp: new Date().toISOString()
+    });
   }
 }
 

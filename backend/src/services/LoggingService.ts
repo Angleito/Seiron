@@ -29,6 +29,8 @@ export interface LogContext {
   adapter?: string;
   dragonPowerLevel?: number;
   metadata?: Record<string, any>;
+  // Additional fields for flexibility
+  [key: string]: any;
 }
 
 export interface LogEntry {
