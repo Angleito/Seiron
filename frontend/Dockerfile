@@ -10,7 +10,8 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
+# Using npm install instead of npm ci due to lock file sync issues
+RUN npm install --legacy-peer-deps
 
 # Copy source code
 COPY . .
