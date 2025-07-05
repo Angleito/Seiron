@@ -10,10 +10,9 @@ const VoiceInterfaceExample: React.FC = () => {
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant', content: string }>>([])
   const [isProcessing, setIsProcessing] = useState(false)
 
-  // ElevenLabs configuration
+  // ElevenLabs configuration - now using backend proxy
   const elevenLabsConfig: ElevenLabsConfig = {
-    apiKey: import.meta.env.VITE_ELEVENLABS_API_KEY || '',
-    voiceId: import.meta.env.VITE_ELEVENLABS_VOICE_ID || 'default-voice',
+    apiUrl: import.meta.env.VITE_API_URL || 'http://localhost:8000',
     modelId: 'eleven_monolingual_v1',
     voiceSettings: {
       stability: 0.5,

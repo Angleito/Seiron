@@ -13,9 +13,8 @@ interface ImportMetaEnv {
   readonly VITE_WALLETCONNECT_PROJECT_ID?: string
   readonly VITE_SEI_RPC_URL: string
   
-  // Voice Configuration (ElevenLabs)
-  readonly VITE_ELEVENLABS_API_KEY?: string
-  readonly VITE_ELEVENLABS_VOICE_ID?: string
+  // Voice Configuration (Backend Proxy)
+  readonly VITE_API_URL: string
   readonly VITE_VOICE_ENABLED: string
   readonly VITE_VOICE_STABILITY: string
   readonly VITE_VOICE_SIMILARITY_BOOST: string

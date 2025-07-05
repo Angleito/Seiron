@@ -19,8 +19,7 @@ export interface TTSState {
 }
 
 export interface ElevenLabsConfig {
-  apiKey: string
-  voiceId: string
+  apiUrl: string
   modelId?: string
   voiceSettings?: {
     stability?: number
@@ -51,7 +50,7 @@ interface CachedAudio {
   timestamp: number
 }
 
-const openIndexedDB = (): TE.TaskEither<Error, IDBDatabase> =>
+const openIndexedDB = (): TE.TaskEither<TTSError, IDBDatabase> =>
   TE.tryCatch(
     () =>
       new Promise<IDBDatabase>((resolve, reject) => {
@@ -67,12 +66,12 @@ const openIndexedDB = (): TE.TaskEither<Error, IDBDatabase> =>
           }
         }
       }),
-    (error) => new Error(`Failed to open IndexedDB: ${error}`)
+    (error) => createTTSError('AUDIO_ERROR', `Failed to open IndexedDB: ${error}`, undefined, error)
   )
 
 const getCachedAudio = (
   text: string
-): TE.TaskEither<Error, O.Option<ArrayBuffer>> =>
+): TE.TaskEither<TTSError, O.Option<ArrayBuffer>> =>
   pipe(
     openIndexedDB(),
     TE.chain((db) =>
@@ -94,7 +93,7 @@ const getCachedAudio = (
             
             request.onerror = () => resolve(O.none)
           }),
-        (error) => new Error(`Failed to get cached audio: ${error}`)
+        (error) => createTTSError('AUDIO_ERROR', `Failed to get cached audio: ${error}`, undefined, error)
       )
     )
   )
@@ -102,7 +101,7 @@ const getCachedAudio = (
 const setCachedAudio = (
   text: string,
   buffer: ArrayBuffer
-): TE.TaskEither<Error, void> =>
+): TE.TaskEither<TTSError, void> =>
   pipe(
     openIndexedDB(),
     TE.chain((db) =>
@@ -132,7 +131,7 @@ const setCachedAudio = (
             timestamp: Date.now()
           })
         },
-        (error) => new Error(`Failed to cache audio: ${error}`)
+        (error) => createTTSError('AUDIO_ERROR', `Failed to cache audio: ${error}`, undefined, error)
       )
     )
   )
@@ -190,19 +189,20 @@ export const useElevenLabsTTS = (config: ElevenLabsConfig) => {
                   TE.tryCatch(
                     async () => {
                       const response = await fetch(
-                        `https://api.elevenlabs.io/v1/text-to-speech/${config.voiceId}`,
+                        `${config.apiUrl}/api/voice/synthesize`,
                         {
                           method: 'POST',
                           headers: {
-                            'xi-api-key': config.apiKey,
                             'Content-Type': 'application/json'
                           },
                           body: JSON.stringify({
                             text,
-                            model_id: config.modelId || 'eleven_monolingual_v1',
-                            voice_settings: config.voiceSettings || {
+                            modelId: config.modelId || 'eleven_monolingual_v1',
+                            voiceSettings: config.voiceSettings || {
                               stability: 0.5,
-                              similarity_boost: 0.5
+                              similarityBoost: 0.75,
+                              style: 0.5,
+                              useSpeakerBoost: true
                             }
                           })
                         }
@@ -284,7 +284,7 @@ export const useElevenLabsTTS = (config: ElevenLabsConfig) => {
   }, [])
 
   const preloadAudio = useCallback(
-    (texts: string[]): TE.TaskEither<TTSError, void[]> =>
+    (texts: readonly string[]): TE.TaskEither<TTSError, readonly void[]> =>
       TE.traverseArray((text: string) =>
         pipe(
           synthesizeSpeech(text),

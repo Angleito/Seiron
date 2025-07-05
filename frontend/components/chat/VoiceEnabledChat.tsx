@@ -9,12 +9,37 @@ import { VoiceInterface, useVoiceInterfaceAudio } from '@components/voice'
 import { ElevenLabsConfig } from '@hooks/voice/useElevenLabsTTS'
 import { ChatErrorBoundary, VoiceErrorBoundary } from '@components/error-boundaries'
 import { logger } from '@lib/logger'
+import { sanitizeVoiceTranscript, sanitizeChatMessage, useSanitizedContent, SANITIZE_CONFIGS } from '@lib/sanitize'
 import { pipe } from 'fp-ts/function'
 import * as O from 'fp-ts/Option'
 import * as A from 'fp-ts/Array'
 
 // Generate unique session ID
 const generateSessionId = () => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+// Safe message content renderer
+function SafeMessageContent({ content, type }: { content: string; type: 'user' | 'agent' | 'system' }) {
+  const { sanitized, isValid, warnings } = useSanitizedContent(
+    content, 
+    type === 'user' ? SANITIZE_CONFIGS.CHAT_MESSAGE : SANITIZE_CONFIGS.TEXT_ONLY
+  )
+  
+  // Log warnings in development
+  if (process.env.NODE_ENV === 'development' && warnings.length > 0) {
+    logger.warn('Message sanitization warnings:', warnings)
+  }
+  
+  // If content is potentially unsafe, show a warning
+  if (!isValid) {
+    return (
+      <div className="text-yellow-400 text-sm">
+        ⚠️ Message content filtered for security
+      </div>
+    )
+  }
+  
+  return <span className="whitespace-pre-wrap">{sanitized}</span>
+}
 
 function VoiceEnabledChatContent() {
   const [input, setInput] = useState('')
@@ -24,10 +49,9 @@ function VoiceEnabledChatContent() {
   const [lastProcessedTranscript, setLastProcessedTranscript] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
-  // ElevenLabs configuration
+  // ElevenLabs configuration - now using backend proxy
   const elevenLabsConfig: ElevenLabsConfig = {
-    apiKey: process.env.ELEVENLABS_API_KEY || '',
-    voiceId: process.env.ELEVENLABS_VOICE_ID || 'seiron-dragon-voice',
+    apiUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
     modelId: 'eleven_monolingual_v1',
     voiceSettings: {
       stability: 0.5,
@@ -62,12 +86,14 @@ function VoiceEnabledChatContent() {
   
   // Handle voice transcript updates with sentence completion detection
   const handleTranscriptChange = useCallback((transcript: string) => {
-    setVoiceTranscript(transcript)
+    // Sanitize voice transcript to prevent XSS
+    const sanitizedTranscript = sanitizeVoiceTranscript(transcript)
+    setVoiceTranscript(sanitizedTranscript)
     
     // Check if the transcript is different from last processed and ends with sentence terminator
-    if (transcript !== lastProcessedTranscript && transcript.trim() && transcript.match(/[.!?]$/)) {
-      setLastProcessedTranscript(transcript)
-      sendVoiceMessage(transcript.trim(), {
+    if (sanitizedTranscript !== lastProcessedTranscript && sanitizedTranscript.trim() && sanitizedTranscript.match(/[.!?]$/)) {
+      setLastProcessedTranscript(sanitizedTranscript)
+      sendVoiceMessage(sanitizedTranscript.trim(), {
         voiceEnabled: true,
         timestamp: Date.now()
       })
@@ -79,7 +105,9 @@ function VoiceEnabledChatContent() {
   const handleSend = () => {
     if (!input.trim() || isLoading) return
     
-    sendMessage(input)
+    // Sanitize user input to prevent XSS
+    const sanitizedInput = sanitizeChatMessage(input.trim())
+    sendMessage(sanitizedInput)
     setInput('')
   }
   
@@ -199,7 +227,7 @@ function VoiceEnabledChatContent() {
                 </div>
               )}
               
-              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+              <SafeMessageContent content={message.content} type={message.type} />
               
               <div className="flex items-center gap-3 mt-1">
                 <span className="text-xs opacity-75">
@@ -257,7 +285,7 @@ function VoiceEnabledChatContent() {
                 <Mic className="h-4 w-4 text-red-400 animate-pulse" />
                 <span className="text-xs text-red-400">Listening...</span>
               </div>
-              <p className="text-sm text-gray-300 italic">{voiceTranscript}</p>
+              <SafeMessageContent content={voiceTranscript} type="user" />
             </div>
           </div>
         )}

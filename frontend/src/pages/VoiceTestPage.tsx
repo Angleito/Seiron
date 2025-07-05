@@ -1,19 +1,20 @@
 import VoiceInterface from '@components/voice/VoiceInterface'
 // import { ChatInterface } from '@components/chat/chat-interface'
-// import { useState } from 'react'
+import { useState } from 'react'
 
 export default function VoiceTestPage() {
-  // const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([])
+  const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([])
 
-  const _handleVoiceCommand = (_transcript: string) => {
-    console.log('Voice command received:', _transcript)
-    // setMessages(prev => [...prev, { role: 'user', content: _transcript }])
-  }
+  // Voice command handlers available for future integration
+  // const handleVoiceCommand = (transcript: string) => {
+  //   console.log('Voice command received:', transcript)
+  //   setMessages(prev => [...prev, { role: 'user', content: transcript }])
+  // }
 
-  const _handleAIResponse = (_response: string) => {
-    console.log('AI response:', _response)
-    // setMessages(prev => [...prev, { role: 'assistant', content: _response }])
-  }
+  // const handleAIResponse = (response: string) => {
+  //   console.log('AI response:', response)
+  //   setMessages(prev => [...prev, { role: 'assistant', content: response }])
+  // }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white p-8">
@@ -26,8 +27,7 @@ export default function VoiceTestPage() {
           <h2 className="text-2xl mb-4">Voice Controls</h2>
           <VoiceInterface 
             elevenLabsConfig={{
-              apiKey: import.meta.env.VITE_ELEVENLABS_API_KEY || '',
-              voiceId: import.meta.env.VITE_ELEVENLABS_VOICE_ID || ''
+              apiUrl: import.meta.env.VITE_API_URL || 'http://localhost:8000'
             }}
           />
         </div>
@@ -68,8 +68,8 @@ export default function VoiceTestPage() {
         </div>
 
         <div className="mt-8 text-center text-gray-500">
-          <p>ElevenLabs Voice ID: {import.meta.env.VITE_ELEVENLABS_VOICE_ID}</p>
-          <p>API Key: {import.meta.env.VITE_ELEVENLABS_API_KEY ? '✓ Configured' : '✗ Not configured'}</p>
+          <p>Voice API: {import.meta.env.VITE_API_URL}/api/voice</p>
+          <p>Voice Service: Using secure backend proxy</p>
         </div>
       </div>
     </div>

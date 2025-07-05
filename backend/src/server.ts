@@ -12,6 +12,7 @@ import { chatRouter } from './routes/chat';
 import { portfolioRouter } from './routes/portfolio';
 import { aiRouter } from './routes/ai';
 import { confirmationRouter } from './routes/confirmation';
+import voiceRouter from './routes/voice';
 import { SocketService } from './services/SocketService';
 import { PortfolioService } from './services/PortfolioService';
 import { AIService } from './services/AIService';
@@ -128,6 +129,7 @@ app.use('/api/chat', (req, res, next) => {
 app.use('/api/portfolio', validateWallet, portfolioRouter);
 app.use('/api/ai', validateWallet, aiRouter);
 app.use('/api', validateWallet, confirmationRouter);
+app.use('/api/voice', voiceRouter);
 
 // Health check
 app.get('/health', (_req, res) => {
