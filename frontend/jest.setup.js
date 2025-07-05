@@ -1,5 +1,5 @@
-import '@testing-library/jest-dom'
-import 'jest-canvas-mock'
+require('@testing-library/jest-dom')
+require('jest-canvas-mock')
 
 // Mock framer-motion to avoid issues in test environment
 jest.mock('framer-motion', () => ({

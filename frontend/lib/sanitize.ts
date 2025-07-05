@@ -70,23 +70,16 @@ export const SANITIZE_CONFIGS = {
 /**
  * Configure DOMPurify with security settings
  */
-function configureDOMPurify(config?: SanitizeConfig): DOMPurify.DOMPurifyI {
-  const purify = DOMPurify;
-  
-  // Reset configuration
-  purify.clearConfig();
+function createPurifyConfig(config?: SanitizeConfig): any {
+  const purifyConfig: any = {};
   
   if (config) {
-    const purifyConfig: any = {};
-    
-    if (config.allowedTags) {
+    if (config.allowedTags !== undefined) {
       purifyConfig.ALLOWED_TAGS = config.allowedTags;
     }
     
     if (config.allowedAttributes) {
-      purifyConfig.ALLOWED_ATTR = Object.keys(config.allowedAttributes).reduce((acc, tag) => {
-        return [...acc, ...(config.allowedAttributes?.[tag] || [])];
-      }, [] as string[]);
+      purifyConfig.ALLOWED_ATTR = Object.values(config.allowedAttributes).flat();
     }
     
     if (config.forbiddenTags) {
@@ -100,13 +93,30 @@ function configureDOMPurify(config?: SanitizeConfig): DOMPurify.DOMPurifyI {
     if (config.stripIgnoreTag) {
       purifyConfig.KEEP_CONTENT = true;
     }
+  }
+  
+  return purifyConfig;
+}
+
+/**
+ * Sanitize HTML content with specified configuration
+ */
+export function sanitizeHtml(
+  content: string,
+  config: SanitizeConfig = SANITIZE_CONFIGS.TEXT_ONLY
+): string {
+  if (!content || typeof content !== 'string') {
+    return '';
+  }
+  
+  try {
+    const purifyConfig = createPurifyConfig(config);
     
-    if (config.allowedSchemes) {
-      purifyConfig.ALLOWED_URI_REGEXP = new RegExp(`^(?:(?:${config.allowedSchemes.join('|')}):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))`, 'i');
-    }
+    // Remove hooks to avoid interference
+    DOMPurify.removeAllHooks();
     
     // Add security hooks
-    purify.addHook('beforeSanitizeElements', (node) => {
+    DOMPurify.addHook('beforeSanitizeElements', (node) => {
       // Remove any data attributes that could be used for XSS
       if (node.nodeType === 1) {
         const element = node as Element;
@@ -120,7 +130,7 @@ function configureDOMPurify(config?: SanitizeConfig): DOMPurify.DOMPurifyI {
       }
     });
     
-    purify.addHook('afterSanitizeAttributes', (node) => {
+    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
       // Additional security check for remaining attributes
       if (node.nodeType === 1) {
         const element = node as Element;
@@ -137,26 +147,13 @@ function configureDOMPurify(config?: SanitizeConfig): DOMPurify.DOMPurifyI {
       }
     });
     
-    return purify;
-  }
-  
-  return purify;
-}
-
-/**
- * Sanitize HTML content with specified configuration
- */
-export function sanitizeHtml(
-  content: string,
-  config: SanitizeConfig = SANITIZE_CONFIGS.TEXT_ONLY
-): string {
-  if (!content || typeof content !== 'string') {
-    return '';
-  }
-  
-  try {
-    const purify = configureDOMPurify(config);
-    return purify.sanitize(content, { RETURN_DOM_FRAGMENT: false }) as string;
+    const result = DOMPurify.sanitize(content, purifyConfig);
+    const sanitizedString = typeof result === 'string' ? result : String(result);
+    
+    // Clean up hooks
+    DOMPurify.removeAllHooks();
+    
+    return sanitizedString;
   } catch (error) {
     console.error('Sanitization error:', error);
     // Fallback to text-only extraction

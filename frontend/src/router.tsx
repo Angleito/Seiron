@@ -13,6 +13,7 @@ const DragonShowcasePage = lazy(() => import('./pages/DragonShowcasePage'))
 const VoiceTestPage = lazy(() => import('./pages/VoiceTestPage'))
 const AgentTestPage = lazy(() => import('./pages/AgentTestPage'))
 const AnimationDemoPage = lazy(() => import('./pages/AnimationDemoPage'))
+const SecurityTestPage = lazy(() => import('./pages/SecurityTestPage'))
 
 const PageLoader = ({ children, pageName }: { children: React.ReactNode, pageName?: string }) => (
   <PageErrorBoundary pageName={pageName}>
@@ -88,6 +89,14 @@ export const router = createBrowserRouter([
         element: (
           <PageLoader pageName="Animation Demo">
             <AnimationDemoPage />
+          </PageLoader>
+        ),
+      },
+      {
+        path: 'security-test',
+        element: (
+          <PageLoader pageName="Security Test">
+            <SecurityTestPage />
           </PageLoader>
         ),
       },

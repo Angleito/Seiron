@@ -101,22 +101,22 @@ const VoiceEnabledChatContent = React.memo(function VoiceEnabledChatContent() {
     }
   }, [lastProcessedTranscript, sendVoiceMessage])
   
-  // Handle text input send
-  const handleSend = () => {
+  // Handle text input send - memoized
+  const handleSend = useCallback(() => {
     if (!input.trim() || isLoading) return
     
     // Sanitize user input to prevent XSS
     const sanitizedInput = sanitizeChatMessage(input.trim())
     sendMessage(sanitizedInput)
     setInput('')
-  }
+  }, [input, isLoading, sendMessage])
   
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSend()
     }
-  }
+  }, [handleSend])
   
   // Handle voice errors
   const handleVoiceError = useCallback((error: Error) => {
@@ -145,8 +145,8 @@ const VoiceEnabledChatContent = React.memo(function VoiceEnabledChatContent() {
     )
   }, [messages, isVoiceEnabled, isPlaying, playResponse])
   
-  // Message status icon
-  const getStatusIcon = (status?: StreamMessage['status']): string | null => {
+  // Message status icon - memoized
+  const getStatusIcon = useCallback((status?: StreamMessage['status']): string | null => {
     if (!status) return null
     
     switch (status) {
@@ -157,7 +157,7 @@ const VoiceEnabledChatContent = React.memo(function VoiceEnabledChatContent() {
       case 'failed': return '✗'
       default: return null
     }
-  }
+  }, [])
   
   return (
     <div className="flex flex-col h-full bg-gradient-to-b from-gray-950 to-black">
@@ -339,12 +339,12 @@ const VoiceEnabledChatContent = React.memo(function VoiceEnabledChatContent() {
       </div>
     </div>
   )
-}
+})
 
-export function VoiceEnabledChat() {
+export const VoiceEnabledChat = React.memo(function VoiceEnabledChat() {
   return (
     <ChatErrorBoundary>
       <VoiceEnabledChatContent />
     </ChatErrorBoundary>
   )
-}
+})
