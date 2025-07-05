@@ -1,0 +1,360 @@
+/* Seiron Dragon Animation Styles */
+
+/* ===== Base Dragon Styles ===== */
+.seiron-dragon {
+  position: relative;
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+/* ===== Breathing Animation ===== */
+@keyframes seiron-breathe {
+  0%, 100% {
+    transform: scale(0.98);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+.seiron-breathing {
+  animation: seiron-breathe 5s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+/* ===== Glow Pulse Animation ===== */
+@keyframes seiron-glow-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 20px rgba(255, 94, 0, 0.4))
+            drop-shadow(0 0 40px rgba(255, 60, 0, 0.2));
+  }
+  50% {
+    filter: drop-shadow(0 0 30px rgba(255, 94, 0, 0.8))
+            drop-shadow(0 0 60px rgba(255, 60, 0, 0.4))
+            drop-shadow(0 0 80px rgba(255, 30, 0, 0.2));
+  }
+}
+
+.seiron-glow {
+  animation: seiron-glow-pulse 3.5s ease-in-out infinite;
+}
+
+/* Alternative box-shadow glow for better performance */
+@keyframes seiron-box-glow {
+  0%, 100% {
+    box-shadow: 0 0 30px rgba(255, 94, 0, 0.4),
+                0 0 60px rgba(255, 60, 0, 0.2),
+                inset 0 0 20px rgba(255, 94, 0, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(255, 94, 0, 0.8),
+                0 0 80px rgba(255, 60, 0, 0.4),
+                0 0 120px rgba(255, 30, 0, 0.2),
+                inset 0 0 30px rgba(255, 94, 0, 0.2);
+  }
+}
+
+.seiron-box-glow {
+  animation: seiron-box-glow 4s ease-in-out infinite;
+  border-radius: 50%;
+}
+
+/* ===== Blend Mode Classes ===== */
+.seiron-blend-screen {
+  mix-blend-mode: screen;
+  opacity: 0.9;
+}
+
+.seiron-blend-multiply {
+  mix-blend-mode: multiply;
+  opacity: 0.85;
+}
+
+.seiron-blend-overlay {
+  mix-blend-mode: overlay;
+}
+
+.seiron-blend-color-dodge {
+  mix-blend-mode: color-dodge;
+  opacity: 0.8;
+}
+
+/* ===== Edge Fade Masks ===== */
+.seiron-edge-fade {
+  -webkit-mask-image: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 0.9) 40%,
+    rgba(0, 0, 0, 0.7) 60%,
+    rgba(0, 0, 0, 0.3) 80%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  mask-image: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 0.9) 40%,
+    rgba(0, 0, 0, 0.7) 60%,
+    rgba(0, 0, 0, 0.3) 80%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+
+.seiron-edge-fade-soft {
+  -webkit-mask-image: radial-gradient(
+    circle at center,
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 0.95) 30%,
+    rgba(0, 0, 0, 0.8) 50%,
+    rgba(0, 0, 0, 0.5) 70%,
+    rgba(0, 0, 0, 0.2) 85%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  mask-image: radial-gradient(
+    circle at center,
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 0.95) 30%,
+    rgba(0, 0, 0, 0.8) 50%,
+    rgba(0, 0, 0, 0.5) 70%,
+    rgba(0, 0, 0, 0.2) 85%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+
+/* ===== Particle Effect Keyframes ===== */
+@keyframes seiron-ember-float-1 {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translate(30px, -120px) scale(0.3);
+    opacity: 0;
+  }
+}
+
+@keyframes seiron-ember-float-2 {
+  0% {
+    transform: translate(0, 0) scale(0.8);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.9;
+  }
+  85% {
+    opacity: 0.2;
+  }
+  100% {
+    transform: translate(-40px, -100px) scale(0.2);
+    opacity: 0;
+  }
+}
+
+@keyframes seiron-ember-float-3 {
+  0% {
+    transform: translate(0, 0) scale(1.2);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.8;
+  }
+  80% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translate(20px, -140px) scale(0.4);
+    opacity: 0;
+  }
+}
+
+/* Ember particle elements */
+.seiron-embers {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.seiron-ember {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: radial-gradient(circle, #ff5e00 0%, #ff3000 50%, transparent 100%);
+  border-radius: 50%;
+  filter: blur(1px);
+}
+
+.seiron-ember:nth-child(1) {
+  bottom: 20%;
+  left: 45%;
+  animation: seiron-ember-float-1 6s ease-out infinite;
+}
+
+.seiron-ember:nth-child(2) {
+  bottom: 25%;
+  left: 55%;
+  animation: seiron-ember-float-2 7s ease-out infinite 2s;
+}
+
+.seiron-ember:nth-child(3) {
+  bottom: 15%;
+  left: 50%;
+  animation: seiron-ember-float-3 8s ease-out infinite 4s;
+}
+
+/* ===== Hover Effects ===== */
+.seiron-dragon:hover .seiron-breathing {
+  animation-duration: 3s;
+}
+
+.seiron-dragon:hover .seiron-glow {
+  animation-duration: 2s;
+}
+
+/* ===== Responsive Utilities ===== */
+
+/* Mobile (< 640px) */
+@media (max-width: 639px) {
+  .seiron-breathing {
+    animation-duration: 6s;
+  }
+  
+  .seiron-glow, .seiron-box-glow {
+    animation-duration: 4.5s;
+  }
+  
+  @keyframes seiron-breathe-mobile {
+    0%, 100% {
+      transform: scale(0.99);
+    }
+    50% {
+      transform: scale(1.01);
+    }
+  }
+  
+  .seiron-breathing {
+    animation-name: seiron-breathe-mobile;
+  }
+  
+  /* Reduced particle effects on mobile */
+  .seiron-ember {
+    display: none;
+  }
+  
+  /* Softer glow on mobile for performance */
+  @keyframes seiron-glow-pulse-mobile {
+    0%, 100% {
+      filter: drop-shadow(0 0 15px rgba(255, 94, 0, 0.3));
+    }
+    50% {
+      filter: drop-shadow(0 0 25px rgba(255, 94, 0, 0.5));
+    }
+  }
+  
+  .seiron-glow {
+    animation-name: seiron-glow-pulse-mobile;
+  }
+}
+
+/* Tablet (640px - 1024px) */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .seiron-breathing {
+    animation-duration: 5.5s;
+  }
+  
+  .seiron-glow, .seiron-box-glow {
+    animation-duration: 4s;
+  }
+  
+  /* Show only 2 embers on tablet */
+  .seiron-ember:nth-child(3) {
+    display: none;
+  }
+}
+
+/* Desktop (1024px+) */
+@media (min-width: 1024px) {
+  /* Enhanced hover effects on desktop */
+  .seiron-dragon {
+    cursor: pointer;
+  }
+  
+  .seiron-dragon:hover {
+    transform: scale(1.05);
+  }
+  
+  .seiron-dragon:hover .seiron-ember {
+    animation-duration: 4s;
+  }
+}
+
+/* Large screens (1440px+) */
+@media (min-width: 1440px) {
+  /* Stronger effects on large screens */
+  @keyframes seiron-glow-pulse-large {
+    0%, 100% {
+      filter: drop-shadow(0 0 30px rgba(255, 94, 0, 0.5))
+              drop-shadow(0 0 60px rgba(255, 60, 0, 0.3))
+              drop-shadow(0 0 90px rgba(255, 30, 0, 0.1));
+    }
+    50% {
+      filter: drop-shadow(0 0 40px rgba(255, 94, 0, 0.9))
+              drop-shadow(0 0 80px rgba(255, 60, 0, 0.5))
+              drop-shadow(0 0 120px rgba(255, 30, 0, 0.3));
+    }
+  }
+  
+  .seiron-glow {
+    animation-name: seiron-glow-pulse-large;
+  }
+}
+
+/* ===== Performance Optimizations ===== */
+@media (prefers-reduced-motion: reduce) {
+  .seiron-breathing,
+  .seiron-glow,
+  .seiron-box-glow,
+  .seiron-ember {
+    animation: none;
+  }
+  
+  .seiron-dragon:hover {
+    transform: none;
+  }
+}
+
+/* ===== Utility Classes ===== */
+.seiron-no-animation {
+  animation: none !important;
+}
+
+.seiron-fast-animation {
+  animation-duration: 2s !important;
+}
+
+.seiron-slow-animation {
+  animation-duration: 8s !important;
+}
+
+/* Combined animation class */
+.seiron-full-effect {
+  animation: seiron-breathe 5s ease-in-out infinite,
+             seiron-glow-pulse 3.5s ease-in-out infinite;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .seiron-glow {
+    filter: brightness(1.2);
+  }
+  
+  .seiron-ember {
+    opacity: 0.9;
+  }
+}

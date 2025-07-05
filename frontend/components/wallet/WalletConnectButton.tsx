@@ -1,21 +1,17 @@
 'use client'
 
 import { usePrivy, useWallets } from '@privy-io/react-auth'
-import { useAccount, useBalance } from '@privy-io/wagmi'
-import { formatEther } from 'viem'
 import { Wallet, Power, LogOut } from 'lucide-react'
 import { useState } from 'react'
 
 export function WalletConnectButton() {
   const { ready, authenticated, login, logout, user } = usePrivy()
   const { wallets } = useWallets()
-  const { address, isConnected } = useAccount()
-  const { data: balance } = useBalance({
-    address,
-  })
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
-  const activeWallet = wallets.find(wallet => wallet.address === address)
+  // Get the first connected wallet
+  const activeWallet = wallets.find(wallet => wallet.connectorType !== 'embedded') || wallets[0]
+  const address = activeWallet?.address
 
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`
@@ -50,7 +46,7 @@ export function WalletConnectButton() {
     )
   }
 
-  if (!authenticated || !isConnected) {
+  if (!authenticated || !address) {
     return (
       <button
         onClick={handleConnect}
@@ -73,12 +69,6 @@ export function WalletConnectButton() {
           <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
           <span className="font-medium">{formatAddress(address!)}</span>
         </div>
-        {balance && (
-          <div className="flex items-center space-x-1 text-sm text-gray-300">
-            <span>{parseFloat(formatEther(balance.value)).toFixed(4)}</span>
-            <span>{balance.symbol}</span>
-          </div>
-        )}
       </button>
 
       {isDropdownOpen && (
@@ -100,15 +90,9 @@ export function WalletConnectButton() {
             </div>
 
             <div>
-              <div className="text-sm text-gray-400 mb-1">Balance</div>
+              <div className="text-sm text-gray-400 mb-1">Wallet Type</div>
               <div className="text-white font-medium">
-                {balance ? (
-                  <>
-                    {parseFloat(formatEther(balance.value)).toFixed(6)} {balance.symbol}
-                  </>
-                ) : (
-                  'Loading...'
-                )}
+                {activeWallet?.walletClientType || 'Unknown'}
               </div>
             </div>
 

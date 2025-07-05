@@ -8,6 +8,7 @@ import { getOrchestrator } from '@/lib/orchestrator-client'
 import { ChatStreamService, StreamMessage, TypingIndicator, ConnectionStatus } from './ChatStreamService'
 import { Subscription } from 'rxjs'
 import * as E from 'fp-ts/Either'
+import { SeironImage } from '@/components/SeironImage'
 
 // New adapter-related types
 interface HiveInsight {
@@ -382,12 +383,18 @@ export function ChatInterface() {
       )}
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 relative">
+        {/* Seiron Watermark */}
+        <SeironImage 
+          variant="watermark"
+          className="absolute bottom-8 right-8 z-0"
+        />
+        
         {messages.map((message) => (
           <div
             key={message.id}
             className={cn(
-              'flex',
+              'flex relative z-10',
               message.type === 'user' ? 'justify-end' : 'justify-start'
             )}
           >
@@ -486,7 +493,7 @@ export function ChatInterface() {
         ))}
         {/* Typing Indicators */}
         {typingIndicators.length > 0 && (
-          <div className="space-y-2">
+          <div className="space-y-2 relative z-10">
             {typingIndicators.map((indicator) => (
               <div key={indicator.agentId} className="flex justify-start">
                 <div className="bg-gradient-to-r from-gray-900 to-black rounded-lg px-4 py-2 border border-red-800 shadow-lg">
@@ -505,7 +512,7 @@ export function ChatInterface() {
         
         {/* Legacy loading indicator */}
         {isLoading && typingIndicators.length === 0 && (
-          <div className="flex justify-start">
+          <div className="flex justify-start relative z-10">
             <div className="bg-gradient-to-r from-gray-900 to-black rounded-lg px-4 py-2 border border-red-800 shadow-lg">
               <div className="flex items-center gap-2">
                 <div className="text-2xl animate-bounce">🐉</div>

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { Bot, Shield, TrendingUp, Zap, Star, Eye, Sparkles } from 'lucide-react'
-import { SeironDragon } from '@/components/dragon/SeironDragon'
+import { SeironImage } from '@/components/dragon/SeironImage'
 
 export default function Home() {
   return (
@@ -11,11 +11,30 @@ export default function Home() {
       <div className="relative overflow-hidden bg-gradient-to-b from-black via-red-950/20 to-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           {/* Seiron Dragon with integrated environment */}
-          <div className="flex justify-center mb-12">
-            <SeironDragon 
-              size="xl" 
-              variant="hero"
-            />
+          <div className="relative flex justify-center mb-12">
+            {/* Background glow effect */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-[700px] h-[700px] bg-gradient-radial from-red-600/20 via-orange-500/10 to-transparent blur-3xl animate-pulse" />
+            </div>
+            
+            {/* Dragon Image with fiery effects */}
+            <div className="relative z-10">
+              <SeironImage 
+                variant="hero"
+                className="drop-shadow-2xl"
+              />
+              
+              {/* Additional fiery overlay effect */}
+              <div className="absolute inset-0 bg-gradient-to-t from-orange-600/20 via-red-600/10 to-transparent opacity-60 pointer-events-none animate-pulse" />
+              
+              {/* Radial gradient overlay for edge blending */}
+              <div 
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: 'radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.3) 70%, rgba(0,0,0,0.6) 100%)'
+                }}
+              />
+            </div>
           </div>
           
           <div className="text-center">

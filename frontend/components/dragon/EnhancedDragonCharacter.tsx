@@ -381,7 +381,7 @@ export function EnhancedDragonCharacter({
       >
         {/* Dragon Image Placeholder */}
         <img
-          src="/images/dragon.png"
+          src="/dragon-logo.png"
           alt="Dragon"
           className={`object-contain filter drop-shadow-2xl ${
             qualityLevel > 75 ? 'quality-high' : 

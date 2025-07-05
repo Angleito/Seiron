@@ -7,6 +7,10 @@ export { EnhancedDragonCharacter } from './EnhancedDragonCharacter'
 // Enhanced Dragon Interaction System
 export { EnhancedDragonInteractionSystem } from './EnhancedDragonInteractionSystem'
 
+// Seiron Image Component
+export { SeironImage } from './SeironImage'
+export type { default as SeironImage } from './SeironImage'
+
 // Types
 export type {
   DragonState,
