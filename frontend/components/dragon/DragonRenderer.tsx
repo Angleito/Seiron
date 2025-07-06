@@ -349,9 +349,9 @@ const DragonRenderer: React.FC<DragonRendererProps> = ({
             onClick={onClick}
             enableHover={enableHover}
             {...asciiProps}
-            pose={voiceBasedProps.ascii.pose as 'coiled' | 'flying' | 'attacking' | 'sleeping'}
-            speed={voiceBasedProps.ascii.speed as 'slow' | 'normal' | 'fast'}
-            enableBreathing={voiceBasedProps.ascii.enableBreathing}
+            pose={voiceBasedProps.ascii?.pose as 'coiled' | 'flying' | 'attacking' | 'sleeping' || 'coiled'}
+            speed={voiceBasedProps.ascii?.speed as 'slow' | 'normal' | 'fast' || 'normal'}
+            enableBreathing={voiceBasedProps.ascii?.enableBreathing ?? true}
           />
         )
       

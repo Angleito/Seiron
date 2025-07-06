@@ -1,10 +1,18 @@
 'use client'
 
-import React, { useRef, useMemo, useEffect, useState } from 'react'
+import React, { useRef, useMemo, useEffect, useState, useCallback } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
 import * as THREE from 'three'
 import { motion } from 'framer-motion'
+import { 
+  useDragonPerformance,
+  createPerformancePropComparison,
+  adjustParticleCount,
+  adjustTextureQuality,
+  adjustAnimationQuality,
+  LOD_LEVELS
+} from '../../utils/dragon-performance'
 
 // Types and interfaces
 export interface Dragon3DProps {
@@ -17,6 +25,10 @@ export interface Dragon3DProps {
   showParticles?: boolean
   autoRotate?: boolean
   quality?: 'low' | 'medium' | 'high'
+  enablePerformanceMode?: boolean
+  maxAnimationQuality?: number
+  enableLOD?: boolean
+  targetFPS?: number
 }
 
 interface DragonMeshProps {
@@ -26,6 +38,8 @@ interface DragonMeshProps {
   quality: 'low' | 'medium' | 'high'
   onClick?: () => void
   enableHover?: boolean
+  performance: ReturnType<typeof useDragonPerformance>
+  maxAnimationQuality: number
 }
 
 // Dragon geometry configurations
@@ -72,14 +86,27 @@ const DragonConfig = {
   },
 }
 
-// Particle system for magical effects
-const ParticleSystem: React.FC<{ count: number; size: number }> = ({ count, size }) => {
+// Performance-aware particle system for magical effects
+const ParticleSystem: React.FC<{ 
+  count: number; 
+  size: number; 
+  performance: ReturnType<typeof useDragonPerformance>;
+  animationSpeed: number;
+}> = ({ count, size, performance, animationSpeed }) => {
   const meshRef = useRef<THREE.Points>(null)
+  const frameCountRef = useRef(0)
+  
+  // Adjust particle count based on performance
+  const adjustedCount = useMemo(() => {
+    const baseCount = adjustParticleCount(count, performance.currentLOD)
+    return Math.max(1, baseCount)
+  }, [count, performance.currentLOD])
+  
   const [positions, velocities] = useMemo(() => {
-    const positions = new Float32Array(count * 3)
-    const velocities = new Float32Array(count * 3)
+    const positions = new Float32Array(adjustedCount * 3)
+    const velocities = new Float32Array(adjustedCount * 3)
     
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < adjustedCount; i++) {
       positions[i * 3] = (Math.random() - 0.5) * size * 4
       positions[i * 3 + 1] = (Math.random() - 0.5) * size * 4
       positions[i * 3 + 2] = (Math.random() - 0.5) * size * 4
@@ -90,23 +117,29 @@ const ParticleSystem: React.FC<{ count: number; size: number }> = ({ count, size
     }
     
     return [positions, velocities]
-  }, [count, size])
+  }, [adjustedCount, size])
 
   useFrame((state) => {
-    if (!meshRef.current || !meshRef.current.geometry.attributes.position) return
+    if (!meshRef.current || !meshRef.current.geometry.attributes.position || performance.shouldDisableAnimations) return
+    
+    // Skip frames for performance optimization
+    frameCountRef.current++
+    const skipFrames = performance.shouldReduceQuality ? 2 : 1
+    if (frameCountRef.current % skipFrames !== 0) return
     
     const positions = meshRef.current.geometry.attributes.position.array as Float32Array
+    const speedMultiplier = animationSpeed * (performance.shouldReduceQuality ? 0.5 : 1)
     
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < adjustedCount; i++) {
       const xIndex = i * 3
       const yIndex = i * 3 + 1
       const zIndex = i * 3 + 2
       
       if (positions[xIndex] !== undefined && positions[yIndex] !== undefined && positions[zIndex] !== undefined &&
           velocities[xIndex] !== undefined && velocities[yIndex] !== undefined && velocities[zIndex] !== undefined) {
-        positions[xIndex] += velocities[xIndex]
-        positions[yIndex] += velocities[yIndex]
-        positions[zIndex] += velocities[zIndex]
+        positions[xIndex] += velocities[xIndex] * speedMultiplier
+        positions[yIndex] += velocities[yIndex] * speedMultiplier
+        positions[zIndex] += velocities[zIndex] * speedMultiplier
         
         // Reset particles that go too far
         if (positions[yIndex] > size * 2) {
@@ -120,33 +153,43 @@ const ParticleSystem: React.FC<{ count: number; size: number }> = ({ count, size
     meshRef.current.geometry.attributes.position.needsUpdate = true
   })
 
+  // Adjust particle size based on LOD
+  const particleSize = useMemo(() => {
+    const baseSize = size * 0.02
+    return baseSize * performance.currentLOD.textureQuality
+  }, [size, performance.currentLOD.textureQuality])
+
   return (
     <points ref={meshRef}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
-          count={count}
+          count={adjustedCount}
           array={positions}
           itemSize={3}
         />
       </bufferGeometry>
       <pointsMaterial
-        size={size * 0.02}
+        size={particleSize}
         color={DragonConfig.colors.gold}
         transparent
-        opacity={0.8}
+        opacity={performance.currentLOD.level > 2 ? 0.6 : 0.8}
         sizeAttenuation={true}
       />
     </points>
   )
 }
 
-// Dragon body component
-const DragonBody: React.FC<{ size: number; animationSpeed: number }> = ({ size, animationSpeed }) => {
+// Performance-aware dragon body component
+const DragonBody: React.FC<{ 
+  size: number; 
+  animationSpeed: number; 
+  performance: ReturnType<typeof useDragonPerformance> 
+}> = ({ size, animationSpeed, performance }) => {
   const bodyRef = useRef<THREE.Group>(null)
-  const segmentRefs = useRef<THREE.Mesh[]>([])
+  const frameCountRef = useRef(0)
   
-  // Create serpentine body using tube geometry
+  // LOD-aware geometry creation
   const bodyGeometry = useMemo(() => {
     const curve = new THREE.CatmullRomCurve3([
       new THREE.Vector3(0, 0, 0),
@@ -158,20 +201,35 @@ const DragonBody: React.FC<{ size: number; animationSpeed: number }> = ({ size, 
       new THREE.Vector3(size * 1.6, 0, -size * 0.1),
     ])
     
-    return new THREE.TubeGeometry(curve, 32, size * 0.15, 8, false)
-  }, [size])
+    // Adjust geometry quality based on LOD
+    const segmentCount = performance.currentLOD.level > 2 ? 16 : 32
+    const radialSegments = performance.currentLOD.level > 3 ? 4 : 8
+    
+    return new THREE.TubeGeometry(curve, segmentCount, size * 0.15, radialSegments, false)
+  }, [size, performance.currentLOD.level])
 
   useFrame((state) => {
-    if (!bodyRef.current) return
+    if (!bodyRef.current || performance.shouldDisableAnimations) return
     
-    const time = state.clock.getElapsedTime() * animationSpeed
+    // Skip frames for performance optimization
+    frameCountRef.current++
+    const skipFrames = performance.shouldReduceQuality ? 3 : 1
+    if (frameCountRef.current % skipFrames !== 0) return
     
-    // Breathing animation
-    const breathe = Math.sin(time * 2) * 0.05 + 1
-    bodyRef.current.scale.setScalar(breathe)
+    const time = state.clock.getElapsedTime() * animationSpeed * performance.currentLOD.animationQuality
     
-    // Subtle undulation
-    bodyRef.current.rotation.z = Math.sin(time * 0.5) * 0.1
+    // Simplified breathing animation for performance
+    if (performance.shouldReduceQuality) {
+      const breathe = Math.sin(time * 1) * 0.03 + 1
+      bodyRef.current.scale.setScalar(breathe)
+    } else {
+      // Full breathing animation
+      const breathe = Math.sin(time * 2) * 0.05 + 1
+      bodyRef.current.scale.setScalar(breathe)
+      
+      // Subtle undulation (only in high quality mode)
+      bodyRef.current.rotation.z = Math.sin(time * 0.5) * 0.1
+    }
   })
 
   return (
@@ -183,14 +241,29 @@ const DragonBody: React.FC<{ size: number; animationSpeed: number }> = ({ size, 
   )
 }
 
-// Dragon head component
-const DragonHead: React.FC<{ size: number; animationSpeed: number }> = ({ size, animationSpeed }) => {
+// Performance-aware dragon head component
+const DragonHead: React.FC<{ 
+  size: number; 
+  animationSpeed: number; 
+  performance: ReturnType<typeof useDragonPerformance> 
+}> = ({ size, animationSpeed, performance }) => {
   const headRef = useRef<THREE.Group>(null)
   const eyeRefs = useRef<THREE.Mesh[]>([])
+  const frameCountRef = useRef(0)
   
-  // Create custom head geometry
+  // Performance-aware head geometry creation
   const headGeometry = useMemo(() => {
-    const geometry = new THREE.SphereGeometry(size * 0.25, 16, 16)
+    // Adjust geometry detail based on LOD
+    const widthSegments = performance.currentLOD.level > 2 ? 8 : 16
+    const heightSegments = performance.currentLOD.level > 2 ? 8 : 16
+    
+    const geometry = new THREE.SphereGeometry(size * 0.25, widthSegments, heightSegments)
+    
+    // Skip complex geometry modifications in low quality mode
+    if (performance.currentLOD.level > 3) {
+      return geometry
+    }
+    
     // Modify geometry to make it more dragon-like
     const positionAttribute = geometry.attributes.position
     if (!positionAttribute) return geometry
@@ -207,8 +280,8 @@ const DragonHead: React.FC<{ size: number; animationSpeed: number }> = ({ size, 
         positions[i + 2] = z * 1.5
       }
       
-      // Create ridges
-      if (y !== undefined && y > 0 && x !== undefined) {
+      // Create ridges (only in high quality)
+      if (y !== undefined && y > 0 && x !== undefined && performance.currentLOD.level < 2) {
         positions[i + 1] = y * (1 + Math.sin(x * 8) * 0.1)
       }
     }
@@ -216,7 +289,7 @@ const DragonHead: React.FC<{ size: number; animationSpeed: number }> = ({ size, 
     positionAttribute.needsUpdate = true
     geometry.computeVertexNormals()
     return geometry
-  }, [size])
+  }, [size, performance.currentLOD.level])
 
   const hornGeometry = useMemo(() => {
     return new THREE.ConeGeometry(size * 0.02, size * 0.15, 6)
@@ -288,8 +361,12 @@ const DragonHead: React.FC<{ size: number; animationSpeed: number }> = ({ size, 
   )
 }
 
-// Dragon wings component
-const DragonWings: React.FC<{ size: number; animationSpeed: number }> = ({ size, animationSpeed }) => {
+// Performance-aware dragon wings component
+const DragonWings: React.FC<{ 
+  size: number; 
+  animationSpeed: number; 
+  performance: ReturnType<typeof useDragonPerformance> 
+}> = ({ size, animationSpeed, performance }) => {
   const leftWingRef = useRef<THREE.Group>(null)
   const rightWingRef = useRef<THREE.Group>(null)
   
@@ -345,7 +422,7 @@ const DragonWings: React.FC<{ size: number; animationSpeed: number }> = ({ size,
   )
 }
 
-// Main dragon mesh component
+// Performance-aware main dragon mesh component
 const DragonMesh: React.FC<DragonMeshProps> = ({
   size,
   animationSpeed,
@@ -353,31 +430,41 @@ const DragonMesh: React.FC<DragonMeshProps> = ({
   quality,
   onClick,
   enableHover,
+  performance,
+  maxAnimationQuality
 }) => {
   const groupRef = useRef<THREE.Group>(null)
   const [hovered, setHovered] = useState(false)
+  const frameCountRef = useRef(0)
   
-  // LOD system based on quality
+  // Dynamic particle count based on performance and LOD
   const particleCount = useMemo(() => {
-    switch (quality) {
-      case 'low': return 50
-      case 'medium': return 100
-      case 'high': return 200
-      default: return 100
-    }
-  }, [quality])
+    const baseCount = quality === 'low' ? 50 : quality === 'medium' ? 100 : 200
+    return adjustParticleCount(baseCount, performance.currentLOD)
+  }, [quality, performance.currentLOD])
 
   useFrame((state) => {
-    if (!groupRef.current) return
+    if (!groupRef.current || performance.shouldDisableAnimations) return
     
-    const time = state.clock.getElapsedTime() * animationSpeed
+    // Skip frames for performance optimization
+    frameCountRef.current++
+    const skipFrames = performance.shouldReduceQuality ? 2 : 1
+    if (frameCountRef.current % skipFrames !== 0) return
     
-    // Floating animation
-    groupRef.current.position.y = Math.sin(time * 1.5) * size * 0.1
-    groupRef.current.rotation.y = Math.sin(time * 0.3) * 0.1
+    const time = state.clock.getElapsedTime() * animationSpeed * maxAnimationQuality * performance.currentLOD.animationQuality
     
-    // Hover effect
-    if (hovered && enableHover) {
+    // Performance-aware floating animation
+    if (performance.shouldReduceQuality) {
+      // Simplified animation
+      groupRef.current.position.y = Math.sin(time * 0.8) * size * 0.05
+    } else {
+      // Full floating animation
+      groupRef.current.position.y = Math.sin(time * 1.5) * size * 0.1
+      groupRef.current.rotation.y = Math.sin(time * 0.3) * 0.1
+    }
+    
+    // Hover effect (only in high quality mode)
+    if (hovered && enableHover && !performance.shouldReduceQuality) {
       groupRef.current.scale.setScalar(1.1)
     } else {
       groupRef.current.scale.setScalar(1)
@@ -392,13 +479,18 @@ const DragonMesh: React.FC<DragonMeshProps> = ({
       onPointerOut={() => setHovered(false)}
     >
       {/* Main dragon parts */}
-      <DragonBody size={size} animationSpeed={animationSpeed} />
-      <DragonHead size={size} animationSpeed={animationSpeed} />
-      <DragonWings size={size} animationSpeed={animationSpeed} />
+      <DragonBody size={size} animationSpeed={animationSpeed} performance={performance} />
+      <DragonHead size={size} animationSpeed={animationSpeed} performance={performance} />
+      <DragonWings size={size} animationSpeed={animationSpeed} performance={performance} />
       
       {/* Particle effects */}
-      {showParticles && (
-        <ParticleSystem count={particleCount} size={size} />
+      {showParticles && performance.currentLOD.particles.enabled && (
+        <ParticleSystem 
+          count={particleCount} 
+          size={size} 
+          performance={performance}
+          animationSpeed={animationSpeed}
+        />
       )}
       
       {/* Lighting */}
@@ -425,8 +517,11 @@ const sizeMap = {
   xl: { size: 1.8, canvasSize: 'w-96 h-96' },
 }
 
+// Performance-aware prop comparison
+const propComparison = createPerformancePropComparison<Dragon3DProps>([])
+
 // Main Dragon3D component
-const Dragon3D: React.FC<Dragon3DProps> = ({
+const Dragon3DInternal: React.FC<Dragon3DProps> = ({
   size = 'lg',
   className = '',
   onClick,
@@ -436,8 +531,22 @@ const Dragon3D: React.FC<Dragon3DProps> = ({
   showParticles = true,
   autoRotate = false,
   quality = 'medium',
+  enablePerformanceMode = true,
+  maxAnimationQuality = 1.0,
+  enableLOD = true,
+  targetFPS = 60
 }) => {
   const { size: dragonSize, canvasSize } = sizeMap[size]
+  
+  // Performance monitoring
+  const performance = useDragonPerformance({
+    config: {
+      targetFPS,
+      adaptiveLOD: enableLOD,
+      autoOptimization: enablePerformanceMode,
+      maxMemoryMB: 512 // 3D dragon uses more memory
+    }
+  })
   
   return (
     <motion.div
@@ -459,20 +568,22 @@ const Dragon3D: React.FC<Dragon3DProps> = ({
         {/* Dragon mesh */}
         <DragonMesh
           size={dragonSize}
-          animationSpeed={animationSpeed}
+          animationSpeed={animationSpeed * maxAnimationQuality}
           showParticles={showParticles}
           quality={quality}
           onClick={onClick}
           enableHover={enableHover}
+          performance={performance}
+          maxAnimationQuality={maxAnimationQuality}
         />
         
-        {/* Controls */}
-        {enableInteraction && (
+        {/* Performance-aware controls */}
+        {enableInteraction && !performance.shouldReduceQuality && (
           <OrbitControls 
             enablePan={false}
             enableZoom={false}
-            autoRotate={autoRotate}
-            autoRotateSpeed={0.5}
+            autoRotate={autoRotate && !performance.shouldDisableAnimations}
+            autoRotateSpeed={0.5 * maxAnimationQuality}
             maxPolarAngle={Math.PI / 2}
             minPolarAngle={Math.PI / 3}
           />
@@ -481,5 +592,13 @@ const Dragon3D: React.FC<Dragon3DProps> = ({
     </motion.div>
   )
 }
+
+// Memoized component with performance-aware prop comparison
+const Dragon3D = React.memo(Dragon3DInternal, (prevProps, nextProps) => {
+  return propComparison(prevProps, nextProps)
+})
+
+// Add display name for debugging
+Dragon3D.displayName = 'Dragon3D'
 
 export default Dragon3D

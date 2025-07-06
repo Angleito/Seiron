@@ -40,12 +40,45 @@ export type { TransactionPreviewData, TokenAmount, ProtocolInfo } from './transa
 // Shared UI Components
 export * from './ui';
 
-// Dragon Components
-export { Dragon3D, Dragon3DExample } from './dragon';
-export type { Dragon3DProps } from './dragon';
+// Dragon Components - Complete dragon component suite
+export { 
+  Dragon3D, 
+  Dragon3DExample, 
+  Dragon3DIntegrationGuide,
+  ASCIIDragon, 
+  ASCIIDragonExample,
+  DragonRenderer, 
+  DragonRendererExample,
+  dragonUtils,
+  useDragonRenderer
+} from './dragon';
+
+// Dragon Component Types
+export type { 
+  Dragon3DProps, 
+  ASCIIDragonProps, 
+  DragonRendererProps, 
+  DragonType, 
+  VoiceAnimationState, 
+  DragonPerformanceMetrics 
+} from './dragon';
 
 // Dragon Types - simplified
 export type { SimpleDragonSpriteProps } from './SimpleDragonSprite';
+
+// Voice Integration Components - Complete voice and dragon integration suite
+export * from './voice';
+
+// Voice Component Types
+export type {
+  VoiceInterfaceProps,
+  VoiceInterfaceState,
+  VoiceDragonDemoProps,
+  VoiceDragonIntegrationExampleProps
+} from './voice';
+
+// Utility functions and helpers
+export * from '../utils';
 
 // Existing Components
 export { WalletConnect } from './wallet/wallet-connect';

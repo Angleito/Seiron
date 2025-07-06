@@ -1,11 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSpeechRecognition } from '../../hooks/voice/useSpeechRecognition'
 import { useElevenLabsTTS, ElevenLabsConfig } from '../../hooks/voice/useElevenLabsTTS'
+import DragonRenderer, { DragonType, VoiceAnimationState } from '../dragon/DragonRenderer'
 import * as E from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
 import * as O from 'fp-ts/Option'
 import { logger } from '../../lib/logger'
 import { voiceLogger, logVoiceInterface, logEnvironment } from '../../lib/voice-logger'
+import { 
+  createEnhancedVoiceAnimationState, 
+  voiceAnalysis, 
+  dragonBehaviorPatterns 
+} from '../../utils/voice-dragon-mapping'
 
 // Log environment variables at module load
 const envStatus = {
@@ -26,6 +32,11 @@ export interface VoiceInterfaceProps {
   elevenLabsConfig: ElevenLabsConfig
   autoReadResponses?: boolean
   className?: string
+  // Dragon integration props
+  dragonType?: DragonType
+  dragonSize?: 'sm' | 'md' | 'lg' | 'xl'
+  enableDragonAnimations?: boolean
+  onDragonClick?: () => void
 }
 
 export interface VoiceInterfaceState {
@@ -41,7 +52,11 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
   onError,
   elevenLabsConfig,
   autoReadResponses = false,
-  className = ''
+  className = '',
+  dragonType = '2d',
+  dragonSize = 'lg',
+  enableDragonAnimations = true,
+  onDragonClick
 }) => {
   logger.debug('🔊 VoiceInterface component initializing', {
     hasOnTranscriptChange: !!onTranscriptChange,
@@ -248,6 +263,54 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
     }
   }, [playAudioResponse])
 
+  // Advanced dragon voice animation state with intelligent transcript analysis
+  const dragonVoiceState = useMemo((): VoiceAnimationState => {
+    // Use enhanced voice state creation with transcript analysis
+    const baseState = createEnhancedVoiceAnimationState(
+      isListening,
+      state.isPlayingAudio,
+      isTTSLoading,
+      !!state.lastError,
+      state.currentTranscript,
+      Date.now() - (state as any).startTime || 0 // Duration tracking
+    )
+    
+    // Apply advanced dragon behavior patterns based on transcript context
+    if (state.currentTranscript.length > 0) {
+      const behaviorPattern = dragonBehaviorPatterns.analyze(state.currentTranscript)
+      
+      // Merge behavior pattern with base state
+      return {
+        ...baseState,
+        ...behaviorPattern,
+        // Ensure isIdle state is correctly calculated
+        isIdle: !baseState.isListening && !baseState.isSpeaking && !baseState.isProcessing
+      }
+    }
+    
+    // Additional context-aware adjustments
+    if (isListening && state.currentTranscript.length === 0) {
+      // Just started listening - show attention
+      return {
+        ...baseState,
+        emotion: 'happy',
+        volume: 0.7
+      }
+    }
+    
+    if (state.isPlayingAudio) {
+      // Currently speaking - show engagement
+      const transcriptEmotion = voiceAnalysis.analyzeTranscriptEmotion(state.currentTranscript)
+      return {
+        ...baseState,
+        emotion: transcriptEmotion === 'neutral' ? 'excited' : transcriptEmotion,
+        volume: 1.0
+      }
+    }
+    
+    return baseState
+  }, [isListening, state.isPlayingAudio, isTTSLoading, state.lastError, state.currentTranscript])
+
   const microphoneButtonClasses = useMemo(() => {
     const baseClasses = 'relative p-4 rounded-full transition-all duration-300 transform hover:scale-110'
     const activeClasses = isListening
@@ -266,14 +329,270 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
     return `${baseClasses} ${activeClasses}`
   }, [state.isSpeakerEnabled])
 
-  const dragonEmojiClasses = useMemo(() => {
-    const baseClasses = 'text-6xl transition-all duration-300'
-    const activeClasses = state.isPlayingAudio
-      ? 'animate-bounce scale-125'
-      : 'scale-100'
+  // Dragon event handlers with voice integration
+  const handleDragonError = useCallback((error: Error, errorDragonType: DragonType) => {
+    logger.error('🐉 Dragon component error', { error: error.message, dragonType: errorDragonType })
+    setState(prev => ({ ...prev, lastError: error }))
+    onError?.(error)
+  }, [onError])
+
+  // Dragon fallback handler
+  const handleDragonFallback = useCallback((fromType: DragonType, toType: DragonType) => {
+    logger.info('🐉 Dragon fallback triggered', { fromType, toType })
+    // Optionally trigger a brief visual indication of fallback
+    if (enableDragonAnimations) {
+      // The dragon will automatically handle the fallback animation
+      logger.debug('🐉 Dragon fallback animation triggered', { from: fromType, to: toType })
+    }
+  }, [enableDragonAnimations])
+
+  // Advanced dragon click handler with intelligent voice responses
+  const handleDragonClickWithVoiceFeedback = useCallback(() => {
+    logger.debug('🐉 Dragon clicked with intelligent voice feedback')
     
-    return `${baseClasses} ${activeClasses}`
-  }, [state.isPlayingAudio])
+    // Trigger intelligent audio response based on current context
+    if (state.isSpeakerEnabled && !state.isPlayingAudio && !isListening) {
+      let responseMessage = ''
+      
+      // Context-aware responses based on current transcript and voice state
+      if (state.currentTranscript.length > 0) {
+        // Analyze the current transcript for intelligent response
+        const isQuestion = voiceAnalysis.isQuestion(state.currentTranscript)
+        const isCommand = voiceAnalysis.isCommand(state.currentTranscript)
+        const transcriptEmotion = voiceAnalysis.analyzeTranscriptEmotion(state.currentTranscript)
+        
+        if (isQuestion) {
+          const questionResponses = [
+            "That's an interesting question! Let me think about that.",
+            "I'm considering your question. Give me a moment.",
+            "Great question! I'll help you with that.",
+            "Let me process that question for you."
+          ]
+          responseMessage = questionResponses[Math.floor(Math.random() * questionResponses.length)]
+        } else if (isCommand) {
+          const commandResponses = [
+            "I'm ready to execute your command!",
+            "Command received! I'll help you with that.",
+            "On it! Let me assist you.",
+            "Command acknowledged! How can I help?"
+          ]
+          responseMessage = commandResponses[Math.floor(Math.random() * commandResponses.length)]
+        } else {
+          // Emotion-based responses
+          const emotionResponses = {
+            excited: [
+              "I can feel your excitement! How can I help?",
+              "Your energy is contagious! What shall we do?",
+              "I love your enthusiasm! Let's get started!"
+            ],
+            happy: [
+              "I'm glad you're in a good mood! What can I do for you?",
+              "You seem happy! How can I assist you today?",
+              "Great to see you're feeling positive! What's next?"
+            ],
+            angry: [
+              "I sense some frustration. Let me help you work through this.",
+              "I'm here to help resolve any issues you're facing.",
+              "Take a deep breath. I'm here to assist you."
+            ],
+            neutral: [
+              "Hello! I'm listening and ready to help.",
+              "I'm here whenever you need assistance.",
+              "Ready for your next request!"
+            ]
+          }
+          
+          const responses = emotionResponses[transcriptEmotion] || emotionResponses.neutral
+          responseMessage = responses[Math.floor(Math.random() * responses.length)]
+        }
+      } else {
+        // Default greetings when no transcript context
+        const greetings = [
+          "Hello! I'm listening.",
+          "Ready for your command!",
+          "How can I help you today?",
+          "I'm here and ready to assist!",
+          "What would you like me to do?",
+          "Dragon at your service!",
+          "Speak, and I shall listen with wisdom."
+        ]
+        responseMessage = greetings[Math.floor(Math.random() * greetings.length)]
+      }
+      
+      playAudioResponse(responseMessage)
+      
+      logger.debug('🐉 Intelligent dragon response triggered', {
+        hasTranscript: state.currentTranscript.length > 0,
+        transcriptLength: state.currentTranscript.length,
+        responseMessage: responseMessage.substring(0, 50) + '...'
+      })
+    }
+    
+    // Call the original dragon click handler
+    onDragonClick?.()
+  }, [state.isSpeakerEnabled, state.isPlayingAudio, isListening, playAudioResponse, onDragonClick, state.currentTranscript])
+
+  // Comprehensive voice event handling system
+  useEffect(() => {
+    const dispatchVoiceEvent = (type: string, data?: any) => {
+      const event = new CustomEvent('voiceStateChange', {
+        detail: { type, data, timestamp: Date.now() }
+      })
+      window.dispatchEvent(event)
+      
+      logger.debug('🎙️ Voice event dispatched', { type, data })
+    }
+    
+    // Dispatch events for voice state changes
+    if (isListening && !state.isPlayingAudio && !isTTSLoading) {
+      dispatchVoiceEvent('listening_start', { 
+        transcriptLength: state.currentTranscript.length,
+        volume: dragonVoiceState.volume 
+      })
+    } else if (!isListening && state.isPlayingAudio) {
+      dispatchVoiceEvent('speaking_start', { 
+        volume: dragonVoiceState.volume 
+      })
+    } else if (isTTSLoading) {
+      dispatchVoiceEvent('processing_start', { 
+        volume: dragonVoiceState.volume 
+      })
+    } else if (!isListening && !state.isPlayingAudio && !isTTSLoading) {
+      dispatchVoiceEvent('voice_idle', { 
+        volume: dragonVoiceState.volume 
+      })
+    }
+    
+    // Enhanced dragon synchronization logging
+    logger.debug('🐉 Voice state change detected for dragon sync', {
+      isListening,
+      isSpeaking: state.isPlayingAudio,
+      isProcessing: isTTSLoading,
+      transcriptLength: state.currentTranscript.length,
+      emotion: dragonVoiceState.emotion,
+      volume: dragonVoiceState.volume,
+      voiceState: dragonVoiceState
+    })
+  }, [isListening, state.isPlayingAudio, isTTSLoading, state.currentTranscript.length, dragonVoiceState.emotion, dragonVoiceState.volume, dragonVoiceState])
+
+  // Voice event cleanup and listener management
+  useEffect(() => {
+    const voiceEventHandlers = new Map<string, EventListener>()
+    
+    // Register global voice event listeners for external integrations
+    const registerVoiceEventListener = (eventType: string, handler: EventListener) => {
+      voiceEventHandlers.set(eventType, handler)
+      window.addEventListener(eventType, handler)
+    }
+    
+    // Example external integration listeners
+    registerVoiceEventListener('voiceCommand', (event: CustomEvent) => {
+      const { command, confidence } = event.detail
+      logger.debug('🎙️ Voice command received', { command, confidence })
+      
+      // Handle voice commands if needed
+      if (confidence > 0.8) {
+        // High confidence voice command processing
+        onTranscriptChange?.(command)
+      }
+    })
+    
+    registerVoiceEventListener('voiceEmotionDetected', (event: CustomEvent) => {
+      const { emotion, intensity } = event.detail
+      logger.debug('🎙️ Voice emotion detected', { emotion, intensity })
+      
+      // Update dragon state based on detected emotion
+      // This could be integrated with more advanced emotion detection APIs
+    })
+    
+    // Cleanup function
+    return () => {
+      voiceEventHandlers.forEach((handler, eventType) => {
+        window.removeEventListener(eventType, handler)
+      })
+      voiceEventHandlers.clear()
+      
+      // Dispatch cleanup event
+      const cleanupEvent = new CustomEvent('voiceCleanup', {
+        detail: { componentId: 'VoiceInterface', timestamp: Date.now() }
+      })
+      window.dispatchEvent(cleanupEvent)
+      
+      logger.debug('🧹 Voice event handlers cleaned up')
+    }
+  }, [onTranscriptChange])
+
+  // Advanced transcript analysis and voice state updates
+  useEffect(() => {
+    if (state.currentTranscript.length > 0) {
+      const dispatchTranscriptEvent = (type: string, analysis: any) => {
+        const event = new CustomEvent('voiceTranscriptAnalysis', {
+          detail: { 
+            type, 
+            transcript: state.currentTranscript,
+            analysis,
+            timestamp: Date.now() 
+          }
+        })
+        window.dispatchEvent(event)
+      }
+      
+      // Advanced transcript analysis using voice-dragon-mapping utilities
+      const analysisTimer = setTimeout(() => {
+        const isQuestion = voiceAnalysis.isQuestion(state.currentTranscript)
+        const isCommand = voiceAnalysis.isCommand(state.currentTranscript)
+        const detectedEmotion = voiceAnalysis.analyzeTranscriptEmotion(state.currentTranscript)
+        const speechIntensity = voiceAnalysis.calculateSpeechIntensity(
+          state.currentTranscript,
+          isListening,
+          state.isPlayingAudio
+        )
+        
+        const wordCount = state.currentTranscript.trim().split(' ').length
+        const hasExclamation = state.currentTranscript.includes('!')
+        const hasQuestion = state.currentTranscript.includes('?')
+        
+        // Advanced dragon response suggestions
+        let suggestedDragonResponse = 'neutral'
+        if (isQuestion) {
+          suggestedDragonResponse = 'inquisitive'
+        } else if (isCommand) {
+          suggestedDragonResponse = 'attentive'
+        } else if (detectedEmotion === 'excited' || hasExclamation) {
+          suggestedDragonResponse = 'excited'
+        } else if (detectedEmotion === 'angry') {
+          suggestedDragonResponse = 'calming'
+        } else if (detectedEmotion === 'happy') {
+          suggestedDragonResponse = 'joyful'
+        }
+        
+        // Get behavior pattern suggestions
+        const behaviorPattern = dragonBehaviorPatterns.analyze(state.currentTranscript)
+        
+        const analysis = {
+          isQuestion,
+          isCommand,
+          hasExclamation,
+          hasQuestion,
+          wordCount,
+          length: state.currentTranscript.length,
+          detectedEmotion,
+          speechIntensity,
+          currentDragonEmotion: dragonVoiceState.emotion,
+          suggestedDragonResponse,
+          behaviorPattern,
+          complexity: wordCount > 10 ? 'high' : wordCount > 5 ? 'medium' : 'low',
+          engagement: speechIntensity > 0.7 ? 'high' : speechIntensity > 0.4 ? 'medium' : 'low'
+        }
+        
+        dispatchTranscriptEvent('advanced_transcript_analyzed', analysis)
+        
+        logger.debug('🔍 Advanced transcript analysis completed', analysis)
+      }, 500) // Debounce analysis
+      
+      return () => clearTimeout(analysisTimer)
+    }
+  }, [state.currentTranscript, dragonVoiceState.emotion])
 
   if (!isSpeechSupported) {
     logger.warn('🔊 Speech recognition not supported, rendering fallback UI')
@@ -296,14 +615,34 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
   
   return (
     <div className={`flex flex-col items-center space-y-6 p-6 ${className}`}>
-      {/* Dragon Emoji Display */}
+      {/* Dragon Display */}
       <div className="relative">
-        <span className={dragonEmojiClasses} role="img" aria-label="Dragon">
-          {state.isPlayingAudio ? '🐉🔥' : '🐉'}
-        </span>
-        {state.isPlayingAudio && (
-          <div className="absolute inset-0 animate-ping opacity-30">
-            <span className="text-6xl" role="img" aria-label="Fire">🔥</span>
+        <DragonRenderer
+          dragonType={dragonType}
+          size={dragonSize}
+          className="transition-all duration-300"
+          onClick={handleDragonClickWithVoiceFeedback}
+          enableHover={true}
+          voiceState={enableDragonAnimations ? dragonVoiceState : undefined}
+          enableFallback={true}
+          fallbackType="2d"
+          performanceMode="auto"
+          onError={handleDragonError}
+          onFallback={handleDragonFallback}
+        />
+        
+        {/* Voice state indicator overlay */}
+        {enableDragonAnimations && (
+          <div className="absolute -top-2 -right-2 flex space-x-1">
+            {isListening && (
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" title="Listening" />
+            )}
+            {state.isPlayingAudio && (
+              <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse" title="Speaking" />
+            )}
+            {isTTSLoading && (
+              <div className="w-3 h-3 bg-blue-500 rounded-full animate-spin" title="Processing" />
+            )}
           </div>
         )}
       </div>

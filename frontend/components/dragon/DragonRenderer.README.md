@@ -119,7 +119,50 @@ interface VoiceAnimationState {
 />
 ```
 
-### Voice Integration
+### Voice Integration with Hooks
+
+```tsx
+import { DragonRenderer } from '@/components/dragon'
+import { useDragon3D, useASCIIDragon, useElevenLabsTTS, useSpeechRecognition } from '@/hooks/voice'
+
+function VoiceEnabledDragon() {
+  const dragon3D = useDragon3D({ 
+    enableVoiceIntegration: true,
+    enablePerformanceMonitoring: true
+  })
+  
+  const tts = useElevenLabsTTS({
+    onSpeakingStart: dragon3D.onVoiceSpeakingStart,
+    onSpeakingEnd: dragon3D.onVoiceSpeakingEnd
+  })
+  
+  const speech = useSpeechRecognition({
+    onListeningStart: dragon3D.onVoiceListeningStart,
+    onListeningEnd: dragon3D.onVoiceListeningEnd,
+    onTranscript: dragon3D.onTranscriptUpdate
+  })
+
+  return (
+    <DragonRenderer
+      dragonType="3d"
+      size="lg"
+      voiceState={{
+        isListening: dragon3D.voiceIntegration.isListening,
+        isSpeaking: dragon3D.voiceIntegration.isSpeaking,
+        isProcessing: dragon3D.voiceIntegration.isProcessing,
+        isIdle: dragon3D.isCalm()
+      }}
+      threeDProps={{
+        showParticles: dragon3D.powerLevel > 50,
+        animationSpeed: dragon3D.powerLevel / 50,
+        quality: dragon3D.shouldReduceQuality() ? 'low' : 'high'
+      }}
+    />
+  )
+}
+```
+
+### Legacy Voice Integration (Simple)
 
 ```tsx
 function VoiceEnabledDragon() {
@@ -172,7 +215,66 @@ function AdvancedDragon() {
 }
 ```
 
-### Dynamic Type Switching
+### Dynamic Type Switching with Voice
+
+```tsx
+import { DragonRenderer } from '@/components/dragon'
+import { useDragon3D, useASCIIDragon } from '@/hooks/voice'
+
+function DynamicDragon() {
+  const [dragonType, setDragonType] = useState<DragonType>('2d')
+  
+  const dragon3D = useDragon3D({ enableVoiceIntegration: true })
+  const asciiDragon = useASCIIDragon({ enableVoiceIntegration: true })
+
+  const getDragonProps = () => {
+    switch (dragonType) {
+      case '3d':
+        return {
+          voiceState: {
+            isListening: dragon3D.voiceIntegration.isListening,
+            isSpeaking: dragon3D.voiceIntegration.isSpeaking,
+            isProcessing: dragon3D.voiceIntegration.isProcessing,
+            isIdle: dragon3D.isCalm()
+          },
+          threeDProps: {
+            showParticles: dragon3D.powerLevel > 50,
+            animationSpeed: dragon3D.powerLevel / 50
+          }
+        }
+      case 'ascii':
+        return {
+          asciiProps: {
+            pose: asciiDragon.pose,
+            speed: asciiDragon.speed,
+            enableTypewriter: asciiDragon.isTypewriterActive()
+          }
+        }
+      default:
+        return {}
+    }
+  }
+
+  return (
+    <div>
+      <div className="flex gap-2 mb-4">
+        <button onClick={() => setDragonType('2d')}>2D</button>
+        <button onClick={() => setDragonType('ascii')}>ASCII</button>
+        <button onClick={() => setDragonType('3d')}>3D</button>
+      </div>
+      
+      <DragonRenderer
+        dragonType={dragonType}
+        size="lg"
+        enableFallback={true}
+        {...getDragonProps()}
+      />
+    </div>
+  )
+}
+```
+
+### Simple Dynamic Type Switching
 
 ```tsx
 function DynamicDragon() {

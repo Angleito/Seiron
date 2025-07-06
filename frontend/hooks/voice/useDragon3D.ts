@@ -10,6 +10,12 @@ import { map, distinctUntilChanged, takeUntil, debounceTime, filter } from 'rxjs
 import { logger } from '../../lib/logger'
 import { voiceLogger } from '../../lib/voice-logger'
 import { usePerformanceMonitor } from '../usePerformanceMonitor'
+import { 
+  useDragonPerformance,
+  adjustAnimationQuality,
+  adjustParticleCount,
+  createOptimizedAnimationLoop
+} from '../../utils/dragon-performance'
 
 // Types and interfaces
 export type DragonState = 'idle' | 'attention' | 'ready' | 'active' | 'speaking' | 'listening' | 'processing'
@@ -282,49 +288,49 @@ const createDragon3DError = (
 const mapStateToAnimationConfig = (state: DragonState, mood: DragonMood): Partial<DragonAnimationConfig> => {
   const configs: Record<DragonState, Partial<DragonAnimationConfig>> = {
     idle: {
-      breathing: { speed: 1, intensity: 0.3 },
-      floating: { speed: 0.8, amplitude: 0.2 },
-      wingFlapping: { speed: 0.5, intensity: 0.3 }
+      breathing: { enabled: true, speed: 1, intensity: 0.3 },
+      floating: { enabled: true, speed: 0.8, amplitude: 0.2 },
+      wingFlapping: { enabled: true, speed: 0.5, intensity: 0.3 }
     },
     attention: {
-      breathing: { speed: 1.2, intensity: 0.4 },
-      floating: { speed: 1, amplitude: 0.3 },
-      wingFlapping: { speed: 0.8, intensity: 0.4 },
-      aura: { intensity: 0.6 }
+      breathing: { enabled: true, speed: 1.2, intensity: 0.4 },
+      floating: { enabled: true, speed: 1, amplitude: 0.3 },
+      wingFlapping: { enabled: true, speed: 0.8, intensity: 0.4 },
+      aura: { enabled: true, intensity: 0.6, color: '#ef4444' }
     },
     ready: {
-      breathing: { speed: 1.5, intensity: 0.6 },
-      floating: { speed: 1.2, amplitude: 0.4 },
-      wingFlapping: { speed: 1, intensity: 0.6 },
-      aura: { intensity: 0.8 },
-      particles: { intensity: 0.7 }
+      breathing: { enabled: true, speed: 1.5, intensity: 0.6 },
+      floating: { enabled: true, speed: 1.2, amplitude: 0.4 },
+      wingFlapping: { enabled: true, speed: 1, intensity: 0.6 },
+      aura: { enabled: true, intensity: 0.8, color: '#ef4444' },
+      particles: { enabled: true, count: 10, intensity: 0.7 }
     },
     active: {
-      breathing: { speed: 2, intensity: 0.8 },
-      floating: { speed: 1.5, amplitude: 0.5 },
-      wingFlapping: { speed: 1.5, intensity: 0.8 },
-      aura: { intensity: 1 },
-      particles: { intensity: 1 }
+      breathing: { enabled: true, speed: 2, intensity: 0.8 },
+      floating: { enabled: true, speed: 1.5, amplitude: 0.5 },
+      wingFlapping: { enabled: true, speed: 1.5, intensity: 0.8 },
+      aura: { enabled: true, intensity: 1, color: '#ef4444' },
+      particles: { enabled: true, count: 15, intensity: 1 }
     },
     speaking: {
-      breathing: { speed: 2.5, intensity: 1 },
-      floating: { speed: 1.8, amplitude: 0.6 },
-      wingFlapping: { speed: 2, intensity: 1 },
-      aura: { intensity: 1, color: '#fbbf24' },
-      particles: { intensity: 1.2 }
+      breathing: { enabled: true, speed: 2.5, intensity: 1 },
+      floating: { enabled: true, speed: 1.8, amplitude: 0.6 },
+      wingFlapping: { enabled: true, speed: 2, intensity: 1 },
+      aura: { enabled: true, intensity: 1, color: '#fbbf24' },
+      particles: { enabled: true, count: 20, intensity: 1.2 }
     },
     listening: {
-      breathing: { speed: 1.3, intensity: 0.5 },
-      floating: { speed: 1.1, amplitude: 0.3 },
-      wingFlapping: { speed: 0.9, intensity: 0.5 },
-      aura: { intensity: 0.7, color: '#10b981' }
+      breathing: { enabled: true, speed: 1.3, intensity: 0.5 },
+      floating: { enabled: true, speed: 1.1, amplitude: 0.3 },
+      wingFlapping: { enabled: true, speed: 0.9, intensity: 0.5 },
+      aura: { enabled: true, intensity: 0.7, color: '#10b981' }
     },
     processing: {
-      breathing: { speed: 1.8, intensity: 0.7 },
-      floating: { speed: 1.4, amplitude: 0.4 },
-      wingFlapping: { speed: 1.2, intensity: 0.7 },
-      aura: { intensity: 0.9, color: '#8b5cf6' },
-      particles: { intensity: 0.8 }
+      breathing: { enabled: true, speed: 1.8, intensity: 0.7 },
+      floating: { enabled: true, speed: 1.4, amplitude: 0.4 },
+      wingFlapping: { enabled: true, speed: 1.2, intensity: 0.7 },
+      aura: { enabled: true, intensity: 0.9, color: '#8b5cf6' },
+      particles: { enabled: true, count: 12, intensity: 0.8 }
     }
   }
 
@@ -382,6 +388,10 @@ export interface UseDragon3DOptions {
   initialMood?: DragonMood
   initialPowerLevel?: number
   animationConfig?: Partial<DragonAnimationConfig>
+  targetFPS?: number
+  enableLOD?: boolean
+  maxAnimationQuality?: number
+  enableAdvancedEffects?: boolean
 }
 
 export const useDragon3D = (options: UseDragon3DOptions = {}) => {
@@ -395,7 +405,11 @@ export const useDragon3D = (options: UseDragon3DOptions = {}) => {
     initialState = 'idle',
     initialMood = 'calm',
     initialPowerLevel = 30,
-    animationConfig: customAnimationConfig = {}
+    animationConfig: customAnimationConfig = {},
+    targetFPS = 60,
+    enableLOD = true,
+    maxAnimationQuality = 1.0,
+    enableAdvancedEffects = true
   } = options
 
   logger.debug('🐉 Initializing Dragon3D hook', {
@@ -416,13 +430,49 @@ export const useDragon3D = (options: UseDragon3DOptions = {}) => {
     animationConfig: { ...initialAnimationConfig, ...customAnimationConfig }
   })
 
-  // Performance monitoring
+  // Enhanced performance monitoring with dragon-specific optimizations
+  const dragonPerformance = useDragonPerformance({
+    config: {
+      targetFPS,
+      adaptiveLOD: enableLOD,
+      autoOptimization: autoOptimize,
+      maxMemoryMB: 512, // 3D dragon uses more memory
+      performanceMonitoring: enablePerformanceMonitoring
+    },
+    onWarning: (warning) => {
+      logger.warn('🐉 Dragon3D performance warning', warning)
+      voiceLogger.warn('Dragon3D Performance', { warning })
+    },
+    onLODChange: (newLOD, oldLOD) => {
+      logger.info('🐉 Dragon3D LOD changed', { from: oldLOD.name, to: newLOD.name })
+      
+      // Update animation config based on new LOD
+      const optimizedConfig = optimizeConfigForPerformance(
+        state.animationConfig,
+        newLOD.level * 20 // Convert LOD level to performance score
+      )
+      dispatch({ type: 'UPDATE_ANIMATION_CONFIG', payload: optimizedConfig })
+      
+      // Update quality setting
+      const quality = newLOD.level > 2 ? 'low' : newLOD.level > 1 ? 'medium' : 'high'
+      dispatch({ 
+        type: 'UPDATE_PERFORMANCE', 
+        payload: { 
+          quality,
+          shouldOptimize: newLOD.level > 2,
+          fps: dragonPerformance?.metrics.fps || 60
+        }
+      })
+    }
+  })
+
+  // Fallback to legacy performance monitor if dragon performance is not available
   const performanceMonitor = usePerformanceMonitor({
-    enabled: enablePerformanceMonitoring,
-    targetFPS: 60,
+    enabled: enablePerformanceMonitoring && !dragonPerformance,
+    targetFPS,
     sampleRate: 2000,
     onPerformanceWarning: (metrics) => {
-      logger.warn('🐉 Dragon performance warning', metrics)
+      logger.warn('🐉 Dragon3D performance warning (legacy)', metrics)
       if (autoOptimize) {
         dispatch({
           type: 'UPDATE_PERFORMANCE',
@@ -443,19 +493,30 @@ export const useDragon3D = (options: UseDragon3DOptions = {}) => {
     stateSubject.current.next(state)
   }, [state])
 
-  // Auto-optimize based on performance
+  // Auto-optimize based on performance using enhanced dragon performance system
   useEffect(() => {
     if (autoOptimize && enablePerformanceMonitoring) {
+      const performanceScore = dragonPerformance ? 
+        (5 - dragonPerformance.currentLOD.level) * 20 : // Convert LOD to score
+        performanceMonitor.performanceScore
+      
       const optimizedConfig = optimizeConfigForPerformance(
         state.animationConfig,
-        performanceMonitor.performanceScore
+        performanceScore
       )
       
       if (JSON.stringify(optimizedConfig) !== JSON.stringify(state.animationConfig)) {
         dispatch({ type: 'UPDATE_ANIMATION_CONFIG', payload: optimizedConfig })
       }
     }
-  }, [performanceMonitor.performanceScore, autoOptimize, enablePerformanceMonitoring, state.animationConfig])
+  }, [
+    dragonPerformance?.currentLOD.level, 
+    performanceMonitor.performanceScore, 
+    autoOptimize, 
+    enablePerformanceMonitoring, 
+    state.animationConfig,
+    dragonPerformance
+  ])
 
   // State transition functions
   const setState = useCallback((newState: DragonState): TE.TaskEither<Dragon3DError, void> => {
@@ -662,14 +723,57 @@ export const useDragon3D = (options: UseDragon3DOptions = {}) => {
   // Functional getters using fp-ts
   const getSpecialAnimation = () => state.specialAnimation
   const hasSpecialAnimation = () => O.isSome(state.specialAnimation)
-  const getAnimationName = () => pipe(
+  const getAnimationName = (): SpecialAnimation | 'none' => pipe(
     state.specialAnimation,
-    O.getOrElse(() => 'none' as const)
+    O.getOrElse((): SpecialAnimation | 'none' => 'none' as const)
   )
 
-  // Performance utilities
-  const shouldReduceQuality = () => enablePerformanceMonitoring && performanceMonitor.shouldReduceQuality
-  const shouldDisableAnimations = () => enablePerformanceMonitoring && performanceMonitor.shouldDisableAnimations
+  // Enhanced performance utilities
+  const shouldReduceQuality = useCallback(() => {
+    if (dragonPerformance) {
+      return dragonPerformance.shouldReduceQuality
+    }
+    return enablePerformanceMonitoring && performanceMonitor.shouldReduceQuality
+  }, [dragonPerformance, enablePerformanceMonitoring, performanceMonitor.shouldReduceQuality])
+
+  const shouldDisableAnimations = useCallback(() => {
+    if (dragonPerformance) {
+      return dragonPerformance.shouldDisableAnimations
+    }
+    return enablePerformanceMonitoring && performanceMonitor.shouldDisableAnimations
+  }, [dragonPerformance, enablePerformanceMonitoring, performanceMonitor.shouldDisableAnimations])
+
+  const getCurrentLOD = useCallback(() => {
+    return dragonPerformance?.currentLOD || null
+  }, [dragonPerformance])
+
+  const getPerformanceMetrics = useCallback(() => {
+    return dragonPerformance?.metrics || null
+  }, [dragonPerformance])
+
+  const optimizeForPerformance = useCallback(() => {
+    if (dragonPerformance) {
+      dragonPerformance.optimizeForPerformance()
+    } else {
+      // Fallback optimization
+      const optimizedConfig = optimizeConfigForPerformance(state.animationConfig, 30)
+      dispatch({ type: 'UPDATE_ANIMATION_CONFIG', payload: optimizedConfig })
+    }
+  }, [dragonPerformance, state.animationConfig])
+
+  const getAdjustedParticleCount = useCallback((baseCount: number) => {
+    if (dragonPerformance) {
+      return adjustParticleCount(baseCount, dragonPerformance.currentLOD)
+    }
+    return baseCount
+  }, [dragonPerformance])
+
+  const getAdjustedAnimationConfig = useCallback((baseConfig: any) => {
+    if (dragonPerformance) {
+      return adjustAnimationQuality(baseConfig, dragonPerformance.currentLOD, dragonPerformance.metrics.fps)
+    }
+    return baseConfig
+  }, [dragonPerformance])
 
   return {
     // State
@@ -709,11 +813,26 @@ export const useDragon3D = (options: UseDragon3DOptions = {}) => {
     isPowerful: () => state.powerLevel > 70,
     isCalm: () => state.mood === 'calm' && state.state === 'idle',
 
-    // Performance utilities
+    // Enhanced performance utilities
     shouldReduceQuality,
     shouldDisableAnimations,
-    performanceScore: enablePerformanceMonitoring ? performanceMonitor.performanceScore : 100,
-    isHighPerformance: enablePerformanceMonitoring ? performanceMonitor.isHighPerformance : true,
+    getCurrentLOD,
+    getPerformanceMetrics,
+    optimizeForPerformance,
+    getAdjustedParticleCount,
+    getAdjustedAnimationConfig,
+    performanceScore: dragonPerformance ? 
+      (5 - dragonPerformance.currentLOD.level) * 20 : 
+      (enablePerformanceMonitoring ? performanceMonitor.performanceScore : 100),
+    isHighPerformance: dragonPerformance ? 
+      dragonPerformance.currentLOD.level < 2 : 
+      (enablePerformanceMonitoring ? performanceMonitor.isHighPerformance : true),
+    currentLOD: dragonPerformance?.currentLOD || null,
+    memoryStats: dragonPerformance?.memoryStats || null,
+    maxAnimationQuality,
+    targetFPS,
+    enableLOD,
+    enableAdvancedEffects,
 
     // Reactive streams
     dragonState$,
