@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react'
 import { Send, Loader2, Plus, Sparkles } from 'lucide-react'
 import { cn } from '@lib/utils'
 import { SeironImage } from '@components/SeironImage'
@@ -13,7 +13,18 @@ interface Message {
   isLoading?: boolean
 }
 
-export function MinimalChatInterface() {
+interface MinimalChatInterfaceProps {
+  onNewMessage?: (message: Message) => void
+  onUserMessage?: (message: Message) => void
+  className?: string
+}
+
+export interface MinimalChatInterfaceRef {
+  sendMessage: (content: string) => void
+}
+
+export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalChatInterfaceProps>(
+  ({ onNewMessage, onUserMessage, className }, ref) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -40,20 +51,24 @@ export function MinimalChatInterface() {
     }
   }, [input])
 
-  const handleSubmit = useCallback(async (e?: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e?: React.FormEvent, content?: string) => {
     e?.preventDefault()
-    if (!input.trim() || isLoading) return
+    const messageContent = content || input.trim()
+    if (!messageContent || isLoading) return
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: input.trim(),
+      content: messageContent,
       timestamp: new Date()
     }
 
     setMessages(prev => [...prev, userMessage])
-    setInput('')
+    if (!content) setInput('')
     setIsLoading(true)
+    
+    // Notify parent of user message
+    onUserMessage?.(userMessage)
 
     // Simulate AI response
     const loadingMessage: Message = {
@@ -77,14 +92,19 @@ export function MinimalChatInterface() {
       
       const response = dragonResponses[Math.floor(Math.random() * dragonResponses.length)]
       
+      const assistantMessage = { ...loadingMessage, content: response, isLoading: false } as Message
+      
       setMessages(prev => prev.map(msg => 
         msg.id === loadingMessage.id 
-          ? { ...msg, content: response, isLoading: false } as Message
+          ? assistantMessage
           : msg
       ))
       setIsLoading(false)
+      
+      // Notify parent of new assistant message
+      onNewMessage?.(assistantMessage)
     }, 1500)
-  }, [input, isLoading])
+  }, [input, isLoading, onNewMessage, onUserMessage])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -93,8 +113,17 @@ export function MinimalChatInterface() {
     }
   }
 
+  // Expose sendMessage method to parent
+  useImperativeHandle(ref, () => ({
+    sendMessage: (content: string) => {
+      if (content.trim()) {
+        handleSubmit(undefined, content)
+      }
+    }
+  }), [handleSubmit])
+
   return (
-    <div className="h-full flex flex-col bg-gray-950">
+    <div className={cn("h-full flex flex-col bg-gray-950", className)}>
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-4 py-8">
@@ -206,4 +235,6 @@ export function MinimalChatInterface() {
       />
     </div>
   )
-}
+})
+
+MinimalChatInterface.displayName = 'MinimalChatInterface'
