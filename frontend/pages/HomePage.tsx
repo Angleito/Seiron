@@ -1,10 +1,14 @@
 import { Link } from 'react-router-dom'
 import { Bot, Shield, TrendingUp, Zap, Star, Eye, Sparkles } from 'lucide-react'
-import SeironSprite from '@components/SeironSprite'
+import { SeironImage } from '@components/SeironImage'
+import MysticalBackground from '@components/MysticalBackground'
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-black relative">
+      {/* Mystical Background Effects */}
+      <MysticalBackground variant="cosmic" particleCount={30} />
+      
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-b from-black via-red-950/20 to-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
@@ -15,11 +19,12 @@ export default function HomePage() {
               <div className="w-[700px] h-[700px] bg-gradient-radial from-red-600/20 via-orange-500/10 to-transparent blur-3xl animate-pulse" />
             </div>
             
-            {/* Dragon Image with fiery effects */}
+            {/* Dragon Image with mystical effects */}
             <div className="relative z-10">
-              <SeironSprite 
-                variant="hero"
-                className="drop-shadow-2xl"
+              <SeironImage 
+                variant="logo"
+                className="w-96 h-96"
+                enableMysticalEffects={true}
               />
               
               {/* Additional fiery overlay effect */}
