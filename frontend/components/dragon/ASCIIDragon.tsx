@@ -307,7 +307,7 @@ const ASCIIDragon: React.FC<ASCIIDragonProps> = ({
       }
 
       const currentLine = dragonArt[lineIndex]
-      if (charIndex >= currentLine.length) {
+      if (!currentLine || charIndex >= currentLine.length) {
         lineIndex++
         charIndex = 0
         return
@@ -328,7 +328,7 @@ const ASCIIDragon: React.FC<ASCIIDragonProps> = ({
     if (!enableBreathing) return
 
     const breathingInterval = setInterval(() => {
-      setBreathingIntensity(prev => {
+      setBreathingIntensity(() => {
         const newIntensity = 0.85 + Math.sin(Date.now() / config.breathing) * 0.15
         return Math.max(0.7, Math.min(1.15, newIntensity))
       })

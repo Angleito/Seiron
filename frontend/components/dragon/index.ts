@@ -1,4 +1,6 @@
 export { default as Dragon3D } from './Dragon3D'
 export { default as Dragon3DExample } from './Dragon3DExample'
 export { default as Dragon3DIntegrationGuide } from './Dragon3DIntegrationGuide'
+export { default as ASCIIDragon } from './ASCIIDragon'
 export type { Dragon3DProps } from './Dragon3D'
+export type { ASCIIDragonProps } from './ASCIIDragon'
