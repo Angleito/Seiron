@@ -15,6 +15,32 @@
   .text-balance {
     text-wrap: balance;
   }
+  
+  /* Performance optimization utilities */
+  .will-change-opacity {
+    will-change: opacity;
+  }
+  
+  .will-change-transform {
+    will-change: transform;
+  }
+  
+  .contain-paint {
+    contain: paint;
+  }
+  
+  .gpu-layer {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  
+  /* Disable animations for better INP on low-end devices */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-pulse {
+      animation: none !important;
+    }
+  }
 }
 
 /* ========================================

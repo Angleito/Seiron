@@ -40,15 +40,16 @@ export default function Home() {
         </div>
 
         {/* Dragon Scale Background */}
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-gradient-to-r from-red-900/40 to-orange-900/40 opacity-70" />
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-red-500 rounded-full blur-3xl opacity-20 animate-pulse" />
-          <div className="absolute top-20 left-1/4 w-64 h-64 bg-orange-500 rounded-full blur-2xl opacity-15 animate-pulse" />
-          <div className="absolute bottom-20 right-1/4 w-80 h-80 bg-yellow-500 rounded-full blur-3xl opacity-10 animate-pulse" />
+        <div className="absolute inset-0 -z-10 pointer-events-none">
+          <div className="absolute inset-0 bg-gradient-to-r from-red-900/40 to-orange-900/40 opacity-70 will-change-transform transform-gpu" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-red-500 rounded-full blur-3xl opacity-20 animate-pulse will-change-opacity contain-paint" />
+          <div className="absolute top-20 left-1/4 w-64 h-64 bg-orange-500 rounded-full blur-2xl opacity-15 animate-pulse will-change-opacity contain-paint" />
+          <div className="absolute bottom-20 right-1/4 w-80 h-80 bg-yellow-500 rounded-full blur-3xl opacity-10 animate-pulse will-change-opacity contain-paint" />
           {/* Dragon Scale Pattern */}
-          <div className="absolute inset-0 opacity-5" style={{
+          <div className="absolute inset-0 opacity-5 pointer-events-none" style={{
             backgroundImage: 'radial-gradient(circle at 20px 20px, rgba(255,0,0,0.3) 2px, transparent 2px)',
-            backgroundSize: '40px 40px'
+            backgroundSize: '40px 40px',
+            contain: 'paint'
           }} />
         </div>
       </div>
