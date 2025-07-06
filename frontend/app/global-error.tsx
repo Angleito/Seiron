@@ -191,7 +191,7 @@ export default function GlobalError({
               Critical Dragon System Error
             </h2>
             <p className="description">
-              The dragon's core systems have encountered a catastrophic failure. 
+              The dragon&apos;s core systems have encountered a catastrophic failure. 
               All mystical energies need to be restored from the beginning.
             </p>
             

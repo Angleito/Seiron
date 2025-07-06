@@ -211,7 +211,7 @@ export default function Error({
           
           <div>
             <h2 className="heading">
-              Dragon's Power Overload
+              Dragon&apos;s Power Overload
             </h2>
             <p className="description">
               The mystical energies have surged beyond control! Even the legendary Seiron 
@@ -229,7 +229,7 @@ export default function Error({
 
           <div>
             <button onClick={reset} className="button">
-              Recharge Dragon's Power
+              Recharge Dragon&apos;s Power
             </button>
             
             <div className="help-text">

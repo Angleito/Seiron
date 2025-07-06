@@ -158,7 +158,7 @@ export default function NotFound() {
           
           <div>
             <h2 className="heading">
-              Dragon's Lair Not Found
+              Dragon&apos;s Lair Not Found
             </h2>
             <p className="description">
               The mystical path you seek has been consumed by dragon fire. 
@@ -168,7 +168,7 @@ export default function NotFound() {
 
           <div>
             <a href="/" className="button">
-              Return to Dragon's Domain
+              Return to Dragon&apos;s Domain
             </a>
             
             <div className="help-text">
