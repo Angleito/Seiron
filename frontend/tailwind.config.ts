@@ -69,7 +69,7 @@ const config: Config = {
         950: '#09090b',
       },
       
-      // 10% - Primary accent (Dragon theme)
+      // 10% - Primary accent
       red: {
         50: '#fef2f2',
         100: '#fee2e2',
@@ -100,40 +100,27 @@ const config: Config = {
     extend: {
       // Legacy color mappings for gradual migration
       colors: {
-        dragon: {
-          DEFAULT: "#dc2626",
-          hover: "#ef4444",
-        },
         background: "var(--color-background)",
         foreground: "var(--color-foreground)",
         accent: "var(--color-accent-primary)",
       },
       backgroundImage: {
-        // Dragon scale patterns
-        "dragon-scales": "radial-gradient(circle at 50% 50%, #DC2626 0%, #991B1B 50%, #7F1D1D 100%)",
-        "dragon-scales-subtle": "radial-gradient(circle at 50% 50%, rgba(220, 38, 38, 0.1) 0%, rgba(153, 27, 27, 0.05) 100%)",
         // Mystical gradients
         "mystical-primary": "linear-gradient(135deg, #DC2626 0%, #7C3AED 100%)",
         "mystical-secondary": "linear-gradient(135deg, #F59E0B 0%, #DC2626 100%)",
         "mystical-dark": "linear-gradient(135deg, #991B1B 0%, #5B21B6 100%)",
         "cosmic-glow": "radial-gradient(ellipse at center, #7C3AED 0%, transparent 70%)",
         // Power gradients
-        "dragon-power": "linear-gradient(45deg, #DC2626, #F59E0B, #DC2626)",
         "sei-gradient": "linear-gradient(135deg, #6B7280 0%, #374151 100%)",
       },
       animation: {
-        // Dragon-themed animations
-        "dragon-pulse": "dragon-pulse 2s ease-in-out infinite",
+        // General animations
         "scale-shimmer": "scale-shimmer 3s ease-in-out infinite",
         "mystical-glow": "mystical-glow 4s ease-in-out infinite",
         "power-surge": "power-surge 1.5s ease-in-out infinite",
         "cosmic-float": "cosmic-float 6s ease-in-out infinite",
         // Performance optimized versions
-        "dragon-pulse-slow": "dragon-pulse 4s ease-in-out infinite",
         "mystical-glow-slow": "mystical-glow 6s ease-in-out infinite",
-        // Mobile optimized animations
-        "dragon-float-mobile": "dragon-float-mobile 5s ease-in-out infinite",
-        "dragon-balls-reduced": "dragon-balls-orbit-reduced 30s linear infinite",
         // Touch gesture feedback
         "touch-ripple": "touch-ripple 0.6s ease-out",
         "swipe-hint": "swipe-hint 1s ease-in-out infinite",
@@ -141,16 +128,6 @@ const config: Config = {
         "spin-slow": "spin 3s linear infinite",
       },
       keyframes: {
-        "dragon-pulse": {
-          "0%, 100%": { 
-            transform: "scale(1)", 
-            opacity: "1" 
-          },
-          "50%": { 
-            transform: "scale(1.05)", 
-            opacity: "0.8" 
-          },
-        },
         "scale-shimmer": {
           "0%, 100%": { 
             backgroundPosition: "0% 50%" 
@@ -183,18 +160,6 @@ const config: Config = {
             transform: "translateY(-10px)" 
           },
         },
-        "dragon-float-mobile": {
-          "0%, 100%": { 
-            transform: "translateY(0px)" 
-          },
-          "50%": { 
-            transform: "translateY(-5px)" 
-          },
-        },
-        "dragon-balls-orbit-reduced": {
-          "0%": { transform: "rotate(0deg)" },
-          "100%": { transform: "rotate(360deg)" },
-        },
         "touch-ripple": {
           "0%": {
             transform: "scale(0)",
@@ -222,7 +187,6 @@ const config: Config = {
         'md': '0 4px 6px -1px rgb(0 0 0 / 0.1)',
         'lg': '0 10px 15px -3px rgb(0 0 0 / 0.1)',
         'xl': '0 20px 25px -5px rgb(0 0 0 / 0.1)',
-        'dragon': '0 10px 25px rgba(220, 38, 38, 0.3)',
       },
       fontFamily: {
         // Geist fonts

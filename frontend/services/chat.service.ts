@@ -19,7 +19,7 @@ export interface ChatResponse {
 export async function processChat(message: string, sessionId: string, walletAddress?: string): Promise<ChatResponse> {
   try {
     if (!message || !sessionId) {
-      throw new Error('The dragon requires both your wish and a summoning circle (sessionId)')
+      throw new Error('Message and session ID are required for processing')
     }
 
     // Call backend chat orchestrate endpoint
@@ -45,13 +45,13 @@ export async function processChat(message: string, sessionId: string, walletAddr
 
   } catch (error) {
     console.error('Chat API error:', error)
-    throw new Error('The dragon encountered mystical interference. Please try summoning again.')
+    throw new Error('Failed to process chat message. Please try again.')
   }
 }
 
 export function getWebSocketEndpoint(sessionId: string) {
   if (!sessionId) {
-    throw new Error('A summoning circle (sessionId) is required for the dragon connection')
+    throw new Error('Session ID is required for WebSocket connection')
   }
 
   return {

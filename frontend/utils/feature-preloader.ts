@@ -7,19 +7,6 @@
 export const FeaturePreloader = {
   // Feature definitions
   features: { // Record<string, FeatureDefinition>
-  "dragon-animations": {
-    "priority": "high",
-    "components": [
-      "components/dragon/EnhancedDragonCharacter",
-      "components/dragon/InteractiveDragon",
-      "components/DragonAnimationShowcase"
-    ],
-    "routes": [
-      "/dragon-demo",
-      "/dragon-showcase"
-    ],
-    "estimatedSize": "150KB"
-  },
   "voice-features": {
     "priority": "medium",
     "components": [
@@ -93,12 +80,6 @@ export const FeaturePreloader = {
     const loadPromises: Promise<any>[] = []
 
     switch (featureName) {
-      case 'dragon-animations':
-        loadPromises.push(
-          import('../components/dragon/lazy').then(m => m.preloadDragonComponents())
-        )
-        break
-
       case 'voice-features':
         loadPromises.push(
           import('../components/voice/lazy').then(m => m.preloadVoiceComponents()),

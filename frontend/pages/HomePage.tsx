@@ -44,14 +44,14 @@ export default function HomePage() {
       {/* Main Content */}
       <div className="relative z-70 flex flex-col items-center justify-center min-h-screen px-4">
         <div className="text-center max-w-4xl">
-          {/* Dragon Summoning Title */}
+          {/* Mystical Power Title */}
           <h1 className={`
             text-8xl font-black mb-4 relative
             text-transparent bg-gradient-to-b from-yellow-400 via-yellow-500 to-yellow-600 bg-clip-text
             transition-all duration-1000 ease-out
-            ${isLoaded ? 'storm-dragon-summon' : 'opacity-0 scale-0'}
+            ${isLoaded ? 'storm-power-manifestation' : 'opacity-0 scale-0'}
           `}>
-            <span className="storm-dragon-aura">SEIRON</span>
+            <span className="storm-mystical-aura">SEIRON</span>
           </h1>
           
           {/* Mystical Subtitle */}

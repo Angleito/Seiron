@@ -30,10 +30,10 @@ const MysticalBackground: React.FC<MysticalBackgroundProps> = ({
   useEffect(() => {
     const generateParticles = () => {
       const colors = variant === 'cosmic' 
-        ? ['bg-cosmic-purple-400', 'bg-gold-400', 'bg-dragon-red-400']
+        ? ['bg-cosmic-purple-400', 'bg-gold-400', 'bg-red-400']
         : variant === 'intense'
-        ? ['bg-dragon-red-400', 'bg-gold-400', 'bg-dragon-red-300']
-        : ['bg-dragon-red-200', 'bg-gold-200', 'bg-cosmic-purple-200'];
+        ? ['bg-red-400', 'bg-gold-400', 'bg-red-300']
+        : ['bg-red-200', 'bg-gold-200', 'bg-cosmic-purple-200'];
 
       const newParticles = Array.from({ length: particleCount }, (_, i) => ({
         id: i,
@@ -54,11 +54,11 @@ const MysticalBackground: React.FC<MysticalBackgroundProps> = ({
   const getBackgroundIntensity = () => {
     switch (variant) {
       case 'intense':
-        return 'bg-gradient-to-br from-dragon-red-900/20 via-sei-gray-900/10 to-cosmic-purple-900/20';
+        return 'bg-gradient-to-br from-red-900/20 via-sei-gray-900/10 to-cosmic-purple-900/20';
       case 'cosmic':
-        return 'bg-gradient-to-br from-cosmic-purple-900/30 via-dragon-red-900/20 to-gold-900/20';
+        return 'bg-gradient-to-br from-cosmic-purple-900/30 via-red-900/20 to-gold-900/20';
       default:
-        return 'bg-gradient-to-br from-dragon-red-900/5 via-sei-gray-900/5 to-cosmic-purple-900/5';
+        return 'bg-gradient-to-br from-red-900/5 via-sei-gray-900/5 to-cosmic-purple-900/5';
     }
   };
 
@@ -114,7 +114,7 @@ const MysticalBackground: React.FC<MysticalBackgroundProps> = ({
         <div className="absolute inset-0">
           {/* Large Mystical Orbs */}
           <div 
-            className="absolute w-20 h-20 bg-gradient-to-br from-dragon-red-400/20 to-dragon-red-600/20 rounded-full blur-lg animate-cosmic-float"
+            className="absolute w-20 h-20 bg-gradient-to-br from-red-400/20 to-red-600/20 rounded-full blur-lg animate-cosmic-float"
             style={{ 
               top: '20%', 
               left: '10%', 
@@ -144,7 +144,7 @@ const MysticalBackground: React.FC<MysticalBackgroundProps> = ({
           ></div>
           
           <div 
-            className="absolute w-14 h-14 bg-gradient-to-br from-dragon-red-300/20 to-cosmic-purple-400/20 rounded-full blur-lg animate-cosmic-float"
+            className="absolute w-14 h-14 bg-gradient-to-br from-red-300/20 to-cosmic-purple-400/20 rounded-full blur-lg animate-cosmic-float"
             style={{ 
               top: '40%', 
               right: '40%', 
@@ -164,7 +164,7 @@ const MysticalBackground: React.FC<MysticalBackgroundProps> = ({
           ></div>
           
           <div 
-            className="absolute w-1.5 h-1.5 bg-dragon-red-400 rounded-full animate-mystical-glow opacity-40"
+            className="absolute w-1.5 h-1.5 bg-red-400 rounded-full animate-mystical-glow opacity-40"
             style={{ 
               bottom: '30%', 
               left: '70%', 
@@ -194,8 +194,8 @@ const MysticalBackground: React.FC<MysticalBackgroundProps> = ({
       {/* Intensity Overlay */}
       {variant === 'intense' && (
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-dragon-red-900/10 via-transparent to-gold-900/10"></div>
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-dragon-red-900/5 to-transparent animate-scale-shimmer"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-red-900/10 via-transparent to-gold-900/10"></div>
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-red-900/5 to-transparent animate-scale-shimmer"></div>
         </div>
       )}
     </div>

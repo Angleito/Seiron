@@ -100,37 +100,6 @@ global.visualTesting = {
     }
   },
 
-  // Test dragon visual states
-  testDragonStates: async (dragonElement, states) => {
-    const results = {}
-    
-    for (const state of states) {
-      // Trigger state change
-      const stateChangeEvent = new CustomEvent('dragon-state-change', {
-        detail: { state }
-      })
-      dragonElement.dispatchEvent(stateChangeEvent)
-      
-      // Wait for animation to complete
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Capture screenshot
-      const screenshotPath = await visualTesting.captureElement(
-        dragonElement,
-        `dragon-state-${state}`
-      )
-      
-      // Compare with baseline
-      const comparison = await visualTesting.compareWithBaseline(
-        screenshotPath,
-        `dragon-state-${state}`
-      )
-      
-      results[state] = comparison
-    }
-    
-    return results
-  },
 
   // Test responsive breakpoints
   testResponsiveBreakpoints: async (element, breakpoints) => {
@@ -200,7 +169,6 @@ function hashElement(element) {
     element.tagName,
     element.className,
     element.id,
-    element.getAttribute('data-dragon-part') || '',
     element.textContent || ''
   ].join('')
   
@@ -230,20 +198,6 @@ global.expectVisualMatch = async (element, name, options = {}) => {
   return comparison
 }
 
-// Dragon-specific visual testing
-global.expectDragonVisualStates = async (dragonElement, states, options = {}) => {
-  const results = await visualTesting.testDragonStates(dragonElement, states)
-  
-  const failures = Object.entries(results)
-    .filter(([state, result]) => !result.passed && !result.isNewBaseline)
-    .map(([state, result]) => `${state}: ${result.percentage}% different`)
-  
-  if (failures.length > 0) {
-    throw new Error(`Visual regressions detected in dragon states:\n${failures.join('\n')}`)
-  }
-  
-  return results
-}
 
 global.expectResponsiveVisuals = async (element, breakpoints, options = {}) => {
   const results = await visualTesting.testResponsiveBreakpoints(element, breakpoints)

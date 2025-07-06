@@ -34,7 +34,7 @@ const SeiroonLogo: React.FC<SeiroonLogoProps> = ({
   const DragonIcon = ({ className: iconClassName = '' }) => (
     <div className={`relative ${iconSizeClasses[size]} ${iconClassName}`}>
       {/* Dragon Head Silhouette */}
-      <div className="absolute inset-0 bg-gradient-to-br from-dragon-red-500 to-dragon-red-700 rounded-full shadow-dragon transform transition-all duration-300 hover:scale-110">
+      <div className="absolute inset-0 bg-gradient-to-br from-red-500 to-red-700 rounded-full shadow-dragon transform transition-all duration-300 hover:scale-110">
         <div className="absolute inset-1 bg-gradient-to-br from-gold-400 to-gold-600 rounded-full opacity-80"></div>
         
         {/* Dragon Eyes */}
@@ -46,7 +46,7 @@ const SeiroonLogo: React.FC<SeiroonLogoProps> = ({
         
         {/* Power Aura */}
         {isHovered && (
-          <div className="absolute -inset-2 bg-gradient-to-br from-dragon-red-400 to-cosmic-purple-400 rounded-full animate-power-surge opacity-30"></div>
+          <div className="absolute -inset-2 bg-gradient-to-br from-red-400 to-cosmic-purple-400 rounded-full animate-power-surge opacity-30"></div>
         )}
       </div>
     </div>
@@ -79,11 +79,11 @@ const SeiroonLogo: React.FC<SeiroonLogoProps> = ({
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        <h1 className={`font-bold ${sizeClasses[size]} bg-gradient-to-r from-dragon-red-500 via-gold-500 to-cosmic-purple-500 bg-clip-text text-transparent transition-all duration-300 ${isHovered ? 'animate-scale-shimmer' : ''}`}>
+        <h1 className={`font-bold ${sizeClasses[size]} bg-gradient-to-r from-red-500 via-gold-500 to-cosmic-purple-500 bg-clip-text text-transparent transition-all duration-300 ${isHovered ? 'animate-scale-shimmer' : ''}`}>
           <span className="relative">
             Seiron
             {isHovered && (
-              <span className="absolute -inset-1 bg-gradient-to-r from-dragon-red-400 to-cosmic-purple-400 opacity-20 blur-sm animate-pulse"></span>
+              <span className="absolute -inset-1 bg-gradient-to-r from-red-400 to-cosmic-purple-400 opacity-20 blur-sm animate-pulse"></span>
             )}
           </span>
         </h1>
@@ -101,11 +101,11 @@ const SeiroonLogo: React.FC<SeiroonLogoProps> = ({
       <DragonIcon className={isHovered ? 'animate-dragon-pulse' : ''} />
       
       <div className="flex flex-col">
-        <h1 className={`font-bold ${sizeClasses[size]} bg-gradient-to-r from-dragon-red-500 via-gold-500 to-cosmic-purple-500 bg-clip-text text-transparent transition-all duration-300 ${isHovered ? 'animate-scale-shimmer' : ''}`}>
+        <h1 className={`font-bold ${sizeClasses[size]} bg-gradient-to-r from-red-500 via-gold-500 to-cosmic-purple-500 bg-clip-text text-transparent transition-all duration-300 ${isHovered ? 'animate-scale-shimmer' : ''}`}>
           <span className="relative">
             Seiron
             {isHovered && (
-              <span className="absolute -inset-1 bg-gradient-to-r from-dragon-red-400 to-cosmic-purple-400 opacity-20 blur-sm animate-pulse"></span>
+              <span className="absolute -inset-1 bg-gradient-to-r from-red-400 to-cosmic-purple-400 opacity-20 blur-sm animate-pulse"></span>
             )}
           </span>
         </h1>
@@ -118,7 +118,7 @@ const SeiroonLogo: React.FC<SeiroonLogoProps> = ({
       {/* Mystical Particles */}
       {isHovered && (
         <>
-          <div className="absolute -top-2 -right-2 w-2 h-2 bg-dragon-red-400 rounded-full animate-cosmic-float opacity-70"></div>
+          <div className="absolute -top-2 -right-2 w-2 h-2 bg-red-400 rounded-full animate-cosmic-float opacity-70"></div>
           <div className="absolute -bottom-2 -left-2 w-1.5 h-1.5 bg-gold-400 rounded-full animate-cosmic-float opacity-70" style={{ animationDelay: '0.5s' }}></div>
           <div className="absolute -top-1 left-1/3 w-1 h-1 bg-cosmic-purple-400 rounded-full animate-cosmic-float opacity-70" style={{ animationDelay: '1s' }}></div>
         </>

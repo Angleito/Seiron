@@ -1,9 +1,7 @@
-// Simple Dragon Components
+// Simple Components
 export { default as SeiroonLogo } from './SeiroonLogo';
 export { default as MysticalBackground } from './MysticalBackground';
 export { default as SeiroonDemo } from './SeiroonDemo';
-export { default as EnhancedDragonCharacter } from './EnhancedDragonCharacter';
-export { default as SimpleDragonSprite } from './SimpleDragonSprite';
 
 // Chat Components
 export { VoiceEnabledChat } from './chat/VoiceEnabledChat';
@@ -40,42 +38,6 @@ export type { TransactionPreviewData, TokenAmount, ProtocolInfo } from './transa
 // Shared UI Components
 export * from './ui';
 
-// Dragon Components - Complete dragon component suite
-export { 
-  Dragon3D, 
-  Dragon3DExample, 
-  Dragon3DIntegrationGuide,
-  ASCIIDragon, 
-  ASCIIDragonExample,
-  DragonRenderer, 
-  DragonRendererExample,
-  dragonUtils,
-  useDragonRenderer
-} from './dragon';
-
-// Dragon Component Types
-export type { 
-  Dragon3DProps, 
-  ASCIIDragonProps, 
-  DragonRendererProps, 
-  DragonType, 
-  VoiceAnimationState, 
-  DragonPerformanceMetrics 
-} from './dragon';
-
-// Dragon Types - simplified
-export type { SimpleDragonSpriteProps } from './SimpleDragonSprite';
-
-// Voice Integration Components - Complete voice and dragon integration suite
-export * from './voice';
-
-// Voice Component Types
-export type {
-  VoiceInterfaceProps,
-  VoiceInterfaceState,
-  VoiceDragonDemoProps,
-  VoiceDragonIntegrationExampleProps
-} from './voice';
 
 // Utility functions and helpers
 export * from '../utils';

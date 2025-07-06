@@ -11,16 +11,6 @@ const path = require('path')
 class FeaturePreloader {
   constructor() {
     this.features = {
-      'dragon-animations': {
-        priority: 'high',
-        components: [
-          'components/dragon/EnhancedDragonCharacter',
-          'components/dragon/InteractiveDragon',
-          'components/DragonAnimationShowcase'
-        ],
-        routes: ['/dragon-demo', '/dragon-showcase'],
-        estimatedSize: '150KB'
-      },
       'voice-features': {
         priority: 'medium',
         components: [
@@ -100,13 +90,6 @@ export const FeaturePreloader = {
     const loadPromises = []
 
     switch (featureName) {
-      case 'dragon-animations':
-        loadPromises.push(
-          import('../components/dragon/lazy').then(m => m.preloadDragonComponents()),
-          import('../components/lazy-dragon-showcase').then(m => m.preloadDragonShowcase())
-        )
-        break
-
       case 'voice-features':
         loadPromises.push(
           import('../components/voice/lazy').then(m => m.preloadVoiceComponents()),

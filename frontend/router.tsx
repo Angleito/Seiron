@@ -17,7 +17,7 @@ const DemoPage = lazy(() => import('./pages/DemoPage'))
 const VoiceTestPage = lazy(() => import('./pages/VoiceTestPage'))
 const AgentTestPage = lazy(() => import('./pages/AgentTestPage'))
 const SecurityTestPage = lazy(() => import('./pages/SecurityTestPage'))
-const ChatDragonPage = lazy(() => import('./pages/chat-dragon'))
+const ChatPage = lazy(() => import('./pages/chat'))
 const AboutPage = lazy(() => import('./pages/about'))
 
 const PageLoader = ({ 
@@ -105,8 +105,8 @@ export const router = createBrowserRouter([
       {
         path: 'chat',
         element: (
-          <PageLoader pageName="Voice Chat" featureType="chat">
-            <ChatDragonPage />
+          <PageLoader pageName="Chat" featureType="chat">
+            <ChatPage />
           </PageLoader>
         ),
       },

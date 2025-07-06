@@ -22,9 +22,9 @@ export default defineConfig({
             default-src 'self';
             script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval';
             style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-            img-src 'self' data: https:;
+            img-src 'self' data: blob: https:;
             font-src 'self' data: https://fonts.gstatic.com;
-            connect-src 'self' https: wss: ws: http://localhost:3001 ws://localhost:3001 https://api.web3modal.org https://explorer-api.walletconnect.com https://pulse.walletconnect.org;
+            connect-src 'self' https: wss: ws: blob: data: http://localhost:3001 ws://localhost:3001 https://api.web3modal.org https://explorer-api.walletconnect.com https://pulse.walletconnect.org https://rawcdn.githack.com;
             media-src 'self';
             object-src 'none';
             base-uri 'self';
@@ -114,5 +114,12 @@ export default defineConfig({
   },
   define: {
     global: 'globalThis',
+    // Support for process.env in browser
+    'process.env': JSON.stringify({
+      NODE_ENV: process.env.NODE_ENV || 'development',
+      NEXT_PUBLIC_ELEVENLABS_API_KEY: process.env.VITE_ELEVENLABS_API_KEY || process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY || '',
+      NEXT_PUBLIC_ELEVENLABS_VOICE_ID: process.env.VITE_ELEVENLABS_VOICE_ID || process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID || 'default',
+      NEXT_PUBLIC_VOICE_ENABLED: process.env.VITE_VOICE_ENABLED || process.env.NEXT_PUBLIC_VOICE_ENABLED || 'true',
+    }),
   },
 })

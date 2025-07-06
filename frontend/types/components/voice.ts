@@ -27,7 +27,7 @@ export interface VoiceVisualizerProps {
   isActive: boolean
   audioLevel: number
   frequencyData?: number[]
-  type?: 'wave' | 'bars' | 'circular' | 'dragon'
+  type?: 'wave' | 'bars' | 'circular'
   color?: string
   size?: number
   className?: string
@@ -134,7 +134,7 @@ export interface VoiceConfig {
   }
   visualization: {
     enabled: boolean
-    type: 'wave' | 'bars' | 'circular' | 'dragon'
+    type: 'wave' | 'bars' | 'circular'
     color: string
     sensitivity: number
     smoothing: number
@@ -327,7 +327,7 @@ export interface UseVoiceVisualizerReturn {
   isActive: boolean
   start: () => void
   stop: () => void
-  setType: (type: 'wave' | 'bars' | 'circular' | 'dragon') => void
+  setType: (type: 'wave' | 'bars' | 'circular') => void
   setColor: (color: string) => void
   setSensitivity: (sensitivity: number) => void
 }
@@ -429,11 +429,3 @@ export interface VoiceChatIntegration {
   stopWords: string[]
 }
 
-export interface VoiceDragonIntegration {
-  enabled: boolean
-  reactToVoice: boolean
-  animateOnSpeech: boolean
-  showVoiceActivity: boolean
-  dragonCommands: boolean
-  voiceFeedback: boolean
-}

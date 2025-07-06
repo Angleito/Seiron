@@ -178,7 +178,6 @@ export interface ChatMessageMetadata {
   executionTime?: number
   error?: boolean
   powerLevel?: number
-  dragonBallMessage?: string
   adapterType?: string
   agentId?: string
   tokens?: number

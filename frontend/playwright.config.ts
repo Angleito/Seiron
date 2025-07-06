@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
 /**
- * Playwright configuration for Dragon component testing
+ * Playwright configuration for Seiron frontend testing
  * Covers cross-browser and mobile device testing
  */
 export default defineConfig({

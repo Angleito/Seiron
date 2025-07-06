@@ -13,9 +13,6 @@ const axe = configureAxe({
     'button-name': { enabled: true },
     'link-name': { enabled: true },
     
-    // Dragon-specific accessibility rules
-    'svg-img-alt': { enabled: true },
-    'role-img-alt': { enabled: true },
   },
   tags: ['wcag2a', 'wcag2aa', 'wcag21aa']
 })
@@ -269,24 +266,3 @@ global.expectScreenReaderAccessible = async (element) => {
   expect(reading.fullReading.length).toBeGreaterThan(0)
 }
 
-// Dragon-specific accessibility testing
-global.expectDragonAccessible = async (dragonElement) => {
-  // Check basic accessibility
-  await expectAccessible(dragonElement)
-  
-  // Check SVG accessibility
-  expect(dragonElement.getAttribute('role')).toBe('img')
-  expect(dragonElement.getAttribute('aria-label')).toBeTruthy()
-  
-  // Check interactive parts are keyboard accessible
-  const interactiveParts = dragonElement.querySelectorAll('[data-dragon-part]')
-  interactiveParts.forEach(part => {
-    if (part.classList.contains('cursor-pointer')) {
-      expectKeyboardAccessible(part)
-    }
-  })
-  
-  // Check ARIA live regions for state announcements
-  const liveRegions = dragonElement.querySelectorAll('[aria-live]')
-  expect(liveRegions.length).toBeGreaterThan(0)
-}

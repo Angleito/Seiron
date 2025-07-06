@@ -4,7 +4,7 @@ export * from './useWalletOperations';
 export * from './useAnimationPerformance';
 export * from './usePriceFeed';
 
-// Performance monitoring hook used by dragon components
+// Performance monitoring hook
 export { usePerformanceMonitor } from './usePerformanceMonitor';
 
 // Chat persistence hooks
@@ -22,5 +22,5 @@ export type {
 // Real-time subscription hooks
 export * from './realtime';
 
-// Voice Integration Hooks - Complete voice and dragon integration suite
+// Voice Integration Hooks - Complete voice integration suite
 export * from './voice';

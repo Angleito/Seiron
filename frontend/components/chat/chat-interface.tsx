@@ -3,8 +3,8 @@
 // Export the minimal version as default for cleaner UI
 export { MinimalChatInterface as ChatInterface } from './MinimalChatInterface'
 
-// Export the voice-enabled chat with dragon
-export { VoiceEnabledChatWithDragon } from './VoiceEnabledChatWithDragon'
+// Export the voice-enabled chat
+export { VoiceEnabledChat } from './VoiceEnabledChat'
 
 // Keep the original complex version available as ComplexChatInterface
 import { useState, useEffect, useRef, useMemo } from 'react'

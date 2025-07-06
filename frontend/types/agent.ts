@@ -55,7 +55,6 @@ export interface AgentMessage {
     executionTime?: number
     error?: boolean
     powerLevel?: number
-    dragonBallMessage?: string
     adapterType?: string
     agentId?: string
     [key: string]: unknown

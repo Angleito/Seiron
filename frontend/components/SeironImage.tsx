@@ -69,13 +69,13 @@ export function SeironImage({
         <>
           {/* Dragon energy ripples */}
           <div className="absolute inset-0 scale-110 animate-pulse opacity-30">
-            <div className="absolute inset-0 bg-gradient-radial from-dragon-red-400/20 via-gold-400/10 to-transparent blur-xl" />
+            <div className="absolute inset-0 bg-gradient-radial from-red-400/20 via-gold-400/10 to-transparent blur-xl" />
           </div>
           
           {/* Floating dragon balls effect */}
           <div className="absolute -top-4 -right-4 w-8 h-8 bg-gradient-to-br from-gold-400 to-gold-600 rounded-full blur-sm animate-cosmic-float opacity-20" 
                style={{ animationDelay: '0s', animationDuration: '6s' }} />
-          <div className="absolute -bottom-4 -left-4 w-6 h-6 bg-gradient-to-br from-dragon-red-400 to-dragon-red-600 rounded-full blur-sm animate-cosmic-float opacity-20" 
+          <div className="absolute -bottom-4 -left-4 w-6 h-6 bg-gradient-to-br from-red-400 to-red-600 rounded-full blur-sm animate-cosmic-float opacity-20" 
                style={{ animationDelay: '2s', animationDuration: '8s' }} />
           <div className="absolute top-1/2 -right-8 w-5 h-5 bg-gradient-to-br from-cosmic-purple-400 to-cosmic-purple-600 rounded-full blur-sm animate-cosmic-float opacity-20" 
                style={{ animationDelay: '4s', animationDuration: '7s' }} />
@@ -106,7 +106,7 @@ export function SeironImage({
       {enableMysticalEffects && variant !== 'icon' && (
         <div className="absolute inset-0 pointer-events-none">
           <div 
-            className="absolute bottom-1/4 left-1/4 w-1/2 h-1/2 bg-gradient-radial from-dragon-red-400/20 to-transparent blur-2xl animate-mystical-glow"
+            className="absolute bottom-1/4 left-1/4 w-1/2 h-1/2 bg-gradient-radial from-red-400/20 to-transparent blur-2xl animate-mystical-glow"
             style={{ animationDelay: '1s' }}
           />
         </div>

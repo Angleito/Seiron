@@ -71,11 +71,11 @@ frontend/
 
 ## Key Components
 
-### Dragon Summoning Interface (`/components/chat/chat-interface.tsx`)
-- Real-time dragon communication UI
-- Wish fulfillment history
-- Mystical wish input field with summoning functionality
-- Dragon conjuring states
+### Chat Interface (`/components/chat/MinimalChatInterface.tsx`)
+- Dragon Ball Z themed chat UI with Seiron character
+- Message history with game-style dialogue boxes
+- Mystical wish input field with dragon theming
+- Loading states with dragon wisdom messages
 
 ### Dragon's Treasure Vault (`/components/portfolio/portfolio-sidebar.tsx`)
 - Treasure vault power level summary

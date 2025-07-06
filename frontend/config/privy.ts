@@ -40,7 +40,7 @@ if (import.meta.env.DEV) {
 const defaultConfig = {
   appearance: {
     theme: 'dark' as const,
-    accentColor: '#ef4444' as const, // Red to match Dragon Ball theme
+    accentColor: '#ef4444' as const, // Red accent color for UI consistency
     logo: undefined, // No logo needed
     showWalletLoginFirst: true,
   },
@@ -65,7 +65,7 @@ const defaultConfig = {
   // Custom text
   customText: {
     connectButton: 'Power Up Wallet',
-    connectModalTitle: 'Enter the Dragon Realm',
+    connectModalTitle: 'Connect Your Wallet',
     connectModalSubtitle: 'Connect your wallet to manage your DeFi portfolio',
   },
 };

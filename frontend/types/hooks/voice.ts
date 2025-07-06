@@ -217,12 +217,6 @@ export interface VoiceIntegrationConfig {
     confirmBeforeSend: boolean
     voiceResponse: boolean
   }
-  dragonIntegration?: {
-    enabled: boolean
-    reactToVoice: boolean
-    animateOnSpeech: boolean
-    voiceFeedback: boolean
-  }
   keyboardShortcuts?: Record<string, () => void>
   gestureControls?: boolean
 }
@@ -232,9 +226,7 @@ export interface VoiceIntegrationHookReturn {
   updateConfig: (updates: Partial<VoiceIntegrationConfig>) => void
   enableChatIntegration: () => void
   disableChatIntegration: () => void
-  enableDragonIntegration: () => void
-  disableDragonIntegration: () => void
-  isIntegrated: (service: 'chat' | 'dragon') => boolean
+  isIntegrated: (service: 'chat') => boolean
 }
 
 // Functional Types for fp-ts Integration

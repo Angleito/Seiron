@@ -35,10 +35,10 @@ export default function AboutPage() {
           {/* Hero Section */}
           <div className="text-center mb-16">
             <h2 className="text-6xl font-black mb-6 text-transparent bg-gradient-to-b from-yellow-400 via-yellow-500 to-yellow-600 bg-clip-text">
-              The Eternal Dragon of Finance
+              The Eternal Guardian of Finance
             </h2>
             <p className="text-xl text-yellow-400/80 leading-relaxed">
-              Seiron grants your wildest Sei investing wishes with the power of AI, voice commands, and mystical dragon energy.
+              Seiron grants your wildest Sei investing wishes with the power of AI, voice commands, and mystical energy.
             </p>
           </div>
 
@@ -47,7 +47,7 @@ export default function AboutPage() {
             <FeatureCard
               icon={<Mic className="h-8 w-8" />}
               title="Voice-Powered Interface"
-              description="Speak your wishes to Seiron using natural voice commands. The dragon listens, understands, and responds with ancient wisdom enhanced by modern AI."
+              description="Speak your wishes to Seiron using natural voice commands. The guardian spirit listens, understands, and responds with ancient wisdom enhanced by modern AI."
             />
             
             <FeatureCard
@@ -64,8 +64,8 @@ export default function AboutPage() {
             
             <FeatureCard
               icon={<Sparkles className="h-8 w-8" />}
-              title="Mystical Dragon Animations"
-              description="Watch as the ASCII dragon responds to your voice, breathing and moving with each interaction, bringing ancient magic to modern finance."
+              title="Mystical Spirit Animations"
+              description="Watch as the ASCII spirit responds to your voice, breathing and moving with each interaction, bringing ancient magic to modern finance."
             />
           </div>
 
@@ -74,19 +74,19 @@ export default function AboutPage() {
             <h3 className="text-3xl font-bold mb-4 text-yellow-400">The Legend of Seiron</h3>
             <div className="space-y-4 text-gray-300 leading-relaxed">
               <p>
-                In the mystical realm of Sei, where blockchain technology meets ancient dragon magic, 
-                Seiron emerged as the guardian of financial wisdom. This legendary dragon possesses 
+                In the mystical realm of Sei, where blockchain technology meets ancient ethereal magic, 
+                Seiron emerged as the guardian of financial wisdom. This legendary spirit possesses 
                 the power to grant investment wishes to those brave enough to summon it.
               </p>
               <p>
-                Unlike ordinary financial assistants, Seiron channels the energy of the eternal dragon 
-                balls, combining millennia of wisdom with cutting-edge AI technology. Through voice 
+                Unlike ordinary financial assistants, Seiron channels the energy of the eternal orbs 
+                of wisdom, combining millennia of ancient knowledge with cutting-edge AI technology. Through voice 
                 commands and mystical chat interfaces, mortals can now access powers once reserved 
                 for the gods of finance.
               </p>
               <p>
                 Every interaction with Seiron is enhanced by storm effects, lightning animations, 
-                and the dragon's responsive ASCII form that breathes with life. This is not just 
+                and the spirit's responsive ASCII form that breathes with life. This is not just 
                 a financial tool—it's a journey into a realm where technology and mythology unite.
               </p>
             </div>
@@ -115,8 +115,8 @@ export default function AboutPage() {
         {/* Footer */}
         <footer className="mt-24 py-8 border-t border-yellow-500/20">
           <div className="container mx-auto px-4 text-center text-yellow-400/60">
-            <p>© 2024 Seiron - The Dragon of Financial Wisdom</p>
-            <p className="mt-2 text-sm">Powered by Sei Network • Enhanced by AI • Blessed by Dragons</p>
+            <p>© 2024 Seiron - The Guardian of Financial Wisdom</p>
+            <p className="mt-2 text-sm">Powered by Sei Network • Enhanced by AI • Blessed by Ancient Spirits</p>
           </div>
         </footer>
       </div>
