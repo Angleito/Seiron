@@ -40,6 +40,10 @@ export type { TransactionPreviewData, TokenAmount, ProtocolInfo } from './transa
 // Shared UI Components
 export * from './ui';
 
+// Dragon Components
+export { Dragon3D, Dragon3DExample } from './dragon';
+export type { Dragon3DProps } from './dragon';
+
 // Dragon Types - simplified
 export type { SimpleDragonSpriteProps } from './SimpleDragonSprite';
 

@@ -1,6 +1,9 @@
 require('@testing-library/jest-dom')
 require('jest-canvas-mock')
 
+// Import React for mocks
+const React = require('react')
+
 // Mock framer-motion to avoid issues in test environment
 jest.mock('framer-motion', () => ({
   motion: {
@@ -19,6 +22,8 @@ jest.mock('framer-motion', () => ({
     set: jest.fn(),
   }),
 }))
+
+// Three.js and React Three Fiber mocks will be handled in individual test files
 
 // Mock IntersectionObserver
 global.IntersectionObserver = jest.fn(() => ({

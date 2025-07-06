@@ -1,0 +1,669 @@
+/**
+ * Storm Animations - Advanced CSS animations for Seiron's storm theme
+ * Features: Lightning effects, cloud morphing, fog particles, vortex rotations
+ * Optimized for performance with GPU acceleration
+ */
+
+/* ========================================
+   CSS Custom Properties (CSS Variables)
+   ======================================== */
+
+:root {
+  /* Storm Color Palette */
+  --storm-dark-red: #8B0000;
+  --storm-crimson: #DC143C;
+  --storm-golden: #FFD700;
+  --storm-lightning: #E6E6FA;
+  --storm-fog: rgba(169, 169, 169, 0.6);
+  --storm-shadow: rgba(0, 0, 0, 0.8);
+  --storm-glow: rgba(255, 215, 0, 0.4);
+  
+  /* Animation Durations */
+  --storm-duration-fast: 0.3s;
+  --storm-duration-normal: 0.8s;
+  --storm-duration-slow: 2s;
+  --storm-duration-epic: 4s;
+  --storm-duration-eternal: 8s;
+  
+  /* Timing Functions */
+  --storm-ease-natural: cubic-bezier(0.4, 0, 0.2, 1);
+  --storm-ease-dramatic: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --storm-ease-lightning: cubic-bezier(0.95, 0.05, 0.795, 0.035);
+  --storm-ease-breathing: cubic-bezier(0.37, 0, 0.63, 1);
+  
+  /* Animation Delays */
+  --storm-delay-1: 0.1s;
+  --storm-delay-2: 0.2s;
+  --storm-delay-3: 0.3s;
+  --storm-delay-4: 0.4s;
+  --storm-delay-5: 0.5s;
+}
+
+/* ========================================
+   Complex Keyframe Animations
+   ======================================== */
+
+/* Cloud Morphing and Swirling */
+@keyframes storm-cloud-morph {
+  0% {
+    transform: scale(1) rotate(0deg) skew(0deg);
+    border-radius: 50% 40% 60% 30%;
+    opacity: 0.7;
+  }
+  25% {
+    transform: scale(1.1) rotate(5deg) skew(2deg);
+    border-radius: 60% 50% 40% 70%;
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(0.95) rotate(10deg) skew(-1deg);
+    border-radius: 40% 70% 50% 60%;
+    opacity: 0.9;
+  }
+  75% {
+    transform: scale(1.05) rotate(15deg) skew(3deg);
+    border-radius: 70% 30% 80% 40%;
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1) rotate(20deg) skew(0deg);
+    border-radius: 50% 40% 60% 30%;
+    opacity: 0.7;
+  }
+}
+
+@keyframes storm-cloud-swirl {
+  0% {
+    transform: rotate(0deg) translateX(0px) scale(1);
+  }
+  25% {
+    transform: rotate(90deg) translateX(10px) scale(1.05);
+  }
+  50% {
+    transform: rotate(180deg) translateX(0px) scale(0.98);
+  }
+  75% {
+    transform: rotate(270deg) translateX(-10px) scale(1.02);
+  }
+  100% {
+    transform: rotate(360deg) translateX(0px) scale(1);
+  }
+}
+
+/* Lightning Flash Effects */
+@keyframes storm-lightning-flash {
+  0% {
+    opacity: 0;
+    transform: scaleY(0) skewX(0deg);
+  }
+  5% {
+    opacity: 1;
+    transform: scaleY(1) skewX(-10deg);
+    filter: brightness(3) contrast(2);
+  }
+  10% {
+    opacity: 0.8;
+    transform: scaleY(0.8) skewX(5deg);
+    filter: brightness(2) contrast(1.5);
+  }
+  15% {
+    opacity: 0;
+    transform: scaleY(0) skewX(0deg);
+    filter: brightness(1) contrast(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleY(0) skewX(0deg);
+    filter: brightness(1) contrast(1);
+  }
+}
+
+@keyframes storm-lightning-glow {
+  0% {
+    box-shadow: 0 0 0 var(--storm-lightning);
+  }
+  50% {
+    box-shadow: 
+      0 0 20px var(--storm-lightning),
+      0 0 40px var(--storm-golden),
+      0 0 60px var(--storm-crimson);
+  }
+  100% {
+    box-shadow: 0 0 0 var(--storm-lightning);
+  }
+}
+
+/* Fog Particle Movements */
+@keyframes storm-fog-drift {
+  0% {
+    transform: translateX(-50px) translateY(0px) rotate(0deg);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translateX(0px) translateY(-10px) rotate(2deg);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateX(30px) translateY(5px) rotate(-1deg);
+    opacity: 0.8;
+  }
+  75% {
+    transform: translateX(10px) translateY(-5px) rotate(3deg);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateX(50px) translateY(0px) rotate(0deg);
+    opacity: 0.2;
+  }
+}
+
+@keyframes storm-fog-particles {
+  0% {
+    transform: scale(0.8) rotate(0deg);
+    opacity: 0.4;
+  }
+  33% {
+    transform: scale(1.2) rotate(120deg);
+    opacity: 0.7;
+  }
+  66% {
+    transform: scale(0.9) rotate(240deg);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(0.8) rotate(360deg);
+    opacity: 0.4;
+  }
+}
+
+/* Vortex Rotation Animations */
+@keyframes storm-vortex-spin {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@keyframes storm-vortex-spiral {
+  0% {
+    transform: rotate(0deg) translateX(0px) scale(1);
+  }
+  25% {
+    transform: rotate(90deg) translateX(20px) scale(1.1);
+  }
+  50% {
+    transform: rotate(180deg) translateX(0px) scale(0.9);
+  }
+  75% {
+    transform: rotate(270deg) translateX(-20px) scale(1.05);
+  }
+  100% {
+    transform: rotate(360deg) translateX(0px) scale(1);
+  }
+}
+
+/* Breathing/Pulsing Effects */
+@keyframes storm-breathing {
+  0% {
+    transform: scale(1) translateZ(0);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.05) translateZ(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) translateZ(0);
+    opacity: 0.8;
+  }
+}
+
+@keyframes storm-power-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 var(--storm-glow);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 20px 10px var(--storm-glow);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 var(--storm-glow);
+  }
+}
+
+/* ========================================
+   Storm Animation Classes
+   ======================================== */
+
+/* Cloud Animations */
+.storm-cloud {
+  will-change: transform, opacity;
+  animation: storm-cloud-morph var(--storm-duration-eternal) var(--storm-ease-natural) infinite;
+}
+
+.storm-cloud-swirling {
+  will-change: transform;
+  animation: storm-cloud-swirl var(--storm-duration-slow) var(--storm-ease-natural) infinite;
+}
+
+/* Lightning Effects */
+.storm-lightning {
+  position: relative;
+  will-change: opacity, transform, filter;
+  animation: storm-lightning-flash var(--storm-duration-fast) var(--storm-ease-lightning) infinite;
+}
+
+.storm-lightning-glow {
+  will-change: box-shadow;
+  animation: storm-lightning-glow var(--storm-duration-normal) var(--storm-ease-natural) infinite;
+}
+
+/* Fog Particles */
+.storm-fog {
+  will-change: transform, opacity;
+  animation: storm-fog-drift var(--storm-duration-epic) var(--storm-ease-natural) infinite;
+}
+
+.storm-fog-particles {
+  will-change: transform, opacity;
+  animation: storm-fog-particles var(--storm-duration-slow) var(--storm-ease-natural) infinite;
+}
+
+/* Vortex Animations */
+.storm-vortex {
+  will-change: transform;
+  animation: storm-vortex-spin var(--storm-duration-slow) linear infinite;
+}
+
+.storm-vortex-spiral {
+  will-change: transform;
+  animation: storm-vortex-spiral var(--storm-duration-epic) var(--storm-ease-dramatic) infinite;
+}
+
+/* Breathing Effects */
+.storm-breathing {
+  will-change: transform, opacity;
+  animation: storm-breathing var(--storm-duration-slow) var(--storm-ease-breathing) infinite;
+}
+
+.storm-power-pulse {
+  will-change: transform, box-shadow;
+  animation: storm-power-pulse var(--storm-duration-normal) var(--storm-ease-natural) infinite;
+}
+
+/* ========================================
+   Dramatic Entrance Animations
+   ======================================== */
+
+@keyframes storm-entrance-dramatic {
+  0% {
+    transform: scale(0.3) rotate(-10deg) translateY(100px);
+    opacity: 0;
+    filter: blur(10px);
+  }
+  50% {
+    transform: scale(1.1) rotate(2deg) translateY(-20px);
+    opacity: 0.8;
+    filter: blur(2px);
+  }
+  100% {
+    transform: scale(1) rotate(0deg) translateY(0px);
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+
+@keyframes storm-entrance-lightning {
+  0% {
+    opacity: 0;
+    transform: scaleX(0.1) skewX(20deg);
+    filter: brightness(0);
+  }
+  10% {
+    opacity: 1;
+    transform: scaleX(1.2) skewX(-5deg);
+    filter: brightness(3);
+  }
+  20% {
+    opacity: 0.8;
+    transform: scaleX(0.9) skewX(2deg);
+    filter: brightness(1.5);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleX(1) skewX(0deg);
+    filter: brightness(1);
+  }
+}
+
+.storm-entrance-dramatic {
+  animation: storm-entrance-dramatic var(--storm-duration-normal) var(--storm-ease-dramatic) forwards;
+}
+
+.storm-entrance-lightning {
+  animation: storm-entrance-lightning var(--storm-duration-fast) var(--storm-ease-lightning) forwards;
+}
+
+/* ========================================
+   Hover Effects for Interactive Elements
+   ======================================== */
+
+.storm-hover-glow {
+  position: relative;
+  transition: all var(--storm-duration-fast) var(--storm-ease-natural);
+}
+
+.storm-hover-glow:hover {
+  transform: scale(1.05) translateZ(0);
+  box-shadow: 
+    0 0 20px var(--storm-glow),
+    0 0 40px var(--storm-golden),
+    0 4px 20px var(--storm-shadow);
+  filter: brightness(1.1) saturate(1.2);
+}
+
+.storm-hover-lightning {
+  position: relative;
+  transition: all var(--storm-duration-fast) var(--storm-ease-natural);
+  overflow: hidden;
+}
+
+.storm-hover-lightning::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--storm-lightning),
+    transparent
+  );
+  transition: left var(--storm-duration-fast) var(--storm-ease-natural);
+}
+
+.storm-hover-lightning:hover::before {
+  left: 100%;
+}
+
+.storm-hover-vortex {
+  transition: transform var(--storm-duration-fast) var(--storm-ease-natural);
+}
+
+.storm-hover-vortex:hover {
+  transform: rotate(5deg) scale(1.02);
+}
+
+/* ========================================
+   Scroll-Triggered Animations
+   ======================================== */
+
+.storm-scroll-fade {
+  opacity: 0;
+  transform: translateY(50px);
+  transition: all var(--storm-duration-normal) var(--storm-ease-natural);
+}
+
+.storm-scroll-fade.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.storm-scroll-lightning {
+  opacity: 0;
+  transform: scaleX(0) skewX(20deg);
+  transition: all var(--storm-duration-fast) var(--storm-ease-lightning);
+}
+
+.storm-scroll-lightning.in-view {
+  opacity: 1;
+  transform: scaleX(1) skewX(0deg);
+}
+
+.storm-scroll-vortex {
+  opacity: 0;
+  transform: rotate(-180deg) scale(0.5);
+  transition: all var(--storm-duration-slow) var(--storm-ease-dramatic);
+}
+
+.storm-scroll-vortex.in-view {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+/* ========================================
+   GPU-Accelerated Performance Optimizations
+   ======================================== */
+
+.storm-gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+.storm-3d-transform {
+  transform-style: preserve-3d;
+}
+
+/* Force GPU acceleration for critical animations */
+.storm-cloud,
+.storm-lightning,
+.storm-vortex,
+.storm-fog {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* ========================================
+   Media Queries - Accessibility & Performance
+   ======================================== */
+
+/* Reduced Motion Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .storm-cloud,
+  .storm-lightning,
+  .storm-vortex,
+  .storm-fog,
+  .storm-breathing,
+  .storm-power-pulse {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .storm-entrance-dramatic,
+  .storm-entrance-lightning {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+  }
+}
+
+/* Mobile Performance Scaling */
+@media (max-width: 768px) {
+  :root {
+    --storm-duration-fast: 0.2s;
+    --storm-duration-normal: 0.5s;
+    --storm-duration-slow: 1s;
+    --storm-duration-epic: 2s;
+    --storm-duration-eternal: 4s;
+  }
+  
+  .storm-cloud,
+  .storm-fog,
+  .storm-vortex {
+    animation-duration: var(--storm-duration-slow) !important;
+  }
+  
+  .storm-hover-glow:hover {
+    transform: scale(1.02) translateZ(0);
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  :root {
+    --storm-dark-red: #FF0000;
+    --storm-crimson: #FF0000;
+    --storm-golden: #FFFF00;
+    --storm-lightning: #FFFFFF;
+    --storm-fog: rgba(255, 255, 255, 0.8);
+    --storm-shadow: rgba(0, 0, 0, 1);
+    --storm-glow: rgba(255, 255, 0, 0.8);
+  }
+  
+  .storm-hover-glow:hover {
+    outline: 2px solid var(--storm-golden);
+  }
+}
+
+/* ========================================
+   Z-Index Layering System
+   ======================================== */
+
+.storm-layer-background {
+  z-index: 1;
+}
+
+.storm-layer-fog {
+  z-index: 2;
+}
+
+.storm-layer-clouds {
+  z-index: 3;
+}
+
+.storm-layer-lightning {
+  z-index: 4;
+}
+
+.storm-layer-vortex {
+  z-index: 5;
+}
+
+.storm-layer-foreground {
+  z-index: 6;
+}
+
+/* ========================================
+   Utility Classes for Animation Control
+   ======================================== */
+
+.storm-animation-paused {
+  animation-play-state: paused !important;
+}
+
+.storm-animation-delayed-1 {
+  animation-delay: var(--storm-delay-1) !important;
+}
+
+.storm-animation-delayed-2 {
+  animation-delay: var(--storm-delay-2) !important;
+}
+
+.storm-animation-delayed-3 {
+  animation-delay: var(--storm-delay-3) !important;
+}
+
+.storm-animation-delayed-4 {
+  animation-delay: var(--storm-delay-4) !important;
+}
+
+.storm-animation-delayed-5 {
+  animation-delay: var(--storm-delay-5) !important;
+}
+
+.storm-animation-reverse {
+  animation-direction: reverse !important;
+}
+
+.storm-animation-alternate {
+  animation-direction: alternate !important;
+}
+
+/* ========================================
+   Mystical Dragon Summoning Effects
+   ======================================== */
+
+@keyframes storm-dragon-summon {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+    filter: blur(20px) hue-rotate(0deg);
+  }
+  25% {
+    transform: scale(0.5) rotate(90deg);
+    opacity: 0.3;
+    filter: blur(10px) hue-rotate(45deg);
+  }
+  50% {
+    transform: scale(1.2) rotate(180deg);
+    opacity: 0.7;
+    filter: blur(5px) hue-rotate(90deg);
+  }
+  75% {
+    transform: scale(0.9) rotate(270deg);
+    opacity: 0.9;
+    filter: blur(2px) hue-rotate(135deg);
+  }
+  100% {
+    transform: scale(1) rotate(360deg);
+    opacity: 1;
+    filter: blur(0px) hue-rotate(180deg);
+  }
+}
+
+.storm-dragon-summon {
+  animation: storm-dragon-summon var(--storm-duration-epic) var(--storm-ease-dramatic) forwards;
+}
+
+/* Dragon power aura */
+.storm-dragon-aura {
+  position: relative;
+}
+
+.storm-dragon-aura::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  background: radial-gradient(
+    circle,
+    var(--storm-glow) 0%,
+    var(--storm-golden) 30%,
+    var(--storm-crimson) 60%,
+    transparent 100%
+  );
+  border-radius: 50%;
+  animation: storm-power-pulse var(--storm-duration-slow) var(--storm-ease-breathing) infinite;
+  z-index: -1;
+}
+
+/* ========================================
+   Print Styles
+   ======================================== */
+
+@media print {
+  .storm-cloud,
+  .storm-lightning,
+  .storm-vortex,
+  .storm-fog,
+  .storm-breathing,
+  .storm-power-pulse,
+  .storm-entrance-dramatic,
+  .storm-entrance-lightning {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+  }
+}

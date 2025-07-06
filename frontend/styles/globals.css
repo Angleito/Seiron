@@ -1,5 +1,7 @@
 /* Import responsive dragon styles */
 @import './dragon-responsive.css';
+/* Import storm theme animations */
+@import './storm-animations.css';
 
 @font-face {
   font-family: 'Geist Sans';
@@ -19,6 +21,48 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ========================================
+   STORM THEME CSS CUSTOM PROPERTIES
+   ======================================== */
+
+:root {
+  /* Storm Color Palette */
+  --storm-deep-red: #7f1d1d;
+  --storm-crimson: #dc2626;
+  --storm-scarlet: #ef4444;
+  --storm-gold: #f59e0b;
+  --storm-amber: #fbbf24;
+  --storm-dark-gold: #d97706;
+  --storm-bronze: #92400e;
+  --storm-shadow: #1f2937;
+  --storm-obsidian: #111827;
+  --storm-charcoal: #374151;
+  
+  /* Storm Animation Timings */
+  --storm-slow: 8s;
+  --storm-medium: 4s;
+  --storm-fast: 2s;
+  --storm-lightning: 0.3s;
+  --storm-gather: 6s;
+  --storm-pulse: 3s;
+  
+  /* Storm Opacity Values */
+  --storm-opacity-light: 0.3;
+  --storm-opacity-medium: 0.6;
+  --storm-opacity-heavy: 0.9;
+  --storm-opacity-full: 1;
+  
+  /* Storm Shadows */
+  --storm-shadow-light: 0 0 20px rgba(239, 68, 68, 0.3);
+  --storm-shadow-medium: 0 0 40px rgba(239, 68, 68, 0.6);
+  --storm-shadow-heavy: 0 0 60px rgba(239, 68, 68, 0.9);
+  
+  /* Storm Glows */
+  --storm-glow-gold: 0 0 30px rgba(245, 158, 11, 0.8);
+  --storm-glow-crimson: 0 0 40px rgba(220, 38, 38, 0.9);
+  --storm-glow-mixed: 0 0 50px rgba(239, 68, 68, 0.7), 0 0 80px rgba(245, 158, 11, 0.5);
+}
+
 @layer base {
   html {
     height: 100%;
@@ -31,6 +75,61 @@
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  
+  /* ========================================
+     STORM THEME UTILITY CLASSES
+     ======================================== */
+  
+  /* Storm Glow Effect */
+  .storm-glow {
+    box-shadow: var(--storm-glow-mixed);
+    filter: brightness(1.2) contrast(1.1);
+    transition: all 0.3s ease;
+  }
+  
+  .storm-glow:hover {
+    box-shadow: 
+      0 0 60px rgba(239, 68, 68, 0.9),
+      0 0 100px rgba(245, 158, 11, 0.7),
+      0 0 140px rgba(220, 38, 38, 0.5);
+    filter: brightness(1.4) contrast(1.2);
+  }
+  
+  /* Storm Shadow Effect */
+  .storm-shadow {
+    box-shadow: 
+      0 10px 30px rgba(31, 41, 55, 0.8),
+      0 0 40px rgba(127, 29, 29, 0.6),
+      inset 0 1px 0 rgba(245, 158, 11, 0.2);
+    filter: drop-shadow(0 0 20px rgba(239, 68, 68, 0.4));
+  }
+  
+  /* Storm Backdrop Effect */
+  .storm-backdrop {
+    background: linear-gradient(
+      135deg,
+      rgba(17, 24, 39, 0.95) 0%,
+      rgba(31, 41, 55, 0.9) 25%,
+      rgba(127, 29, 29, 0.8) 50%,
+      rgba(31, 41, 55, 0.9) 75%,
+      rgba(17, 24, 39, 0.95) 100%
+    );
+    backdrop-filter: blur(12px) saturate(1.3);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+  }
+  
+  /* Lightning Flash Effect */
+  .lightning-flash {
+    animation: lightningStrike var(--storm-lightning) ease-in-out;
+  }
+  
+  /* Storm GPU Acceleration */
+  .storm-gpu {
+    will-change: transform, opacity, filter, box-shadow;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
   }
 }
 
@@ -1564,4 +1663,219 @@
 
 .animate-float-ember-3 {
   animation: float-ember-3 5s ease-in-out infinite;
+}
+
+/* ========================================
+   STORM THEME KEYFRAME ANIMATIONS
+   ======================================== */
+
+/* Storm Clouds Gathering Animation */
+@keyframes stormGather {
+  0% {
+    transform: translateX(-100%) scale(0.8);
+    opacity: 0;
+    filter: blur(20px);
+  }
+  25% {
+    transform: translateX(-50%) scale(1);
+    opacity: 0.4;
+    filter: blur(10px);
+  }
+  50% {
+    transform: translateX(0%) scale(1.1);
+    opacity: 0.7;
+    filter: blur(5px);
+  }
+  75% {
+    transform: translateX(25%) scale(1.05);
+    opacity: 0.9;
+    filter: blur(2px);
+  }
+  100% {
+    transform: translateX(0%) scale(1);
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+
+/* Lightning Strike Animation */
+@keyframes lightningStrike {
+  0% {
+    background: transparent;
+    box-shadow: none;
+    filter: brightness(1);
+  }
+  5% {
+    background: rgba(245, 158, 11, 0.9);
+    box-shadow: 
+      0 0 100px rgba(245, 158, 11, 1),
+      0 0 200px rgba(239, 68, 68, 0.8);
+    filter: brightness(3) contrast(2);
+  }
+  10% {
+    background: rgba(239, 68, 68, 0.7);
+    box-shadow: 
+      0 0 80px rgba(239, 68, 68, 1),
+      0 0 160px rgba(245, 158, 11, 0.6);
+    filter: brightness(2.5) contrast(1.8);
+  }
+  15% {
+    background: rgba(245, 158, 11, 0.5);
+    box-shadow: 
+      0 0 60px rgba(245, 158, 11, 0.8),
+      0 0 120px rgba(239, 68, 68, 0.4);
+    filter: brightness(2) contrast(1.5);
+  }
+  100% {
+    background: transparent;
+    box-shadow: none;
+    filter: brightness(1);
+  }
+}
+
+/* Dragon Awakening Animation */
+@keyframes dragonAwaken {
+  0% {
+    transform: scale(0.95) rotate(0deg);
+    filter: brightness(0.8) contrast(0.9) saturate(0.8);
+    box-shadow: 0 0 20px rgba(127, 29, 29, 0.4);
+  }
+  25% {
+    transform: scale(1.02) rotate(1deg);
+    filter: brightness(1.1) contrast(1.1) saturate(1.1);
+    box-shadow: 
+      0 0 40px rgba(239, 68, 68, 0.6),
+      0 0 60px rgba(245, 158, 11, 0.4);
+  }
+  50% {
+    transform: scale(1.08) rotate(-1deg);
+    filter: brightness(1.3) contrast(1.3) saturate(1.3);
+    box-shadow: 
+      0 0 60px rgba(239, 68, 68, 0.8),
+      0 0 100px rgba(245, 158, 11, 0.6),
+      0 0 140px rgba(220, 38, 38, 0.4);
+  }
+  75% {
+    transform: scale(1.15) rotate(0.5deg);
+    filter: brightness(1.5) contrast(1.5) saturate(1.5);
+    box-shadow: 
+      0 0 80px rgba(239, 68, 68, 1),
+      0 0 120px rgba(245, 158, 11, 0.8),
+      0 0 160px rgba(220, 38, 38, 0.6);
+  }
+  100% {
+    transform: scale(1.2) rotate(0deg);
+    filter: brightness(1.6) contrast(1.6) saturate(1.6);
+    box-shadow: 
+      0 0 100px rgba(239, 68, 68, 1),
+      0 0 140px rgba(245, 158, 11, 1),
+      0 0 180px rgba(220, 38, 38, 0.8),
+      0 0 220px rgba(127, 29, 29, 0.6);
+  }
+}
+
+/* Storm Energy Pulse */
+@keyframes stormPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: var(--storm-opacity-medium);
+    filter: brightness(1) hue-rotate(0deg);
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: var(--storm-opacity-heavy);
+    filter: brightness(1.4) hue-rotate(10deg);
+  }
+}
+
+/* Storm Whirlwind Effect */
+@keyframes stormWhirlwind {
+  0% {
+    transform: rotate(0deg) scale(1);
+    opacity: 0.3;
+  }
+  25% {
+    transform: rotate(90deg) scale(1.1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: rotate(180deg) scale(1.2);
+    opacity: 0.8;
+  }
+  75% {
+    transform: rotate(270deg) scale(1.1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+    opacity: 0.3;
+  }
+}
+
+/* Storm Ember Spiral */
+@keyframes stormEmberSpiral {
+  0% {
+    transform: rotate(0deg) translateX(0px) scale(1);
+    opacity: 0;
+  }
+  25% {
+    transform: rotate(90deg) translateX(30px) scale(1.2);
+    opacity: 0.8;
+  }
+  50% {
+    transform: rotate(180deg) translateX(50px) scale(1.4);
+    opacity: 1;
+  }
+  75% {
+    transform: rotate(270deg) translateX(30px) scale(1.1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: rotate(360deg) translateX(0px) scale(0.8);
+    opacity: 0;
+  }
+}
+
+/* Storm Utility Animation Classes */
+.animate-storm-gather {
+  animation: stormGather var(--storm-gather) ease-in-out infinite;
+}
+
+.animate-lightning-strike {
+  animation: lightningStrike var(--storm-lightning) ease-in-out;
+}
+
+.animate-dragon-awaken {
+  animation: dragonAwaken var(--storm-slow) ease-in-out infinite;
+}
+
+.animate-storm-pulse {
+  animation: stormPulse var(--storm-pulse) ease-in-out infinite;
+}
+
+.animate-storm-whirlwind {
+  animation: stormWhirlwind var(--storm-medium) linear infinite;
+}
+
+.animate-storm-ember-spiral {
+  animation: stormEmberSpiral var(--storm-medium) ease-in-out infinite;
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .animate-storm-gather,
+  .animate-lightning-strike,
+  .animate-dragon-awaken,
+  .animate-storm-pulse,
+  .animate-storm-whirlwind,
+  .animate-storm-ember-spiral {
+    animation: none !important;
+  }
+  
+  .storm-glow,
+  .storm-shadow,
+  .lightning-flash {
+    transition: none !important;
+    animation: none !important;
+  }
 }
