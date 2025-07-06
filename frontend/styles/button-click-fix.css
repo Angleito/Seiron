@@ -1,0 +1,41 @@
+/* ========================================
+   Button Click Fix for Transform Issues
+   ======================================== */
+
+/* Fix for buttons with transform animations */
+button {
+  position: relative !important;
+  isolation: isolate !important;
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
+  transform: translateZ(0) !important; /* Force GPU layer */
+  transform-origin: center center !important;
+}
+
+/* Ensure clickability during and after animations */
+button.storm-hover-glow,
+button.storm-hover-lightning {
+  will-change: transform, opacity !important;
+  transform-style: preserve-3d !important;
+  -webkit-transform-style: preserve-3d !important;
+}
+
+/* Fix for animation container */
+.storm-entrance-dramatic > button,
+.storm-entrance-dramatic button {
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+/* Additional fixes for homepage buttons */
+button[onclick*="handleNavigation"] {
+  position: relative !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+/* Fix hover states during animations */
+.storm-entrance-dramatic button:hover {
+  transform: scale(1.05) translateZ(0) !important;
+}

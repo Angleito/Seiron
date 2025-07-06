@@ -1,5 +1,7 @@
 /* Import design tokens first */
 @import './design-tokens.css';
+@import './storm-animations.css';
+@import './button-click-fix.css';
 
 @font-face {
   font-family: 'Geist Sans';

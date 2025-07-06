@@ -341,11 +341,18 @@
 }
 
 .storm-entrance-dramatic {
-  animation: storm-entrance-dramatic var(--storm-duration-normal) var(--storm-ease-dramatic) forwards;
+  animation: storm-entrance-dramatic var(--storm-duration-normal) var(--storm-ease-dramatic) both;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+  transform-style: preserve-3d;
+  -webkit-backface-visibility: hidden;
+  -webkit-transform-style: preserve-3d;
 }
 
 .storm-entrance-lightning {
-  animation: storm-entrance-lightning var(--storm-duration-fast) var(--storm-ease-lightning) forwards;
+  animation: storm-entrance-lightning var(--storm-duration-fast) var(--storm-ease-lightning) both;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
 }
 
 /* ========================================
@@ -355,21 +362,25 @@
 .storm-hover-glow {
   position: relative;
   transition: all var(--storm-duration-fast) var(--storm-ease-natural);
+  cursor: pointer !important;
+  pointer-events: auto !important;
 }
 
 .storm-hover-glow:hover {
-  transform: scale(1.05) translateZ(0);
+  transform: scale(1.05) translateZ(0) !important;
   box-shadow: 
     0 0 20px var(--storm-glow),
     0 0 40px var(--storm-golden),
-    0 4px 20px var(--storm-shadow);
-  filter: brightness(1.1) saturate(1.2);
+    0 4px 20px var(--storm-shadow) !important;
+  filter: brightness(1.1) saturate(1.2) !important;
 }
 
 .storm-hover-lightning {
   position: relative;
   transition: all var(--storm-duration-fast) var(--storm-ease-natural);
   overflow: hidden;
+  cursor: pointer !important;
+  pointer-events: auto !important;
 }
 
 .storm-hover-lightning::before {
@@ -386,6 +397,7 @@
     transparent
   );
   transition: left var(--storm-duration-fast) var(--storm-ease-natural);
+  pointer-events: none;
 }
 
 .storm-hover-lightning:hover::before {
