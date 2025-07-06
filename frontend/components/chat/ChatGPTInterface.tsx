@@ -1,0 +1,225 @@
+'use client'
+
+import React, { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react'
+import { Send, Loader2, Sparkles, User } from 'lucide-react'
+import { cn } from '@lib/utils'
+import { SeironImage } from '@components/SeironImage'
+import '@/styles/chatgpt-anime.css'
+
+interface Message {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: Date
+  isLoading?: boolean
+}
+
+interface ChatGPTInterfaceProps {
+  onNewMessage?: (message: Message) => void
+  onUserMessage?: (message: Message) => void
+  className?: string
+  initialMessages?: Message[]
+}
+
+export interface ChatGPTInterfaceRef {
+  sendMessage: (content: string) => void
+  addMessage: (message: Message) => void
+}
+
+export const ChatGPTInterface = forwardRef<ChatGPTInterfaceRef, ChatGPTInterfaceProps>(
+  ({ onNewMessage, onUserMessage, className, initialMessages }, ref) => {
+    const [messages, setMessages] = useState<Message[]>(
+      initialMessages || [
+        {
+          id: '1',
+          role: 'assistant',
+          content: "Greetings! I am Seiron, the legendary Dragon of Financial Wisdom. My power level is over 9000! What investment strategies shall we explore today?",
+          timestamp: new Date()
+        }
+      ]
+    )
+    const [input, setInput] = useState('')
+    const [isLoading, setIsLoading] = useState(false)
+    const [showTypingIndicator, setShowTypingIndicator] = useState(false)
+    const messagesEndRef = useRef<HTMLDivElement>(null)
+    const textareaRef = useRef<HTMLTextAreaElement>(null)
+    const messagesContainerRef = useRef<HTMLDivElement>(null)
+
+    // Auto-scroll to bottom
+    useEffect(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, [messages])
+
+    // Auto-resize textarea
+    useEffect(() => {
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto'
+        textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
+      }
+    }, [input])
+
+    const generateMessageId = () => {
+      return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    }
+
+    const addMessage = useCallback((message: Message) => {
+      setMessages(prev => [...prev, message])
+      onNewMessage?.(message)
+    }, [onNewMessage])
+
+    const handleSendMessage = useCallback(async () => {
+      if (!input.trim() || isLoading) return
+
+      const userMessage: Message = {
+        id: generateMessageId(),
+        role: 'user',
+        content: input.trim(),
+        timestamp: new Date()
+      }
+
+      // Add user message
+      addMessage(userMessage)
+      onUserMessage?.(userMessage)
+      
+      // Clear input
+      setInput('')
+      
+      // Show loading state
+      setIsLoading(true)
+      setShowTypingIndicator(true)
+
+      // Simulate AI response (replace with actual API call)
+      setTimeout(() => {
+        const aiMessage: Message = {
+          id: generateMessageId(),
+          role: 'assistant',
+          content: `Your power level is impressive! Based on my analysis, ${getRandomDragonResponse()}`,
+          timestamp: new Date()
+        }
+        
+        setShowTypingIndicator(false)
+        addMessage(aiMessage)
+        setIsLoading(false)
+      }, 1500 + Math.random() * 1500)
+    }, [input, isLoading, addMessage, onUserMessage])
+
+    const getRandomDragonResponse = () => {
+      const responses = [
+        "the market ki is flowing strong today. I sense great opportunities in the tech sector!",
+        "my dragon senses detect a disturbance in the crypto force. Proceed with caution, young warrior.",
+        "like gathering the seven Dragon Balls, diversifying your portfolio requires patience and strategy.",
+        "the power of compound interest is like the Kamehameha wave - it grows stronger over time!",
+        "remember, even Goku trained for years. Your investment journey requires similar dedication."
+      ]
+      return responses[Math.floor(Math.random() * responses.length)]
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault()
+        handleSendMessage()
+      }
+    }
+
+    // Expose methods via ref
+    useImperativeHandle(ref, () => ({
+      sendMessage: (content: string) => {
+        setInput(content)
+        handleSendMessage()
+      },
+      addMessage
+    }), [handleSendMessage, addMessage])
+
+    return (
+      <div className={cn('chatgpt-anime-container', className)}>
+        {/* Messages Area */}
+        <div className="chatgpt-messages-container" ref={messagesContainerRef}>
+          {messages.map((message, index) => (
+            <div
+              key={message.id}
+              className={cn('chatgpt-message', message.role, {
+                'new-message': index === messages.length - 1
+              })}
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              {/* Avatar */}
+              <div className={cn('chatgpt-avatar', message.role)}>
+                {message.role === 'user' ? (
+                  <User className="w-6 h-6 text-white m-auto mt-2" />
+                ) : (
+                  <SeironImage 
+                    type="head" 
+                    className="w-full h-full object-cover"
+                    width={40}
+                    height={40}
+                  />
+                )}
+              </div>
+
+              {/* Message Bubble */}
+              <div className={cn('chatgpt-bubble', message.role)}>
+                <p>{message.content}</p>
+                {message.role === 'assistant' && (
+                  <span className="chatgpt-power-level">
+                    Power: {9000 + Math.floor(Math.random() * 1000)}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {/* Typing Indicator */}
+          {showTypingIndicator && (
+            <div className="chatgpt-message ai">
+              <div className="chatgpt-avatar ai">
+                <SeironImage 
+                  type="head" 
+                  className="w-full h-full object-cover"
+                  width={40}
+                  height={40}
+                />
+              </div>
+              <div className="chatgpt-typing-indicator">
+                <div className="dragon-ball"></div>
+                <div className="dragon-ball"></div>
+                <div className="dragon-ball"></div>
+              </div>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input Area */}
+        <div className="chatgpt-input-area">
+          <div className="chatgpt-input-wrapper">
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Channel your ki and ask Seiron..."
+              className="chatgpt-input"
+              rows={1}
+              disabled={isLoading}
+            />
+            <button
+              onClick={handleSendMessage}
+              disabled={!input.trim() || isLoading}
+              className="chatgpt-send-button"
+              aria-label="Send message"
+            >
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Send className="w-5 h-5" />
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+)
+
+ChatGPTInterface.displayName = 'ChatGPTInterface'

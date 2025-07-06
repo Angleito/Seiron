@@ -1,0 +1,331 @@
+/* Anime Message Bubble Styles */
+
+/* Message Wrapper */
+.anime-message-wrapper {
+  position: relative;
+  margin: 1rem 0;
+  padding: 0 1rem;
+}
+
+.anime-message-user {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.anime-message-ai {
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* Ki/Energy Aura */
+.anime-ki-aura {
+  position: absolute;
+  inset: -8px;
+  border-radius: 16px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.anime-ki-aura-active {
+  opacity: 1;
+}
+
+.anime-emotion-neutral .anime-ki-aura {
+  background: radial-gradient(circle at center, rgba(59, 130, 246, 0.2), transparent 70%);
+}
+
+.anime-emotion-excited .anime-ki-aura {
+  background: radial-gradient(circle at center, rgba(251, 191, 36, 0.3), transparent 70%);
+  animation: ki-pulse 2s ease-in-out infinite;
+}
+
+.anime-emotion-serious .anime-ki-aura {
+  background: radial-gradient(circle at center, rgba(239, 68, 68, 0.25), transparent 70%);
+}
+
+.anime-emotion-powerful .anime-ki-aura {
+  background: radial-gradient(circle at center, rgba(168, 85, 247, 0.3), transparent 70%);
+  animation: ki-surge 1.5s ease-in-out infinite;
+}
+
+/* Message Bubble */
+.anime-message-bubble {
+  position: relative;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  max-width: 600px;
+  backdrop-filter: blur(4px);
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+
+.anime-bubble-user {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(37, 99, 235, 0.8));
+  border: 2px solid rgba(96, 165, 250, 0.5);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  color: white;
+}
+
+.anime-bubble-ai {
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.9), rgba(245, 101, 101, 0.8));
+  border: 2px solid rgba(251, 191, 36, 0.5);
+  box-shadow: 0 4px 12px rgba(251, 146, 60, 0.2);
+  color: white;
+}
+
+.anime-bubble-hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.anime-bubble-user.anime-bubble-hover {
+  border-color: rgba(147, 197, 253, 0.8);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+}
+
+.anime-bubble-ai.anime-bubble-hover {
+  border-color: rgba(252, 211, 77, 0.8);
+  box-shadow: 0 8px 20px rgba(251, 146, 60, 0.4);
+}
+
+/* Power Level Indicator */
+.anime-power-indicator {
+  position: absolute;
+  top: -10px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(251, 191, 36, 0.8);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fbbf24;
+  text-shadow: 0 0 4px rgba(251, 191, 36, 0.6);
+}
+
+.anime-power-value {
+  font-family: 'Geist Mono', monospace;
+}
+
+/* Message Content */
+.anime-message-content {
+  position: relative;
+  line-height: 1.6;
+}
+
+.anime-message-content strong {
+  font-weight: 700;
+  text-shadow: 0 0 2px currentColor;
+}
+
+.anime-message-content em {
+  font-style: italic;
+}
+
+/* Links */
+.anime-link {
+  color: #60a5fa;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.anime-link:hover {
+  color: #93c5fd;
+  text-shadow: 0 0 4px rgba(96, 165, 250, 0.5);
+}
+
+/* Inline Code */
+.anime-inline-code {
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.9em;
+}
+
+/* Code Blocks */
+.anime-code-wrapper {
+  position: relative;
+  margin: 1rem 0;
+}
+
+.anime-code-block {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-x: auto;
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.anime-code-block code {
+  color: #e5e5e5;
+}
+
+/* Copy Button */
+.anime-copy-container {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.anime-copy-button {
+  padding: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #a0a0a0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.anime-copy-button:hover {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Timestamp */
+.anime-message-timestamp {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+/* Sparkle Icon */
+.anime-sparkle-icon {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  opacity: 0.6;
+  animation: sparkle-rotate 3s linear infinite;
+}
+
+/* Energy Lines */
+.anime-energy-line {
+  position: absolute;
+  height: 2px;
+  background: linear-gradient(to right, transparent, currentColor, transparent);
+  opacity: 0;
+  animation: energy-flow 1s ease-out forwards;
+  pointer-events: none;
+}
+
+.anime-energy-line-1 {
+  top: 20%;
+  left: -20px;
+  right: -20px;
+  color: #fbbf24;
+  animation-delay: 0s;
+}
+
+.anime-energy-line-2 {
+  top: 50%;
+  left: -30px;
+  right: -30px;
+  color: #60a5fa;
+  animation-delay: 0.1s;
+}
+
+.anime-energy-line-3 {
+  top: 80%;
+  left: -25px;
+  right: -25px;
+  color: #a78bfa;
+  animation-delay: 0.2s;
+}
+
+/* Animations */
+@keyframes ki-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.5;
+  }
+}
+
+@keyframes ki-surge {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.15) rotate(180deg);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1) rotate(360deg);
+    opacity: 0.3;
+  }
+}
+
+@keyframes sparkle-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes energy-flow {
+  0% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(1);
+  }
+}
+
+/* Message Animation on Mount */
+.anime-message-animated {
+  animation: message-appear 0.4s ease-out;
+}
+
+@keyframes message-appear {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .anime-message-bubble {
+    padding: 0.75rem 1rem;
+    max-width: 90%;
+  }
+
+  .anime-power-indicator {
+    font-size: 11px;
+    padding: 1px 6px;
+  }
+
+  .anime-code-block {
+    font-size: 0.8rem;
+    padding: 0.75rem;
+  }
+}

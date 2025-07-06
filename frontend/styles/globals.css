@@ -2,6 +2,7 @@
 @import './design-tokens.css';
 @import './storm-animations.css';
 @import './button-click-fix.css';
+@import './anime-message-bubble.css';
 
 @font-face {
   font-family: 'Geist Sans';
