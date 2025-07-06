@@ -17,10 +17,10 @@ export default defineConfig({
           res.setHeader('X-XSS-Protection', '1; mode=block')
           res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
           
-          // Development CSP that allows localhost connections
+          // Development CSP that allows localhost connections and Vite HMR
           res.setHeader('Content-Security-Policy', `
             default-src 'self';
-            script-src 'self' 'wasm-unsafe-eval';
+            script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval';
             style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
             img-src 'self' data: https:;
             font-src 'self' data: https://fonts.gstatic.com;
@@ -111,5 +111,8 @@ export default defineConfig({
       'fp-ts',
       'rxjs'
     ],
+  },
+  define: {
+    global: 'globalThis',
   },
 })

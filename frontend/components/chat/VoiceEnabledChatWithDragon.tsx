@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import ASCIIDragon from '../dragon/ASCIIDragon'
+import Dragon3D from '../dragon/Dragon3D'
 import { MinimalChatInterface } from './MinimalChatInterface'
 import { useSpeechRecognition } from '@/hooks/voice/useSpeechRecognition'
 import { useElevenLabsTTS } from '@/hooks/voice/useElevenLabsTTS'
@@ -135,6 +135,20 @@ export const VoiceEnabledChatWithDragon: React.FC<VoiceEnabledChatWithDragonProp
     }
   }, [isVoiceEnabled, speak])
 
+  // Update volume for voice state (simulated for now)
+  useEffect(() => {
+    if (isSpeaking || isListening) {
+      const interval = setInterval(() => {
+        // Simulate volume changes for more dynamic animation
+        setVolume(Math.random() * 0.8 + 0.2)
+      }, 100)
+      return () => clearInterval(interval)
+    } else {
+      setVolume(0)
+      return undefined
+    }
+  }, [isSpeaking, isListening])
+
   // Monitor when user sends a message
   const handleUserMessage = useCallback(() => {
     if (isVoiceEnabled) {
@@ -146,18 +160,21 @@ export const VoiceEnabledChatWithDragon: React.FC<VoiceEnabledChatWithDragonProp
     <div className={cn("flex flex-col h-full relative", className)}>
       {/* Dragon Header Section */}
       <div className="relative bg-gradient-to-b from-background to-background/50 border-b border-border/50">
-        <div className="relative h-32 sm:h-40 md:h-48 overflow-hidden">
-          {/* Background gradient */}
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent" />
+        <div className="relative h-48 sm:h-56 md:h-64 overflow-hidden">
+          {/* Background gradient for mystical atmosphere */}
+          <div className="absolute inset-0 bg-gradient-to-b from-red-900/10 via-orange-900/5 to-transparent" />
           
-          {/* ASCII Dragon centered */}
+          {/* 3D Dragon centered */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <ASCIIDragon
-              size="md"
+            <Dragon3D
+              size="lg"
               voiceState={voiceState}
-              enableBreathing={true}
-              speed={isListening ? 'fast' : 'normal'}
-              className="opacity-90"
+              showParticles={true}
+              quality="medium"
+              enablePerformanceMode={true}
+              animationSpeed={isListening ? 1.5 : isSpeaking ? 2.0 : 1.0}
+              enableInteraction={false}
+              className="opacity-95"
             />
           </div>
 

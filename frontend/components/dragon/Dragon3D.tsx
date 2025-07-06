@@ -1,16 +1,15 @@
 'use client'
 
-import React, { useRef, useMemo, useEffect, useState, useCallback } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
+import React, { useRef, useMemo, useEffect, useState, Suspense } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber'
+import { OrbitControls, PerspectiveCamera, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { motion } from 'framer-motion'
+import { VoiceAnimationState } from './DragonRenderer'
 import { 
   useDragonPerformance,
   createPerformancePropComparison,
   adjustParticleCount,
-  adjustTextureQuality,
-  adjustAnimationQuality,
   LOD_LEVELS,
   LODLevel
 } from '../../utils/dragon-performance'
@@ -30,6 +29,7 @@ export interface Dragon3DProps {
   maxAnimationQuality?: number
   enableLOD?: boolean
   targetFPS?: number
+  voiceState?: VoiceAnimationState
 }
 
 interface DragonMeshProps {
@@ -41,48 +41,68 @@ interface DragonMeshProps {
   enableHover?: boolean
   performance: ReturnType<typeof useDragonPerformance>
   maxAnimationQuality: number
+  voiceState?: VoiceAnimationState
 }
 
-// Dragon geometry configurations
+// Dragon model URL
+const DRAGON_MODEL_URL = 'https://rawcdn.githack.com/KhronosGroup/glTF-Sample-Models/master/2.0/DragonAttenuation/glTF-Binary/DragonAttenuation.glb'
+
+// Dragon configuration with red/golden materials
 const DragonConfig = {
   colors: {
     red: new THREE.Color(0xdc2626),
     darkRed: new THREE.Color(0x991b1b),
     gold: new THREE.Color(0xfbbf24),
     darkGold: new THREE.Color(0xd97706),
-    eyeGlow: new THREE.Color(0xfef08a),
+    eyeGlow: new THREE.Color(0x3b82f6), // Blue for voice state
     fire: new THREE.Color(0xff4500),
   },
   materials: {
-    scales: new THREE.MeshPhongMaterial({
+    // Primary dragon body material - red with metallic finish
+    dragonBody: new THREE.MeshStandardMaterial({
       color: 0xdc2626,
-      shininess: 100,
-      transparent: true,
-      opacity: 0.95,
-    }),
-    belly: new THREE.MeshPhongMaterial({
-      color: 0x7f1d1d,
-      shininess: 50,
-    }),
-    gold: new THREE.MeshStandardMaterial({
-      color: 0xfbbf24,
-      roughness: 0.3,
+      roughness: 0.2,
       metalness: 0.8,
+      emissive: 0x3d0000,
+      emissiveIntensity: 0.1,
     }),
-    darkRed: new THREE.MeshPhongMaterial({
-      color: 0x7f1d1d,
-      shininess: 30,
+    // Secondary material for belly/undersides
+    dragonBelly: new THREE.MeshStandardMaterial({
+      color: 0x991b1b,
+      roughness: 0.4,
+      metalness: 0.6,
     }),
-    wing: new THREE.MeshPhongMaterial({
+    // Golden accents for horns, claws, wing bones
+    goldAccents: new THREE.MeshPhysicalMaterial({
+      color: 0xfbbf24,
+      roughness: 0.1,
+      metalness: 0.9,
+      reflectivity: 0.8,
+      clearcoat: 0.5,
+      clearcoatRoughness: 0.1,
+    }),
+    // Wing membrane material - semi-transparent red
+    wingMembrane: new THREE.MeshStandardMaterial({
       color: 0xdc2626,
       transparent: true,
       opacity: 0.8,
       side: THREE.DoubleSide,
+      roughness: 0.3,
+      metalness: 0.2,
+      emissive: 0x2d0000,
+      emissiveIntensity: 0.1,
     }),
+    // Wing bone structure - golden
+    wingBone: new THREE.MeshStandardMaterial({
+      color: 0xfbbf24,
+      roughness: 0.2,
+      metalness: 0.9,
+    }),
+    // Eye material with blue glow
     eye: new THREE.MeshPhongMaterial({
-      color: 0xfef08a,
-      emissive: 0x4d1f00,
-      emissiveIntensity: 0.5,
+      color: 0x3b82f6,
+      emissive: 0x1e40af,
+      emissiveIntensity: 0.3,
     }),
   },
 }
@@ -93,7 +113,8 @@ const ParticleSystem: React.FC<{
   size: number; 
   performance: ReturnType<typeof useDragonPerformance>;
   animationSpeed: number;
-}> = ({ count, size, performance, animationSpeed }) => {
+  voiceState?: VoiceAnimationState;
+}> = ({ count, size, performance, animationSpeed, voiceState }) => {
   const meshRef = useRef<THREE.Points>(null)
   const frameCountRef = useRef(0)
   
@@ -121,7 +142,15 @@ const ParticleSystem: React.FC<{
     return [positions, velocities]
   }, [adjustedCount, size])
 
-  useFrame((state) => {
+  // Particle color based on voice state
+  const particleColor = useMemo(() => {
+    if (voiceState?.isSpeaking) return DragonConfig.colors.fire
+    if (voiceState?.isListening) return DragonConfig.colors.eyeGlow
+    if (voiceState?.isProcessing) return new THREE.Color(0x8b5cf6) // Purple
+    return DragonConfig.colors.gold
+  }, [voiceState])
+
+  useFrame(() => {
     if (!meshRef.current || !meshRef.current.geometry.attributes.position || performance.shouldDisableAnimations) return
     
     // Skip frames for performance optimization
@@ -132,6 +161,9 @@ const ParticleSystem: React.FC<{
     const positions = meshRef.current.geometry.attributes.position.array as Float32Array
     const speedMultiplier = animationSpeed * (performance.shouldReduceQuality ? 0.5 : 1)
     
+    // Enhance particle movement based on voice state
+    const voiceMultiplier = voiceState?.isSpeaking ? 2 : voiceState?.isListening ? 1.5 : 1
+    
     for (let i = 0; i < adjustedCount; i++) {
       const xIndex = i * 3
       const yIndex = i * 3 + 1
@@ -139,9 +171,9 @@ const ParticleSystem: React.FC<{
       
       if (positions[xIndex] !== undefined && positions[yIndex] !== undefined && positions[zIndex] !== undefined &&
           velocities[xIndex] !== undefined && velocities[yIndex] !== undefined && velocities[zIndex] !== undefined) {
-        positions[xIndex] += velocities[xIndex] * speedMultiplier
-        positions[yIndex] += velocities[yIndex] * speedMultiplier
-        positions[zIndex] += velocities[zIndex] * speedMultiplier
+        positions[xIndex] += velocities[xIndex] * speedMultiplier * voiceMultiplier
+        positions[yIndex] += velocities[yIndex] * speedMultiplier * voiceMultiplier
+        positions[zIndex] += velocities[zIndex] * speedMultiplier * voiceMultiplier
         
         // Reset particles that go too far
         if (positions[yIndex] > size * 2) {
@@ -155,12 +187,13 @@ const ParticleSystem: React.FC<{
     meshRef.current.geometry.attributes.position.needsUpdate = true
   })
 
-  // Adjust particle size based on LOD
+  // Adjust particle size based on LOD and voice state
   const particleSize = useMemo(() => {
     const baseSize = size * 0.02
     const currentLOD = getCurrentLOD(performance)
-    return baseSize * currentLOD.textureQuality
-  }, [size, performance.currentLOD])
+    const voiceMultiplier = voiceState?.isSpeaking ? 1.5 : voiceState?.volume ? 1 + voiceState.volume * 0.5 : 1
+    return baseSize * currentLOD.textureQuality * voiceMultiplier
+  }, [size, performance.currentLOD, voiceState])
 
   return (
     <points ref={meshRef}>
@@ -174,261 +207,314 @@ const ParticleSystem: React.FC<{
       </bufferGeometry>
       <pointsMaterial
         size={particleSize}
-        color={DragonConfig.colors.gold}
+        color={particleColor}
         transparent
-        opacity={performance.currentLOD?.level && performance.currentLOD.level > 2 ? 0.6 : 0.8}
+        opacity={voiceState?.isSpeaking ? 0.9 : 0.6}
         sizeAttenuation={true}
       />
     </points>
   )
 }
 
-// Performance-aware dragon body component
-const DragonBody: React.FC<{ 
-  size: number; 
-  animationSpeed: number; 
-  performance: ReturnType<typeof useDragonPerformance> 
-}> = ({ size, animationSpeed, performance }) => {
-  const bodyRef = useRef<THREE.Group>(null)
+// Dragon model component using GLTFLoader
+const DragonModel: React.FC<{
+  size: number
+  animationSpeed: number
+  performance: ReturnType<typeof useDragonPerformance>
+  voiceState?: VoiceAnimationState
+}> = ({ size, animationSpeed, performance, voiceState }) => {
+  const { scene } = useGLTF(DRAGON_MODEL_URL)
+  const dragonRef = useRef<THREE.Group>(null)
   const frameCountRef = useRef(0)
+  const [originalMaterials] = useState<Map<string, THREE.Material>>(new Map())
   
-  // LOD-aware geometry creation
-  const bodyGeometry = useMemo(() => {
-    const curve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(size * 0.3, size * 0.1, size * 0.2),
-      new THREE.Vector3(size * 0.6, 0, size * 0.4),
-      new THREE.Vector3(size * 0.9, -size * 0.1, size * 0.2),
-      new THREE.Vector3(size * 1.2, 0, 0),
-      new THREE.Vector3(size * 1.4, size * 0.1, -size * 0.2),
-      new THREE.Vector3(size * 1.6, 0, -size * 0.1),
-    ])
+  // Scale the dragon model appropriately
+  const scaledDragon = useMemo(() => {
+    if (!scene) return null
     
-    // Adjust geometry quality based on LOD
-    const currentLOD = getCurrentLOD(performance)
-    const segmentCount = currentLOD.level > 2 ? 16 : 32
-    const radialSegments = currentLOD.level > 3 ? 4 : 8
+    const clonedScene = scene.clone()
+    clonedScene.scale.setScalar(size * 0.02) // Scale from the example
     
-    return new THREE.TubeGeometry(curve, segmentCount, size * 0.15, radialSegments, false)
-  }, [size, performance.currentLOD])
-
-  useFrame((state) => {
-    if (!bodyRef.current || performance.shouldDisableAnimations) return
-    
-    // Skip frames for performance optimization
-    frameCountRef.current++
-    const skipFrames = performance.shouldReduceQuality ? 3 : 1
-    if (frameCountRef.current % skipFrames !== 0) return
-    
-    const currentLOD = getCurrentLOD(performance)
-    const time = state.clock.getElapsedTime() * animationSpeed * currentLOD.animationQuality
-    
-    // Simplified breathing animation for performance
-    if (performance.shouldReduceQuality) {
-      const breathe = Math.sin(time * 1) * 0.03 + 1
-      bodyRef.current.scale.setScalar(breathe)
-    } else {
-      // Full breathing animation
-      const breathe = Math.sin(time * 2) * 0.05 + 1
-      bodyRef.current.scale.setScalar(breathe)
-      
-      // Subtle undulation (only in high quality mode)
-      bodyRef.current.rotation.z = Math.sin(time * 0.5) * 0.1
-    }
-  })
-
-  return (
-    <group ref={bodyRef}>
-      <mesh geometry={bodyGeometry} material={DragonConfig.materials.scales} />
-      {/* Belly segment */}
-      <mesh geometry={bodyGeometry} material={DragonConfig.materials.belly} scale={[0.8, 0.6, 0.8]} />
-    </group>
-  )
-}
-
-// Performance-aware dragon head component
-const DragonHead: React.FC<{ 
-  size: number; 
-  animationSpeed: number; 
-  performance: ReturnType<typeof useDragonPerformance> 
-}> = ({ size, animationSpeed, performance }) => {
-  const headRef = useRef<THREE.Group>(null)
-  const eyeRefs = useRef<THREE.Mesh[]>([])
-  const frameCountRef = useRef(0)
-  
-  // Performance-aware head geometry creation
-  const headGeometry = useMemo(() => {
-    // Adjust geometry detail based on LOD
-    const currentLOD = getCurrentLOD(performance)
-    const widthSegments = currentLOD.level > 2 ? 8 : 16
-    const heightSegments = currentLOD.level > 2 ? 8 : 16
-    
-    const geometry = new THREE.SphereGeometry(size * 0.25, widthSegments, heightSegments)
-    
-    // Skip complex geometry modifications in low quality mode
-    if (currentLOD.level > 3) {
-      return geometry
-    }
-    
-    // Modify geometry to make it more dragon-like
-    const positionAttribute = geometry.attributes.position
-    if (!positionAttribute) return geometry
-    
-    const positions = positionAttribute.array as Float32Array
-    
-    for (let i = 0; i < positions.length; i += 3) {
-      const x = positions[i]
-      const y = positions[i + 1]
-      const z = positions[i + 2]
-      
-      // Elongate the snout
-      if (z !== undefined && z > 0) {
-        positions[i + 2] = z * 1.5
-      }
-      
-      // Create ridges (only in high quality)
-      if (y !== undefined && y > 0 && x !== undefined && currentLOD.level < 2) {
-        positions[i + 1] = y * (1 + Math.sin(x * 8) * 0.1)
-      }
-    }
-    
-    positionAttribute.needsUpdate = true
-    geometry.computeVertexNormals()
-    return geometry
-  }, [size, performance.currentLOD])
-
-  const hornGeometry = useMemo(() => {
-    return new THREE.ConeGeometry(size * 0.02, size * 0.15, 6)
-  }, [size])
-
-  useFrame((state) => {
-    if (!headRef.current) return
-    
-    const time = state.clock.getElapsedTime() * animationSpeed
-    
-    // Head bobbing
-    headRef.current.position.y = Math.sin(time * 2) * size * 0.05
-    headRef.current.rotation.y = Math.sin(time * 0.8) * 0.2
-    
-    // Eye glow animation
-    eyeRefs.current.forEach((eye, index) => {
-      if (eye) {
-        const material = eye.material as THREE.MeshPhongMaterial
-        material.emissiveIntensity = 0.3 + Math.sin(time * 3 + index) * 0.2
+    // Apply red/golden materials to the dragon
+    clonedScene.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        // Store original material for cleanup
+        if (child.material && !originalMaterials.has(child.uuid)) {
+          originalMaterials.set(child.uuid, child.material)
+        }
+        
+        // Apply new materials based on object name or position
+        if (child.name.toLowerCase().includes('eye')) {
+          child.material = DragonConfig.materials.eye
+        } else if (child.name.toLowerCase().includes('horn') || 
+                   child.name.toLowerCase().includes('claw') ||
+                   child.name.toLowerCase().includes('tooth')) {
+          child.material = DragonConfig.materials.goldAccents
+        } else {
+          // Main body gets red material
+          child.material = DragonConfig.materials.dragonBody
+        }
+        
+        child.castShadow = true
+        child.receiveShadow = true
       }
     })
+    
+    return clonedScene
+  }, [scene, size, originalMaterials])
+
+  // Animation loop
+  useFrame((state) => {
+    if (!dragonRef.current || performance.shouldDisableAnimations) return
+    
+    frameCountRef.current++
+    const skipFrames = performance.shouldReduceQuality ? 2 : 1
+    if (frameCountRef.current % skipFrames !== 0) return
+    
+    const time = state.clock.getElapsedTime() * animationSpeed
+    
+    // Base breathing animation
+    if (!performance.shouldReduceQuality) {
+      const breathe = Math.sin(time * 2) * 0.03 + 1
+      dragonRef.current.scale.setScalar(breathe * size * 0.02)
+    }
+    
+    // Voice state animations
+    if (voiceState) {
+      // Listening state - attentive pose
+      if (voiceState.isListening) {
+        dragonRef.current.rotation.y = Math.sin(time * 1.5) * 0.1
+        dragonRef.current.position.y = Math.sin(time * 3) * size * 0.05
+      }
+      
+      // Speaking state - more dramatic movement
+      if (voiceState.isSpeaking) {
+        dragonRef.current.rotation.y = Math.sin(time * 2) * 0.2
+        dragonRef.current.position.y = Math.sin(time * 4) * size * 0.1
+        const intensity = voiceState.volume || 0.5
+        dragonRef.current.rotation.z = Math.sin(time * 3) * 0.1 * intensity
+      }
+      
+      // Processing state - contemplative movement
+      if (voiceState.isProcessing) {
+        dragonRef.current.rotation.y = Math.sin(time * 0.5) * 0.05
+        dragonRef.current.position.y = Math.sin(time * 1) * size * 0.02
+      }
+    }
+    
+    // Default floating animation when idle
+    if (!voiceState || voiceState.isIdle) {
+      dragonRef.current.position.y = Math.sin(time * 1.5) * size * 0.03
+      dragonRef.current.rotation.y = Math.sin(time * 0.3) * 0.05
+    }
   })
 
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      originalMaterials.forEach((material) => {
+        material.dispose()
+      })
+      originalMaterials.clear()
+    }
+  }, [originalMaterials])
+
+  if (!scaledDragon) return null
+
   return (
-    <group ref={headRef} position={[0, size * 0.1, size * 0.4]}>
-      {/* Main head */}
-      <mesh geometry={headGeometry} material={DragonConfig.materials.scales} />
-      
-      {/* Eyes */}
-      <mesh 
-        ref={(el) => el && (eyeRefs.current[0] = el)}
-        position={[size * 0.1, size * 0.05, size * 0.15]}
-        geometry={new THREE.SphereGeometry(size * 0.03, 8, 8)}
-        material={DragonConfig.materials.eye}
-      />
-      <mesh 
-        ref={(el) => el && (eyeRefs.current[1] = el)}
-        position={[-size * 0.1, size * 0.05, size * 0.15]}
-        geometry={new THREE.SphereGeometry(size * 0.03, 8, 8)}
-        material={DragonConfig.materials.eye}
-      />
-      
-      {/* Horns */}
-      <mesh 
-        position={[size * 0.08, size * 0.2, size * 0.1]}
-        rotation={[0, 0, 0.3]}
-        geometry={hornGeometry}
-        material={DragonConfig.materials.gold}
-      />
-      <mesh 
-        position={[-size * 0.08, size * 0.2, size * 0.1]}
-        rotation={[0, 0, -0.3]}
-        geometry={hornGeometry}
-        material={DragonConfig.materials.gold}
-      />
-      
-      {/* Nostrils */}
-      <mesh 
-        position={[size * 0.05, size * 0.02, size * 0.22]}
-        geometry={new THREE.SphereGeometry(size * 0.01, 6, 6)}
-        material={DragonConfig.materials.darkRed}
-      />
-      <mesh 
-        position={[-size * 0.05, size * 0.02, size * 0.22]}
-        geometry={new THREE.SphereGeometry(size * 0.01, 6, 6)}
-        material={DragonConfig.materials.darkRed}
-      />
+    <group ref={dragonRef}>
+      <primitive object={scaledDragon} />
     </group>
   )
 }
 
-// Performance-aware dragon wings component
-const DragonWings: React.FC<{ 
-  size: number; 
-  animationSpeed: number; 
-  performance: ReturnType<typeof useDragonPerformance> 
-}> = ({ size, animationSpeed, performance }) => {
+// Anatomically correct dragon wings positioned on the sides above arms
+const DragonWings: React.FC<{
+  size: number
+  animationSpeed: number
+  performance: ReturnType<typeof useDragonPerformance>
+  voiceState?: VoiceAnimationState
+}> = ({ size, animationSpeed, performance, voiceState }) => {
   const leftWingRef = useRef<THREE.Group>(null)
   const rightWingRef = useRef<THREE.Group>(null)
+  const frameCountRef = useRef(0)
   
-  // Create wing geometry
-  const wingGeometry = useMemo(() => {
-    const shape = new THREE.Shape()
-    shape.moveTo(0, 0)
-    shape.bezierCurveTo(size * 0.1, size * 0.3, size * 0.4, size * 0.2, size * 0.5, 0)
-    shape.bezierCurveTo(size * 0.4, -size * 0.1, size * 0.2, -size * 0.05, 0, 0)
+  // Wing dimensions based on dragon size
+  const wingSpan = size * 1.5
+  const wingHeight = size * 0.8
+  const shoulderWidth = size * 0.4
+  const shoulderHeight = size * 0.3
+  const backOffset = size * 0.1
+
+  // Create anatomically correct wing geometry
+  const wingComponents = useMemo(() => {
+    // Wing bone structure
+    const wingBoneGeometry = new THREE.CylinderGeometry(size * 0.01, size * 0.005, wingSpan * 0.6, 8)
     
-    return new THREE.ShapeGeometry(shape)
-  }, [size])
+    // Wing membrane using shape geometry for natural curves
+    const wingShape = new THREE.Shape()
+    wingShape.moveTo(0, 0)
+    wingShape.bezierCurveTo(
+      wingSpan * 0.2, wingHeight * 0.4, 
+      wingSpan * 0.6, wingHeight * 0.3, 
+      wingSpan * 0.8, wingHeight * 0.1
+    )
+    wingShape.bezierCurveTo(
+      wingSpan * 0.7, -wingHeight * 0.1,
+      wingSpan * 0.4, -wingHeight * 0.05,
+      wingSpan * 0.1, -wingHeight * 0.02
+    )
+    wingShape.bezierCurveTo(
+      wingSpan * 0.05, -wingHeight * 0.01,
+      0, 0,
+      0, 0
+    )
+    
+    const wingMembraneGeometry = new THREE.ShapeGeometry(wingShape)
+    
+    // Secondary wing fingers for more realistic structure
+    const fingerBoneGeometry = new THREE.CylinderGeometry(size * 0.005, size * 0.002, wingSpan * 0.4, 6)
+    
+    return {
+      wingBoneGeometry,
+      wingMembraneGeometry,
+      fingerBoneGeometry
+    }
+  }, [size, wingSpan, wingHeight])
 
   useFrame((state) => {
-    if (!leftWingRef.current || !rightWingRef.current) return
+    if (!leftWingRef.current || !rightWingRef.current || performance.shouldDisableAnimations) return
+    
+    frameCountRef.current++
+    const skipFrames = performance.shouldReduceQuality ? 2 : 1
+    if (frameCountRef.current % skipFrames !== 0) return
     
     const time = state.clock.getElapsedTime() * animationSpeed
     
-    // Wing flapping animation
-    const flapAngle = Math.sin(time * 4) * 0.5 + 0.5
-    leftWingRef.current.rotation.z = flapAngle
-    rightWingRef.current.rotation.z = -flapAngle
+    // Base wing animation speed and intensity
+    let flapSpeed = 2
+    let flapIntensity = 0.3
+    let spreadAmount = 0.2
     
-    // Wing positioning
-    leftWingRef.current.position.y = Math.sin(time * 4) * size * 0.02
-    rightWingRef.current.position.y = Math.sin(time * 4) * size * 0.02
+    // Modify animation based on voice state
+    if (voiceState) {
+      if (voiceState.isListening) {
+        // Wings spread attentively
+        spreadAmount = 0.5
+        flapSpeed = 1.5
+        flapIntensity = 0.2
+      } else if (voiceState.isSpeaking) {
+        // Dramatic wing movement
+        spreadAmount = 0.8
+        flapSpeed = 3
+        flapIntensity = 0.6
+        const intensity = voiceState.volume || 0.5
+        flapIntensity *= (0.5 + intensity)
+      } else if (voiceState.isProcessing) {
+        // Wings folded contemplatively
+        spreadAmount = 0.1
+        flapSpeed = 0.8
+        flapIntensity = 0.1
+      } else if (voiceState.isIdle) {
+        // Gentle breathing movement
+        spreadAmount = 0.3
+        flapSpeed = 1
+        flapIntensity = 0.15
+      }
+    }
+    
+    // Calculate wing positions and rotations
+    const flapAngle = Math.sin(time * flapSpeed) * flapIntensity
+    const spreadAngle = spreadAmount * Math.PI / 4
+    
+    // Left wing animation
+    leftWingRef.current.rotation.z = spreadAngle + flapAngle
+    leftWingRef.current.rotation.y = Math.sin(time * flapSpeed * 0.5) * 0.1
+    leftWingRef.current.position.y = shoulderHeight + Math.sin(time * flapSpeed) * size * 0.02
+    
+    // Right wing animation (mirrored)
+    rightWingRef.current.rotation.z = -(spreadAngle + flapAngle)
+    rightWingRef.current.rotation.y = -Math.sin(time * flapSpeed * 0.5) * 0.1
+    rightWingRef.current.position.y = shoulderHeight + Math.sin(time * flapSpeed) * size * 0.02
   })
 
   return (
     <group>
-      {/* Left wing */}
-      <group ref={leftWingRef} position={[size * 0.2, size * 0.1, size * 0.1]}>
-        <mesh geometry={wingGeometry} material={DragonConfig.materials.wing} />
-        {/* Wing membrane details */}
+      {/* Left wing - positioned on dragon's left shoulder */}
+      <group 
+        ref={leftWingRef} 
+        position={[-shoulderWidth, shoulderHeight, backOffset]}
+      >
+        {/* Main wing bone (humerus equivalent) */}
         <mesh 
-          geometry={new THREE.PlaneGeometry(size * 0.4, size * 0.15)}
-          material={DragonConfig.materials.wing}
-          position={[size * 0.2, size * 0.1, 0]}
+          geometry={wingComponents.wingBoneGeometry}
+          material={DragonConfig.materials.wingBone}
+          rotation={[0, 0, Math.PI / 2]}
+          position={[wingSpan * 0.3, 0, 0]}
+        />
+        
+        {/* Wing finger bones */}
+        <mesh 
+          geometry={wingComponents.fingerBoneGeometry}
+          material={DragonConfig.materials.wingBone}
+          rotation={[0, 0, Math.PI / 3]}
+          position={[wingSpan * 0.5, wingHeight * 0.2, 0]}
+        />
+        <mesh 
+          geometry={wingComponents.fingerBoneGeometry}
+          material={DragonConfig.materials.wingBone}
+          rotation={[0, 0, Math.PI / 6]}
+          position={[wingSpan * 0.6, wingHeight * 0.1, 0]}
+        />
+        
+        {/* Wing membrane */}
+        <mesh 
+          geometry={wingComponents.wingMembraneGeometry}
+          material={DragonConfig.materials.wingMembrane}
+          position={[0, 0, 0]}
         />
       </group>
       
-      {/* Right wing */}
-      <group ref={rightWingRef} position={[-size * 0.2, size * 0.1, size * 0.1]}>
-        <mesh geometry={wingGeometry} material={DragonConfig.materials.wing} scale={[-1, 1, 1]} />
-        {/* Wing membrane details */}
+      {/* Right wing - positioned on dragon's right shoulder */}
+      <group 
+        ref={rightWingRef} 
+        position={[shoulderWidth, shoulderHeight, backOffset]}
+      >
+        {/* Main wing bone (humerus equivalent) */}
         <mesh 
-          geometry={new THREE.PlaneGeometry(size * 0.4, size * 0.15)}
-          material={DragonConfig.materials.wing}
-          position={[-size * 0.2, size * 0.1, 0]}
+          geometry={wingComponents.wingBoneGeometry}
+          material={DragonConfig.materials.wingBone}
+          rotation={[0, 0, -Math.PI / 2]}
+          position={[-wingSpan * 0.3, 0, 0]}
+        />
+        
+        {/* Wing finger bones */}
+        <mesh 
+          geometry={wingComponents.fingerBoneGeometry}
+          material={DragonConfig.materials.wingBone}
+          rotation={[0, 0, -Math.PI / 3]}
+          position={[-wingSpan * 0.5, wingHeight * 0.2, 0]}
+        />
+        <mesh 
+          geometry={wingComponents.fingerBoneGeometry}
+          material={DragonConfig.materials.wingBone}
+          rotation={[0, 0, -Math.PI / 6]}
+          position={[-wingSpan * 0.6, wingHeight * 0.1, 0]}
+        />
+        
+        {/* Wing membrane (mirrored) */}
+        <mesh 
+          geometry={wingComponents.wingMembraneGeometry}
+          material={DragonConfig.materials.wingMembrane}
+          scale={[-1, 1, 1]}
+          position={[0, 0, 0]}
         />
       </group>
     </group>
   )
 }
 
-// Performance-aware main dragon mesh component
+// Main dragon mesh component with model and wings
 const DragonMesh: React.FC<DragonMeshProps> = ({
   size,
   animationSpeed,
@@ -437,7 +523,8 @@ const DragonMesh: React.FC<DragonMeshProps> = ({
   onClick,
   enableHover,
   performance,
-  maxAnimationQuality
+  maxAnimationQuality,
+  voiceState
 }) => {
   const groupRef = useRef<THREE.Group>(null)
   const [hovered, setHovered] = useState(false)
@@ -459,21 +546,11 @@ const DragonMesh: React.FC<DragonMeshProps> = ({
     if (frameCountRef.current % skipFrames !== 0) return
     
     const currentLOD = getCurrentLOD(performance)
-    const time = state.clock.getElapsedTime() * animationSpeed * maxAnimationQuality * currentLOD.animationQuality
-    
-    // Performance-aware floating animation
-    if (performance.shouldReduceQuality) {
-      // Simplified animation
-      groupRef.current.position.y = Math.sin(time * 0.8) * size * 0.05
-    } else {
-      // Full floating animation
-      groupRef.current.position.y = Math.sin(time * 1.5) * size * 0.1
-      groupRef.current.rotation.y = Math.sin(time * 0.3) * 0.1
-    }
+    const adjustedAnimationSpeed = animationSpeed * maxAnimationQuality * currentLOD.animationQuality
     
     // Hover effect (only in high quality mode)
     if (hovered && enableHover && !performance.shouldReduceQuality) {
-      groupRef.current.scale.setScalar(1.1)
+      groupRef.current.scale.setScalar(1.05)
     } else {
       groupRef.current.scale.setScalar(1)
     }
@@ -486,10 +563,21 @@ const DragonMesh: React.FC<DragonMeshProps> = ({
       onPointerOver={() => setHovered(true)}
       onPointerOut={() => setHovered(false)}
     >
-      {/* Main dragon parts */}
-      <DragonBody size={size} animationSpeed={animationSpeed} performance={performance} />
-      <DragonHead size={size} animationSpeed={animationSpeed} performance={performance} />
-      <DragonWings size={size} animationSpeed={animationSpeed} performance={performance} />
+      {/* Dragon model */}
+      <DragonModel 
+        size={size} 
+        animationSpeed={animationSpeed} 
+        performance={performance}
+        voiceState={voiceState}
+      />
+      
+      {/* Anatomically correct wings */}
+      <DragonWings 
+        size={size} 
+        animationSpeed={animationSpeed} 
+        performance={performance}
+        voiceState={voiceState}
+      />
       
       {/* Particle effects */}
       {showParticles && (performance.currentLOD?.particles?.enabled ?? true) && (
@@ -498,21 +586,46 @@ const DragonMesh: React.FC<DragonMeshProps> = ({
           size={size} 
           performance={performance}
           animationSpeed={animationSpeed}
+          voiceState={voiceState}
         />
       )}
       
-      {/* Lighting */}
-      <ambientLight intensity={0.4} />
+      {/* Enhanced lighting for red/golden dragon */}
+      <ambientLight intensity={0.3} color={0x2d1b1b} />
+      <directionalLight 
+        position={[size * 2, size * 2, size]} 
+        intensity={1.2} 
+        color={DragonConfig.colors.gold}
+        castShadow
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+      />
       <pointLight 
         position={[size * 0.5, size * 0.5, size * 0.5]} 
         intensity={0.8} 
-        color={DragonConfig.colors.gold}
+        color={DragonConfig.colors.red}
       />
       <pointLight 
         position={[-size * 0.5, size * 0.5, size * 0.5]} 
         intensity={0.6} 
-        color={DragonConfig.colors.red}
+        color={DragonConfig.colors.gold}
       />
+      
+      {/* Voice state specific lighting */}
+      {voiceState?.isSpeaking && (
+        <pointLight 
+          position={[0, size * 0.2, size * 0.4]} 
+          intensity={1.5 * (voiceState.volume || 0.5)} 
+          color={DragonConfig.colors.fire}
+        />
+      )}
+      {voiceState?.isListening && (
+        <pointLight 
+          position={[0, size * 0.3, size * 0.3]} 
+          intensity={0.8} 
+          color={DragonConfig.colors.eyeGlow}
+        />
+      )}
     </group>
   )
 }
@@ -531,7 +644,14 @@ const getCurrentLOD = (performance: any): LODLevel => {
 }
 
 // Performance-aware prop comparison
-const propComparison = createPerformancePropComparison<Dragon3DProps>([])
+const propComparison = createPerformancePropComparison<Dragon3DProps>(['voiceState'])
+
+// Loading fallback component
+const DragonLoadingFallback: React.FC<{ size: string }> = ({ size }) => (
+  <div className={`${sizeMap[size as keyof typeof sizeMap].canvasSize} flex items-center justify-center bg-black rounded-lg`}>
+    <div className="text-red-400 animate-pulse">Loading Dragon...</div>
+  </div>
+)
 
 // Main Dragon3D component
 const Dragon3DInternal: React.FC<Dragon3DProps> = ({
@@ -547,7 +667,8 @@ const Dragon3DInternal: React.FC<Dragon3DProps> = ({
   enablePerformanceMode = true,
   maxAnimationQuality = 1.0,
   enableLOD = true,
-  targetFPS = 60
+  targetFPS = 60,
+  voiceState
 }) => {
   const { size: dragonSize, canvasSize } = sizeMap[size]
   
@@ -557,51 +678,55 @@ const Dragon3DInternal: React.FC<Dragon3DProps> = ({
       targetFPS,
       adaptiveLOD: enableLOD,
       autoOptimization: enablePerformanceMode,
-      maxMemoryMB: 512 // 3D dragon uses more memory
+      maxMemoryMB: 1024 // Increased for GLTF model + wings
     }
   })
   
   return (
     <motion.div
       className={`${canvasSize} ${className} cursor-pointer select-none`}
-      whileHover={enableHover ? { scale: 1.05 } : undefined}
-      whileTap={{ scale: 0.95 }}
+      whileHover={enableHover ? { scale: 1.02 } : undefined}
+      whileTap={{ scale: 0.98 }}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
     >
-      <Canvas
-        camera={{ position: [0, 0, 5], fov: 50 }}
-        style={{ width: '100%', height: '100%' }}
-      >
-        <PerspectiveCamera makeDefault />
-        
-        {/* Scene setup */}
-        <color attach="background" args={['#000000']} />
-        <fog attach="fog" args={['#000000', 5, 15]} />
-        
-        {/* Dragon mesh */}
-        <DragonMesh
-          size={dragonSize}
-          animationSpeed={animationSpeed * maxAnimationQuality}
-          showParticles={showParticles}
-          quality={quality}
-          onClick={onClick}
-          enableHover={enableHover}
-          performance={performance}
-          maxAnimationQuality={maxAnimationQuality}
-        />
-        
-        {/* Performance-aware controls */}
-        {enableInteraction && !performance.shouldReduceQuality && (
-          <OrbitControls 
-            enablePan={false}
-            enableZoom={false}
-            autoRotate={autoRotate && !performance.shouldDisableAnimations}
-            autoRotateSpeed={0.5 * maxAnimationQuality}
-            maxPolarAngle={Math.PI / 2}
-            minPolarAngle={Math.PI / 3}
+      <Suspense fallback={<DragonLoadingFallback size={size} />}>
+        <Canvas
+          camera={{ position: [0, 0, 8], fov: 50 }}
+          style={{ width: '100%', height: '100%' }}
+          shadows
+        >
+          <PerspectiveCamera makeDefault />
+          
+          {/* Scene setup */}
+          <color attach="background" args={['#000000']} />
+          <fog attach="fog" args={['#1a1a1a', 5, 20]} />
+          
+          {/* Dragon mesh with voice integration */}
+          <DragonMesh
+            size={dragonSize}
+            animationSpeed={animationSpeed * maxAnimationQuality}
+            showParticles={showParticles}
+            quality={quality}
+            onClick={onClick}
+            enableHover={enableHover}
+            performance={performance}
+            maxAnimationQuality={maxAnimationQuality}
+            voiceState={voiceState}
           />
-        )}
-      </Canvas>
+          
+          {/* Performance-aware controls */}
+          {enableInteraction && !performance.shouldReduceQuality && (
+            <OrbitControls 
+              enablePan={false}
+              enableZoom={false}
+              autoRotate={autoRotate && !performance.shouldDisableAnimations}
+              autoRotateSpeed={0.5 * maxAnimationQuality}
+              maxPolarAngle={Math.PI / 1.8}
+              minPolarAngle={Math.PI / 3}
+            />
+          )}
+        </Canvas>
+      </Suspense>
     </motion.div>
   )
 }
@@ -613,5 +738,8 @@ const Dragon3D = React.memo(Dragon3DInternal, (prevProps, nextProps) => {
 
 // Add display name for debugging
 Dragon3D.displayName = 'Dragon3D'
+
+// Preload the dragon model
+useGLTF.preload(DRAGON_MODEL_URL)
 
 export default Dragon3D
