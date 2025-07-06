@@ -1,0 +1,50 @@
+import { PublicClient, WalletClient } from 'viem';
+import { SiloProtocolAdapter, SiloStakingPosition, SiloStakingPoolInfo, SiloStakingMetrics, SiloStakeParams, SiloUnstakeParams, SiloClaimRewardsParams, SiloRewardInfo, SeiProtocolConfig } from '../types';
+import { WalletAddress, TokenAddress, TransactionHash, AsyncResult } from '../../../types/portfolio';
+export declare class SiloProtocolWrapper implements SiloProtocolAdapter {
+    private publicClient;
+    private walletClient;
+    private protocolConfig;
+    readonly name = "Silo";
+    readonly version = "1.0.0";
+    isInitialized: boolean;
+    private config;
+    constructor(publicClient: PublicClient, walletClient: WalletClient, protocolConfig: SeiProtocolConfig);
+    initialize: () => AsyncResult<void>;
+    getStakingPositions: (walletAddress: WalletAddress) => AsyncResult<SiloStakingPosition[]>;
+    getStakingPoolInfo: (token: TokenAddress) => AsyncResult<SiloStakingPoolInfo>;
+    getStakingMetrics: (walletAddress: WalletAddress) => AsyncResult<SiloStakingMetrics>;
+    stake: (params: SiloStakeParams) => AsyncResult<TransactionHash>;
+    unstake: (params: SiloUnstakeParams) => AsyncResult<TransactionHash>;
+    claimRewards: (params: SiloClaimRewardsParams) => AsyncResult<TransactionHash>;
+    calculateRewards: (walletAddress: WalletAddress, positionId?: string) => AsyncResult<SiloRewardInfo[]>;
+    estimateStakingReturns: (params: SiloStakeParams) => AsyncResult<{
+        dailyRewards: number;
+        monthlyRewards: number;
+        annualRewards: number;
+        apy: number;
+    }>;
+    calculateUnstakePenalty: (positionId: string, amount: string) => AsyncResult<{
+        penalty: number;
+        penaltyAmount: string;
+        netAmount: string;
+    }>;
+    private verifyContractDeployments;
+    private getUserStakingPositionIds;
+    private getStakingPositionDetails;
+    private getStakingPositionById;
+    private fetchPositionData;
+    private fetchStakingPoolData;
+    private validateStakeParams;
+    private executeStake;
+    private executeUnstake;
+    private executeClaimRewards;
+    private calculatePositionRewards;
+    private simulateTransaction;
+    private mapToStakingPosition;
+    private getTokenSymbol;
+    private formatTokenAmount;
+    private calculateAPY;
+    private getStakingMultiplier;
+}
+export declare const createSiloProtocolWrapper: (publicClient: PublicClient, walletClient: WalletClient, config: SeiProtocolConfig) => SiloProtocolWrapper;

@@ -129,7 +129,7 @@ function formatAgentResponse(result: TaskResult, agentType?: string): string {
         response = `🐉 Seiron's Vision of Your Treasure Vault:\n\n`
         response += `Total Power Level: $${(data.totalValue as number).toLocaleString()}\n`
         response += `Dragon's Favor: ${(data.change24h as number) > 0 ? '+' : ''}${data.change24h as number}%\n\n`
-        response += `Mystical Treasures:\n`
+        response += `Mystical Treasures:\n`;
         (data.positions as Array<Record<string, unknown>>).forEach((pos: Record<string, unknown>) => {
           response += `• ${pos.asset}: $${(pos.value as number).toLocaleString()} (${pos.allocation}%)\n`
         })
