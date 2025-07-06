@@ -48,9 +48,9 @@ jobs:
         
       - name: Start services
         run: |
-          docker-compose -f docker-compose.e2e.yml up -d --build
+          docker compose -f docker-compose.e2e.yml up -d --build
           # Wait for services to be healthy
-          timeout 300 bash -c 'until docker-compose -f docker-compose.e2e.yml ps | grep -E "healthy|running" | grep -v "unhealthy" | wc -l | grep -q "6"; do sleep 5; done'
+          timeout 300 bash -c 'until docker compose -f docker-compose.e2e.yml ps | grep -E "healthy|running" | grep -v "unhealthy" | wc -l | grep -q "6"; do sleep 5; done'
           
       - name: Run Cypress tests
         uses: cypress-io/github-action@v6
@@ -86,7 +86,7 @@ jobs:
         if: always()
         run: |
           mkdir -p test-results
-          docker-compose -f docker-compose.e2e.yml logs > test-results/docker-logs.txt
+          docker compose -f docker-compose.e2e.yml logs > test-results/docker-logs.txt
           
       - name: Upload test results
         if: always()
@@ -98,7 +98,7 @@ jobs:
           
       - name: Stop services
         if: always()
-        run: docker-compose -f docker-compose.e2e.yml down -v
+        run: docker compose -f docker-compose.e2e.yml down -v
         
   e2e-report:
     needs: e2e-tests
