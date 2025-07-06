@@ -2,6 +2,8 @@ import { ChatInterface } from '@/components/chat/chat-interface'
 import { PortfolioSidebar } from '@/components/portfolio/portfolio-sidebar'
 import { WalletConnect } from '@/components/wallet/wallet-connect'
 
+export const dynamic = 'force-dynamic'
+
 export default function DashboardPage() {
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-gray-900 via-gray-800 to-red-900">

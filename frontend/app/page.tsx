@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { Shield, TrendingUp, Star, Eye, Sparkles } from 'lucide-react'
 import { FloatingDragonLogo } from '@/components/FloatingDragonLogo'
 
+export const dynamic = 'force-dynamic'
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-red-950 via-red-900 to-red-800">
