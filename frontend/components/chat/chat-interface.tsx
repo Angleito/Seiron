@@ -1,5 +1,9 @@
 'use client'
 
+// Export the minimal version as default for cleaner UI
+export { MinimalChatInterface as ChatInterface } from './MinimalChatInterface'
+
+// Keep the original complex version available as ComplexChatInterface
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { Send, Sparkles, Search, TrendingUp, Activity, Zap } from 'lucide-react'
 import { cn } from '@lib/utils'

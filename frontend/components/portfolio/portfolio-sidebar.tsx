@@ -1,5 +1,9 @@
 'use client'
 
+// Export the minimal version as default for cleaner UI
+export { MinimalPortfolioSidebar as PortfolioSidebar } from './MinimalPortfolioSidebar'
+
+// Keep the original complex version available as ComplexPortfolioSidebar
 import { TrendingUp, TrendingDown, DollarSign, Coins, Activity, Zap, Search } from 'lucide-react'
 import { cn } from '@lib/utils'
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
