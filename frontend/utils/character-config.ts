@@ -32,7 +32,7 @@ export const alternativeNames = {
 // Get a random alternative name
 export function getAlternativeName(role: 'user' | 'assistant'): string {
   const names = alternativeNames[role]
-  return names[Math.floor(Math.random() * names.length)]
+  return names[Math.floor(Math.random() * names.length)] || characterConfig[role].name
 }
 
 // Dragon Ball style power level display
