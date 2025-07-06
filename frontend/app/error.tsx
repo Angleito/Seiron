@@ -19,7 +19,7 @@ export default function Error({
   return (
     <html lang="en">
       <head>
-        <title>500 - Dragon's Power Overload | Seiron</title>
+        <title>500 - Dragon&apos;s Power Overload | Seiron</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <style dangerouslySetInnerHTML={{
           __html: `

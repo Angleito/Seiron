@@ -4,7 +4,7 @@ export default function NotFound() {
   return (
     <html lang="en">
       <head>
-        <title>404 - Dragon's Lair Not Found | Seiron</title>
+        <title>404 - Dragon&apos;s Lair Not Found | Seiron</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <style dangerouslySetInnerHTML={{
           __html: `
@@ -162,7 +162,7 @@ export default function NotFound() {
             </h2>
             <p className="description">
               The mystical path you seek has been consumed by dragon fire. 
-              Even the legendary Seiron cannot grant wishes for pages that don't exist.
+              Even the legendary Seiron cannot grant wishes for pages that don&apos;t exist.
             </p>
           </div>
 
