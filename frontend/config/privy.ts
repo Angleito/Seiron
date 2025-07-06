@@ -41,7 +41,7 @@ const defaultConfig = {
   appearance: {
     theme: 'dark' as const,
     accentColor: '#ef4444' as const, // Red to match Dragon Ball theme
-    logo: '/dragon-logo.png', // Add your logo path
+    logo: undefined, // No logo needed
     showWalletLoginFirst: true,
   },
   loginMethods: [

@@ -79,7 +79,7 @@ export function MinimalChatInterface() {
       
       setMessages(prev => prev.map(msg => 
         msg.id === loadingMessage.id 
-          ? { ...msg, content: response, isLoading: false }
+          ? { ...msg, content: response, isLoading: false } as Message
           : msg
       ))
       setIsLoading(false)
