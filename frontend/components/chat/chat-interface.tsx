@@ -742,12 +742,12 @@ export function ComplexChatInterface() {
                 )}
                 {message.metadata?.executionTime && (
                   <p className="text-size-4 text-red-400">
-                    ⚡ {(message.metadata.executionTime / 1000).toFixed(2)}s
+                    ⚡ {((message.metadata.executionTime as number) / 1000).toFixed(2)}s
                   </p>
                 )}
                 {message.metadata?.confidence && (
                   <span className="text-size-4 text-yellow-400">
-                    {Math.round(message.metadata.confidence * 100)}%
+                    {Math.round((message.metadata.confidence as number) * 100)}%
                   </span>
                 )}
                 {message.metadata?.powerLevel && (
