@@ -244,7 +244,7 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
       
       {/* Content container */}
       <div 
-        className="relative z-70 w-full h-full"
+        className="relative z-50 w-full h-full"
         style={{
           transform: shouldAnimate ? `translateY(${calculateParallaxOffset(-0.02)}px)` : 'none'
         }}

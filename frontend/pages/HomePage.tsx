@@ -42,7 +42,7 @@ export default function HomePage() {
       </div>
       
       {/* Main Content */}
-      <div className="relative z-70 flex flex-col items-center justify-center min-h-screen px-4">
+      <div className="relative z-50 flex flex-col items-center justify-center min-h-screen px-4">
         <div className="text-center max-w-4xl">
           {/* Mystical Power Title */}
           <h1 className={`
@@ -73,6 +73,7 @@ export default function HomePage() {
           `}>
             <Link
               to="/chat"
+              onClick={() => console.log('Navigating to chat')}
               className="
                 group relative overflow-hidden
                 px-10 py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 
@@ -96,6 +97,7 @@ export default function HomePage() {
             
             <Link
               to="/about"
+              onClick={() => console.log('Navigating to about')}
               className="
                 group relative overflow-hidden
                 px-10 py-4 bg-gradient-to-r from-slate-800/80 to-slate-900/80
