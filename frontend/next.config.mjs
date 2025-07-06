@@ -57,6 +57,32 @@ const nextConfig = {
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
+
+  // Configure headers to prevent caching of error and special pages
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        has: [
+          {
+            type: 'query',
+            key: 'error',
+          },
+        ],
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
+    ];
+  },
+
+  // Redirect configuration to handle error pages dynamically
+  async redirects() {
+    return [];
+  },
 };
 
 export default nextConfig;
