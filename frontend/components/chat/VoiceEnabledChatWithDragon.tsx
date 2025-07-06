@@ -1,13 +1,14 @@
 'use client'
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { ASCIIDragon } from '../dragon/ASCIIDragon'
+import ASCIIDragon from '../dragon/ASCIIDragon'
 import { MinimalChatInterface } from './MinimalChatInterface'
 import { useSpeechRecognition } from '@/hooks/voice/useSpeechRecognition'
 import { useElevenLabsTTS } from '@/hooks/voice/useElevenLabsTTS'
-import { VoiceAnimationState } from '@/types/voice-animation'
+import { VoiceAnimationState } from '../dragon/DragonRenderer'
 import { Mic, MicOff, Volume2, VolumeX } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import * as O from 'fp-ts/Option'
 
 interface VoiceEnabledChatWithDragonProps {
   className?: string
@@ -42,6 +43,7 @@ export const VoiceEnabledChatWithDragon: React.FC<VoiceEnabledChatWithDragonProp
     isSpeaking: ttsIsSpeaking,
     error: ttsError
   } = useElevenLabsTTS({
+    apiKey: process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY || '',
     voiceId: process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID || 'default',
     modelId: 'eleven_monolingual_v1',
     voiceSettings: {
@@ -59,7 +61,7 @@ export const VoiceEnabledChatWithDragon: React.FC<VoiceEnabledChatWithDragonProp
     isProcessing,
     isIdle: !isListening && !isSpeaking && !isProcessing,
     volume,
-    emotion: isProcessing ? 'thinking' : isSpeaking ? 'excited' : 'neutral'
+    emotion: isProcessing ? 'neutral' : isSpeaking ? 'excited' : 'neutral'
   }
 
   // Update states based on voice hooks
@@ -79,6 +81,7 @@ export const VoiceEnabledChatWithDragon: React.FC<VoiceEnabledChatWithDragonProp
       const timer = setTimeout(() => setShowTranscript(false), 3000)
       return () => clearTimeout(timer)
     }
+    return undefined
   }, [speechTranscript])
 
   // Handle voice control toggle
@@ -117,6 +120,7 @@ export const VoiceEnabledChatWithDragon: React.FC<VoiceEnabledChatWithDragonProp
       }, 500)
       return () => clearTimeout(timer)
     }
+    return undefined
   }, [transcript, isListening, isVoiceEnabled])
 
   // Monitor chat responses for TTS
@@ -152,7 +156,7 @@ export const VoiceEnabledChatWithDragon: React.FC<VoiceEnabledChatWithDragonProp
               size="md"
               voiceState={voiceState}
               enableBreathing={true}
-              breathingSpeed={isListening ? 1.5 : 1}
+              speed={isListening ? 'fast' : 'normal'}
               className="opacity-90"
             />
           </div>
@@ -224,10 +228,10 @@ export const VoiceEnabledChatWithDragon: React.FC<VoiceEnabledChatWithDragonProp
       </div>
 
       {/* Error notifications */}
-      {(speechError || ttsError) && (
+      {(O.isSome(speechError) || ttsError) && (
         <div className="absolute top-4 left-4 right-4 z-50">
           <div className="bg-destructive/10 text-destructive rounded-lg px-4 py-2 text-sm">
-            {speechError || ttsError}
+            {O.isSome(speechError) ? speechError.value.message : ttsError?.message}
           </div>
         </div>
       )}

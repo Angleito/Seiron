@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Sparkles, Zap } from 'lucide-react'
+import { Sparkles, BookOpen } from 'lucide-react'
 import { StormBackground } from '../components/effects/StormBackground'
 import { useEffect, useState } from 'react'
 
@@ -72,7 +72,7 @@ export default function HomePage() {
             ${isLoaded ? 'storm-entrance-dramatic' : 'opacity-0 translate-y-20'}
           `}>
             <Link
-              to="/dashboard"
+              to="/chat"
               className="
                 group relative overflow-hidden
                 px-10 py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 
@@ -95,7 +95,7 @@ export default function HomePage() {
             </Link>
             
             <Link
-              to="/dragon-showcase"
+              to="/about"
               className="
                 group relative overflow-hidden
                 px-10 py-4 bg-gradient-to-r from-slate-800/80 to-slate-900/80
@@ -111,9 +111,9 @@ export default function HomePage() {
                 active:scale-95
               "
             >
-              <Zap className="inline mr-3 h-5 w-5 storm-power-pulse" />
+              <BookOpen className="inline mr-3 h-5 w-5 storm-power-pulse" />
               <span className="relative z-10 text-lg font-extrabold tracking-wide">
-                POWERS
+                ABOUT
               </span>
               {/* Storm energy effect */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-400/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-500" />
