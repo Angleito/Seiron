@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Config Debug</title>
+</head>
+<body>
+    <h1>Configuration Debug</h1>
+    <pre id="output"></pre>
+    <script type="module">
+        // Check environment variables
+        const output = document.getElementById('output');
+        const info = {
+            timestamp: new Date().toISOString(),
+            env: {
+                VITE_PRIVY_APP_ID: import.meta.env.VITE_PRIVY_APP_ID || 'NOT SET',
+                VITE_PRIVY_CLIENT_ID: import.meta.env.VITE_PRIVY_CLIENT_ID || 'NOT SET',
+                VITE_ORCHESTRATOR_API: import.meta.env.VITE_ORCHESTRATOR_API || 'NOT SET',
+                VITE_ORCHESTRATOR_WS: import.meta.env.VITE_ORCHESTRATOR_WS || 'NOT SET',
+                MODE: import.meta.env.MODE,
+                DEV: import.meta.env.DEV,
+                PROD: import.meta.env.PROD,
+            },
+            window: {
+                location: window.location.href,
+                userAgent: navigator.userAgent
+            }
+        };
+        
+        output.textContent = JSON.stringify(info, null, 2);
+        
+        // Try to import configs
+        try {
+            const { privyConfig } = await import('/config/privy.js');
+            output.textContent += '\n\nPrivy Config Loaded: ' + JSON.stringify({
+                hasAppId: !!privyConfig?.appId,
+                hasConfig: !!privyConfig?.config,
+                configKeys: privyConfig?.config ? Object.keys(privyConfig.config) : []
+            }, null, 2);
+        } catch (error) {
+            output.textContent += '\n\nPrivy Config Error: ' + error.message;
+        }
+    </script>
+</body>
+</html>

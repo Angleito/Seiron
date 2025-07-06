@@ -34,6 +34,19 @@ export function Providers({
 }: {
   children: React.ReactNode
 }) {
+  // Add defensive checks
+  if (!privyConfig) {
+    logger.error('privyConfig is undefined');
+    return (
+      <RootErrorBoundary>
+        <div style={{ padding: '20px', color: 'red' }}>
+          <h2>Configuration Error</h2>
+          <p>privyConfig is undefined. Check your imports and build configuration.</p>
+        </div>
+      </RootErrorBoundary>
+    );
+  }
+
   // Check if Privy app ID is valid
   const isValidAppId = privyConfig.appId && privyConfig.appId.length > 0 && privyConfig.appId !== 'your_privy_app_id_here';
   
@@ -52,11 +65,26 @@ export function Providers({
     );
   }
 
+  // Create safe config with fallbacks
+  const safePrivyConfig = privyConfig.config || {
+    appearance: {
+      theme: 'dark' as const,
+      accentColor: '#ef4444' as const,
+      showWalletLoginFirst: true,
+    },
+    loginMethods: ['email', 'wallet'] as ('email' | 'wallet')[],
+    embeddedWallets: {
+      createOnLogin: 'users-without-wallets' as const,
+      requireUserPasswordOnCreate: true,
+      noPromptOnSignature: false,
+    },
+  };
+
   return (
     <RootErrorBoundary>
       <PrivyProvider
         appId={privyConfig.appId}
-        config={privyConfig.config}
+        config={safePrivyConfig}
       >
         <QueryClientProvider client={queryClient}>
           <WagmiProvider config={wagmiConfig}>
