@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <!-- Background -->
+  <circle cx="40" cy="40" r="40" fill="url(#warriorGradient)"/>
+  
+  <!-- Simple warrior silhouette -->
+  <g transform="translate(40, 40)">
+    <!-- Head -->
+    <circle cx="0" cy="-10" r="12" fill="#2c3e50"/>
+    
+    <!-- Body -->
+    <rect x="-15" y="-5" width="30" height="25" rx="5" fill="#34495e"/>
+    
+    <!-- Spiky hair effect -->
+    <path d="M -12 -20 L -8 -25 L -4 -22 L 0 -26 L 4 -22 L 8 -25 L 12 -20" 
+          fill="#1a252f" stroke="none"/>
+    
+    <!-- Eyes glow -->
+    <circle cx="-4" cy="-10" r="2" fill="#4682b4" opacity="0.8"/>
+    <circle cx="4" cy="-10" r="2" fill="#4682b4" opacity="0.8"/>
+    
+    <!-- Energy aura -->
+    <circle cx="0" cy="0" r="35" fill="none" stroke="url(#auraGradient)" stroke-width="2" opacity="0.6"/>
+  </g>
+  
+  <!-- Gradients -->
+  <defs>
+    <linearGradient id="warriorGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a2f4a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f1f2e;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="auraGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4682b4;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#5f9ea0;stop-opacity:0.5" />
+      <stop offset="100%" style="stop-color:#87ceeb;stop-opacity:0" />
+    </linearGradient>
+  </defs>
+</svg>

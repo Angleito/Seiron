@@ -4,6 +4,9 @@ import { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHand
 import { Send, Loader2, Plus, Sparkles } from 'lucide-react'
 import { cn } from '@lib/utils'
 import { SeironImage } from '@components/SeironImage'
+import { GameDialogueBox } from './GameDialogueBox'
+import { characterConfig } from '@/utils/character-config'
+import '@/styles/game-dialogue.css'
 
 interface Message {
   id: string
@@ -125,51 +128,17 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
   return (
     <div className={cn("h-full flex flex-col bg-gray-950", className)}>
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="flex-1 overflow-y-auto game-chat-background">
+        <div className="max-w-5xl mx-auto px-4 py-8">
           {messages.map((message) => (
-            <div
+            <GameDialogueBox
               key={message.id}
-              className={cn(
-                "mb-6 flex gap-4",
-                message.role === 'user' ? 'flex-row-reverse' : ''
-              )}
-            >
-              {/* Avatar */}
-              <div className="flex-shrink-0">
-                {message.role === 'assistant' ? (
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center">
-                    <span className="text-lg">🐉</span>
-                  </div>
-                ) : (
-                  <div className="w-10 h-10 rounded-lg bg-gray-700 flex items-center justify-center">
-                    <span className="text-size-3 font-normal text-gray-300">You</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Message Content */}
-              <div className={cn(
-                "flex-1 max-w-[85%]",
-                message.role === 'user' ? 'text-right' : ''
-              )}>
-                <div className={cn(
-                  "inline-block px-4 py-3 rounded-2xl",
-                  message.role === 'user' 
-                    ? 'bg-red-900/30 text-gray-100 border border-red-800/50' 
-                    : 'bg-gray-800/50 text-gray-100'
-                )}>
-                  {message.isLoading ? (
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin text-red-400" />
-                      <span className="text-gray-400">Channeling dragon wisdom...</span>
-                    </div>
-                  ) : (
-                    <p className="whitespace-pre-wrap">{message.content}</p>
-                  )}
-                </div>
-              </div>
-            </div>
+              characterName={characterConfig[message.role].name}
+              characterImage={characterConfig[message.role].image}
+              message={message.isLoading ? "Channeling dragon wisdom..." : message.content}
+              position={characterConfig[message.role].position}
+              showPortrait={true}
+            />
           ))}
           <div ref={messagesEndRef} />
         </div>

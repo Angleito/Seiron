@@ -1,0 +1,239 @@
+/* Dragon Ball Z Game Dialogue Styling */
+
+/* Main dialogue box container */
+.game-dialogue-box {
+  position: relative;
+  background: linear-gradient(to bottom, #3d2914, #2a1a0a);
+  border: 3px solid #8b4513;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.5),
+    inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+/* Character name header */
+.game-dialogue-header {
+  background: linear-gradient(to right, #ff6b35, #ff8c42);
+  padding: 8px 16px;
+  border-bottom: 2px solid #8b4513;
+  position: relative;
+  overflow: hidden;
+}
+
+.game-dialogue-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 3s infinite;
+}
+
+/* Message content area */
+.game-dialogue-content {
+  padding: 16px 20px;
+  min-height: 80px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.1));
+}
+
+/* Triangle pointer */
+.game-dialogue-pointer {
+  position: absolute;
+  bottom: -12px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
+}
+
+.game-dialogue-pointer-left {
+  left: 40px;
+  border-width: 12px 12px 0 12px;
+  border-color: #2a1a0a transparent transparent transparent;
+}
+
+.game-dialogue-pointer-right {
+  right: 40px;
+  border-width: 12px 12px 0 12px;
+  border-color: #2a1a0a transparent transparent transparent;
+}
+
+/* Ornamental corners */
+.game-dialogue-corner {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(45deg, #ff6b35, #ff8c42);
+  z-index: 1;
+}
+
+.game-dialogue-corner::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  background: #2a1a0a;
+}
+
+.game-dialogue-corner-tl {
+  top: -2px;
+  left: -2px;
+  border-radius: 0 0 100% 0;
+}
+
+.game-dialogue-corner-tr {
+  top: -2px;
+  right: -2px;
+  border-radius: 0 0 0 100%;
+}
+
+.game-dialogue-corner-bl {
+  bottom: -2px;
+  left: -2px;
+  border-radius: 0 100% 0 0;
+}
+
+.game-dialogue-corner-br {
+  bottom: -2px;
+  right: -2px;
+  border-radius: 100% 0 0 0;
+}
+
+/* Character portrait styling */
+.game-portrait-frame {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border: 3px solid #ff6b35;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(255, 107, 53, 0.3);
+  background: linear-gradient(to bottom, #1a0f05, #2a1a0a);
+}
+
+.game-portrait-aura {
+  pointer-events: none;
+  background: radial-gradient(circle at center, transparent 30%, rgba(255, 107, 53, 0.4));
+  animation: aura-pulse 2s ease-in-out infinite;
+}
+
+/* Animations */
+@keyframes dialogue-appear {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes shimmer {
+  to {
+    left: 100%;
+  }
+}
+
+@keyframes aura-pulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
+}
+
+.animate-dialogue-appear {
+  animation: dialogue-appear 0.4s ease-out forwards;
+}
+
+/* Power level indicator */
+.game-power-level {
+  position: absolute;
+  top: 8px;
+  right: 16px;
+  font-size: 12px;
+  color: #ffdd57;
+  text-shadow: 0 0 4px rgba(255, 221, 87, 0.6);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.game-power-level::before {
+  content: '⚡';
+  font-size: 14px;
+}
+
+/* User-specific styling */
+.game-dialogue-box.user-dialogue {
+  background: linear-gradient(to bottom, #1a2f4a, #0f1f2e);
+  border-color: #4682b4;
+}
+
+.game-dialogue-box.user-dialogue .game-dialogue-header {
+  background: linear-gradient(to right, #4682b4, #5f9ea0);
+}
+
+.game-dialogue-box.user-dialogue .game-dialogue-corner {
+  background: linear-gradient(45deg, #4682b4, #5f9ea0);
+}
+
+.game-dialogue-box.user-dialogue .game-dialogue-pointer-left,
+.game-dialogue-box.user-dialogue .game-dialogue-pointer-right {
+  border-color: #0f1f2e transparent transparent transparent;
+}
+
+/* Game chat background */
+.game-chat-background {
+  background: 
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.9)),
+    radial-gradient(circle at 20% 50%, rgba(255, 107, 53, 0.1), transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(70, 130, 180, 0.1), transparent 50%);
+  position: relative;
+}
+
+.game-chat-background::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 100px,
+      rgba(255, 255, 255, 0.02) 100px,
+      rgba(255, 255, 255, 0.02) 101px
+    );
+  pointer-events: none;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  .game-dialogue-box {
+    font-size: 14px;
+  }
+  
+  .game-dialogue-content {
+    padding: 12px 16px;
+    min-height: 60px;
+  }
+  
+  .game-portrait-frame {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .game-dialogue-header {
+    padding: 6px 12px;
+  }
+}
