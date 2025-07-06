@@ -752,12 +752,12 @@ export function ComplexChatInterface() {
                 )}
                 {message.metadata?.powerLevel && (
                   <span className="text-size-4 text-orange-400">
-                    ⚡{message.metadata.powerLevel.toLocaleString()}
+                    ⚡{(message.metadata.powerLevel as number).toLocaleString()}
                   </span>
                 )}
                 {message.metadata?.dragonBallMessage && (
                   <span className="text-size-4 text-orange-300 italic pl-1">
-                    🐲 {message.metadata.dragonBallMessage}
+                    🐲 {String(message.metadata.dragonBallMessage)}
                   </span>
                 )}
               </div>
