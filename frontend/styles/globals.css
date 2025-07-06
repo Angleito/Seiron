@@ -1,7 +1,5 @@
 /* Import design tokens first */
 @import './design-tokens.css';
-/* Import responsive dragon styles */
-@import './dragon-responsive.css';
 
 @font-face {
   font-family: 'Geist Sans';
