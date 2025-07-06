@@ -26,7 +26,7 @@ export default function HomePage() {
     >
       {/* Mystical Portal Effect */}
       <div className={`
-        absolute inset-0 flex items-center justify-center
+        absolute inset-0 flex items-center justify-center pointer-events-none
         transition-all duration-1000 ease-out
         ${showPortal ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}
       `}>
