@@ -79,12 +79,13 @@ export default function HomePage() {
                 px-10 py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 
                 text-red-950 font-bold rounded-lg
                 storm-hover-glow storm-hover-lightning
-                border-2 border-yellow-400/50
-                shadow-lg shadow-yellow-500/25
+                border-2 border-yellow-400
+                shadow-lg shadow-yellow-500/50
                 transform transition-all duration-300
-                hover:shadow-xl hover:shadow-yellow-500/40
+                hover:shadow-xl hover:shadow-yellow-500/60
                 hover:border-yellow-300
                 active:scale-95
+                opacity-100
               "
             >
               <Sparkles className="inline mr-3 h-5 w-5 storm-breathing" />
@@ -100,17 +101,18 @@ export default function HomePage() {
               onClick={() => console.log('Navigating to about')}
               className="
                 group relative overflow-hidden
-                px-10 py-4 bg-gradient-to-r from-slate-800/80 to-slate-900/80
+                px-10 py-4 bg-gradient-to-r from-slate-800 to-slate-900
                 text-yellow-400 font-bold rounded-lg
                 storm-hover-glow storm-hover-vortex
-                border-2 border-yellow-500/50
-                shadow-lg shadow-red-900/25
+                border-2 border-yellow-500
+                shadow-lg shadow-red-900/50
                 backdrop-blur-sm
                 transform transition-all duration-300
-                hover:bg-gradient-to-r hover:from-slate-700/80 hover:to-slate-800/80
+                hover:bg-gradient-to-r hover:from-slate-700 hover:to-slate-800
                 hover:border-yellow-400
-                hover:shadow-xl hover:shadow-red-900/40
+                hover:shadow-xl hover:shadow-red-900/60
                 active:scale-95
+                opacity-100
               "
             >
               <BookOpen className="inline mr-3 h-5 w-5 storm-power-pulse" />
