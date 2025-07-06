@@ -9,16 +9,16 @@
     <!-- Content Security Policy -->
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
-      script-src 'self' 'wasm-unsafe-eval';
+      script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline' https://vercel.live https://*.vercel-scripts.com;
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-      img-src 'self' data: https:;
+      img-src 'self' data: https: blob:;
       font-src 'self' data: https://fonts.gstatic.com;
-      connect-src 'self' https: wss: ws: http://localhost:3001 ws://localhost:3001 https://api.web3modal.org https://explorer-api.walletconnect.com https://pulse.walletconnect.org;
-      media-src 'self';
+      connect-src 'self' https: wss: ws: http://localhost:* ws://localhost:* https://api.web3modal.org https://explorer-api.walletconnect.com https://pulse.walletconnect.org https://vercel.live;
+      media-src 'self' blob:;
       object-src 'none';
       base-uri 'self';
       form-action 'self';
-      frame-src 'self' https://auth.privy.io https://verify.walletconnect.com https://verify.walletconnect.org;
+      frame-src 'self' https://auth.privy.io https://verify.walletconnect.com https://verify.walletconnect.org https://vercel.live;
       upgrade-insecure-requests;
     ">
     
