@@ -8,6 +8,7 @@ interface LightningEffectProps {
   enabled?: boolean
   reducedMotion?: boolean
   maxBolts?: number
+  onLightningStrike?: (isActive: boolean) => void
 }
 
 interface LightningPoint {
@@ -35,7 +36,8 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
   intensity = 'normal',
   enabled = true,
   reducedMotion = false,
-  maxBolts = 3
+  maxBolts = 3,
+  onLightningStrike
 }) => {
   const [lightningBolts, setLightningBolts] = useState<LightningBolt[]>([])
   const [isFlashing, setIsFlashing] = useState(false)
@@ -135,13 +137,15 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
 
     setLightningBolts(newBolts)
     setIsFlashing(true)
+    onLightningStrike?.(true)
 
     // Remove bolts after animation
     setTimeout(() => {
       setLightningBolts([])
       setIsFlashing(false)
+      onLightningStrike?.(false)
     }, Math.max(...newBolts.map(bolt => bolt.duration)))
-  }, [enabled, reducedMotion, intensity, maxBolts, generateLightningBolt])
+  }, [enabled, reducedMotion, intensity, maxBolts, generateLightningBolt, onLightningStrike])
 
   useEffect(() => {
     if (!enabled || reducedMotion) return

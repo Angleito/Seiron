@@ -6,6 +6,7 @@ import { useStormPerformance, useLazyStormEffects } from '@/hooks/useStormPerfor
 // Lazy load heavy components
 const LightningEffect = lazy(() => import('./LightningEffect'))
 const FogOverlay = lazy(() => import('./FogOverlay'))
+const DragonHead3D = lazy(() => import('./DragonHead3D'))
 
 interface StormBackgroundProps {
   className?: string
@@ -91,6 +92,7 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
   children
 }) => {
   const [isLoading, setIsLoading] = useState(true)
+  const [isLightningActive, setIsLightningActive] = useState(false)
   const prefersReducedMotion = useReducedMotion()
   const shouldAnimate = animated && !prefersReducedMotion
   const scrollState = useScrollTracking(shouldAnimate)
@@ -206,6 +208,16 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
         />
       ))}
       
+      {/* Dragon Head - positioned behind fog but in front of clouds */}
+      <Suspense fallback={null}>
+        <DragonHead3D
+          className="absolute inset-0"
+          intensity={normalizedIntensity}
+          enableEyeTracking={shouldAnimate}
+          lightningActive={isLightningActive}
+        />
+      </Suspense>
+      
       {/* Lightning effects - Lazy loaded */}
       {stormConfig.lightning.enabled && (
         <Suspense fallback={null}>
@@ -216,6 +228,7 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
             enabled={shouldAnimate}
             reducedMotion={prefersReducedMotion}
             maxBolts={stormConfig.lightning.maxBolts}
+            onLightningStrike={(isActive: boolean) => setIsLightningActive(isActive)}
           />
         </Suspense>
       )}
