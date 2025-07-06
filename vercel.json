@@ -7,32 +7,32 @@
   "framework": null,
   "rewrites": [
     {
-      "source": "/((?!api).*)",
+      "source": "/(?!api).*",
       "destination": "/index.html"
     }
   ],
   "functions": {
-    "api/ai.ts": {
+    "api/chat.js": {
       "runtime": "nodejs18.x",
       "maxDuration": 30,
       "memory": 1024
     },
-    "api/chat.ts": {
+    "api/orchestrate.js": {
       "runtime": "nodejs18.x",
       "maxDuration": 30,
       "memory": 1024
     },
-    "api/portfolio.ts": {
+    "api/messages/[sessionId].js": {
       "runtime": "nodejs18.x",
       "maxDuration": 30,
       "memory": 1024
     },
-    "api/voice.ts": {
+    "api/sessions/index.js": {
       "runtime": "nodejs18.x",
       "maxDuration": 30,
       "memory": 1024
     },
-    "api/confirmation.ts": {
+    "api/sessions/[sessionId].js": {
       "runtime": "nodejs18.x",
       "maxDuration": 30,
       "memory": 1024
@@ -97,6 +97,9 @@
     "NEXT_PUBLIC_VOICE_ENABLED": "true",
     "OPENAI_API_KEY": "@openai_api_key",
     "REDIS_URL": "@redis_url",
+    "SUPABASE_URL": "@supabase_url",
+    "SUPABASE_ANON_KEY": "@supabase_anon_key",
+    "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key",
     "NODE_ENV": "production",
     "VITE_APP_NAME": "Seiron AI Portfolio"
   },
