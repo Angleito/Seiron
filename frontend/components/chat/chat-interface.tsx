@@ -740,22 +740,22 @@ export function ComplexChatInterface() {
                     {message.status === 'failed' && '✗'}
                   </span>
                 )}
-                {message.metadata?.executionTime && (
+                {message.metadata?.executionTime != null && (
                   <p className="text-size-4 text-red-400">
                     ⚡ {((message.metadata.executionTime as number) / 1000).toFixed(2)}s
                   </p>
                 )}
-                {message.metadata?.confidence && (
+                {message.metadata?.confidence != null && (
                   <span className="text-size-4 text-yellow-400">
                     {Math.round((message.metadata.confidence as number) * 100)}%
                   </span>
                 )}
-                {message.metadata?.powerLevel && (
+                {message.metadata?.powerLevel != null && (
                   <span className="text-size-4 text-orange-400">
                     ⚡{(message.metadata.powerLevel as number).toLocaleString()}
                   </span>
                 )}
-                {message.metadata?.dragonBallMessage && (
+                {message.metadata?.dragonBallMessage != null && (
                   <span className="text-size-4 text-orange-300 italic pl-1">
                     🐲 {String(message.metadata.dragonBallMessage)}
                   </span>
