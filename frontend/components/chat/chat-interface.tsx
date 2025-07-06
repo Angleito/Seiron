@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Send, Bot, Loader2, Sparkles } from 'lucide-react'
+import { Send, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AgentMessage, AgentStreamEvent } from '@/types/agent'
 import { getOrchestrator } from '@/lib/orchestrator-client'

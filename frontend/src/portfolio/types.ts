@@ -12,7 +12,7 @@ export interface Position {
   collateralValue?: number;
   debtValue?: number;
   lastUpdated: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface PortfolioMetrics {
@@ -71,7 +71,7 @@ export interface CacheConfig {
 export interface PortfolioEvent {
   type: 'position_added' | 'position_removed' | 'position_updated' | 'portfolio_synced';
   timestamp: Date;
-  data: any;
+  data: unknown;
 }
 
 export type PositionUpdateCallback = (position: Position) => void;

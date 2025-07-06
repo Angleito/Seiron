@@ -26,7 +26,7 @@ export function PortfolioSidebar() {
     <div className="h-full bg-gradient-to-b from-sei-gray-50 to-sei-gray-100 p-6 overflow-y-auto">
       {/* Portfolio Summary */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-dragon-red-700 mb-4">Dragon's Treasure Vault</h2>
+        <h2 className="text-lg font-semibold text-dragon-red-700 mb-4">Dragon&apos;s Treasure Vault</h2>
         <div className="bg-white rounded-lg p-4 shadow-dragon border border-dragon-red-200">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-sei-gray-600">Total Power Level</span>
@@ -93,7 +93,7 @@ export function PortfolioSidebar() {
 
       {/* Quick Stats */}
       <div className="mt-8">
-        <h3 className="text-lg font-semibold text-dragon-red-700 mb-4">Dragon's Wisdom</h3>
+        <h3 className="text-lg font-semibold text-dragon-red-700 mb-4">Dragon&apos;s Wisdom</h3>
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white rounded-lg p-3 shadow-dragon border border-dragon-red-100">
             <p className="text-xs text-sei-gray-500">Daily Manifestations</p>
@@ -104,7 +104,7 @@ export function PortfolioSidebar() {
             <p className="text-sm font-semibold text-dragon-red-700">47</p>
           </div>
           <div className="bg-white rounded-lg p-3 shadow-dragon border border-dragon-red-100">
-            <p className="text-xs text-sei-gray-500">Dragon's Precision</p>
+            <p className="text-xs text-sei-gray-500">Dragon&apos;s Precision</p>
             <p className="text-sm font-semibold text-dragon-red-700">68%</p>
           </div>
           <div className="bg-white rounded-lg p-3 shadow-dragon border border-dragon-red-100">

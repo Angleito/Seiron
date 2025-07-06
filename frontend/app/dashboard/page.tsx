@@ -17,7 +17,7 @@ export default function DashboardPage() {
               Seiron - Granting your wildest Sei Investing Wishes
             </h1>
             <p className="text-sm text-orange-300 mt-1 font-medium">
-              Unleash the dragon's power to fulfill your wildest investment dreams
+              Unleash the dragon&apos;s power to fulfill your wildest investment dreams
             </p>
           </div>
           <div className="relative">

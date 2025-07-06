@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Orchestrator } from '@/lib/orchestrator-client'
-import { UserIntent, UserIntentType, AgentMessage, TaskResult } from '@/types/agent'
+import { UserIntent, UserIntentType, TaskResult } from '@/types/agent'
 
 // Initialize orchestrator client
 const orchestrator = new Orchestrator({
@@ -96,7 +96,7 @@ function formatAgentResponse(result: TaskResult, agentType?: string): string {
   }
 
   // Format based on task result
-  const data = result.result as any
+  const data = result.result as Record<string, unknown>
   let response = ''
 
   switch (agentType) {
@@ -130,7 +130,7 @@ function formatAgentResponse(result: TaskResult, agentType?: string): string {
         response += `Total Power Level: $${data.totalValue.toLocaleString()}\n`
         response += `Dragon's Favor: ${data.change24h > 0 ? '+' : ''}${data.change24h}%\n\n`
         response += `Mystical Treasures:\n`
-        data.positions.forEach((pos: any) => {
+        data.positions.forEach((pos: Record<string, unknown>) => {
           response += `• ${pos.asset}: $${pos.value.toLocaleString()} (${pos.allocation}%)\n`
         })
       }

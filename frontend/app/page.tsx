@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Bot, Shield, TrendingUp, Zap, Star, Eye, Sparkles } from 'lucide-react'
+import { Shield, TrendingUp, Star, Eye, Sparkles } from 'lucide-react'
 import { FloatingDragonLogo } from '@/components/FloatingDragonLogo'
 
 export default function Home() {
@@ -59,10 +59,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-transparent bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text mb-4">
-              Seiron's Mystical Powers
+              Seiron&apos;s Mystical Powers
             </h2>
             <p className="text-lg text-orange-300">
-              Unleash Seiron's legendary powers to fulfill your wildest investment fantasies
+              Unleash Seiron&apos;s legendary powers to fulfill your wildest investment fantasies
             </p>
           </div>
 
@@ -99,7 +99,7 @@ export default function Home() {
                 <Shield className="h-8 w-8" />
               </div>
               <h3 className="text-lg font-semibold text-orange-100 mb-2">
-                Dragon's Protection
+                Dragon&apos;s Protection
               </h3>
               <p className="text-orange-400">
                 Your treasure remains in your vault. The dragon guards without possessing.
@@ -115,7 +115,7 @@ export default function Home() {
                 Dragon Sight
               </h3>
               <p className="text-orange-400">
-                See through market illusions with the dragon's all-seeing eyes and eternal wisdom.
+                See through market illusions with the dragon&apos;s all-seeing eyes and eternal wisdom.
               </p>
             </div>
           </div>
@@ -151,14 +151,14 @@ export default function Home() {
                 Speak Your Wish
               </h3>
               <p className="text-orange-400">
-                Channel your desires: "Grant me $1000 of SEI" or "Balance my digital treasures."
+                Channel your desires: &quot;Grant me $1000 of SEI&quot; or &quot;Balance my digital treasures.&quot;
               </p>
             </div>
 
             <div className="bg-gradient-to-br from-red-800 to-red-900 rounded-lg p-8 shadow-xl border border-orange-500/40">
               <div className="text-3xl font-bold text-transparent bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text mb-4">3</div>
               <h3 className="text-xl font-semibold text-orange-100 mb-2">
-                Dragon's Manifestation
+                Dragon&apos;s Manifestation
               </h3>
               <p className="text-orange-400">
                 Seiron awakens, scans the Sei realm, and grants your wish with mystical precision.
@@ -175,7 +175,7 @@ export default function Home() {
             Ready to Make Your Wildest Investment Dreams Come True?
           </h2>
           <p className="text-xl text-orange-100 mb-8">
-            Join the legendary investors who have already unleashed Seiron's power to fulfill their wildest Sei ecosystem fantasies.
+            Join the legendary investors who have already unleashed Seiron&apos;s power to fulfill their wildest Sei ecosystem fantasies.
           </p>
           <Link
             href="/dashboard"
