@@ -659,10 +659,11 @@ export function ChatInterface() {
 
       {/* Messages Area */}
       <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-2 relative">
-        {/* Seiron Watermark */}
+        {/* Seiron Watermark with Mystical Effects */}
         <SeironImage 
           variant="watermark"
-          className="absolute bottom-2 right-2 z-0 opacity-50"
+          className="absolute bottom-8 right-8 z-0"
+          enableMysticalEffects={true}
         />
         
         {messages.map((message) => (
