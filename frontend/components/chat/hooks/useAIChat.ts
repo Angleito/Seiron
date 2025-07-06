@@ -352,7 +352,7 @@ export function useAIChat(options: UseAIChatOptions): UseAIChatResult {
     error,
     
     // Core functions
-    handleInputChange,
+    handleInputChange: handleInputChange as (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void,
     handleSubmit,
     sendMessage,
     sendVoiceMessage,
@@ -372,5 +372,5 @@ export function useAIChat(options: UseAIChatOptions): UseAIChatResult {
   }
 }
 
-// Export helper types
-export type { Message, EnhancedMessage, AIError }
+// Export helper types (already exported above)
+// export type { Message, EnhancedMessage, AIError }

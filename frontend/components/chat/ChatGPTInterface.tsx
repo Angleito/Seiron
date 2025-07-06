@@ -148,10 +148,8 @@ export const ChatGPTInterface = forwardRef<ChatGPTInterfaceRef, ChatGPTInterface
                   <User className="w-6 h-6 text-white m-auto mt-2" />
                 ) : (
                   <SeironImage 
-                    type="head" 
+                    variant="icon"
                     className="w-full h-full object-cover"
-                    width={40}
-                    height={40}
                   />
                 )}
               </div>
@@ -173,10 +171,8 @@ export const ChatGPTInterface = forwardRef<ChatGPTInterfaceRef, ChatGPTInterface
             <div className="chatgpt-message ai">
               <div className="chatgpt-avatar ai">
                 <SeironImage 
-                  type="head" 
+                  variant="icon" 
                   className="w-full h-full object-cover"
-                  width={40}
-                  height={40}
                 />
               </div>
               <div className="chatgpt-typing-indicator">

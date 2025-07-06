@@ -54,7 +54,7 @@ Key features:
 - Semantic HTML with proper attributes`,
     timestamp: new Date(Date.now() - 3000),
     powerLevel: 9500,
-    emotion: 'excited'
+    emotion: 'excited' as const
   },
   {
     id: '3',
@@ -82,7 +82,7 @@ The \`?\` makes properties optional, providing flexibility while maintaining typ
 Check out the [TypeScript Handbook](https://www.typescriptlang.org/docs/) for more details.`,
     timestamp: new Date(),
     powerLevel: 8000,
-    emotion: 'neutral'
+    emotion: 'neutral' as const
   }
 ]
 

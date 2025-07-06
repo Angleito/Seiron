@@ -113,7 +113,7 @@ export function AnimeMessageBubble({
           
           const buttonContainer = document.createElement('div')
           buttonContainer.className = 'anime-copy-container'
-          buttonContainer.id = `copy-${blocks[index].id}`
+          buttonContainer.id = `copy-${blocks[index]?.id || index}`
           wrapper.appendChild(buttonContainer)
         }
       })
