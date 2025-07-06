@@ -436,4 +436,4 @@ function PortfolioSidebarInternal() {
 }
 
 // Export memoized component
-export const PortfolioSidebar = React.memo(PortfolioSidebarInternal)
+export const ComplexPortfolioSidebar = React.memo(PortfolioSidebarInternal)

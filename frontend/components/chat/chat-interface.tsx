@@ -72,7 +72,7 @@ function SafeMessageContent({ content, type }: { content: string; type: 'user' |
   return <span className="whitespace-pre-wrap">{sanitized}</span>
 }
 
-export function ChatInterface() {
+export function ComplexChatInterface() {
   const [input, setInput] = useState('')
   const [sessionId] = useState(generateSessionId())
   
