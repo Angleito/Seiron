@@ -4,7 +4,7 @@
   "buildCommand": "cd frontend && npm run build",
   "outputDirectory": "frontend/dist",
   "installCommand": "npm install --legacy-peer-deps && cd frontend && npm install --legacy-peer-deps",
-  "framework": null,
+  "framework": "vite",
   "functions": {
     "api/**/*.js": {
       "runtime": "nodejs18.x",
@@ -56,5 +56,11 @@
     "NODE_ENV": "production"
   },
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
