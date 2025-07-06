@@ -368,7 +368,8 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
             "Great question! I'll help you with that.",
             "Let me process that question for you."
           ]
-          responseMessage = questionResponses[Math.floor(Math.random() * questionResponses.length)]
+          const index = Math.floor(Math.random() * questionResponses.length)
+          responseMessage = questionResponses[index] ?? questionResponses[0] ?? "I'm here to help!"
         } else if (isCommand) {
           const commandResponses = [
             "I'm ready to execute your command!",
@@ -376,7 +377,8 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
             "On it! Let me assist you.",
             "Command acknowledged! How can I help?"
           ]
-          responseMessage = commandResponses[Math.floor(Math.random() * commandResponses.length)]
+          const index = Math.floor(Math.random() * commandResponses.length)
+          responseMessage = commandResponses[index] ?? commandResponses[0] ?? "I'm ready to help!"
         } else {
           // Emotion-based responses
           const emotionResponses = {
@@ -403,7 +405,8 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
           }
           
           const responses = emotionResponses[transcriptEmotion] || emotionResponses.neutral
-          responseMessage = responses[Math.floor(Math.random() * responses.length)]
+          const index = Math.floor(Math.random() * responses.length)
+          responseMessage = responses[index] ?? responses[0] ?? "How can I help you?"
         }
       } else {
         // Default greetings when no transcript context
@@ -416,7 +419,8 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
           "Dragon at your service!",
           "Speak, and I shall listen with wisdom."
         ]
-        responseMessage = greetings[Math.floor(Math.random() * greetings.length)]
+        const index = Math.floor(Math.random() * greetings.length)
+        responseMessage = greetings[index] ?? greetings[0] ?? "Hello! I'm here to help."
       }
       
       playAudioResponse(responseMessage)
@@ -437,7 +441,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
     const dispatchVoiceEvent = (type: string, data?: any) => {
       const event = new CustomEvent('voiceStateChange', {
         detail: { type, data, timestamp: Date.now() }
-      })
+      }) as CustomEvent
       window.dispatchEvent(event)
       
       logger.debug('🎙️ Voice event dispatched', { type, data })
@@ -486,8 +490,9 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
     }
     
     // Example external integration listeners
-    registerVoiceEventListener('voiceCommand', (event: CustomEvent) => {
-      const { command, confidence } = event.detail
+    registerVoiceEventListener('voiceCommand', (event: Event) => {
+      const customEvent = event as CustomEvent
+      const { command, confidence } = customEvent.detail || {}
       logger.debug('🎙️ Voice command received', { command, confidence })
       
       // Handle voice commands if needed
@@ -497,8 +502,9 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
       }
     })
     
-    registerVoiceEventListener('voiceEmotionDetected', (event: CustomEvent) => {
-      const { emotion, intensity } = event.detail
+    registerVoiceEventListener('voiceEmotionDetected', (event: Event) => {
+      const customEvent = event as CustomEvent
+      const { emotion, intensity } = customEvent.detail || {}
       logger.debug('🎙️ Voice emotion detected', { emotion, intensity })
       
       // Update dragon state based on detected emotion
@@ -515,7 +521,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
       // Dispatch cleanup event
       const cleanupEvent = new CustomEvent('voiceCleanup', {
         detail: { componentId: 'VoiceInterface', timestamp: Date.now() }
-      })
+      }) as CustomEvent
       window.dispatchEvent(cleanupEvent)
       
       logger.debug('🧹 Voice event handlers cleaned up')
@@ -533,7 +539,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
             analysis,
             timestamp: Date.now() 
           }
-        })
+        }) as CustomEvent
         window.dispatchEvent(event)
       }
       
@@ -592,6 +598,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
       
       return () => clearTimeout(analysisTimer)
     }
+    return undefined
   }, [state.currentTranscript, dragonVoiceState.emotion])
 
   if (!isSpeechSupported) {

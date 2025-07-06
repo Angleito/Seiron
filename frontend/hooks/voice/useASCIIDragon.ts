@@ -883,7 +883,7 @@ export const useASCIIDragon = (options: UseASCIIDragonOptions = {}) => {
   useEffect(() => {
     if (autoOptimize && enablePerformanceMonitoring) {
       const performanceScore = dragonPerformance ? 
-        (5 - dragonPerformance.currentLOD.level) * 20 : // Convert LOD to score
+        (5 - (dragonPerformance.currentLOD?.level ?? 2)) * 20 : // Convert LOD to score
         performanceMonitor.performanceScore
       
       const optimizedConfig = optimizeConfigForPerformance(
@@ -896,7 +896,7 @@ export const useASCIIDragon = (options: UseASCIIDragonOptions = {}) => {
       }
     }
   }, [
-    dragonPerformance?.currentLOD.level, 
+    dragonPerformance?.currentLOD?.level, 
     performanceMonitor.performanceScore, 
     autoOptimize, 
     enablePerformanceMonitoring, 
@@ -1261,10 +1261,10 @@ export const useASCIIDragon = (options: UseASCIIDragonOptions = {}) => {
     getPerformanceMetrics,
     optimizeForPerformance,
     performanceScore: dragonPerformance ? 
-      (5 - dragonPerformance.currentLOD.level) * 20 : 
+      (5 - (dragonPerformance.currentLOD?.level ?? 2)) * 20 : 
       (enablePerformanceMonitoring ? performanceMonitor.performanceScore : 100),
     isHighPerformance: dragonPerformance ? 
-      dragonPerformance.currentLOD.level < 2 : 
+      (dragonPerformance.currentLOD?.level ?? 2) < 2 : 
       (enablePerformanceMonitoring ? performanceMonitor.isHighPerformance : true),
     currentLOD: dragonPerformance?.currentLOD || null,
     memoryStats: dragonPerformance?.memoryStats || null,

@@ -11,7 +11,8 @@ import {
   adjustParticleCount,
   adjustTextureQuality,
   adjustAnimationQuality,
-  LOD_LEVELS
+  LOD_LEVELS,
+  LODLevel
 } from '../../utils/dragon-performance'
 
 // Types and interfaces
@@ -98,7 +99,8 @@ const ParticleSystem: React.FC<{
   
   // Adjust particle count based on performance
   const adjustedCount = useMemo(() => {
-    const baseCount = adjustParticleCount(count, performance.currentLOD)
+    const currentLOD = getCurrentLOD(performance)
+    const baseCount = adjustParticleCount(count, currentLOD)
     return Math.max(1, baseCount)
   }, [count, performance.currentLOD])
   
@@ -156,8 +158,9 @@ const ParticleSystem: React.FC<{
   // Adjust particle size based on LOD
   const particleSize = useMemo(() => {
     const baseSize = size * 0.02
-    return baseSize * performance.currentLOD.textureQuality
-  }, [size, performance.currentLOD.textureQuality])
+    const currentLOD = getCurrentLOD(performance)
+    return baseSize * currentLOD.textureQuality
+  }, [size, performance.currentLOD])
 
   return (
     <points ref={meshRef}>
@@ -173,7 +176,7 @@ const ParticleSystem: React.FC<{
         size={particleSize}
         color={DragonConfig.colors.gold}
         transparent
-        opacity={performance.currentLOD.level > 2 ? 0.6 : 0.8}
+        opacity={performance.currentLOD?.level && performance.currentLOD.level > 2 ? 0.6 : 0.8}
         sizeAttenuation={true}
       />
     </points>
@@ -202,11 +205,12 @@ const DragonBody: React.FC<{
     ])
     
     // Adjust geometry quality based on LOD
-    const segmentCount = performance.currentLOD.level > 2 ? 16 : 32
-    const radialSegments = performance.currentLOD.level > 3 ? 4 : 8
+    const currentLOD = getCurrentLOD(performance)
+    const segmentCount = currentLOD.level > 2 ? 16 : 32
+    const radialSegments = currentLOD.level > 3 ? 4 : 8
     
     return new THREE.TubeGeometry(curve, segmentCount, size * 0.15, radialSegments, false)
-  }, [size, performance.currentLOD.level])
+  }, [size, performance.currentLOD])
 
   useFrame((state) => {
     if (!bodyRef.current || performance.shouldDisableAnimations) return
@@ -216,7 +220,8 @@ const DragonBody: React.FC<{
     const skipFrames = performance.shouldReduceQuality ? 3 : 1
     if (frameCountRef.current % skipFrames !== 0) return
     
-    const time = state.clock.getElapsedTime() * animationSpeed * performance.currentLOD.animationQuality
+    const currentLOD = getCurrentLOD(performance)
+    const time = state.clock.getElapsedTime() * animationSpeed * currentLOD.animationQuality
     
     // Simplified breathing animation for performance
     if (performance.shouldReduceQuality) {
@@ -254,13 +259,14 @@ const DragonHead: React.FC<{
   // Performance-aware head geometry creation
   const headGeometry = useMemo(() => {
     // Adjust geometry detail based on LOD
-    const widthSegments = performance.currentLOD.level > 2 ? 8 : 16
-    const heightSegments = performance.currentLOD.level > 2 ? 8 : 16
+    const currentLOD = getCurrentLOD(performance)
+    const widthSegments = currentLOD.level > 2 ? 8 : 16
+    const heightSegments = currentLOD.level > 2 ? 8 : 16
     
     const geometry = new THREE.SphereGeometry(size * 0.25, widthSegments, heightSegments)
     
     // Skip complex geometry modifications in low quality mode
-    if (performance.currentLOD.level > 3) {
+    if (currentLOD.level > 3) {
       return geometry
     }
     
@@ -281,7 +287,7 @@ const DragonHead: React.FC<{
       }
       
       // Create ridges (only in high quality)
-      if (y !== undefined && y > 0 && x !== undefined && performance.currentLOD.level < 2) {
+      if (y !== undefined && y > 0 && x !== undefined && currentLOD.level < 2) {
         positions[i + 1] = y * (1 + Math.sin(x * 8) * 0.1)
       }
     }
@@ -289,7 +295,7 @@ const DragonHead: React.FC<{
     positionAttribute.needsUpdate = true
     geometry.computeVertexNormals()
     return geometry
-  }, [size, performance.currentLOD.level])
+  }, [size, performance.currentLOD])
 
   const hornGeometry = useMemo(() => {
     return new THREE.ConeGeometry(size * 0.02, size * 0.15, 6)
@@ -440,7 +446,8 @@ const DragonMesh: React.FC<DragonMeshProps> = ({
   // Dynamic particle count based on performance and LOD
   const particleCount = useMemo(() => {
     const baseCount = quality === 'low' ? 50 : quality === 'medium' ? 100 : 200
-    return adjustParticleCount(baseCount, performance.currentLOD)
+    const currentLOD = getCurrentLOD(performance)
+    return adjustParticleCount(baseCount, currentLOD)
   }, [quality, performance.currentLOD])
 
   useFrame((state) => {
@@ -451,7 +458,8 @@ const DragonMesh: React.FC<DragonMeshProps> = ({
     const skipFrames = performance.shouldReduceQuality ? 2 : 1
     if (frameCountRef.current % skipFrames !== 0) return
     
-    const time = state.clock.getElapsedTime() * animationSpeed * maxAnimationQuality * performance.currentLOD.animationQuality
+    const currentLOD = getCurrentLOD(performance)
+    const time = state.clock.getElapsedTime() * animationSpeed * maxAnimationQuality * currentLOD.animationQuality
     
     // Performance-aware floating animation
     if (performance.shouldReduceQuality) {
@@ -484,7 +492,7 @@ const DragonMesh: React.FC<DragonMeshProps> = ({
       <DragonWings size={size} animationSpeed={animationSpeed} performance={performance} />
       
       {/* Particle effects */}
-      {showParticles && performance.currentLOD.particles.enabled && (
+      {showParticles && (performance.currentLOD?.particles?.enabled ?? true) && (
         <ParticleSystem 
           count={particleCount} 
           size={size} 
@@ -515,6 +523,11 @@ const sizeMap = {
   md: { size: 0.8, canvasSize: 'w-48 h-48' },
   lg: { size: 1.2, canvasSize: 'w-64 h-64' },
   xl: { size: 1.8, canvasSize: 'w-96 h-96' },
+}
+
+// Helper to ensure LOD is never undefined
+const getCurrentLOD = (performance: any): LODLevel => {
+  return performance.currentLOD || LOD_LEVELS[2] // Default to medium
 }
 
 // Performance-aware prop comparison

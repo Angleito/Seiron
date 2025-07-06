@@ -307,8 +307,9 @@ export const voiceAnalysis = {
     transcript: string,
     isListening: boolean,
     isSpeaking: boolean,
-    duration: number = 0
+    duration?: number
   ): number {
+    const safeDuration = duration ?? 0
     let intensity = 0
     
     // Base intensity from activity
@@ -329,8 +330,8 @@ export const voiceAnalysis = {
     intensity += Math.min(capitalRatio * 0.5, 0.2)
     
     // Duration-based intensity decay
-    if (duration > 5000) {
-      intensity *= Math.max(0.5, 1 - (duration - 5000) / 10000)
+    if (safeDuration > 5000) {
+      intensity *= Math.max(0.5, 1 - (safeDuration - 5000) / 10000)
     }
     
     return Math.max(0, Math.min(1, intensity))
@@ -416,7 +417,7 @@ export const voiceStateTransitions = {
     
     return states.map((state, index) => ({
       state,
-      duration: durations[index]
+      duration: durations[index] ?? 1000
     }))
   },
 
@@ -437,23 +438,24 @@ export const voiceStateTransitions = {
     
     // Blend volumes
     const blendedVolume = states.reduce((sum, state, index) => 
-      sum + (state.volume || 0) * normalizedWeights[index], 0
+      sum + (state.volume || 0) * (normalizedWeights[index] ?? 0), 0
     )
     
     // Choose dominant emotion based on weights
     let maxWeight = 0
     let dominantEmotion: VoiceAnimationState['emotion'] = 'neutral'
     states.forEach((state, index) => {
-      if (normalizedWeights[index] > maxWeight) {
-        maxWeight = normalizedWeights[index]
+      const weight = normalizedWeights[index] ?? 0
+      if (weight > maxWeight) {
+        maxWeight = weight
         dominantEmotion = state.emotion
       }
     })
     
     // Blend boolean states (true if any weighted state is true)
-    const isListening = states.some((state, index) => state.isListening && normalizedWeights[index] > 0.3)
-    const isSpeaking = states.some((state, index) => state.isSpeaking && normalizedWeights[index] > 0.3)
-    const isProcessing = states.some((state, index) => state.isProcessing && normalizedWeights[index] > 0.3)
+    const isListening = states.some((state, index) => state.isListening && (normalizedWeights[index] ?? 0) > 0.3)
+    const isSpeaking = states.some((state, index) => state.isSpeaking && (normalizedWeights[index] ?? 0) > 0.3)
+    const isProcessing = states.some((state, index) => state.isProcessing && (normalizedWeights[index] ?? 0) > 0.3)
     
     return {
       isListening,
@@ -475,15 +477,16 @@ export function createEnhancedVoiceAnimationState(
   isProcessing: boolean,
   hasError: boolean,
   transcript: string = '',
-  duration: number = 0,
+  duration?: number,
   volume?: number
 ): VoiceAnimationState {
+  const safeDuration = duration ?? 0
   // Analyze transcript for enhanced emotion detection
   const transcriptEmotion = voiceAnalysis.analyzeTranscriptEmotion(transcript)
   
   // Calculate enhanced volume based on speech intensity
   const enhancedVolume = volume ?? voiceAnalysis.calculateSpeechIntensity(
-    transcript, isListening, isSpeaking, duration
+    transcript, isListening, isSpeaking, safeDuration
   )
   
   // Determine final emotion with transcript context
@@ -518,7 +521,7 @@ export const dragonBehaviorPatterns = {
   /**
    * Gets appropriate dragon behavior for question context
    */
-  forQuestion(transcript: string): Partial<VoiceAnimationState> {
+  forQuestion(_transcript: string): Partial<VoiceAnimationState> {
     return {
       emotion: 'happy',
       volume: 0.7
@@ -528,7 +531,7 @@ export const dragonBehaviorPatterns = {
   /**
    * Gets appropriate dragon behavior for command context
    */
-  forCommand(transcript: string): Partial<VoiceAnimationState> {
+  forCommand(_transcript: string): Partial<VoiceAnimationState> {
     return {
       emotion: 'excited',
       volume: 0.9

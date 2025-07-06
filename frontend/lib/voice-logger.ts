@@ -11,6 +11,11 @@ export interface VoiceLogContext {
 class VoiceLogger {
   private sessionId: string
   private logLevel: 'debug' | 'info' | 'warn' | 'error'
+  
+  // Add warn method to match interface expectations
+  warn(message: string, context?: VoiceLogContext) {
+    logger.warn(this.formatMessage(message), this.enrichContext(context))
+  }
 
   constructor() {
     this.sessionId = `voice-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`

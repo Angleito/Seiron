@@ -7,7 +7,9 @@ import { voiceStateTo2DProps } from '../utils/voice-dragon-mapping'
 import { 
   createPerformancePropComparison,
   useDragonPerformance,
-  adjustAnimationQuality
+  adjustAnimationQuality,
+  LOD_LEVELS,
+  LODLevel
 } from '../utils/dragon-performance'
 
 export interface SimpleDragonSpriteProps {
@@ -26,6 +28,11 @@ const sizeClasses = {
   md: 'w-24 h-24',
   lg: 'w-32 h-32',
   xl: 'w-48 h-48'
+}
+
+// Helper to ensure LOD is never undefined
+const getCurrentLOD = (performance: any): LODLevel => {
+  return performance.currentLOD || LOD_LEVELS[2] // Default to medium
 }
 
 // Performance-aware prop comparison
@@ -104,7 +111,7 @@ const SimpleDragonSpriteInternal: React.FC<SimpleDragonSpriteProps> = ({
     
     const animations: any = {
       scale: voiceProps.scale,
-      transition: adjustAnimationQuality(baseConfig, performance.currentLOD, performance.metrics.fps)
+      transition: adjustAnimationQuality(baseConfig, getCurrentLOD(performance), performance.metrics.fps)
     }
 
     // Add pulsing animation for speaking/listening states
@@ -131,7 +138,7 @@ const SimpleDragonSpriteInternal: React.FC<SimpleDragonSpriteProps> = ({
     const color = voiceState?.isSpeaking ? 'rgba(255, 165, 0, ' : 'rgba(255, 255, 255, '
     
     // Simplified glow for better performance
-    if (performance.currentLOD.level > 2) {
+    if (performance.currentLOD && performance.currentLOD.level > 2) {
       return {
         filter: `drop-shadow(0 0 ${intensity * 10}px ${color}${intensity * 0.6}))`
       }
@@ -140,7 +147,7 @@ const SimpleDragonSpriteInternal: React.FC<SimpleDragonSpriteProps> = ({
     return {
       filter: `drop-shadow(0 0 ${intensity * 20}px ${color}${intensity})) drop-shadow(0 0 ${intensity * 10}px ${color}${intensity * 0.8}))`
     }
-  }, [voiceProps.shouldGlow, voiceProps.glowIntensity, voiceState, performance.shouldReduceQuality, performance.currentLOD.level, maxAnimationQuality])
+  }, [voiceProps.shouldGlow, voiceProps.glowIntensity, voiceState, performance.shouldReduceQuality, getCurrentLOD(performance).level, maxAnimationQuality])
 
   return (
     <motion.div
@@ -181,9 +188,9 @@ const SimpleDragonSpriteInternal: React.FC<SimpleDragonSpriteProps> = ({
           )}
           
           {/* Energy particles for speaking */}
-          {voiceState.isSpeaking && performance.currentLOD.level < 3 && (
+          {voiceState.isSpeaking && getCurrentLOD(performance).level < 3 && (
             <div className="absolute inset-0 pointer-events-none">
-              {[...Array(performance.currentLOD.level < 2 ? 6 : 3)].map((_, i) => (
+              {[...Array(getCurrentLOD(performance).level < 2 ? 6 : 3)].map((_, i) => (
                 <motion.div
                   key={i}
                   className="absolute w-2 h-2 bg-orange-400 rounded-full"

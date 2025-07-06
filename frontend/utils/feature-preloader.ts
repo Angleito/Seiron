@@ -6,7 +6,7 @@
 
 export const FeaturePreloader = {
   // Feature definitions
-  features: {
+  features: { // Record<string, FeatureDefinition>
   "dragon-animations": {
     "priority": "high",
     "components": [
@@ -69,8 +69,8 @@ export const FeaturePreloader = {
 },
 
   // Preload based on route
-  preloadForRoute(route) {
-    const preloadPromises = []
+  preloadForRoute(route: string): Promise<any[]> {
+    const preloadPromises: Promise<void>[] = []
     
     Object.entries(this.features).forEach(([featureName, feature]) => {
       if (feature.routes.includes(route)) {
@@ -83,14 +83,14 @@ export const FeaturePreloader = {
   },
 
   // Preload specific feature
-  async preloadFeature(featureName) {
-    const feature = this.features[featureName]
+  async preloadFeature(featureName: string): Promise<void> {
+    const feature = (this.features as any)[featureName]
     if (!feature) {
       console.warn(`Feature ${featureName} not found`)
       return
     }
 
-    const loadPromises = []
+    const loadPromises: Promise<any>[] = []
 
     switch (featureName) {
       case 'dragon-animations':
@@ -115,16 +115,13 @@ export const FeaturePreloader = {
 
       case 'chat-features':
         loadPromises.push(
-          import('../components/chat/ChatInterface'),
           import('../components/chat/VoiceEnabledChat')
         )
         break
 
       case 'portfolio-features':
-        loadPromises.push(
-          import('../components/portfolio/PortfolioOverview'),
-          import('../components/portfolio/PortfolioAnalytics')
-        )
+        // Portfolio components to be imported when they exist
+        console.log('Portfolio features would be loaded here')
         break
     }
 
@@ -137,7 +134,7 @@ export const FeaturePreloader = {
   },
 
   // Intelligent preloading based on user behavior
-  smartPreload() {
+  smartPreload(): Promise<any[]> {
     // Preload high-priority features immediately
     const highPriorityFeatures = Object.entries(this.features)
       .filter(([_, feature]) => feature.priority === 'high')
@@ -149,8 +146,8 @@ export const FeaturePreloader = {
   },
 
   // Get preload recommendations
-  getRecommendations() {
-    const recommendations = []
+  getRecommendations(): string[] {
+    const recommendations: string[] = []
     
     Object.entries(this.features).forEach(([name, feature]) => {
       if (feature.priority === 'high') {

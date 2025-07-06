@@ -497,7 +497,7 @@ export const useDragon3D = (options: UseDragon3DOptions = {}) => {
   useEffect(() => {
     if (autoOptimize && enablePerformanceMonitoring) {
       const performanceScore = dragonPerformance ? 
-        (5 - dragonPerformance.currentLOD.level) * 20 : // Convert LOD to score
+        (5 - (dragonPerformance.currentLOD?.level ?? 2)) * 20 : // Convert LOD to score
         performanceMonitor.performanceScore
       
       const optimizedConfig = optimizeConfigForPerformance(
@@ -510,7 +510,7 @@ export const useDragon3D = (options: UseDragon3DOptions = {}) => {
       }
     }
   }, [
-    dragonPerformance?.currentLOD.level, 
+    dragonPerformance?.currentLOD?.level, 
     performanceMonitor.performanceScore, 
     autoOptimize, 
     enablePerformanceMonitoring, 
@@ -762,14 +762,14 @@ export const useDragon3D = (options: UseDragon3DOptions = {}) => {
   }, [dragonPerformance, state.animationConfig])
 
   const getAdjustedParticleCount = useCallback((baseCount: number) => {
-    if (dragonPerformance) {
+    if (dragonPerformance && dragonPerformance.currentLOD) {
       return adjustParticleCount(baseCount, dragonPerformance.currentLOD)
     }
     return baseCount
   }, [dragonPerformance])
 
   const getAdjustedAnimationConfig = useCallback((baseConfig: any) => {
-    if (dragonPerformance) {
+    if (dragonPerformance && dragonPerformance.currentLOD) {
       return adjustAnimationQuality(baseConfig, dragonPerformance.currentLOD, dragonPerformance.metrics.fps)
     }
     return baseConfig
@@ -822,10 +822,10 @@ export const useDragon3D = (options: UseDragon3DOptions = {}) => {
     getAdjustedParticleCount,
     getAdjustedAnimationConfig,
     performanceScore: dragonPerformance ? 
-      (5 - dragonPerformance.currentLOD.level) * 20 : 
+      (5 - (dragonPerformance.currentLOD?.level ?? 2)) * 20 : 
       (enablePerformanceMonitoring ? performanceMonitor.performanceScore : 100),
     isHighPerformance: dragonPerformance ? 
-      dragonPerformance.currentLOD.level < 2 : 
+      (dragonPerformance.currentLOD?.level ?? 2) < 2 : 
       (enablePerformanceMonitoring ? performanceMonitor.isHighPerformance : true),
     currentLOD: dragonPerformance?.currentLOD || null,
     memoryStats: dragonPerformance?.memoryStats || null,

@@ -28,6 +28,9 @@ export interface LODLevel {
   shadowQuality: number
   postProcessing: boolean
   antiAliasing: boolean
+  particles: {
+    enabled: boolean
+  }
 }
 
 export interface MemoryManager {
@@ -71,7 +74,8 @@ export const LOD_LEVELS: LODLevel[] = [
     animationQuality: 1.0,
     shadowQuality: 1.0,
     postProcessing: true,
-    antiAliasing: true
+    antiAliasing: true,
+    particles: { enabled: true }
   },
   {
     level: 1,
@@ -82,7 +86,8 @@ export const LOD_LEVELS: LODLevel[] = [
     animationQuality: 0.9,
     shadowQuality: 0.8,
     postProcessing: true,
-    antiAliasing: true
+    antiAliasing: true,
+    particles: { enabled: true }
   },
   {
     level: 2,
@@ -93,7 +98,8 @@ export const LOD_LEVELS: LODLevel[] = [
     animationQuality: 0.8,
     shadowQuality: 0.6,
     postProcessing: true,
-    antiAliasing: false
+    antiAliasing: false,
+    particles: { enabled: true }
   },
   {
     level: 3,
@@ -104,7 +110,8 @@ export const LOD_LEVELS: LODLevel[] = [
     animationQuality: 0.6,
     shadowQuality: 0.3,
     postProcessing: false,
-    antiAliasing: false
+    antiAliasing: false,
+    particles: { enabled: false }
   },
   {
     level: 4,
@@ -115,7 +122,8 @@ export const LOD_LEVELS: LODLevel[] = [
     animationQuality: 0.4,
     shadowQuality: 0.0,
     postProcessing: false,
-    antiAliasing: false
+    antiAliasing: false,
+    particles: { enabled: false }
   }
 ]
 
@@ -383,12 +391,12 @@ export const selectLODLevel = (
   if (Math.abs(targetLevel - currentLevel) === 1) {
     // Only switch if performance difference is significant
     if (overallScore < 45 || overallScore > 85) {
-      return LOD_LEVELS[targetLevel]
+      return LOD_LEVELS[targetLevel] || LOD_LEVELS[2]!
     }
     return currentLOD
   }
   
-  return LOD_LEVELS[targetLevel]
+  return LOD_LEVELS[targetLevel] || LOD_LEVELS[2]!
 }
 
 // Animation frame optimization
@@ -662,7 +670,7 @@ export const useDragonPerformance = (options: UseDragonPerformanceOptions = {}) 
   }), [options.config])
 
   const performanceStateRef = useRef<DragonPerformanceState>({
-    currentLOD: LOD_LEVELS[2], // Start with medium
+    currentLOD: LOD_LEVELS[2]!, // Start with medium
     metrics: {
       fps: 60,
       frameTime: 16.67,
@@ -685,7 +693,6 @@ export const useDragonPerformance = (options: UseDragonPerformanceOptions = {}) 
     warningsIssued: 0,
     lastOptimization: 0
   })
-
   const memoryManagerRef = useRef<DragonMemoryManager | null>(null)
   const performanceMonitorRef = useRef<DragonPerformanceMonitor | null>(null)
 
@@ -703,17 +710,21 @@ export const useDragonPerformance = (options: UseDragonPerformanceOptions = {}) 
     if (config.performanceMonitoring && !performanceMonitorRef.current) {
       performanceMonitorRef.current = new DragonPerformanceMonitor(
         (metrics) => {
-          performanceStateRef.current.metrics = metrics
-          
-          // Analyze for warnings
-          const warnings = analyzePerformanceMetrics(metrics, config.targetFPS)
-          warnings.forEach(warning => {
-            options.onWarning?.(warning)
-            performanceStateRef.current.warningsIssued++
-          })
+          if (performanceStateRef.current) {
+            performanceStateRef.current.metrics = metrics
+            
+            // Analyze for warnings
+            const warnings = analyzePerformanceMetrics(metrics, config.targetFPS)
+            warnings.forEach(warning => {
+              options.onWarning?.(warning)
+              if (performanceStateRef.current) {
+                performanceStateRef.current.warningsIssued++
+              }
+            })
+          }
           
           // Auto LOD adjustment
-          if (config.adaptiveLOD) {
+          if (config.adaptiveLOD && performanceStateRef.current) {
             const newLOD = selectLODLevel(
               metrics,
               config.targetFPS,
@@ -738,13 +749,15 @@ export const useDragonPerformance = (options: UseDragonPerformanceOptions = {}) 
   }, [config, options])
 
   const setLODLevel = useCallback((level: number) => {
-    const newLOD = LOD_LEVELS[Math.max(0, Math.min(4, level))]
+    if (!performanceStateRef.current) return
+    const newLOD = LOD_LEVELS[Math.max(0, Math.min(4, level))]!
     const oldLOD = performanceStateRef.current.currentLOD
     performanceStateRef.current.currentLOD = newLOD
     options.onLODChange?.(newLOD, oldLOD)
   }, [options])
 
   const optimizeForPerformance = useCallback(() => {
+    if (!performanceStateRef.current) return
     const now = Date.now()
     if (now - performanceStateRef.current.lastOptimization < 1000) return
     
@@ -764,15 +777,26 @@ export const useDragonPerformance = (options: UseDragonPerformanceOptions = {}) 
     }
     
     setTimeout(() => {
-      performanceStateRef.current.isOptimizing = false
+      if (performanceStateRef.current) {
+        performanceStateRef.current.isOptimizing = false
+      }
     }, 500)
   }, [config.targetFPS, setLODLevel])
 
   return {
     // Current state
-    currentLOD: performanceStateRef.current.currentLOD,
-    metrics: performanceStateRef.current.metrics,
-    isOptimizing: performanceStateRef.current.isOptimizing,
+    currentLOD: performanceStateRef.current?.currentLOD ?? LOD_LEVELS[2],
+    metrics: performanceStateRef.current?.metrics || {
+      fps: 60,
+      frameTime: 16.67,
+      memoryUsage: 0,
+      renderTime: 12,
+      animationFrames: 0,
+      droppedFrames: 0,
+      cpuUsage: 0,
+      timestamp: Date.now()
+    },
+    isOptimizing: performanceStateRef.current?.isOptimizing || false,
     
     // Controls
     setLODLevel,
@@ -785,8 +809,8 @@ export const useDragonPerformance = (options: UseDragonPerformanceOptions = {}) 
       memoryManagerRef.current?.retrieve(category, key) || O.none,
     
     // Utilities
-    shouldReduceQuality: performanceStateRef.current.metrics.fps < config.targetFPS * 0.8,
-    shouldDisableAnimations: performanceStateRef.current.metrics.fps < config.targetFPS * 0.6,
+    shouldReduceQuality: (performanceStateRef.current?.metrics.fps || 60) < config.targetFPS * 0.8,
+    shouldDisableAnimations: (performanceStateRef.current?.metrics.fps || 60) < config.targetFPS * 0.6,
     memoryStats: memoryManagerRef.current?.getStats() || { textures: 0, geometries: 0, materials: 0, totalSizeMB: 0 },
     
     // Configuration
