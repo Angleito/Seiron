@@ -40,7 +40,7 @@ export function FloatingDragonLogo({
         ${isHovered ? 'scale-110' : 'scale-100'}
       `}>
         <Image
-          src="/images/seiron.png"
+          src="/images/seiron.webp"
           alt="Seiron - The Wish-Granting Dragon"
           width={config.width}
           height={config.height}
