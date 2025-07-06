@@ -55,7 +55,7 @@ export default function HomePage() {
           </h1>
           
           {/* Mystical Subtitle */}
-          <p className={`
+          <div className={`
             text-2xl text-yellow-400/90 mb-16 font-light relative
             transition-all duration-1000 delay-500 ease-out
             ${isLoaded ? 'storm-entrance-lightning' : 'opacity-0 translate-y-10'}
@@ -64,7 +64,7 @@ export default function HomePage() {
               Grant your wildest Sei investing wishes
             </span>
             <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-32 h-px bg-gradient-to-r from-transparent via-yellow-500 to-transparent opacity-60" />
-          </p>
+          </div>
           
           {/* Storm-Themed Action Buttons */}
           <div className={`

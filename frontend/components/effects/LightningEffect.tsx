@@ -136,7 +136,7 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
       />
 
       {/* Lightning bolts */}
-      <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 40 }}>
+      <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ zIndex: 40 }}>
         <defs>
           <linearGradient id="lightningGradient" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="#fbbf24" stopOpacity="1" />
@@ -156,7 +156,7 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
           <g key={bolt.id}>
             {/* Main bolt */}
             <path
-              d={`M${bolt.x}% ${bolt.y}% L${bolt.x + (Math.random() - 0.5) * 2}% ${bolt.y + bolt.height * 0.25}% L${bolt.x + (Math.random() - 0.5) * 4}% ${bolt.y + bolt.height * 0.5}% L${bolt.x + (Math.random() - 0.5) * 2}% ${bolt.y + bolt.height * 0.75}% L${bolt.x + (Math.random() - 0.5) * 3}% ${bolt.y + bolt.height}%`}
+              d={`M${bolt.x} ${bolt.y} L${bolt.x + (Math.random() - 0.5) * 2} ${bolt.y + bolt.height * 0.25} L${bolt.x + (Math.random() - 0.5) * 4} ${bolt.y + bolt.height * 0.5} L${bolt.x + (Math.random() - 0.5) * 2} ${bolt.y + bolt.height * 0.75} L${bolt.x + (Math.random() - 0.5) * 3} ${bolt.y + bolt.height}`}
               stroke="url(#lightningGradient)"
               strokeWidth={bolt.width}
               fill="none"
@@ -168,10 +168,10 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
             {bolt.branches.map((branch, index) => (
               <line
                 key={index}
-                x1={`${branch.x1}%`}
-                y1={`${branch.y1}%`}
-                x2={`${branch.x2}%`}
-                y2={`${branch.y2}%`}
+                x1={branch.x1}
+                y1={branch.y1}
+                x2={branch.x2}
+                y2={branch.y2}
                 stroke="url(#lightningGradient)"
                 strokeWidth={bolt.width * 0.6}
                 opacity={bolt.opacity * 0.7}

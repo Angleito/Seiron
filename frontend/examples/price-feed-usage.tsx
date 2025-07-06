@@ -196,7 +196,9 @@ export function TradingPriceWidget({ asset }: { asset: Asset }) {
                   const x = (i / (sparklineData.length - 1)) * 100;
                   const min = Math.min(...sparklineData);
                   const max = Math.max(...sparklineData);
-                  const y = 30 - ((price - min) / (max - min)) * 30;
+                  // Handle edge case where all prices are the same
+                  const range = max - min;
+                  const y = range === 0 ? 15 : 30 - ((price - min) / range) * 30;
                   return `${x},${y}`;
                 })
                 .join(' ')}
