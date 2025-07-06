@@ -10,7 +10,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           {/* Floating Dragon Logo */}
           <div className="flex justify-center mb-12">
-            <FloatingDragonLogo size="xl" showDragonBalls={true} />
+            <FloatingDragonLogo size="xl" />
           </div>
           
           <div className="text-center">

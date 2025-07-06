@@ -5,7 +5,6 @@ import { useState } from 'react'
 
 interface FloatingDragonLogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl'
-  showDragonBalls?: boolean
   className?: string
 }
 
@@ -18,7 +17,6 @@ const sizeConfig = {
 
 export function FloatingDragonLogo({ 
   size = 'lg', 
-  showDragonBalls = true, 
   className = '' 
 }: FloatingDragonLogoProps) {
   const [isHovered, setIsHovered] = useState(false)
@@ -33,32 +31,6 @@ export function FloatingDragonLogo({
       {/* Mystical Aura */}
       <div className="absolute inset-0 rounded-full bg-gradient-to-r from-red-500/20 via-orange-500/20 to-yellow-500/20 blur-xl animate-dragon-pulse" />
       
-      {/* Dragon Balls Orbiting (if enabled) */}
-      {showDragonBalls && (
-        <div className="absolute inset-0 animate-dragon-balls-orbit">
-          {[1, 2, 3, 4, 5, 6, 7].map((stars, index) => (
-            <div
-              key={stars}
-              className="absolute w-8 h-8 animate-dragon-ball-float"
-              style={{
-                transform: `rotate(${index * 51.43}deg) translateX(${config.width * 0.6}px) rotate(-${index * 51.43}deg)`,
-                animationDelay: `${index * 0.2}s`
-              }}
-            >
-              <div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full shadow-lg relative overflow-hidden">
-                {/* Star pattern inside ball */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-red-600 text-xs font-bold">
-                    {'★'.repeat(stars)}
-                  </div>
-                </div>
-                {/* Ball shine effect */}
-                <div className="absolute top-1 left-1 w-3 h-3 bg-yellow-200 rounded-full opacity-70" />
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* Main Dragon Image */}
       <div className={`
