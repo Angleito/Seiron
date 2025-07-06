@@ -3,17 +3,29 @@ import { TaskEither } from 'fp-ts/TaskEither';
 import * as TE from 'fp-ts/TaskEither';
 import { pipe } from 'fp-ts/function';
 import { BaseAgent, AgentConfig, AgentError, ActionContext, ActionResult } from '../base/BaseAgent';
-import { CitrexProtocolWrapper } from '../../../backend/src/protocols/sei/adapters/CitrexProtocolWrapper';
-import { SiloProtocolWrapper } from '../../../backend/src/protocols/sei/adapters/SiloProtocolWrapper';
-import { 
-  CitrexPerpetualPosition, 
-  CitrexMarketData, 
-  CitrexTradingMetrics,
-  CitrexOpenPositionParams,
-  CitrexClosePositionParams,
-  CitrexAdjustPositionParams,
-  CitrexLiquidationInfo
-} from '../../../backend/src/protocols/sei/types';
+// TODO: Re-enable these imports once backend types are properly integrated
+// import { CitrexProtocolWrapper } from '../../../backend/src/protocols/sei/adapters/CitrexProtocolWrapper';
+// import { SiloProtocolWrapper } from '../../../backend/src/protocols/sei/adapters/SiloProtocolWrapper';
+// import { 
+//   CitrexPerpetualPosition, 
+//   CitrexMarketData, 
+//   CitrexTradingMetrics,
+//   CitrexOpenPositionParams,
+//   CitrexClosePositionParams,
+//   CitrexAdjustPositionParams,
+//   CitrexLiquidationInfo
+// } from '../../../backend/src/protocols/sei/types';
+
+// Temporary placeholder types for backend integration
+type CitrexProtocolWrapper = any;
+type SiloProtocolWrapper = any;
+type CitrexPerpetualPosition = any;
+type CitrexMarketData = any;
+type CitrexTradingMetrics = any;
+type CitrexOpenPositionParams = any;
+type CitrexClosePositionParams = any;
+type CitrexAdjustPositionParams = any;
+type CitrexLiquidationInfo = any;
 
 /**
  * Enhanced Market Analysis & Trading Agent

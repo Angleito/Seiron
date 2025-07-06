@@ -127,11 +127,11 @@ function formatAgentResponse(result: TaskResult, agentType?: string): string {
     case 'portfolio_agent':
       if (data.positions) {
         response = `🐉 Seiron's Vision of Your Treasure Vault:\n\n`
-        response += `Total Power Level: $${data.totalValue.toLocaleString()}\n`
-        response += `Dragon's Favor: ${data.change24h > 0 ? '+' : ''}${data.change24h}%\n\n`
+        response += `Total Power Level: $${(data.totalValue as number).toLocaleString()}\n`
+        response += `Dragon's Favor: ${(data.change24h as number) > 0 ? '+' : ''}${data.change24h as number}%\n\n`
         response += `Mystical Treasures:\n`
-        data.positions.forEach((pos: Record<string, unknown>) => {
-          response += `• ${pos.asset}: $${pos.value.toLocaleString()} (${pos.allocation}%)\n`
+        (data.positions as Array<Record<string, unknown>>).forEach((pos: Record<string, unknown>) => {
+          response += `• ${pos.asset}: $${(pos.value as number).toLocaleString()} (${pos.allocation}%)\n`
         })
       }
       break
