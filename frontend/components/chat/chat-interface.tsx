@@ -134,7 +134,7 @@ export function ChatInterface() {
         }
         setMessages(prev => [...prev, assistantMessage])
       }
-    } catch (error) {
+    } catch {
       const errorMessage: AgentMessage = {
         id: (Date.now() + 1).toString(),
         type: 'agent',
