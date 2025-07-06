@@ -10,20 +10,23 @@ interface LightningEffectProps {
   maxBolts?: number
 }
 
-interface LightningBolt {
-  id: string
+interface LightningPoint {
   x: number
   y: number
+}
+
+interface LightningBranch {
+  points: LightningPoint[]
   width: number
-  height: number
+  opacity: number
+}
+
+interface LightningBolt {
+  id: string
+  mainPath: LightningPoint[]
+  branches: LightningBranch[]
   opacity: number
   duration: number
-  branches: Array<{
-    x1: number
-    y1: number
-    x2: number
-    y2: number
-  }>
 }
 
 export const LightningEffect = React.memo<LightningEffectProps>(({
@@ -38,51 +41,88 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
   const [isFlashing, setIsFlashing] = useState(false)
 
   const frequencyConfig = {
-    low: { minDelay: 8000, maxDelay: 15000 },
-    medium: { minDelay: 4000, maxDelay: 8000 },
-    high: { minDelay: 2000, maxDelay: 5000 }
+    low: { minDelay: 12000, maxDelay: 25000 },
+    medium: { minDelay: 6000, maxDelay: 15000 },
+    high: { minDelay: 3000, maxDelay: 8000 }
   }
 
   const intensityConfig = {
-    subtle: { maxBolts: 1, flashIntensity: 0.1, glowSize: 20 },
-    normal: { maxBolts: 2, flashIntensity: 0.2, glowSize: 40 },
-    intense: { maxBolts: 3, flashIntensity: 0.35, glowSize: 60 }
+    subtle: { maxBolts: 1, flashIntensity: 0.15, glowSize: 8 },
+    normal: { maxBolts: 1, flashIntensity: 0.25, glowSize: 12 },
+    intense: { maxBolts: 2, flashIntensity: 0.4, glowSize: 16 }
+  }
+
+  const generateJaggedPath = (startX: number, startY: number, endX: number, endY: number, segments: number = 15): LightningPoint[] => {
+    const points: LightningPoint[] = []
+    points.push({ x: startX, y: startY })
+    
+    for (let i = 1; i < segments; i++) {
+      const progress = i / segments
+      const baseX = startX + (endX - startX) * progress
+      const baseY = startY + (endY - startY) * progress
+      
+      // Add significant randomness for jagged lightning effect
+      const offsetX = (Math.random() - 0.5) * 8 * (1 - Math.abs(progress - 0.5) * 2) // More variation in middle
+      const offsetY = (Math.random() - 0.5) * 3
+      
+      points.push({
+        x: baseX + offsetX,
+        y: baseY + offsetY
+      })
+    }
+    
+    points.push({ x: endX, y: endY })
+    return points
   }
 
   const generateLightningBolt = useCallback((): LightningBolt => {
-    const x = Math.random() * 100
-    const y = Math.random() * 30
-    const width = 2 + Math.random() * 4
-    const height = 40 + Math.random() * 60
-    const branches = []
+    // Start from random top position
+    const startX = 10 + Math.random() * 80
+    const startY = -5 + Math.random() * 15
     
-    // Generate main bolt path
-    const segments = 8 + Math.floor(Math.random() * 12)
-    for (let i = 0; i < segments; i++) {
-      const progress = i / segments
-      const baseX = x + (Math.random() - 0.5) * 20
-      const baseY = y + progress * height
+    // End at random bottom position
+    const endX = startX + (Math.random() - 0.5) * 40
+    const endY = 85 + Math.random() * 20
+    
+    // Generate main lightning path with many segments for jagged effect
+    const mainSegments = 20 + Math.floor(Math.random() * 15)
+    const mainPath = generateJaggedPath(startX, startY, endX, endY, mainSegments)
+    
+    // Generate branches from random points along main path
+    const branches: LightningBranch[] = []
+    const numBranches = Math.floor(Math.random() * 4) + 2 // 2-5 branches
+    
+    for (let i = 0; i < numBranches; i++) {
+      // Pick random point along main path (avoid first and last 20%)
+      const branchIndex = Math.floor(mainPath.length * 0.2 + Math.random() * mainPath.length * 0.6)
+      const branchStart = mainPath[branchIndex]
       
-      // Add some branching
-      if (Math.random() < 0.3) {
+      if (branchStart) {
+        // Branch goes off at an angle
+        const branchLength = 15 + Math.random() * 25
+        const angle = (Math.random() - 0.5) * Math.PI * 0.8 // ±72 degrees
+        
+        const branchEndX = branchStart.x + Math.cos(angle) * branchLength
+        const branchEndY = branchStart.y + Math.sin(angle) * branchLength + Math.random() * 10
+        
+        // Generate branch path
+        const branchSegments = 8 + Math.floor(Math.random() * 6)
+        const branchPath = generateJaggedPath(branchStart.x, branchStart.y, branchEndX, branchEndY, branchSegments)
+        
         branches.push({
-          x1: baseX,
-          y1: baseY,
-          x2: baseX + (Math.random() - 0.5) * 30,
-          y2: baseY + Math.random() * 20
+          points: branchPath,
+          width: 0.3 + Math.random() * 0.4, // Much thinner branches
+          opacity: 0.6 + Math.random() * 0.3
         })
       }
     }
 
     return {
       id: `lightning-${Date.now()}-${Math.random()}`,
-      x,
-      y,
-      width,
-      height,
-      opacity: 0.8 + Math.random() * 0.2,
-      duration: 150 + Math.random() * 100,
-      branches
+      mainPath,
+      branches,
+      opacity: 0.9 + Math.random() * 0.1,
+      duration: 100 + Math.random() * 80
     }
   }, [])
 
@@ -139,12 +179,13 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
       <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ zIndex: 40 }}>
         <defs>
           <linearGradient id="lightningGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#fbbf24" stopOpacity="1" />
-            <stop offset="50%" stopColor="#f59e0b" stopOpacity="0.8" />
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
+            <stop offset="20%" stopColor="#fbbf24" stopOpacity="0.95" />
+            <stop offset="60%" stopColor="#f59e0b" stopOpacity="0.8" />
             <stop offset="100%" stopColor="#d97706" stopOpacity="0.6" />
           </linearGradient>
           <filter id="lightningGlow">
-            <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+            <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
             <feMerge>
               <feMergeNode in="coloredBlur"/>
               <feMergeNode in="SourceGraphic"/>
@@ -152,52 +193,93 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
           </filter>
         </defs>
         
-        {lightningBolts.map((bolt) => (
-          <g key={bolt.id}>
-            {/* Main bolt */}
-            <path
-              d={`M${bolt.x} ${bolt.y} L${bolt.x + (Math.random() - 0.5) * 2} ${bolt.y + bolt.height * 0.25} L${bolt.x + (Math.random() - 0.5) * 4} ${bolt.y + bolt.height * 0.5} L${bolt.x + (Math.random() - 0.5) * 2} ${bolt.y + bolt.height * 0.75} L${bolt.x + (Math.random() - 0.5) * 3} ${bolt.y + bolt.height}`}
-              stroke="url(#lightningGradient)"
-              strokeWidth={bolt.width}
-              fill="none"
-              opacity={bolt.opacity}
-              filter="url(#lightningGlow)"
-            />
-            
-            {/* Branch bolts */}
-            {bolt.branches.map((branch, index) => (
-              <line
-                key={index}
-                x1={branch.x1}
-                y1={branch.y1}
-                x2={branch.x2}
-                y2={branch.y2}
+        {lightningBolts.map((bolt) => {
+          // Convert points to SVG path
+          const mainPathD = bolt.mainPath.reduce((path, point, index) => {
+            return index === 0 ? `M${point.x} ${point.y}` : `${path} L${point.x} ${point.y}`
+          }, '')
+          
+          return (
+            <g key={bolt.id}>
+              {/* Main lightning bolt - very thin */}
+              <path
+                d={mainPathD}
                 stroke="url(#lightningGradient)"
-                strokeWidth={bolt.width * 0.6}
-                opacity={bolt.opacity * 0.7}
+                strokeWidth="0.4"
+                fill="none"
+                opacity={bolt.opacity}
                 filter="url(#lightningGlow)"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
-            ))}
-          </g>
-        ))}
+              
+              {/* Secondary glow for main bolt */}
+              <path
+                d={mainPathD}
+                stroke="#ffffff"
+                strokeWidth="0.15"
+                fill="none"
+                opacity={bolt.opacity * 0.8}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              
+              {/* Branch bolts */}
+              {bolt.branches.map((branch, index) => {
+                const branchPathD = branch.points.reduce((path, point, pointIndex) => {
+                  return pointIndex === 0 ? `M${point.x} ${point.y}` : `${path} L${point.x} ${point.y}`
+                }, '')
+                
+                return (
+                  <g key={index}>
+                    <path
+                      d={branchPathD}
+                      stroke="url(#lightningGradient)"
+                      strokeWidth={branch.width}
+                      fill="none"
+                      opacity={branch.opacity * bolt.opacity}
+                      filter="url(#lightningGlow)"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d={branchPathD}
+                      stroke="#ffffff"
+                      strokeWidth={branch.width * 0.4}
+                      fill="none"
+                      opacity={branch.opacity * bolt.opacity * 0.6}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </g>
+                )
+              })}
+            </g>
+          )
+        })}
       </svg>
       
-      {/* Glow effects */}
-      {lightningBolts.map((bolt) => (
-        <div
-          key={`glow-${bolt.id}`}
-          className="absolute rounded-full bg-yellow-400/20 blur-2xl"
-          style={{
-            left: `${bolt.x}%`,
-            top: `${bolt.y}%`,
-            width: `${intensityConfig[intensity].glowSize}px`,
-            height: `${bolt.height}%`,
-            opacity: bolt.opacity * 0.5,
-            transform: 'translate(-50%, -50%)',
-            zIndex: 35
-          }}
-        />
-      ))}
+      {/* Subtle glow effects along main path */}
+      {lightningBolts.map((bolt) => {
+        // Create glow points along main path
+        const glowPoints = bolt.mainPath.filter((_, index) => index % 3 === 0) // Every 3rd point
+        
+        return glowPoints.map((point, index) => (
+          <div
+            key={`glow-${bolt.id}-${index}`}
+            className="absolute rounded-full bg-white/10 blur-sm"
+            style={{
+              left: `${point.x}%`,
+              top: `${point.y}%`,
+              width: `${intensityConfig[intensity].glowSize}px`,
+              height: `${intensityConfig[intensity].glowSize}px`,
+              opacity: bolt.opacity * 0.3,
+              transform: 'translate(-50%, -50%)',
+              zIndex: 35
+            }}
+          />
+        ))
+      })}
     </div>
   )
 })
