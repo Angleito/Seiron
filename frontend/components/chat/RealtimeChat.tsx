@@ -1,7 +1,9 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react'
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { logger } from '@/lib/logger'
 import { useRealtimeChat } from '@/hooks/realtime'
 import { ChatMessage, PresenceState, TypingIndicator, CryptoPrice } from '@/types/realtime'
+import { StreamMessage } from './ChatStreamService'
+import { AgentType } from '@/types/agent'
 import { ChatInput } from './parts/ChatInput'
 import { ChatMessage as ChatMessageComponent } from './parts/ChatMessage'
 import { TypingIndicator as TypingIndicatorComponent } from './parts/TypingIndicator'
@@ -10,6 +12,19 @@ import { RealtimeConnectionStatus } from './parts/RealtimeConnectionStatus'
 import { RealtimePresenceIndicator } from './parts/RealtimePresenceIndicator'
 import { RealtimePriceDisplay } from './parts/RealtimePriceDisplay'
 import { ChatStatusBar } from './parts/ChatStatusBar'
+
+// Convert realtime ChatMessage to StreamMessage
+function realtimeChatMessageToStreamMessage(msg: ChatMessage): StreamMessage {
+  return {
+    id: msg.id,
+    type: msg.role === 'assistant' ? 'agent' : msg.role as 'user' | 'system',
+    content: msg.content,
+    timestamp: new Date(msg.created_at),
+    status: msg.status === 'error' ? 'failed' : msg.status,
+    agentType: msg.role === 'assistant' ? (msg.metadata?.agentType as AgentType || 'planning_agent') : undefined,
+    metadata: msg.metadata
+  }
+}
 
 export interface RealtimeChatProps {
   sessionId: string
@@ -48,7 +63,6 @@ export function RealtimeChat({
   const [showPresence, setShowPresence] = useState(enablePresence)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Real-time chat hook
@@ -120,8 +134,7 @@ export function RealtimeChat({
         typingTimeoutRef.current = null
       }
       
-      // Focus input for next message
-      inputRef.current?.focus()
+      // Clear input is handled above, focus would need a ref if required
       
       logger.info('Message sent via realtime chat', { 
         sessionId, 
@@ -240,20 +253,26 @@ export function RealtimeChat({
       {/* Messages Area */}
       <div className="flex-1 overflow-hidden">
         <MessagesArea
-          messages={realtimeChat.messages}
-          loading={realtimeChat.loading.messages}
-          error={realtimeChat.error}
+          messages={useMemo(() => realtimeChat.messages.map(realtimeChatMessageToStreamMessage), [realtimeChat.messages])}
+          typingIndicators={realtimeChat.typingIndicators.map(ind => ({
+            agentId: ind.user_id,
+            agentType: 'planning_agent',
+            timestamp: new Date(ind.started_at)
+          }))}
+          voiceTranscript=""
           onRetryMessage={handleRetryMessage}
-          onDeleteMessage={handleDeleteMessage}
-          className="h-full"
+          sessionId={sessionId}
         />
         
         {/* Typing Indicators */}
         {enablePresence && realtimeChat.typingIndicators.length > 0 && (
           <div className="px-4 py-2">
             <TypingIndicatorComponent
-              indicators={realtimeChat.typingIndicators}
-              className="text-sm text-gray-500"
+              indicators={realtimeChat.typingIndicators.map(ind => ({
+                agentId: ind.user_id,
+                agentType: 'planning_agent',
+                timestamp: new Date(ind.started_at)
+              }))}
             />
           </div>
         )}
@@ -263,29 +282,32 @@ export function RealtimeChat({
       </div>
       
       {/* Status Bar */}
-      <ChatStatusBar
-        session={realtimeChat.session}
-        loading={realtimeChat.loading}
-        messageCount={realtimeChat.messages.length}
-        presenceCount={realtimeChat.presence.length}
-        isTyping={isTyping}
-        onClearMessages={handleClearMessages}
-        onTogglePresence={() => setShowPresence(!showPresence)}
-        onTogglePrices={() => setShowPrices(!showPrices)}
-        className="shrink-0"
-      />
+      <div className="shrink-0 px-4 py-2 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+        <div className="flex items-center space-x-4">
+          <span>{realtimeChat.messages.length} messages</span>
+          {enablePresence && <span>{realtimeChat.presence.length} users online</span>}
+          {isTyping && <span className="text-yellow-600">Someone is typing...</span>}
+        </div>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={handleClearMessages}
+            className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+          >
+            Clear
+          </button>
+        </div>
+      </div>
       
       {/* Input Area */}
       <div className="shrink-0 border-t border-gray-200 dark:border-gray-700">
         <ChatInput
-          ref={inputRef}
-          value={inputValue}
-          onChange={handleInputChange}
-          onSend={handleSendMessage}
+          input={inputValue}
+          onInputChange={handleInputChange}
+          onSend={() => { handleSendMessage(inputValue) }}
+          isLoading={realtimeChat.loading.messages}
+          disabled={!realtimeChat.isConnected}
           placeholder="Type a message..."
-          disabled={!realtimeChat.isConnected || realtimeChat.loading.messages}
-          enableVoice={enableVoice}
-          className="w-full"
+          sessionId={sessionId}
         />
       </div>
     </div>

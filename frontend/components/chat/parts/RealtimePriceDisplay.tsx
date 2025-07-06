@@ -216,7 +216,7 @@ export function RealtimePriceDisplay({
                   key={symbol}
                   onClick={() => handleSymbolToggle(symbol)}
                   size="sm"
-                  variant={symbols.includes(symbol) ? 'default' : 'outline'}
+                  variant={symbols.includes(symbol) ? 'primary' : 'secondary'}
                   className="text-xs px-2 py-1 h-auto"
                 >
                   {symbol} {symbols.includes(symbol) && '✓'}

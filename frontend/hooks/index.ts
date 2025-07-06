@@ -9,10 +9,12 @@ export { useChatSessions } from './useChatSessions'
 export { useChatHistory } from './useChatHistory'
 export type { 
   UseChatSessionsOptions, 
-  UseChatSessionsReturn,
-  UseChatHistoryOptions, 
-  UseChatHistoryReturn 
+  UseChatSessionsReturn
 } from './useChatSessions'
+export type {
+  UseChatHistoryOptions,
+  UseChatHistoryReturn
+} from './useChatHistory'
 
 // Real-time subscription hooks
 export * from './realtime';

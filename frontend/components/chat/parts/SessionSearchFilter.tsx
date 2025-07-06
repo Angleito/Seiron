@@ -171,7 +171,7 @@ export const SessionSearchFilter = React.memo(function SessionSearchFilter({
         
         <Button
           onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-          variant={showAdvancedFilters ? 'default' : 'ghost'}
+          variant={showAdvancedFilters ? 'secondary' : 'ghost'}
           className={`${
             showAdvancedFilters 
               ? 'bg-orange-600 text-white' 
@@ -182,7 +182,7 @@ export const SessionSearchFilter = React.memo(function SessionSearchFilter({
           Filters
           {activeFiltersCount > 0 && (
             <Badge 
-              variant="red" 
+              variant="danger" 
               size="sm" 
               className="absolute -top-2 -right-2 min-w-[1.5rem] h-6 flex items-center justify-center"
             >
@@ -281,7 +281,7 @@ export const SessionSearchFilter = React.memo(function SessionSearchFilter({
               <div className="flex gap-2">
                 <Button
                   onClick={() => setOrder('desc')}
-                  variant={order === 'desc' ? 'default' : 'ghost'}
+                  variant={order === 'desc' ? 'secondary' : 'ghost'}
                   size="sm"
                   className={order === 'desc' ? 'bg-orange-600 text-white' : 'text-orange-300'}
                 >
@@ -289,7 +289,7 @@ export const SessionSearchFilter = React.memo(function SessionSearchFilter({
                 </Button>
                 <Button
                   onClick={() => setOrder('asc')}
-                  variant={order === 'asc' ? 'default' : 'ghost'}
+                  variant={order === 'asc' ? 'secondary' : 'ghost'}
                   size="sm"
                   className={order === 'asc' ? 'bg-orange-600 text-white' : 'text-orange-300'}
                 >
@@ -308,7 +308,7 @@ export const SessionSearchFilter = React.memo(function SessionSearchFilter({
                   <Button
                     key={count}
                     onClick={() => setLimit(count)}
-                    variant={limit === count ? 'default' : 'ghost'}
+                    variant={limit === count ? 'secondary' : 'ghost'}
                     size="sm"
                     className={limit === count ? 'bg-orange-600 text-white' : 'text-orange-300'}
                   >
@@ -326,7 +326,7 @@ export const SessionSearchFilter = React.memo(function SessionSearchFilter({
               <div className="flex gap-2">
                 <Button
                   onClick={() => setArchived(false)}
-                  variant={!archived ? 'default' : 'ghost'}
+                  variant={!archived ? 'secondary' : 'ghost'}
                   size="sm"
                   className={!archived ? 'bg-green-600 text-white' : 'text-orange-300'}
                 >
@@ -334,7 +334,7 @@ export const SessionSearchFilter = React.memo(function SessionSearchFilter({
                 </Button>
                 <Button
                   onClick={() => setArchived(true)}
-                  variant={archived ? 'default' : 'ghost'}
+                  variant={archived ? 'secondary' : 'ghost'}
                   size="sm"
                   className={archived ? 'bg-gray-600 text-white' : 'text-orange-300'}
                 >
@@ -390,7 +390,7 @@ export const SessionSearchFilter = React.memo(function SessionSearchFilter({
         <div className="flex flex-wrap gap-2">
           <span className="text-sm text-orange-300/70">Active filters:</span>
           {searchQuery && (
-            <Badge variant="orange" className="flex items-center gap-1">
+            <Badge variant="warning" className="flex items-center gap-1">
               Search: "{searchQuery.slice(0, 20)}{searchQuery.length > 20 ? '...' : ''}"
               <button
                 onClick={() => handleSearchChange('')}
@@ -401,7 +401,7 @@ export const SessionSearchFilter = React.memo(function SessionSearchFilter({
             </Badge>
           )}
           {archived && (
-            <Badge variant="gray" className="flex items-center gap-1">
+            <Badge variant="default" className="flex items-center gap-1">
               Archived
               <button
                 onClick={() => {
@@ -415,7 +415,7 @@ export const SessionSearchFilter = React.memo(function SessionSearchFilter({
             </Badge>
           )}
           {order === 'asc' && (
-            <Badge variant="blue" className="flex items-center gap-1">
+            <Badge variant="info" className="flex items-center gap-1">
               Oldest First
               <button
                 onClick={() => {
@@ -429,7 +429,7 @@ export const SessionSearchFilter = React.memo(function SessionSearchFilter({
             </Badge>
           )}
           {limit !== 20 && (
-            <Badge variant="purple" className="flex items-center gap-1">
+            <Badge variant="info" className="flex items-center gap-1">
               {limit} per page
               <button
                 onClick={() => {

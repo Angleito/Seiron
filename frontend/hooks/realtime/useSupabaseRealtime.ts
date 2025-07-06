@@ -108,7 +108,7 @@ export function useSupabaseRealtime(options: UseSupabaseRealtimeOptions): UseSup
     })
     
     // Re-apply existing subscriptions
-    subscriptionsRef.current.forEach((options, key) => {
+    subscriptionsRef.current.forEach((options) => {
       applySubscription(channel, options)
     })
     
@@ -345,14 +345,16 @@ export function useSupabaseRealtime(options: UseSupabaseRealtimeOptions): UseSup
     }
     
     // Add global error handler
-    window.addEventListener('error', handleError)
-    window.addEventListener('unhandledrejection', (event) => {
+    window.addEventListener('error', handleError as any)
+    window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
       handleError(new Error(event.reason))
     })
     
     return () => {
-      window.removeEventListener('error', handleError)
-      window.removeEventListener('unhandledrejection', handleError as any)
+      window.removeEventListener('error', handleError as any)
+      window.removeEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
+        handleError(new Error(event.reason))
+      })
     }
   }, [channelName, onError])
   
@@ -368,10 +370,3 @@ export function useSupabaseRealtime(options: UseSupabaseRealtimeOptions): UseSup
   }
 }
 
-// Extended subscription options with event handlers
-export interface ExtendedRealtimeSubscriptionOptions extends RealtimeSubscriptionOptions {
-  onInsert?: (payload: RealtimePayload) => void
-  onUpdate?: (payload: RealtimePayload) => void
-  onDelete?: (payload: RealtimePayload) => void
-  onChange?: (payload: RealtimePayload) => void
-}

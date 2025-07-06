@@ -16,4 +16,5 @@ export type {
 } from './chat-persistence.service'
 
 // Chat service
-export { default as chatService } from './chat.service'
+export * as chatService from './chat.service'
+export type { ChatResponse } from './chat.service'

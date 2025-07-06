@@ -214,7 +214,7 @@ export const MessageOperationLoadingState = React.memo(function MessageOperation
 
   return (
     <div className={`inline-flex items-center gap-2 px-3 py-1 bg-orange-600/20 border border-orange-500/30 rounded-full ${className}`}>
-      <LoadingSpinner size="xs" />
+      <LoadingSpinner size="sm" />
       <span className="text-orange-300 text-xs">{messages[operation]}</span>
     </div>
   )

@@ -5,6 +5,12 @@ export * from './agent'
 export * from './portfolio'
 export * from './price-feed'
 export * from './realtime'
+// Note: chat-stream types are re-exported through realtime to avoid conflicts
+export type { 
+  StreamMessage as VercelStreamMessage,
+  VercelChatConfig,
+  OrchestrationResponse
+} from './chat-stream'
 
 // Note: Other type files removed during cleanup
 

@@ -62,7 +62,7 @@ export const ChatErrorDisplay = React.memo(function ChatErrorDisplay({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <h3 className="font-semibold text-red-300">{getErrorTitle(error.type)}</h3>
-            <Badge variant="red" size="sm">{error.type}</Badge>
+            <Badge variant="danger" size="sm">{error.type}</Badge>
           </div>
           <p className="text-red-200 text-sm mb-2">{error.message}</p>
           <p className="text-red-300/70 text-xs mb-3">{getErrorSuggestion(error.type)}</p>

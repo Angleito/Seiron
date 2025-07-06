@@ -19,8 +19,8 @@ export function RealtimeConnectionStatus({
 }: RealtimeConnectionStatusProps) {
   const getConnectionStatus = () => {
     if (error) return 'error'
-    if (isConnected) return 'success'
-    return 'warning'
+    if (isConnected) return 'connected'
+    return 'connecting'
   }
   
   const getConnectionText = () => {
@@ -42,8 +42,9 @@ export function RealtimeConnectionStatus({
         <div className="flex flex-col">
           <StatusIndicator 
             status={getConnectionStatus()} 
-            text={getConnectionText()}
-            className="text-sm"
+            label={getConnectionText()}
+            showLabel={true}
+            size="sm"
           />
           {error && (
             <p className="text-xs text-red-600 dark:text-red-400 mt-1">
@@ -58,7 +59,7 @@ export function RealtimeConnectionStatus({
           <Button
             onClick={onReconnect}
             size="sm"
-            variant="outline"
+            variant="secondary"
             className="text-xs"
           >
             🔄 Reconnect
@@ -69,7 +70,7 @@ export function RealtimeConnectionStatus({
           <Button
             onClick={onDisconnect}
             size="sm"
-            variant="outline"
+            variant="secondary"
             className="text-xs text-red-600 hover:text-red-700"
           >
             ⏸️ Disconnect

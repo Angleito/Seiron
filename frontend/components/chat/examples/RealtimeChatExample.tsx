@@ -22,8 +22,23 @@ export function RealtimeChatExample({ className = '' }: RealtimeChatExampleProps
     id: string
     type: string
     timestamp: string
+    description: string
     data: any
   }>>([])
+  
+  // Helper function to add events
+  const addEvent = (type: string, description: string, data: any) => {
+    const event = {
+      id: `event_${Date.now()}_${Math.random()}`,
+      type,
+      timestamp: new Date().toISOString(),
+      description,
+      data,
+    }
+    
+    setEvents(prev => [event, ...prev].slice(0, 50)) // Keep last 50 events
+    logger.debug('Real-time chat event', event)
+  }
   
   // Event handlers
   const handleMessage = useCallback((message: ChatMessage) => {
@@ -48,20 +63,6 @@ export function RealtimeChatExample({ className = '' }: RealtimeChatExampleProps
   const handleConnectionChange = useCallback((isConnected: boolean) => {
     addEvent('connection', `Connection ${isConnected ? 'established' : 'lost'}`, { isConnected })
   }, [])
-  
-  // Helper function to add events
-  const addEvent = (type: string, description: string, data: any) => {
-    const event = {
-      id: `event_${Date.now()}_${Math.random()}`,
-      type,
-      timestamp: new Date().toISOString(),
-      description,
-      data,
-    }
-    
-    setEvents(prev => [event, ...prev].slice(0, 50)) // Keep last 50 events
-    logger.debug('Real-time chat event', event)
-  }
   
   // Control functions
   const generateNewSession = () => {
@@ -89,7 +90,7 @@ export function RealtimeChatExample({ className = '' }: RealtimeChatExampleProps
     
     if (availableSymbols.length > 0) {
       const newSymbol = availableSymbols[Math.floor(Math.random() * availableSymbols.length)]
-      setPriceSymbols(prev => [...prev, newSymbol])
+      setPriceSymbols(prev => [...prev, newSymbol!])
       addEvent('system', `Added price subscription: ${newSymbol}`, { symbol: newSymbol })
     }
   }
@@ -162,10 +163,10 @@ export function RealtimeChatExample({ className = '' }: RealtimeChatExampleProps
               <div>
                 <label className="block text-sm font-medium mb-2">Session</label>
                 <div className="flex space-x-2">
-                  <Button onClick={generateNewSession} size="sm" variant="outline">
+                  <Button onClick={generateNewSession} size="sm" variant="secondary">
                     🔄 New Session
                   </Button>
-                  <Button onClick={generateNewUser} size="sm" variant="outline">
+                  <Button onClick={generateNewUser} size="sm" variant="secondary">
                     👤 New User
                   </Button>
                 </div>
@@ -210,10 +211,10 @@ export function RealtimeChatExample({ className = '' }: RealtimeChatExampleProps
                 <div>
                   <label className="block text-sm font-medium mb-2">Price Symbols</label>
                   <div className="flex space-x-2 mb-2">
-                    <Button onClick={addPriceSymbol} size="sm" variant="outline">
+                    <Button onClick={addPriceSymbol} size="sm" variant="secondary">
                       ➕ Add Symbol
                     </Button>
-                    <Button onClick={removePriceSymbol} size="sm" variant="outline">
+                    <Button onClick={removePriceSymbol} size="sm" variant="secondary">
                       ➖ Remove Symbol
                     </Button>
                   </div>

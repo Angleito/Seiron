@@ -10,7 +10,7 @@ import {
   MessagesQueryParams,
   chatPersistenceService 
 } from '../services/chat-persistence.service'
-import { logger } from '@lib/logger'
+import { logger } from '@/lib/logger'
 
 export interface UseChatHistoryOptions {
   sessionId: string

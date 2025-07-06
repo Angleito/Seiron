@@ -139,6 +139,10 @@ export interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
   timestamp: Date
+  // Additional properties for compatibility with StreamMessage
+  type?: 'user' | 'agent' | 'system'
+  status?: 'pending' | 'sending' | 'sent' | 'delivered' | 'failed'
+  created_at?: string // For persistence compatibility
   agentType?: AgentType
   metadata?: ChatMessageMetadata
   attachments?: ChatAttachment[]
@@ -148,6 +152,22 @@ export interface ChatMessage {
     timestamp: Date
     reason?: string
   }>
+}
+
+// Type guard to check if a message has timestamp or created_at
+export function getMessageTimestamp(message: ChatMessage): Date {
+  if (message.timestamp) return message.timestamp
+  if (message.created_at) return new Date(message.created_at)
+  return new Date()
+}
+
+// Type to handle both StreamMessage and ChatMessage from persistence
+export type UnifiedChatMessage = ChatMessage & {
+  // Ensure we have both type and role for compatibility
+  type: 'user' | 'agent' | 'system'
+  role: 'user' | 'assistant' | 'system'
+  // Ensure we have timestamp
+  timestamp: Date
 }
 
 export interface ChatMessageMetadata {
@@ -188,10 +208,17 @@ export interface ChatReaction {
 export interface ChatSession {
   id: string
   title?: string
+  description?: string // Added for persistence compatibility
   messages: ChatMessage[]
   participants: ChatParticipant[]
   createdAt: Date
   updatedAt: Date
+  // Additional properties for persistence compatibility
+  created_at?: string
+  updated_at?: string
+  last_message_at?: string
+  is_archived?: boolean
+  message_count?: number
   settings: ChatSettings
   metadata?: Record<string, unknown>
 }

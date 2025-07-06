@@ -122,7 +122,7 @@ export const MessagePagination = React.memo(function MessagePagination({
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !isLoadingMore) {
+        if (entries[0]?.isIntersecting && hasNextPage && !isLoadingMore) {
           onLoadMoreMessages()
         }
       },
@@ -148,7 +148,7 @@ export const MessagePagination = React.memo(function MessagePagination({
             Showing {Math.min(messagesPerPage, totalMessages)} of {totalMessages} messages
           </span>
           {currentPage > 1 && (
-            <Badge variant="orange" size="sm">
+            <Badge variant="warning" size="sm">
               Page {currentPage}
             </Badge>
           )}
@@ -211,7 +211,7 @@ export const MessagePagination = React.memo(function MessagePagination({
                   <Button
                     onClick={() => onGoToPage(page)}
                     disabled={isLoading}
-                    variant={page === currentPage ? 'default' : 'ghost'}
+                    variant={page === currentPage ? 'secondary' : 'ghost'}
                     className={
                       page === currentPage
                         ? 'bg-orange-600 text-white min-w-[2.5rem]'

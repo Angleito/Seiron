@@ -301,6 +301,7 @@ export function useRealtimeMessages(options: UseRealtimeMessagesOptions): UseRea
     // Subscribe to messages for this session
     realtime.subscribe({
       table: 'chat_messages',
+      schema: 'public',
       filter: `session_id=eq.${sessionId}`,
       onInsert: handleMessageInsert,
       onUpdate: handleMessageUpdate,
@@ -310,6 +311,7 @@ export function useRealtimeMessages(options: UseRealtimeMessagesOptions): UseRea
     return () => {
       realtime.unsubscribe({
         table: 'chat_messages',
+        schema: 'public',
       })
     }
   }, [realtime.isConnected, sessionId, handleMessageInsert, handleMessageUpdate, handleMessageDelete])

@@ -49,13 +49,16 @@ export interface CryptoPrice {
 // Real-time Event Types
 export type RealtimeEvent = 'INSERT' | 'UPDATE' | 'DELETE'
 
-export interface RealtimePayload<T = any> extends RealtimePostgresChangesPayload {
+export interface RealtimePayload<T = any> {
   new: T
   old: T
   eventType: RealtimeEvent
   schema: string
   table: string
   commit_timestamp: string
+  // Include common fields from RealtimePostgresChangesPayload
+  errors: string[] | null
+  columns?: Record<string, string>
 }
 
 // Subscription Options
@@ -67,6 +70,10 @@ export interface RealtimeSubscriptionOptions {
   onConnect?: () => void
   onDisconnect?: () => void
   onError?: (error: Error) => void
+  onInsert?: (payload: RealtimePayload) => void
+  onUpdate?: (payload: RealtimePayload) => void
+  onDelete?: (payload: RealtimePayload) => void
+  onChange?: (payload: RealtimePayload) => void
 }
 
 // Connection Status
@@ -177,4 +184,15 @@ export const defaultRealtimeConfig: RealtimeConfig = {
   presenceTimeout: 30000,
   typingTimeout: 3000,
   heartbeatInterval: 30000,
+}
+
+// Type aliases for consistency with component usage
+export type RealtimeMessage = ChatMessage
+export type RealtimePresence = PresenceState
+export type RealtimePrice = CryptoPrice
+export type ConnectionStatus = RealtimeConnectionStatus
+export type RealtimeChannelStatus = 'subscribing' | 'subscribed' | 'unsubscribing' | 'unsubscribed' | 'error'
+export type RealtimeChannelState = {
+  status: RealtimeChannelStatus
+  error?: Error | null
 }

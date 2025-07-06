@@ -6,11 +6,12 @@ import {
   mergeMap,
   shareReplay,
   takeUntil,
-  timeout
+  timeout,
+  scan
 } from 'rxjs/operators'
 import * as E from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
-import { AgentMessage, AgentType } from '../types/agent'
+import { AgentMessage, AgentType, UserIntentType } from '../types/agent'
 import { logger, safeDebug, safeInfo, safeWarn, safeError } from '@lib/logger'
 
 // Enhanced message types for Vercel streaming
@@ -103,9 +104,22 @@ export class VercelChatService {
       takeUntil(this.destroy$)
     )
     
-    // Message history stream
+    // Message history stream - accumulate messages into an array
     this.messageHistory$ = this.messages$.pipe(
-      shareReplay(100), // Keep last 100 messages
+      scan((history: StreamMessage[], message: StreamMessage) => {
+        // Check if message already exists (update) or is new
+        const existingIndex = history.findIndex(m => m.id === message.id)
+        if (existingIndex >= 0) {
+          // Update existing message
+          const updated = [...history]
+          updated[existingIndex] = message
+          return updated
+        } else {
+          // Add new message, keep last 100
+          return [...history, message].slice(-100)
+        }
+      }, []),
+      shareReplay(1),
       takeUntil(this.destroy$)
     )
     
@@ -177,7 +191,12 @@ export class VercelChatService {
           timestamp: new Date(response.timestamp),
           status: 'delivered',
           metadata: {
-            ...response.metadata,
+            intent: response.metadata.intent as UserIntentType,
+            action: response.metadata.action,
+            confidence: response.metadata.confidence,
+            riskLevel: response.metadata.riskLevel,
+            actionRequired: response.metadata.actionRequired,
+            suggestions: response.metadata.suggestions,
             intentId: response.intentId,
             executionTime: response.executionTime,
             requestId

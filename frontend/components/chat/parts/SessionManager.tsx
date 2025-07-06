@@ -147,19 +147,19 @@ export const SessionManager = React.memo(function SessionManager({
       {/* Stats */}
       {stats && (
         <div className="grid grid-cols-4 gap-2 mb-4">
-          <Badge variant="orange" className="text-center">
+          <Badge variant="warning" className="text-center">
             <div className="text-xs">Total</div>
             <div className="font-bold">{stats.total_sessions}</div>
           </Badge>
-          <Badge variant="green" className="text-center">
+          <Badge variant="success" className="text-center">
             <div className="text-xs">Active</div>
             <div className="font-bold">{stats.active_sessions}</div>
           </Badge>
-          <Badge variant="gray" className="text-center">
+          <Badge variant="default" className="text-center">
             <div className="text-xs">Archived</div>
             <div className="font-bold">{stats.archived_sessions}</div>
           </Badge>
-          <Badge variant="blue" className="text-center">
+          <Badge variant="info" className="text-center">
             <div className="text-xs">Messages</div>
             <div className="font-bold">{stats.total_messages}</div>
           </Badge>
@@ -214,14 +214,14 @@ export const SessionManager = React.memo(function SessionManager({
           />
           <Button
             onClick={() => handleViewModeChange('active')}
-            variant={viewMode === 'active' ? 'default' : 'ghost'}
+            variant={viewMode === 'active' ? 'secondary' : 'ghost'}
             className={viewMode === 'active' ? 'bg-orange-600 text-white' : 'text-orange-300'}
           >
             Active
           </Button>
           <Button
             onClick={() => handleViewModeChange('archived')}
-            variant={viewMode === 'archived' ? 'default' : 'ghost'}
+            variant={viewMode === 'archived' ? 'secondary' : 'ghost'}
             className={viewMode === 'archived' ? 'bg-orange-600 text-white' : 'text-orange-300'}
           >
             Archived
@@ -383,7 +383,7 @@ const SessionCard = React.memo(function SessionCard({
                 {session.is_archived && (
                   <>
                     <span>•</span>
-                    <Badge variant="gray" size="sm">Archived</Badge>
+                    <Badge variant="default" size="sm">Archived</Badge>
                   </>
                 )}
               </div>
@@ -421,7 +421,7 @@ const SessionCard = React.memo(function SessionCard({
             disabled={isDeleting}
             title="Delete"
           >
-            {isDeleting ? <LoadingSpinner size="xs" /> : '🗑️'}
+            {isDeleting ? <LoadingSpinner size="sm" /> : '🗑️'}
           </Button>
         </div>
       </div>

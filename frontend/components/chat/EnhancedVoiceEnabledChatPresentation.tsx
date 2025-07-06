@@ -1,9 +1,23 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import { StreamMessage } from './ChatStreamService'
+import { UnifiedChatMessage } from '../../types/components/chat'
 import { ElevenLabsConfig } from '@hooks/voice/useElevenLabsTTS'
 import { ChatSession, ChatMessage, ChatPersistenceError, PaginationInfo } from '../../services/chat-persistence.service'
+
+// Convert UnifiedChatMessage to StreamMessage
+function unifiedToStreamMessage(msg: UnifiedChatMessage): StreamMessage {
+  return {
+    id: msg.id,
+    type: msg.type,
+    content: msg.content,
+    timestamp: msg.timestamp,
+    status: msg.status,
+    agentType: msg.agentType,
+    metadata: msg.metadata as any // Type cast to handle metadata differences
+  }
+}
 import { ChatStatusBar } from './parts/ChatStatusBar'
 import { MessagesArea } from './sections/MessagesArea'
 import { VoiceSection } from './sections/VoiceSection'
@@ -41,7 +55,7 @@ interface EnhancedVoiceEnabledChatPresentationProps {
   input: string
   isVoiceEnabled: boolean
   voiceTranscript: string
-  messages: StreamMessage[]
+  messages: UnifiedChatMessage[]
   typingIndicators: TypingIndicatorData[]
   connectionStatus?: ConnectionStatus
   isLoading: boolean
@@ -199,7 +213,7 @@ export const EnhancedVoiceEnabledChatPresentation = React.memo(function Enhanced
             <div className="flex items-center gap-2">
               <span className="text-orange-300/70 text-sm">📝</span>
               <span className="text-orange-300 text-sm font-medium">{currentSession.title}</span>
-              <Badge variant="orange" size="sm">
+              <Badge variant="warning" size="sm">
                 {currentSession.message_count} messages
               </Badge>
             </div>
@@ -211,7 +225,7 @@ export const EnhancedVoiceEnabledChatPresentation = React.memo(function Enhanced
           {enableSessionManagement && (
             <Button
               onClick={onToggleSessionManager}
-              variant={showSessionManager ? 'default' : 'ghost'}
+              variant={showSessionManager ? 'secondary' : 'ghost'}
               size="sm"
               className={showSessionManager ? 'bg-orange-600 text-white' : 'text-orange-300 hover:text-orange-200'}
             >
@@ -223,7 +237,7 @@ export const EnhancedVoiceEnabledChatPresentation = React.memo(function Enhanced
           {enablePersistence && messagesPagination && messagesPagination.total > 0 && (
             <Button
               onClick={onToggleMessageHistory}
-              variant={showMessageHistory ? 'default' : 'ghost'}
+              variant={showMessageHistory ? 'secondary' : 'ghost'}
               size="sm"
               className={showMessageHistory ? 'bg-orange-600 text-white' : 'text-orange-300 hover:text-orange-200'}
             >
@@ -306,10 +320,11 @@ export const EnhancedVoiceEnabledChatPresentation = React.memo(function Enhanced
           {/* Messages Area */}
           <div className="flex-1 min-h-0">
             <MessagesArea
-              messages={messages}
+              messages={useMemo(() => messages.map(unifiedToStreamMessage), [messages])}
               typingIndicators={typingIndicators}
               voiceTranscript={voiceTranscript}
               onRetryMessage={onRetryMessage}
+              sessionId={currentSessionId}
             />
           </div>
 

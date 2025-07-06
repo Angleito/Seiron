@@ -1,13 +1,10 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useSupabaseRealtime } from './useSupabaseRealtime'
 import { 
   PresenceState, 
   TypingIndicator, 
-  UseRealtimePresenceResult, 
-  UserPresence,
-  RealtimePayload
+  UseRealtimePresenceResult
 } from '@/types/realtime'
 
 export interface UseRealtimePresenceOptions {
@@ -249,10 +246,7 @@ export function useRealtimePresence(options: UseRealtimePresenceOptions): UseRea
     
     return () => {
       if (realtime.channel) {
-        realtime.channel.off('presence', { event: 'sync' })
-        realtime.channel.off('presence', { event: 'join' })
-        realtime.channel.off('presence', { event: 'leave' })
-        realtime.channel.off('broadcast', { event: 'typing' })
+        realtime.channel.unsubscribe()
       }
     }
   }, [realtime.isConnected, realtime.channel, handlePresenceSync, handleTypingBroadcast])

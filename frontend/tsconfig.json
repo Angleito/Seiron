@@ -32,6 +32,7 @@
     /* Module Resolution Options */
     "baseUrl": ".",
     "paths": {
+      "@/*": ["./*"],
       "@components/*": ["./components/*"],
       "@hooks/*": ["./hooks/*"],
       "@lib/*": ["./lib/*"],

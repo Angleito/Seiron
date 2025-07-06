@@ -254,6 +254,7 @@ export function useRealtimeSession(options: UseRealtimeSessionOptions): UseRealt
     // Subscribe to session updates
     realtime.subscribe({
       table: 'chat_sessions',
+      schema: 'public',
       filter: `id=eq.${sessionId}`,
       onUpdate: handleSessionUpdate,
       onDelete: handleSessionDelete,
@@ -262,6 +263,7 @@ export function useRealtimeSession(options: UseRealtimeSessionOptions): UseRealt
     return () => {
       realtime.unsubscribe({
         table: 'chat_sessions',
+        schema: 'public',
       })
     }
   }, [realtime.isConnected, sessionId, handleSessionUpdate, handleSessionDelete])
@@ -320,8 +322,7 @@ export function useRealtimeSession(options: UseRealtimeSessionOptions): UseRealt
           .eq('id', sessionId)
           .then(() => {
             logger.info('Session marked as inactive on unmount', { sessionId })
-          })
-          .catch((error) => {
+          }, (error: Error) => {
             logger.error('Error marking session as inactive', { sessionId, error })
           })
       }

@@ -239,7 +239,7 @@ export function useRealtimePrices(options: UseRealtimePricesOptions = {}): UseRe
     logger.info('Unsubscribing from symbols', { symbols: symbolsToRemove })
     
     setSubscribedSymbols(prev => {
-      const newSet = new Set()
+      const newSet = new Set<string>()
       prev.forEach(symbol => {
         if (!symbolsToRemoveSet.has(symbol)) {
           newSet.add(symbol)
@@ -289,6 +289,7 @@ export function useRealtimePrices(options: UseRealtimePricesOptions = {}): UseRe
     // Subscribe to price updates
     realtime.subscribe({
       table: 'crypto_prices',
+      schema: 'public',
       onInsert: handlePriceUpdate,
       onUpdate: handlePriceUpdate,
     })
@@ -296,6 +297,7 @@ export function useRealtimePrices(options: UseRealtimePricesOptions = {}): UseRe
     return () => {
       realtime.unsubscribe({
         table: 'crypto_prices',
+        schema: 'public',
       })
     }
   }, [realtime.isConnected, handlePriceUpdate])

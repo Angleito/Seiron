@@ -82,7 +82,7 @@ export function RealtimePresenceIndicator({
             <Button
               onClick={() => onStatusChange('online')}
               size="sm"
-              variant={myPresence?.status === 'online' ? 'default' : 'outline'}
+              variant={myPresence?.status === 'online' ? 'primary' : 'secondary'}
               className="text-xs px-2 py-1 h-auto"
               title="Set status to online"
             >
@@ -91,7 +91,7 @@ export function RealtimePresenceIndicator({
             <Button
               onClick={() => onStatusChange('away')}
               size="sm"
-              variant={myPresence?.status === 'away' ? 'default' : 'outline'}
+              variant={myPresence?.status === 'away' ? 'primary' : 'secondary'}
               className="text-xs px-2 py-1 h-auto"
               title="Set status to away"
             >
@@ -100,7 +100,7 @@ export function RealtimePresenceIndicator({
             <Button
               onClick={() => onStatusChange('offline')}
               size="sm"
-              variant={myPresence?.status === 'offline' ? 'default' : 'outline'}
+              variant={myPresence?.status === 'offline' ? 'primary' : 'secondary'}
               className="text-xs px-2 py-1 h-auto"
               title="Set status to offline"
             >

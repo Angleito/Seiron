@@ -56,7 +56,6 @@ export function useChatStream(options: UseChatStreamOptions): UseChatStreamResul
     safeInfo('useChatStream hook initialized', {
       sessionId: options.sessionId,
       apiEndpoint: options.apiEndpoint,
-      wsEndpoint: options.wsEndpoint,
       mountTime: mountTimeRef.current
     })
     
@@ -222,22 +221,8 @@ export function useChatStream(options: UseChatStreamOptions): UseChatStreamResul
   
   // Send adapter action
   const sendAdapterAction = useCallback((action: AdapterAction) => {
-    if (!chatServiceRef.current) return
-    
-    setIsLoading(true)
-    
-    chatServiceRef.current.sendAdapterAction(action).subscribe({
-      next: (result) => {
-        if (E.isLeft(result)) {
-          logger.error('Failed to send adapter action:', result.left)
-          setIsLoading(false)
-        }
-      },
-      error: (error) => {
-        logger.error('Error sending adapter action:', error)
-        setIsLoading(false)
-      }
-    })
+    // TODO: Implement adapter action support in VercelChatService
+    logger.warn('Adapter actions not yet supported in VercelChatService')
   }, [])
   
   // Send voice message with special metadata

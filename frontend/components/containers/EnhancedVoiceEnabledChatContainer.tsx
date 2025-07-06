@@ -11,8 +11,10 @@ import { sanitizeVoiceTranscript, sanitizeChatMessage } from '@lib/sanitize'
 import { pipe } from 'fp-ts/function'
 import * as O from 'fp-ts/Option'
 import * as A from 'fp-ts/Array'
-import { ChatSession, ChatPersistenceError } from '../../services/chat-persistence.service'
+import { ChatSession, ChatPersistenceError, ChatMessage as PersistenceMessage } from '../../services/chat-persistence.service'
 import { EnhancedVoiceEnabledChatPresentation } from '../chat/EnhancedVoiceEnabledChatPresentation'
+import { ChatMessage, UnifiedChatMessage, getMessageTimestamp } from '../../types/components/chat'
+import { StreamMessage } from '../../types/chat-stream'
 
 interface EnhancedVoiceEnabledChatContainerProps {
   userId?: string
@@ -25,6 +27,28 @@ interface EnhancedVoiceEnabledChatContainerProps {
 
 // Generate unique session ID
 const generateSessionId = () => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+// Convert StreamMessage to UnifiedChatMessage
+function streamMessageToUnified(msg: StreamMessage): UnifiedChatMessage {
+  return {
+    ...msg,
+    role: msg.type === 'agent' ? 'assistant' : msg.type as 'user' | 'system',
+    type: msg.type,
+    timestamp: msg.timestamp instanceof Date ? msg.timestamp : new Date(msg.timestamp)
+  }
+}
+
+// Convert PersistenceMessage to UnifiedChatMessage
+function persistenceMessageToUnified(msg: PersistenceMessage): UnifiedChatMessage {
+  const type = msg.role === 'assistant' ? 'agent' : msg.role as 'user' | 'system'
+  return {
+    ...msg,
+    type,
+    role: msg.role,
+    timestamp: new Date(msg.created_at),
+    created_at: msg.created_at
+  }
+}
 
 /**
  * Enhanced container component that manages chat state, voice logic, persistence, and data flow
@@ -128,14 +152,20 @@ export const EnhancedVoiceEnabledChatContainer = React.memo(function EnhancedVoi
 
   // Combine historical and stream messages
   const allMessages = useMemo(() => {
-    if (!enablePersistence) return streamMessages
+    if (!enablePersistence) {
+      return streamMessages.map(streamMessageToUnified)
+    }
     
-    // Merge historical and stream messages, avoiding duplicates
-    const streamMessageIds = new Set(streamMessages.map(m => m.id))
-    const uniqueHistoricalMessages = historicalMessages.filter(m => !streamMessageIds.has(m.id))
+    // Convert messages to unified format
+    const unifiedStreamMessages = streamMessages.map(streamMessageToUnified)
+    const unifiedHistoricalMessages = historicalMessages.map(persistenceMessageToUnified)
     
-    return [...uniqueHistoricalMessages, ...streamMessages].sort((a, b) => 
-      new Date(a.timestamp || a.created_at).getTime() - new Date(b.timestamp || b.created_at).getTime()
+    // Merge messages, avoiding duplicates
+    const streamMessageIds = new Set(unifiedStreamMessages.map(m => m.id))
+    const uniqueHistoricalMessages = unifiedHistoricalMessages.filter(m => !streamMessageIds.has(m.id))
+    
+    return [...uniqueHistoricalMessages, ...unifiedStreamMessages].sort((a, b) => 
+      getMessageTimestamp(a).getTime() - getMessageTimestamp(b).getTime()
     )
   }, [historicalMessages, streamMessages, enablePersistence])
 
@@ -156,7 +186,7 @@ export const EnhancedVoiceEnabledChatContainer = React.memo(function EnhancedVoi
     
     if (enablePersistence) {
       // Load historical messages for the new session
-      await loadMessages(sessionId)
+      await loadMessages()
     }
   }, [currentSessionId, clearMessages, loadMessages, enablePersistence])
 
@@ -243,9 +273,9 @@ export const EnhancedVoiceEnabledChatContainer = React.memo(function EnhancedVoi
     pipe(
       A.last(allMessages),
       O.filter((lastMessage) => 
-        lastMessage.type === 'agent' && 
+        (lastMessage.type === 'agent' || lastMessage.role === 'assistant') && 
         !lastMessage.metadata?.error && 
-        lastMessage.status === 'delivered' &&
+        (lastMessage.status === 'delivered' || !lastMessage.status) &&
         !isPlaying
       ),
       O.map((lastMessage) => {
@@ -277,10 +307,21 @@ export const EnhancedVoiceEnabledChatContainer = React.memo(function EnhancedVoi
   }))
 
   // Get current session info
-  const currentSession = useMemo(() => 
-    sessions.find(s => s.id === currentSessionId) || sessionInfo,
-    [sessions, currentSessionId, sessionInfo]
-  )
+  const currentSession = useMemo(() => {
+    const foundSession = sessions.find(s => s.id === currentSessionId)
+    if (foundSession) {
+      return foundSession
+    }
+    // If we have sessionInfo but it doesn't have all fields, provide defaults
+    if (sessionInfo) {
+      return {
+        ...sessionInfo,
+        is_archived: false,
+        message_count: allMessages.length
+      }
+    }
+    return null
+  }, [sessions, currentSessionId, sessionInfo, allMessages.length])
 
   return (
     <EnhancedVoiceEnabledChatPresentation
