@@ -103,19 +103,22 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
     const baseConfig = {
       clouds: {
         opacity: 0.3 + (normalizedIntensity * 0.5),
-        speed: normalizedIntensity < 0.3 ? 'slow' : normalizedIntensity < 0.7 ? 'medium' : 'fast',
+        speed: normalizedIntensity < 0.3 ? 'slow' as const : normalizedIntensity < 0.7 ? 'medium' as const : 'fast' as const,
         layerCount: Math.ceil(2 + normalizedIntensity * 2) // 2-4 layers
       },
       lightning: {
         enabled: normalizedIntensity > 0.2,
-        frequency: normalizedIntensity < 0.4 ? 'low' : normalizedIntensity < 0.8 ? 'medium' : 'high',
-        intensity: normalizedIntensity < 0.3 ? 'subtle' : normalizedIntensity < 0.7 ? 'normal' : 'intense'
+        frequency: normalizedIntensity < 0.4 ? 'low' as const : normalizedIntensity < 0.8 ? 'medium' as const : 'high' as const,
+        intensity: normalizedIntensity < 0.3 ? 'subtle' as const : normalizedIntensity < 0.7 ? 'normal' as const : 'intense' as const,
+        maxBolts: Math.ceil(1 + normalizedIntensity * 2) // 1-3 bolts
       },
       fog: {
         density: 0.2 + (normalizedIntensity * 0.6),
         speed: 0.5 + (normalizedIntensity * 1.5),
-        opacity: 0.1 + (normalizedIntensity * 0.2)
-      }
+        opacity: 0.1 + (normalizedIntensity * 0.2),
+        particleCount: Math.ceil(4 + normalizedIntensity * 8) // 4-12 particles
+      },
+      enableParallax: true
     }
     
     return baseConfig
@@ -144,7 +147,7 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
         type: layerType,
         zIndex: baseZIndex,
         opacity: stormConfig.clouds.opacity * (1 - i * 0.1),
-        size: i === 0 ? 'large' : i === 1 ? 'medium' : 'small'
+        size: i === 0 ? 'large' as const : i === 1 ? 'medium' as const : 'small' as const
       })
     }
     
@@ -198,7 +201,7 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
           opacity={layer.opacity}
           animationSpeed={stormConfig.clouds.speed}
           size={layer.size}
-          enableParallax={shouldAnimate && config.enableParallax}
+          enableParallax={shouldAnimate && stormConfig.enableParallax}
           reducedMotion={prefersReducedMotion}
         />
       ))}
@@ -224,7 +227,7 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
           density={stormConfig.fog.density}
           speed={shouldAnimate ? stormConfig.fog.speed : 0}
           opacity={stormConfig.fog.opacity}
-          enableParallax={shouldAnimate && config.enableParallax}
+          enableParallax={shouldAnimate && stormConfig.enableParallax}
           particleCount={shouldAnimate ? stormConfig.fog.particleCount : 0}
           reducedMotion={prefersReducedMotion}
         />

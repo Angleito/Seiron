@@ -3,7 +3,6 @@ export { FogOverlay } from './FogOverlay'
 export { StormCloud } from './StormCloud'
 export { LightningEffect } from './LightningEffect'
 export { StormBackground } from './StormBackground'
-export { default as StormBackground } from './StormBackground'
 
 // Performance optimization exports
 export { 

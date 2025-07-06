@@ -49,10 +49,14 @@ const DragonConfig = {
       color: 0x7f1d1d,
       shininess: 50,
     }),
-    gold: new THREE.MeshPhongMaterial({
+    gold: new THREE.MeshStandardMaterial({
       color: 0xfbbf24,
-      shininess: 200,
-      metalness: 0.3,
+      roughness: 0.3,
+      metalness: 0.8,
+    }),
+    darkRed: new THREE.MeshPhongMaterial({
+      color: 0x7f1d1d,
+      shininess: 30,
     }),
     wing: new THREE.MeshPhongMaterial({
       color: 0xdc2626,
@@ -89,20 +93,27 @@ const ParticleSystem: React.FC<{ count: number; size: number }> = ({ count, size
   }, [count, size])
 
   useFrame((state) => {
-    if (!meshRef.current) return
+    if (!meshRef.current || !meshRef.current.geometry.attributes.position) return
     
     const positions = meshRef.current.geometry.attributes.position.array as Float32Array
     
     for (let i = 0; i < count; i++) {
-      positions[i * 3] += velocities[i * 3]
-      positions[i * 3 + 1] += velocities[i * 3 + 1]
-      positions[i * 3 + 2] += velocities[i * 3 + 2]
+      const xIndex = i * 3
+      const yIndex = i * 3 + 1
+      const zIndex = i * 3 + 2
       
-      // Reset particles that go too far
-      if (positions[i * 3 + 1] > size * 2) {
-        positions[i * 3] = (Math.random() - 0.5) * size * 4
-        positions[i * 3 + 1] = -size * 2
-        positions[i * 3 + 2] = (Math.random() - 0.5) * size * 4
+      if (positions[xIndex] !== undefined && positions[yIndex] !== undefined && positions[zIndex] !== undefined &&
+          velocities[xIndex] !== undefined && velocities[yIndex] !== undefined && velocities[zIndex] !== undefined) {
+        positions[xIndex] += velocities[xIndex]
+        positions[yIndex] += velocities[yIndex]
+        positions[zIndex] += velocities[zIndex]
+        
+        // Reset particles that go too far
+        if (positions[yIndex] > size * 2) {
+          positions[xIndex] = (Math.random() - 0.5) * size * 4
+          positions[yIndex] = -size * 2
+          positions[zIndex] = (Math.random() - 0.5) * size * 4
+        }
       }
     }
     
@@ -181,7 +192,10 @@ const DragonHead: React.FC<{ size: number; animationSpeed: number }> = ({ size, 
   const headGeometry = useMemo(() => {
     const geometry = new THREE.SphereGeometry(size * 0.25, 16, 16)
     // Modify geometry to make it more dragon-like
-    const positions = geometry.attributes.position.array as Float32Array
+    const positionAttribute = geometry.attributes.position
+    if (!positionAttribute) return geometry
+    
+    const positions = positionAttribute.array as Float32Array
     
     for (let i = 0; i < positions.length; i += 3) {
       const x = positions[i]
@@ -189,17 +203,17 @@ const DragonHead: React.FC<{ size: number; animationSpeed: number }> = ({ size, 
       const z = positions[i + 2]
       
       // Elongate the snout
-      if (z > 0) {
+      if (z !== undefined && z > 0) {
         positions[i + 2] = z * 1.5
       }
       
       // Create ridges
-      if (y > 0) {
+      if (y !== undefined && y > 0 && x !== undefined) {
         positions[i + 1] = y * (1 + Math.sin(x * 8) * 0.1)
       }
     }
     
-    geometry.attributes.position.needsUpdate = true
+    positionAttribute.needsUpdate = true
     geometry.computeVertexNormals()
     return geometry
   }, [size])

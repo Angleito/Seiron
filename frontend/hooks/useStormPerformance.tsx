@@ -306,7 +306,7 @@ export function useLazyStormEffects() {
 
     observerRef.current = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
+        if (entry && entry.isIntersecting) {
           setIsVisible(true)
           // Delay rendering to avoid blocking
           setTimeout(() => setShouldRender(true), 100)

@@ -347,10 +347,11 @@ const ASCIIDragon: React.FC<ASCIIDragonProps> = ({
       'o': ['·', 'o', 'O', '●']
     }
 
-    if (intensityMap[char]) {
-      const variations = intensityMap[char]
+    const variations = intensityMap[char]
+    if (variations) {
       const index = Math.floor(intensity * (variations.length - 1))
-      return variations[Math.max(0, Math.min(index, variations.length - 1))]
+      const safeIndex = Math.max(0, Math.min(index, variations.length - 1))
+      return variations[safeIndex] ?? char
     }
 
     return char
@@ -368,16 +369,14 @@ const ASCIIDragon: React.FC<ASCIIDragonProps> = ({
   }, [displayedLines, breathingIntensity, enableBreathing])
 
   // Floating animation variants
-  const floatingVariants = {
-    animate: {
-      y: [0, -10, 0],
-      x: [0, 5, 0],
-      rotate: [0, 1, 0],
-      transition: {
-        duration: config.floating / 1000,
-        repeat: Infinity,
-        ease: 'easeInOut'
-      }
+  const floatingAnimation = {
+    y: [0, -10, 0],
+    x: [0, 5, 0],
+    rotate: [0, 1, 0],
+    transition: {
+      duration: config.floating / 1000,
+      repeat: Infinity,
+      ease: 'easeInOut' as const
     }
   }
 
@@ -393,8 +392,8 @@ const ASCIIDragon: React.FC<ASCIIDragonProps> = ({
       onClick={onClick}
       whileHover={enableHover ? { scale: 1.02 } : undefined}
       whileTap={{ scale: 0.98 }}
-      animate={enableFloating ? floatingVariants.animate : undefined}
-      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+      animate={enableFloating ? floatingAnimation : undefined}
+      transition={enableFloating ? undefined : { type: 'spring', stiffness: 300, damping: 20 }}
     >
       <div className="relative">
         <AnimatePresence>
