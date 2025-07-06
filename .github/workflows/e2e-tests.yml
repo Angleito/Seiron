@@ -26,21 +26,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-          
-      - name: Install dependencies
-        run: npm ci
         
       - name: Build frontend
         working-directory: ./frontend
         run: |
-          npm ci
+          npm install --legacy-peer-deps
           npm run build
           
       - name: Build backend
         working-directory: ./backend
         run: |
-          npm ci
+          npm install --legacy-peer-deps
           npm run build
           
       - name: Setup Docker Buildx
