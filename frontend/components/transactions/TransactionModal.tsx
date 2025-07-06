@@ -140,22 +140,22 @@ export function TransactionModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
       <div className="bg-gradient-to-br from-gray-900 via-black to-red-950 border border-red-500/20 rounded-lg max-w-md w-full p-6 shadow-[0_0_50px_rgba(239,68,68,0.3)]">
-        <h2 className="text-2xl font-bold text-white mb-4">Transaction Approval Required</h2>
+        <h2 className="text-size-1 font-semibold text-white mb-4">Transaction Approval Required</h2>
         
         <div className="space-y-4 mb-6">
           <div className="bg-black/50 rounded-lg p-4 border border-red-500/10">
             <div className="flex items-center justify-between mb-2">
               <span className="text-gray-400">Type</span>
-              <span className="text-white font-medium">{getTypeLabel(transaction.type)}</span>
+              <span className="text-white font-normal">{getTypeLabel(transaction.type)}</span>
             </div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-gray-400">Protocol</span>
-              <span className="text-white font-medium">{transaction.protocol}</span>
+              <span className="text-white font-normal">{transaction.protocol}</span>
             </div>
             {transaction.riskLevel && (
               <div className="flex items-center justify-between">
                 <span className="text-gray-400">Risk Level</span>
-                <span className={`font-medium ${getRiskColor(transaction.riskLevel)}`}>
+                <span className={`font-normal ${getRiskColor(transaction.riskLevel)}`}>
                   {transaction.riskLevel.toUpperCase()}
                 </span>
               </div>
@@ -167,14 +167,14 @@ export function TransactionModal({
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <p className="text-gray-400 text-sm">From</p>
-                  <p className="text-white font-medium">
+                  <p className="text-white font-normal">
                     {formatUnits(transaction.tokenIn.amount, transaction.tokenIn.decimals)} {transaction.tokenIn.symbol}
                   </p>
                 </div>
                 <span className="text-red-400">→</span>
                 <div className="text-right">
                   <p className="text-gray-400 text-sm">To</p>
-                  <p className="text-white font-medium">
+                  <p className="text-white font-normal">
                     {formatUnits(transaction.tokenOut.amount, transaction.tokenOut.decimals)} {transaction.tokenOut.symbol}
                   </p>
                 </div>
@@ -186,7 +186,7 @@ export function TransactionModal({
             <div className="bg-black/50 rounded-lg p-4 border border-red-500/10">
               <div className="flex items-center justify-between">
                 <span className="text-gray-400">Estimated Gas</span>
-                <span className="text-white font-medium">
+                <span className="text-white font-normal">
                   {transaction.estimatedGas ? formatEther(transaction.estimatedGas) : '0'} SEI
                 </span>
               </div>
@@ -201,7 +201,7 @@ export function TransactionModal({
 
           {transaction.riskLevel === 'high' && (
             <div className="flex items-start space-x-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-              <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-1" />
               <p className="text-sm text-red-300">
                 This transaction has been flagged as high risk. Please review carefully before proceeding.
               </p>

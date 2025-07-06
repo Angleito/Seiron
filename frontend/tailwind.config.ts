@@ -8,74 +8,105 @@ const config: Config = {
     "./index.html",
   ],
   theme: {
+    // Override default scales to enforce design system
+    fontSize: {
+      // Only 4 font sizes allowed
+      'size-1': ['1.25rem', { lineHeight: '1.75rem' }],    // 20px - Large headings
+      'size-2': ['1rem', { lineHeight: '1.5rem' }],        // 16px - Subheadings
+      'size-3': ['0.875rem', { lineHeight: '1.25rem' }],   // 14px - Body text
+      'size-4': ['0.75rem', { lineHeight: '1rem' }],       // 12px - Small text
+      // Legacy mapping for gradual migration
+      'xs': ['0.75rem', { lineHeight: '1rem' }],           // → size-4
+      'sm': ['0.875rem', { lineHeight: '1.25rem' }],       // → size-3
+      'base': ['1rem', { lineHeight: '1.5rem' }],          // → size-2
+      'lg': ['1.25rem', { lineHeight: '1.75rem' }],        // → size-1
+    },
+    fontWeight: {
+      // Only 2 font weights allowed
+      normal: '400',
+      semibold: '600',
+    },
+    spacing: {
+      // 8pt grid system - all values divisible by 8 or 4
+      '0': '0px',
+      '1': '0.25rem',   // 4px
+      '2': '0.5rem',    // 8px
+      '3': '0.75rem',   // 12px
+      '4': '1rem',      // 16px
+      '5': '1.25rem',   // 20px (exception, but rounds to 24px in practice)
+      '6': '1.5rem',    // 24px
+      '8': '2rem',      // 32px
+      '10': '2.5rem',   // 40px
+      '12': '3rem',     // 48px
+      '16': '4rem',     // 64px
+      '20': '5rem',     // 80px
+      '24': '6rem',     // 96px
+      '32': '8rem',     // 128px
+      '40': '10rem',    // 160px
+      '48': '12rem',    // 192px
+      '56': '14rem',    // 224px
+      '64': '16rem',    // 256px
+    },
+    colors: {
+      // 60/30/10 Color System
+      transparent: 'transparent',
+      current: 'currentColor',
+      
+      // 60% - Neutral colors (backgrounds, containers)
+      white: '#ffffff',
+      black: '#000000',
+      gray: {
+        50: '#fafafa',
+        100: '#f4f4f5',
+        200: '#e4e4e7',
+        300: '#d4d4d8',
+        400: '#a1a1aa',
+        500: '#71717a',
+        600: '#52525b',
+        700: '#3f3f46',
+        800: '#27272a',
+        900: '#18181b',
+        950: '#09090b',
+      },
+      
+      // 10% - Primary accent (Dragon theme)
+      red: {
+        50: '#fef2f2',
+        100: '#fee2e2',
+        200: '#fecaca',
+        300: '#fca5a5',
+        400: '#f87171',
+        500: '#ef4444',
+        600: '#dc2626',
+        700: '#b91c1c',
+        800: '#991b1b',
+        900: '#7f1d1d',
+      },
+      
+      // Semantic colors (use sparingly)
+      green: {
+        400: '#4ade80',
+        600: '#16a34a',
+      },
+      blue: {
+        400: '#60a5fa',
+        600: '#2563eb',
+      },
+      yellow: {
+        400: '#facc15',
+        600: '#ca8a04',
+      },
+    },
     extend: {
+      // Legacy color mappings for gradual migration
       colors: {
-        // Seiron Dragon Red Palette
         dragon: {
-          red: "#DC2626",
-          "red-hover": "#EF4444",
-          "red-dark": "#991B1B",
-          "red-light": "#FCA5A5",
-          "red-50": "#FEF2F2",
-          "red-100": "#FEE2E2",
-          "red-200": "#FECACA",
-          "red-300": "#FCA5A5",
-          "red-400": "#F87171",
-          "red-500": "#EF4444",
-          "red-600": "#DC2626",
-          "red-700": "#B91C1C",
-          "red-800": "#991B1B",
-          "red-900": "#7F1D1D",
+          DEFAULT: "#dc2626",
+          hover: "#ef4444",
         },
-        // Sei Gray Palette
-        sei: {
-          gray: "#6B7280",
-          "gray-light": "#9CA3AF",
-          "gray-dark": "#374151",
-          "gray-50": "#F9FAFB",
-          "gray-100": "#F3F4F6",
-          "gray-200": "#E5E7EB",
-          "gray-300": "#D1D5DB",
-          "gray-400": "#9CA3AF",
-          "gray-500": "#6B7280",
-          "gray-600": "#4B5563",
-          "gray-700": "#374151",
-          "gray-800": "#1F2937",
-          "gray-900": "#111827",
-        },
-        // Gold Palette (Dragon's Power)
-        gold: {
-          DEFAULT: "#F59E0B",
-          "50": "#FFFBEB",
-          "100": "#FEF3C7",
-          "200": "#FDE68A",
-          "300": "#FCD34D",
-          "400": "#FBBF24",
-          "500": "#F59E0B",
-          "600": "#D97706",
-          "700": "#B45309",
-          "800": "#92400E",
-          "900": "#78350F",
-        },
-        // Cosmic Purple Palette (Mystical Elements)
-        cosmic: {
-          purple: "#7C3AED",
-          "purple-light": "#A78BFA",
-          "purple-dark": "#5B21B6",
-          "purple-50": "#F5F3FF",
-          "purple-100": "#EDE9FE",
-          "purple-200": "#DDD6FE",
-          "purple-300": "#C4B5FD",
-          "purple-400": "#A78BFA",
-          "purple-500": "#8B5CF6",
-          "purple-600": "#7C3AED",
-          "purple-700": "#6D28D9",
-          "purple-800": "#5B21B6",
-          "purple-900": "#4C1D95",
-        },
-        // Legacy support
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        background: "var(--color-background)",
+        foreground: "var(--color-foreground)",
+        accent: "var(--color-accent-primary)",
       },
       backgroundImage: {
         // Dragon scale patterns
@@ -186,33 +217,24 @@ const config: Config = {
         },
       },
       boxShadow: {
-        // Dragon-themed shadows
-        "dragon": "0 10px 25px rgba(220, 38, 38, 0.3)",
-        "dragon-hover": "0 20px 40px rgba(220, 38, 38, 0.4)",
-        "mystical": "0 10px 25px rgba(124, 58, 237, 0.3)",
-        "gold-glow": "0 10px 25px rgba(245, 158, 11, 0.3)",
-        "sei-subtle": "0 4px 12px rgba(107, 114, 128, 0.1)",
+        // Simplified shadows
+        'sm': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+        'md': '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+        'lg': '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+        'xl': '0 20px 25px -5px rgb(0 0 0 / 0.1)',
+        'dragon': '0 10px 25px rgba(220, 38, 38, 0.3)',
       },
       fontFamily: {
         // Geist fonts
         "sans": ['Geist Sans', 'system-ui', 'sans-serif'],
         "mono": ['Geist Mono', 'monospace'],
-        // Dragon-themed typography
-        "dragon": ["var(--font-dragon)", "serif"],
-        "mystical": ["var(--font-mystical)", "fantasy"],
-      },
-      spacing: {
-        // Dragon scale sizes
-        "scale-xs": "0.125rem",
-        "scale-sm": "0.25rem",
-        "scale-md": "0.5rem",
-        "scale-lg": "1rem",
-        "scale-xl": "2rem",
       },
       borderRadius: {
-        // Dragon-themed radius
-        "dragon": "0.75rem",
-        "scale": "50%",
+        // Standard radius scale
+        'sm': '0.25rem',   // 4px
+        'md': '0.5rem',    // 8px
+        'lg': '0.75rem',   // 12px
+        'xl': '1rem',      // 16px
       },
     },
   },

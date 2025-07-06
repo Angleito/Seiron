@@ -95,8 +95,7 @@ export const FeaturePreloader = {
     switch (featureName) {
       case 'dragon-animations':
         loadPromises.push(
-          import('../components/dragon/lazy').then(m => m.preloadDragonComponents()),
-          import('../components/lazy-dragon-showcase').then(m => m.preloadDragonShowcase())
+          import('../components/dragon/lazy').then(m => m.preloadDragonComponents())
         )
         break
 

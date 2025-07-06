@@ -258,7 +258,7 @@ export function TransactionDemo() {
       
       <div className="max-w-4xl mx-auto space-y-8">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Transaction Components Demo</h1>
+          <h1 className="text-size-1 font-semibold text-white mb-2">Transaction Components Demo</h1>
           <p className="text-gray-400">Demonstrating transaction confirmation, preview, and risk warning components</p>
         </div>
 
@@ -266,7 +266,7 @@ export function TransactionDemo() {
         <div className="flex space-x-4">
           <button
             onClick={() => setSelectedDemo('swap')}
-            className={`px-4 py-2 rounded-lg font-medium transition-all ${
+            className={`px-4 py-2 rounded-lg font-normal transition-all ${
               selectedDemo === 'swap' 
                 ? 'bg-red-500 text-white' 
                 : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
@@ -276,7 +276,7 @@ export function TransactionDemo() {
           </button>
           <button
             onClick={() => setSelectedDemo('lend')}
-            className={`px-4 py-2 rounded-lg font-medium transition-all ${
+            className={`px-4 py-2 rounded-lg font-normal transition-all ${
               selectedDemo === 'lend' 
                 ? 'bg-red-500 text-white' 
                 : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
@@ -286,7 +286,7 @@ export function TransactionDemo() {
           </button>
           <button
             onClick={() => setSelectedDemo('high-risk')}
-            className={`px-4 py-2 rounded-lg font-medium transition-all ${
+            className={`px-4 py-2 rounded-lg font-normal transition-all ${
               selectedDemo === 'high-risk' 
                 ? 'bg-red-500 text-white' 
                 : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
@@ -298,13 +298,13 @@ export function TransactionDemo() {
 
         {/* Transaction Preview */}
         <div>
-          <h2 className="text-xl font-semibold text-white mb-4">Transaction Preview</h2>
+          <h2 className="text-size-1 font-semibold text-white mb-4">Transaction Preview</h2>
           <TransactionPreview data={getCurrentPreview()} showDetails={true} />
         </div>
 
         {/* Risk Warning */}
         <div>
-          <h2 className="text-xl font-semibold text-white mb-4">Risk Assessment</h2>
+          <h2 className="text-size-1 font-semibold text-white mb-4">Risk Assessment</h2>
           <RiskWarning 
             assessment={getCurrentRiskAssessment()} 
             showDetails={true}

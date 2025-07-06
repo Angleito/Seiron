@@ -107,11 +107,11 @@ export class RootErrorBoundary extends Component<Props, State> {
                 </div>
               </div>
               
-              <h1 className="text-4xl font-bold text-red-100 mb-2">
+              <h1 className="text-size-1 font-semibold text-red-100 mb-2">
                 The Dragon Has Fallen
               </h1>
               
-              <p className="text-xl text-gray-400">
+              <p className="text-size-1 text-gray-400">
                 Seiron encountered a critical error
               </p>
             </div>
@@ -134,29 +134,29 @@ export class RootErrorBoundary extends Component<Props, State> {
                 {process.env.NODE_ENV === 'development' && this.state.error && (
                   <div className="mb-6 space-y-3">
                     <div className="p-4 bg-gray-800 rounded border border-gray-700">
-                      <h3 className="text-sm font-semibold text-red-400 mb-2">
+                      <h3 className="text-size-3 font-semibold text-red-400 mb-2">
                         Error Message:
                       </h3>
-                      <p className="text-sm font-mono text-gray-300 break-words">
+                      <p className="text-size-3 font-mono text-gray-300 break-words">
                         {this.state.error.message}
                       </p>
                     </div>
                     
                     <details className="p-4 bg-gray-800 rounded border border-gray-700">
-                      <summary className="text-sm font-semibold text-gray-400 cursor-pointer hover:text-gray-300">
+                      <summary className="text-size-3 font-semibold text-gray-400 cursor-pointer hover:text-gray-300">
                         Stack Trace
                       </summary>
-                      <pre className="mt-3 text-xs font-mono text-gray-500 overflow-auto max-h-48">
+                      <pre className="mt-3 text-size-4 font-mono text-gray-500 overflow-auto max-h-48">
                         {this.state.error.stack}
                       </pre>
                     </details>
 
                     {this.state.errorInfo && (
                       <details className="p-4 bg-gray-800 rounded border border-gray-700">
-                        <summary className="text-sm font-semibold text-gray-400 cursor-pointer hover:text-gray-300">
+                        <summary className="text-size-3 font-semibold text-gray-400 cursor-pointer hover:text-gray-300">
                           Component Stack
                         </summary>
-                        <pre className="mt-3 text-xs font-mono text-gray-500 overflow-auto max-h-48">
+                        <pre className="mt-3 text-size-4 font-mono text-gray-500 overflow-auto max-h-48">
                           {this.state.errorInfo.componentStack}
                         </pre>
                       </details>
@@ -168,7 +168,7 @@ export class RootErrorBoundary extends Component<Props, State> {
                 <div className="flex flex-col sm:flex-row gap-3">
                   <button
                     onClick={this.handleReload}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium"
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-normal"
                   >
                     <RefreshCw className="h-5 w-5" />
                     Reload Application
@@ -176,7 +176,7 @@ export class RootErrorBoundary extends Component<Props, State> {
                   
                   <button
                     onClick={() => window.location.href = '/'}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-700 hover:bg-gray-600 text-gray-100 rounded-lg transition-colors font-medium"
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-700 hover:bg-gray-600 text-gray-100 rounded-lg transition-colors font-normal"
                   >
                     <Home className="h-5 w-5" />
                     Go to Home
@@ -185,7 +185,7 @@ export class RootErrorBoundary extends Component<Props, State> {
 
                 {/* Error ID */}
                 <div className="mt-6 pt-4 border-t border-gray-800">
-                  <p className="text-xs text-gray-500 text-center">
+                  <p className="text-size-4 text-gray-500 text-center">
                     Error ID: <code className="font-mono bg-gray-800 px-2 py-1 rounded">
                       {this.state.errorId}
                     </code>
@@ -196,12 +196,12 @@ export class RootErrorBoundary extends Component<Props, State> {
 
             {/* Support info */}
             <div className="mt-6 text-center">
-              <p className="text-sm text-gray-500">
+              <p className="text-size-3 text-gray-500">
                 If this problem persists, please contact support with the error ID above.
               </p>
               <a 
                 href="mailto:support@seiron.app?subject=Error%20Report"
-                className="inline-flex items-center gap-2 mt-2 text-sm text-red-400 hover:text-red-300 transition-colors"
+                className="inline-flex items-center gap-2 mt-2 text-size-3 text-red-400 hover:text-red-300 transition-colors"
               >
                 <Mail className="h-4 w-4" />
                 support@seiron.app

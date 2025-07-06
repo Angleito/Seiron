@@ -60,7 +60,7 @@ export function SeironSprite({
     >
       {/* Simple dragon emoji placeholder */}
       <div className={cn(
-        'text-6xl select-none',
+        'text-size-1 select-none',
         animated && 'hover:scale-110 transition-transform duration-300'
       )}>
         🐉

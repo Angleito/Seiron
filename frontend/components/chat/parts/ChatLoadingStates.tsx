@@ -13,29 +13,29 @@ export const SessionsLoadingState = React.memo(function SessionsLoadingState({
   return (
     <div className={`space-y-3 ${className}`}>
       <div className="flex items-center justify-between mb-4">
-        <div className="h-6 w-32 bg-orange-500/30 rounded animate-pulse"></div>
-        <div className="h-8 w-24 bg-orange-600/30 rounded animate-pulse"></div>
+        <div className="h-6 w-32 bg-gray-600/30 rounded animate-pulse"></div>
+        <div className="h-8 w-24 bg-gray-700/30 rounded animate-pulse"></div>
       </div>
       
       {/* Stats loading */}
       <div className="grid grid-cols-4 gap-2 mb-4">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-12 bg-gradient-to-r from-orange-900/30 to-red-900/30 border border-orange-500/30 rounded animate-pulse"></div>
+          <div key={i} className="h-12 bg-gray-800/30 border border-gray-700/30 rounded animate-pulse"></div>
         ))}
       </div>
       
       {/* Session cards loading */}
       {[...Array(3)].map((_, i) => (
-        <Card key={i} className="p-3 bg-gradient-to-r from-orange-900/20 to-red-900/20 border-orange-500/30">
+        <Card key={i} className="p-3 bg-gray-900/20 border-gray-700/30">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <div className="h-4 w-3/4 bg-orange-300/30 rounded animate-pulse mb-2"></div>
-              <div className="h-3 w-1/2 bg-orange-300/20 rounded animate-pulse"></div>
+              <div className="h-4 w-3/4 bg-gray-600/30 rounded animate-pulse mb-2"></div>
+              <div className="h-3 w-1/2 bg-gray-600/20 rounded animate-pulse"></div>
             </div>
             <div className="flex gap-1">
-              <div className="h-6 w-6 bg-orange-300/20 rounded animate-pulse"></div>
-              <div className="h-6 w-6 bg-orange-300/20 rounded animate-pulse"></div>
-              <div className="h-6 w-6 bg-red-300/20 rounded animate-pulse"></div>
+              <div className="h-6 w-6 bg-gray-600/20 rounded animate-pulse"></div>
+              <div className="h-6 w-6 bg-gray-600/20 rounded animate-pulse"></div>
+              <div className="h-6 w-6 bg-gray-700/20 rounded animate-pulse"></div>
             </div>
           </div>
         </Card>
@@ -62,8 +62,8 @@ export const MessagesLoadingState = React.memo(function MessagesLoadingState({
           <div
             className={`max-w-[80%] p-3 rounded-lg animate-pulse ${
               i % 2 === 0
-                ? 'bg-gradient-to-r from-orange-900/30 to-red-900/30 border border-orange-500/30'
-                : 'bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-500/30'
+                ? 'bg-gray-800/30 border border-gray-700/30'
+                : 'bg-gray-700/30 border border-gray-600/30'
             }`}
           >
             <div className="space-y-2">
@@ -90,23 +90,23 @@ export const MessageHistoryLoadingState = React.memo(function MessageHistoryLoad
   return (
     <div className={`${className}`}>
       {/* Header loading */}
-      <div className="flex items-center justify-between p-4 border-b border-orange-500/30">
-        <div className="h-6 w-48 bg-orange-300/30 rounded animate-pulse"></div>
-        <div className="h-4 w-24 bg-orange-300/20 rounded animate-pulse"></div>
+      <div className="flex items-center justify-between p-4 border-b border-gray-700/30">
+        <div className="h-6 w-48 bg-gray-600/30 rounded animate-pulse"></div>
+        <div className="h-4 w-24 bg-gray-600/20 rounded animate-pulse"></div>
       </div>
       
       {/* Messages loading */}
       <MessagesLoadingState messageCount={5} />
       
       {/* Pagination loading */}
-      <div className="flex justify-between items-center p-4 border-t border-orange-500/30">
-        <div className="h-8 w-20 bg-orange-500/30 rounded animate-pulse"></div>
+      <div className="flex justify-between items-center p-4 border-t border-gray-700/30">
+        <div className="h-8 w-20 bg-gray-600/30 rounded animate-pulse"></div>
         <div className="flex gap-2">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-8 w-8 bg-orange-500/30 rounded animate-pulse"></div>
+            <div key={i} className="h-8 w-8 bg-gray-600/30 rounded animate-pulse"></div>
           ))}
         </div>
-        <div className="h-8 w-16 bg-orange-500/30 rounded animate-pulse"></div>
+        <div className="h-8 w-16 bg-gray-600/30 rounded animate-pulse"></div>
       </div>
     </div>
   )
@@ -121,18 +121,18 @@ export const ChatInitialLoadingState = React.memo(function ChatInitialLoadingSta
   return (
     <div className={`flex flex-col h-full bg-gradient-to-b from-gray-950 to-black ${className}`}>
       {/* Status bar loading */}
-      <div className="flex items-center justify-between p-4 border-b border-orange-500/30">
+      <div className="flex items-center justify-between p-4 border-b border-gray-700/30">
         <div className="flex items-center gap-3">
-          <div className="h-3 w-3 bg-orange-500/50 rounded-full animate-pulse"></div>
-          <div className="h-4 w-24 bg-orange-300/30 rounded animate-pulse"></div>
+          <div className="h-3 w-3 bg-gray-600/50 rounded-full animate-pulse"></div>
+          <div className="h-4 w-24 bg-gray-600/30 rounded animate-pulse"></div>
         </div>
-        <div className="h-8 w-32 bg-orange-600/30 rounded animate-pulse"></div>
+        <div className="h-8 w-32 bg-gray-700/30 rounded animate-pulse"></div>
       </div>
       
       {/* Main content loading */}
       <div className="flex-1 flex">
         {/* Sidebar loading */}
-        <div className="w-80 border-r border-orange-500/30">
+        <div className="w-80 border-r border-gray-700/30">
           <SessionsLoadingState />
         </div>
         
@@ -153,11 +153,11 @@ export const SessionCreatingState = React.memo(function SessionCreatingState({
 }) {
   return (
     <div className={`flex items-center justify-center p-8 ${className}`}>
-      <div className="bg-gradient-to-r from-orange-900/30 to-red-900/30 border border-orange-500/50 rounded-lg p-6 flex items-center gap-4">
+      <div className="bg-gray-900/30 border border-gray-700/50 rounded-lg p-6 flex items-center gap-4">
         <LoadingSpinner size="lg" />
-        <div className="text-orange-300">
+        <div className="text-gray-300">
           <div className="font-semibold mb-1">Creating New Session</div>
-          <div className="text-sm text-orange-300/70">Setting up your Dragon Ball Z chat experience...</div>
+          <div className="text-size-3 text-gray-400">Setting up your Dragon Ball Z chat experience...</div>
         </div>
       </div>
     </div>
@@ -187,11 +187,11 @@ export const VoiceLoadingState = React.memo(function VoiceLoadingState({
   }
 
   return (
-    <div className={`flex items-center gap-3 p-3 bg-gradient-to-r from-orange-900/30 to-red-900/30 border border-orange-500/50 rounded-lg ${className}`}>
-      <div className="text-2xl animate-pulse">{icons[operation]}</div>
+    <div className={`flex items-center gap-3 p-3 bg-gray-900/30 border border-gray-700/50 rounded-lg ${className}`}>
+      <div className="text-size-1 animate-pulse">{icons[operation]}</div>
       <div className="flex items-center gap-2">
         <LoadingSpinner size="sm" />
-        <span className="text-orange-300 text-sm">{messages[operation]}</span>
+        <span className="text-gray-300 text-size-3">{messages[operation]}</span>
       </div>
     </div>
   )
@@ -213,9 +213,9 @@ export const MessageOperationLoadingState = React.memo(function MessageOperation
   }
 
   return (
-    <div className={`inline-flex items-center gap-2 px-3 py-1 bg-orange-600/20 border border-orange-500/30 rounded-full ${className}`}>
+    <div className={`inline-flex items-center gap-2 px-3 py-1 bg-gray-700/20 border border-gray-600/30 rounded-full ${className}`}>
       <LoadingSpinner size="sm" />
-      <span className="text-orange-300 text-xs">{messages[operation]}</span>
+      <span className="text-gray-300 text-size-4">{messages[operation]}</span>
     </div>
   )
 })
@@ -228,11 +228,11 @@ export const ErrorRecoveryLoadingState = React.memo(function ErrorRecoveryLoadin
 }) {
   return (
     <div className={`flex items-center justify-center p-6 ${className}`}>
-      <div className="bg-gradient-to-r from-red-900/30 to-orange-900/30 border border-red-500/50 rounded-lg p-4 flex items-center gap-3">
+      <div className="bg-gray-900/30 border border-gray-700/50 rounded-lg p-4 flex items-center gap-3">
         <LoadingSpinner size="md" />
-        <div className="text-red-300">
+        <div className="text-gray-300">
           <div className="font-semibold mb-1">Recovering from Error</div>
-          <div className="text-sm text-red-300/70">Attempting to restore connection...</div>
+          <div className="text-size-3 text-gray-400">Attempting to restore connection...</div>
         </div>
       </div>
     </div>
@@ -249,14 +249,14 @@ export const DragonTypingIndicator = React.memo(function DragonTypingIndicator({
 }) {
   return (
     <div className={`flex items-center gap-3 p-3 ${className}`}>
-      <div className="text-2xl animate-bounce">🐉</div>
+      <div className="text-size-1 animate-bounce">🐉</div>
       <div className="flex items-center gap-2">
-        <span className="text-orange-300 text-sm font-medium">{agentName} is thinking</span>
+        <span className="text-gray-300 text-size-3 font-normal">{agentName} is thinking</span>
         <div className="flex gap-1">
           {[...Array(3)].map((_, i) => (
             <div
               key={i}
-              className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"
+              className="w-2 h-2 bg-gray-500 rounded-full animate-pulse"
               style={{ animationDelay: `${i * 0.2}s` }}
             ></div>
           ))}

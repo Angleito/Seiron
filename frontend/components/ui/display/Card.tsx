@@ -10,16 +10,20 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const cardVariants = {
-  default: 'bg-gray-900 border border-red-500/20',
-  gradient: 'bg-gradient-to-br from-gray-900/50 to-black/50 border border-red-500/10',
-  glass: 'bg-black/30 border border-red-500/5 backdrop-blur-sm'
+  // Default uses neutral colors (60% rule)
+  default: 'bg-gray-900 border border-gray-800',
+  // Gradient variant with subtle neutral colors
+  gradient: 'bg-gradient-to-br from-gray-900 to-gray-950 border border-gray-800',
+  // Glass effect with neutral background
+  glass: 'bg-gray-900/50 border border-gray-800/50 backdrop-blur-sm'
 }
 
 const cardPadding = {
+  // Follows 8pt grid system
   none: '',
-  sm: 'p-2',
-  md: 'p-4',
-  lg: 'p-6'
+  sm: 'p-2',   // 8px
+  md: 'p-4',   // 16px
+  lg: 'p-6'    // 24px
 }
 
 export const Card = React.memo(function Card({
@@ -32,7 +36,9 @@ export const Card = React.memo(function Card({
   return (
     <div
       className={cn(
-        'rounded-lg',
+        'rounded-md shadow-sm transition-all duration-200',
+        // Subtle hover state with accent color (10% rule)
+        'hover:border-gray-700 hover:shadow-md',
         cardVariants[variant],
         cardPadding[padding],
         className

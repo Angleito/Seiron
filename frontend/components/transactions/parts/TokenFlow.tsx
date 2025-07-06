@@ -37,7 +37,7 @@ export const TokenFlow = React.memo(function TokenFlow({
         </div>
         
         <div className="flex justify-center my-2">
-          <div className="p-1.5 bg-red-500/20 rounded-full">
+          <div className="p-2 bg-red-500/20 rounded-full">
             <ArrowRight className="w-4 h-4 text-red-400" />
           </div>
         </div>

@@ -128,9 +128,9 @@ export const VoiceConfigDebugger: React.FC<{ visible?: boolean }> = ({ visible =
     value 
   }) => (
     <div className="flex items-center justify-between py-1">
-      <span className="text-sm">{label}:</span>
+      <span className="text-size-3">{label}:</span>
       <div className="flex items-center space-x-2">
-        {value && <span className="text-xs text-gray-400">{value}</span>}
+        {value && <span className="text-size-4 text-gray-400">{value}</span>}
         <div className={`w-3 h-3 rounded-full ${isGood ? 'bg-green-500' : 'bg-red-500'}`} />
       </div>
     </div>
@@ -142,7 +142,7 @@ export const VoiceConfigDebugger: React.FC<{ visible?: boolean }> = ({ visible =
       
       {/* Environment Variables */}
       <div className="mb-4">
-        <h4 className="font-medium text-orange-400 mb-2">Environment Variables</h4>
+        <h4 className="font-normal text-orange-400 mb-2">Environment Variables</h4>
         <StatusIndicator 
           isGood={status.elevenLabsApiKey.isValid} 
           label="ElevenLabs API Key" 
@@ -162,7 +162,7 @@ export const VoiceConfigDebugger: React.FC<{ visible?: boolean }> = ({ visible =
 
       {/* Browser Support */}
       <div className="mb-4">
-        <h4 className="font-medium text-blue-400 mb-2">Browser Support</h4>
+        <h4 className="font-normal text-blue-400 mb-2">Browser Support</h4>
         <StatusIndicator 
           isGood={status.browserSupport.speechRecognition} 
           label="Speech Recognition"
@@ -183,7 +183,7 @@ export const VoiceConfigDebugger: React.FC<{ visible?: boolean }> = ({ visible =
 
       {/* Permissions */}
       <div className="mb-4">
-        <h4 className="font-medium text-purple-400 mb-2">Permissions</h4>
+        <h4 className="font-normal text-purple-400 mb-2">Permissions</h4>
         <StatusIndicator 
           isGood={status.permissions.microphone === 'granted'} 
           label="Microphone" 
@@ -198,8 +198,8 @@ export const VoiceConfigDebugger: React.FC<{ visible?: boolean }> = ({ visible =
 
       {/* Overall Status */}
       <div className="border-t border-gray-600 pt-3">
-        <h4 className="font-medium text-yellow-400 mb-2">Overall Status</h4>
-        <div className={`text-sm p-2 rounded ${
+        <h4 className="font-normal text-yellow-400 mb-2">Overall Status</h4>
+        <div className={`text-size-3 p-2 rounded ${
           status.elevenLabsApiKey.isValid && 
           status.elevenLabsVoiceId.isValid && 
           status.voiceEnabled.isEnabled &&

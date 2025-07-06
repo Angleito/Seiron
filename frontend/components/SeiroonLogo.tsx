@@ -18,10 +18,10 @@ const SeiroonLogo: React.FC<SeiroonLogoProps> = ({
   const [isHovered, setIsHovered] = useState(false);
 
   const sizeClasses = {
-    sm: 'text-2xl h-8',
-    md: 'text-4xl h-12',
-    lg: 'text-6xl h-16',
-    xl: 'text-8xl h-20'
+    sm: 'text-size-1 h-8',
+    md: 'text-size-1 h-12',
+    lg: 'text-size-1 h-16',
+    xl: 'text-size-1 h-20'
   };
 
   const iconSizeClasses = {

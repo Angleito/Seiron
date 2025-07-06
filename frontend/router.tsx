@@ -13,12 +13,12 @@ import {
 
 // Lazy load pages for code splitting
 const HomePage = lazy(() => import('./pages/HomePage'))
-const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const DemoPage = lazy(() => import('./pages/DemoPage'))
 const VoiceTestPage = lazy(() => import('./pages/VoiceTestPage'))
 const AgentTestPage = lazy(() => import('./pages/AgentTestPage'))
 const SecurityTestPage = lazy(() => import('./pages/SecurityTestPage'))
 const ChatDragonPage = lazy(() => import('./pages/chat-dragon'))
+const AboutPage = lazy(() => import('./pages/about'))
 
 const PageLoader = ({ 
   children, 
@@ -71,14 +71,6 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: 'dashboard',
-        element: (
-          <PageLoader pageName="Dashboard">
-            <DashboardPage />
-          </PageLoader>
-        ),
-      },
-      {
         path: 'demo',
         element: (
           <PageLoader pageName="Demo">
@@ -115,6 +107,14 @@ export const router = createBrowserRouter([
         element: (
           <PageLoader pageName="Voice Chat" featureType="chat">
             <ChatDragonPage />
+          </PageLoader>
+        ),
+      },
+      {
+        path: 'about',
+        element: (
+          <PageLoader pageName="About">
+            <AboutPage />
           </PageLoader>
         ),
       },

@@ -195,15 +195,15 @@ export const VoiceEnabledChatWithDragon: React.FC<VoiceEnabledChatWithDragonProp
           {/* Transcript overlay */}
           {showTranscript && transcript && (
             <div className="absolute bottom-4 left-4 right-4">
-              <div className="bg-background/90 backdrop-blur-sm rounded-lg px-4 py-2 text-sm text-muted-foreground border border-border/50">
-                <span className="text-xs font-medium text-muted-foreground/70 block mb-1">Transcript:</span>
+              <div className="bg-background/90 backdrop-blur-sm rounded-lg px-4 py-2 text-size-3 text-muted-foreground border border-border/50">
+                <span className="text-size-4 font-normal text-muted-foreground/70 block mb-1">Transcript:</span>
                 {transcript}
               </div>
             </div>
           )}
 
           {/* Status indicators */}
-          <div className="absolute bottom-2 left-4 flex items-center gap-2 text-xs">
+          <div className="absolute bottom-2 left-4 flex items-center gap-2 text-size-4">
             {isProcessing && (
               <span className="text-purple-500 animate-pulse">Processing...</span>
             )}

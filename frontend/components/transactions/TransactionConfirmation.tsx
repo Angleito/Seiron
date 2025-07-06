@@ -30,7 +30,7 @@ function SafeTransactionText({ text, className = "" }: { text: string; className
   // If content is potentially unsafe, show a warning
   if (!isValid) {
     return (
-      <div className="text-yellow-400 text-sm">
+      <div className="text-yellow-400 text-size-3">
         ⚠️ Content filtered for security
       </div>
     )
@@ -169,7 +169,7 @@ export function TransactionConfirmation({
       <div className="bg-gradient-to-br from-gray-900 via-black to-red-950 border border-red-500/20 rounded-lg shadow-[0_0_50px_rgba(239,68,68,0.3)]">
         {/* Header */}
         <div className="p-6 border-b border-red-500/10">
-          <h2 className="text-2xl font-bold text-white mb-2">Confirm Transaction</h2>
+          <h2 className="text-size-1 font-semibold text-white mb-2">Confirm Transaction</h2>
           <p className="text-gray-400">{getActionDescription()}</p>
         </div>
 
@@ -179,13 +179,13 @@ export function TransactionConfirmation({
             <div className="flex items-center space-x-3">
               {getRiskIcon(riskAssessment.level)}
               <div>
-                <p className="font-semibold">Risk Level: {riskAssessment.level.toUpperCase()}</p>
-                <p className="text-sm opacity-80">Risk Score: {riskAssessment.score}/100</p>
+                <p className="font-normal">Risk Level: {riskAssessment.level.toUpperCase()}</p>
+                <p className="text-size-3 opacity-80">Risk Score: {riskAssessment.score}/100</p>
               </div>
             </div>
             <button
               onClick={() => setShowDetails(!showDetails)}
-              className="text-sm underline hover:no-underline"
+              className="text-size-3 underline hover:no-underline"
             >
               {showDetails ? 'Hide' : 'Show'} Details
             </button>
@@ -200,7 +200,7 @@ export function TransactionConfirmation({
                 className="mt-4 space-y-3 overflow-hidden"
               >
                 {riskAssessment.factors.map((factor, index) => (
-                  <div key={index} className="flex items-start space-x-2 text-sm">
+                  <div key={index} className="flex items-start space-x-2 text-size-3">
                     <span className={`mt-1 ${
                       factor.severity === 'high' ? 'text-red-400' : 
                       factor.severity === 'medium' ? 'text-yellow-400' : 
@@ -211,11 +211,11 @@ export function TransactionConfirmation({
                 ))}
                 {riskAssessment.recommendations && riskAssessment.recommendations.length > 0 && (
                   <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                    <p className="text-blue-400 font-semibold text-sm mb-2">Recommendations:</p>
+                    <p className="text-blue-400 font-normal text-size-3 mb-2">Recommendations:</p>
                     {riskAssessment.recommendations.map((rec, index) => (
                       <div key={index} className="flex items-start space-x-2">
-                        <span className="text-sm text-gray-300">•</span>
-                        <SafeTransactionText text={rec} className="text-sm text-gray-300" />
+                        <span className="text-size-3 text-gray-300">•</span>
+                        <SafeTransactionText text={rec} className="text-size-3 text-gray-300" />
                       </div>
                     ))}
                   </div>
@@ -232,12 +232,12 @@ export function TransactionConfirmation({
             <div className="bg-black/50 rounded-lg p-4 border border-red-500/10">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-gray-400 text-sm mb-1">You Pay</p>
-                  <p className="text-white text-xl font-semibold">
+                  <p className="text-gray-400 text-size-3 mb-1">You Pay</p>
+                  <p className="text-white text-size-1 font-normal">
                     {formatUnits(preview.tokenIn.amount, preview.tokenIn.decimals)} {preview.tokenIn.symbol}
                   </p>
                   {preview.tokenIn.price && (
-                    <p className="text-gray-500 text-sm">
+                    <p className="text-gray-500 text-size-3">
                       ≈ ${(Number(formatUnits(preview.tokenIn.amount, preview.tokenIn.decimals)) * preview.tokenIn.price).toFixed(2)}
                     </p>
                   )}
@@ -246,12 +246,12 @@ export function TransactionConfirmation({
                   <Zap className="w-6 h-6 text-red-400" />
                 </div>
                 <div className="flex-1 text-right">
-                  <p className="text-gray-400 text-sm mb-1">You Receive</p>
-                  <p className="text-white text-xl font-semibold">
+                  <p className="text-gray-400 text-size-3 mb-1">You Receive</p>
+                  <p className="text-white text-size-1 font-normal">
                     {formatUnits(preview.tokenOut.amount, preview.tokenOut.decimals)} {preview.tokenOut.symbol}
                   </p>
                   {preview.tokenOut.price && (
-                    <p className="text-gray-500 text-sm">
+                    <p className="text-gray-500 text-size-3">
                       ≈ ${(Number(formatUnits(preview.tokenOut.amount, preview.tokenOut.decimals)) * preview.tokenOut.price).toFixed(2)}
                     </p>
                   )}
@@ -264,27 +264,27 @@ export function TransactionConfirmation({
           <div className="grid grid-cols-2 gap-4">
             {preview.priceImpact !== undefined && (
               <div className="bg-black/50 rounded-lg p-3 border border-red-500/10">
-                <p className="text-gray-400 text-sm">Price Impact</p>
-                <p className={`font-semibold ${preview.priceImpact > 3 ? 'text-red-400' : 'text-white'}`}>
+                <p className="text-gray-400 text-size-3">Price Impact</p>
+                <p className={`font-normal ${preview.priceImpact > 3 ? 'text-red-400' : 'text-white'}`}>
                   {preview.priceImpact.toFixed(2)}%
                 </p>
               </div>
             )}
             {preview.slippage !== undefined && (
               <div className="bg-black/50 rounded-lg p-3 border border-red-500/10">
-                <p className="text-gray-400 text-sm">Max Slippage</p>
-                <p className="text-white font-semibold">{preview.slippage}%</p>
+                <p className="text-gray-400 text-size-3">Max Slippage</p>
+                <p className="text-white font-normal">{preview.slippage}%</p>
               </div>
             )}
             {preview.apy !== undefined && (
               <div className="bg-black/50 rounded-lg p-3 border border-red-500/10">
-                <p className="text-gray-400 text-sm">APY</p>
-                <p className="text-green-400 font-semibold">{preview.apy.toFixed(2)}%</p>
+                <p className="text-gray-400 text-size-3">APY</p>
+                <p className="text-green-400 font-normal">{preview.apy.toFixed(2)}%</p>
               </div>
             )}
             <div className="bg-black/50 rounded-lg p-3 border border-red-500/10">
-              <p className="text-gray-400 text-sm">Network Fee</p>
-              <p className="text-white font-semibold">
+              <p className="text-gray-400 text-size-3">Network Fee</p>
+              <p className="text-white font-normal">
                 {formatEther(preview.estimatedGas * preview.gasPrice)} SEI
               </p>
             </div>
@@ -293,7 +293,7 @@ export function TransactionConfirmation({
           {/* Health Factor */}
           {preview.healthFactor && (
             <div className="bg-black/50 rounded-lg p-4 border border-red-500/10">
-              <p className="text-gray-400 text-sm mb-2">Health Factor Impact</p>
+              <p className="text-gray-400 text-size-3 mb-2">Health Factor Impact</p>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <span className="text-white">{preview.healthFactor.before.toFixed(2)}</span>
@@ -309,7 +309,7 @@ export function TransactionConfirmation({
                 )}
               </div>
               {preview.healthFactor.after < 1.5 && (
-                <p className="text-yellow-400 text-sm mt-2">
+                <p className="text-yellow-400 text-size-3 mt-2">
                   ⚠️ Health factor will be below safe threshold
                 </p>
               )}
@@ -319,10 +319,10 @@ export function TransactionConfirmation({
           {/* Simulation Result */}
           {simulationResult && !simulationResult.success && (
             <div className="flex items-start space-x-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-              <XCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <XCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-1" />
               <div>
-                <p className="text-sm text-red-300 font-semibold">Simulation Failed</p>
-                <SafeTransactionText text={simulationResult.error || 'Unknown error'} className="text-sm text-red-300/80" />
+                <p className="text-size-3 text-red-300 font-normal">Simulation Failed</p>
+                <SafeTransactionText text={simulationResult.error || 'Unknown error'} className="text-size-3 text-red-300/80" />
               </div>
             </div>
           )}
@@ -334,14 +334,14 @@ export function TransactionConfirmation({
             <button
               onClick={onCancel}
               disabled={isProcessing}
-              className="flex-1 px-4 py-3 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
+              className="flex-1 px-4 py-3 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-normal"
             >
               Cancel
             </button>
             <button
               onClick={onConfirm}
               disabled={isProcessing || !canConfirm || (simulationResult && !simulationResult.success)}
-              className="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-lg hover:from-red-500 hover:to-red-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold flex items-center justify-center space-x-2"
+              className="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-lg hover:from-red-500 hover:to-red-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-normal flex items-center justify-center space-x-2"
             >
               {isProcessing ? (
                 <>
@@ -356,7 +356,7 @@ export function TransactionConfirmation({
             </button>
           </div>
           {(riskAssessment.level === 'high' || riskAssessment.level === 'critical') && countdown !== null && countdown > 0 && (
-            <p className="text-center text-sm text-gray-400 mt-2">
+            <p className="text-center text-size-3 text-gray-400 mt-2">
               High risk transaction requires {countdown} second review period
             </p>
           )}

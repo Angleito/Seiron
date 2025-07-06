@@ -143,7 +143,7 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
                   </div>
                 ) : (
                   <div className="w-10 h-10 rounded-lg bg-gray-700 flex items-center justify-center">
-                    <span className="text-sm font-medium text-gray-300">You</span>
+                    <span className="text-size-3 font-normal text-gray-300">You</span>
                   </div>
                 )}
               </div>
@@ -197,7 +197,7 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
               {/* Dragon Power Indicator */}
               <div className="absolute bottom-3 right-3 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-orange-400 animate-pulse" />
-                <span className="text-xs text-orange-400">9000</span>
+                <span className="text-size-4 text-orange-400">9000</span>
               </div>
             </div>
             
@@ -221,7 +221,7 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
           </div>
           
           {/* Helper Text */}
-          <p className="mt-2 text-xs text-gray-500 text-center">
+          <p className="mt-2 text-size-4 text-gray-500 text-center">
             The dragon listens to your every wish • Press Enter to send
           </p>
         </form>

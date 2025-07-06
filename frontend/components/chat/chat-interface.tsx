@@ -66,7 +66,7 @@ function SafeMessageContent({ content, type }: { content: string; type: 'user' |
   // If content is potentially unsafe, show a warning
   if (!isValid) {
     return (
-      <div className="text-yellow-400 text-sm">
+      <div className="text-yellow-400 text-size-3">
         ⚠️ Message content filtered for security
       </div>
     )
@@ -556,40 +556,40 @@ export function ComplexChatInterface() {
            `
          }}>
       {/* Enhanced Status Bar */}
-      <div className="px-2 py-1 bg-gradient-to-r from-red-50 to-orange-50 border-b border-red-200">
+      <div className="px-2 py-1 bg-gray-900 border-b border-gray-700">
         <div className="flex items-center justify-between flex-wrap gap-1">
           {/* Connection Status Indicator */}
           <div className="flex items-center gap-1">
             <div className={cn(
-              "h-1.5 w-1.5 rounded-full",
+              "h-2 w-2 rounded-full",
               connectionStatus.isConnected ? "bg-green-500" : "bg-red-500"
             )} />
-            <span className="text-xs text-red-700">
+            <span className="text-size-4 text-gray-300">
               {connectionStatus.isConnected ? 'Connected to Dragon Realm' : 'Connecting...'}
             </span>
             {connectionStatus.error && (
-              <span className="text-xs text-red-600">({connectionStatus.error})</span>
+              <span className="text-size-4 text-gray-400">({connectionStatus.error})</span>
             )}
           </div>
           
           {/* Power Level Display */}
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center gap-1">
               <TrendingUp className="h-3 w-3 text-red-600" />
-              <span className="text-xs text-red-700 font-bold">
+              <span className="text-size-4 text-red-700 font-semibold">
                 Power Level: {powerLevel.toLocaleString()}
               </span>
             </div>
             
             {/* Network Status */}
             {networkStatus && (
-              <div className="flex items-center gap-0.5">
+              <div className="flex items-center gap-1">
                 <Activity className={cn(
                   "h-3 w-3",
                   networkStatus.networkStatus === 'healthy' ? 'text-green-600' : 
                   networkStatus.networkStatus === 'congested' ? 'text-yellow-600' : 'text-red-600'
                 )} />
-                <span className="text-xs text-red-700">
+                <span className="text-size-4 text-red-700">
                   Block {networkStatus.blockNumber}
                 </span>
               </div>
@@ -605,9 +605,9 @@ export function ComplexChatInterface() {
                 })
                 setShowAdapterActions(newState)
               }}
-              className="flex items-center gap-0.5 px-1.5 py-0.5 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition-colors"
+              className="flex items-center gap-1 px-2 py-1 bg-red-600 text-white rounded text-size-4 hover:bg-red-700 transition-colors"
             >
-              <Zap className="h-2.5 w-2.5" />
+              <Zap className="h-3 w-3" />
               Adapters
             </button>
           </div>
@@ -617,11 +617,11 @@ export function ComplexChatInterface() {
         {hiveInsights.length > 0 && (
           <div className="mt-1 flex items-center gap-1">
             <Search className="h-3 w-3 text-red-600" />
-            <span className="text-xs text-red-600">
+            <span className="text-size-4 text-red-600">
               {hiveInsights.length} AI insights available
             </span>
             {hiveInsights.slice(0, 2).map((insight) => (
-              <span key={insight.id} className="text-xs bg-red-100 text-red-700 px-1 py-0.5 rounded">
+              <span key={insight.id} className="text-size-4 bg-red-100 text-red-700 px-2 py-1 rounded">
                 {insight.type}: {insight.confidence}% confidence
               </span>
             ))}
@@ -632,7 +632,7 @@ export function ComplexChatInterface() {
       {/* Adapter Actions Panel */}
       {showAdapterActions && (
         <div className="p-2 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-          <h3 className="text-xs font-semibold text-gray-700 mb-1">Dragon Power Adapters</h3>
+          <h3 className="text-size-4 font-semibold text-gray-700 mb-1">Dragon Power Adapters</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-1">
             {adapterActions.map((action, index) => (
               <button
@@ -648,7 +648,7 @@ export function ComplexChatInterface() {
                 }}
                 disabled={isLoading}
                 className={cn(
-                  "flex items-center gap-1 p-1 rounded border text-xs transition-colors",
+                  "flex items-center gap-1 p-1 rounded border text-size-4 transition-colors",
                   "hover:bg-white hover:shadow-sm",
                   action.type === 'sak' && "border-yellow-300 bg-yellow-50 text-yellow-700",
                   action.type === 'hive' && "border-blue-300 bg-blue-50 text-blue-700",
@@ -683,7 +683,7 @@ export function ComplexChatInterface() {
           >
             <div
               className={cn(
-                'max-w-[85%] rounded-lg px-2.5 py-1 border text-sm',
+                'max-w-[85%] rounded-lg px-3 py-1 border text-size-3',
                 message.type === 'user'
                   ? 'bg-gradient-to-r from-red-600 to-red-700 text-white border-red-800 shadow-lg'
                   : message.type === 'system'
@@ -702,18 +702,18 @@ export function ComplexChatInterface() {
               } : {}}
             >
               {message.type === 'agent' && (
-                <div className="flex items-center gap-1 mb-0.5">
+                <div className="flex items-center gap-1 mb-1">
                   <span className="text-base">{getAgentIcon(message.agentType)}</span>
-                  <span className="text-xs font-medium text-red-300">
+                  <span className="text-size-4 font-normal text-red-300">
                     {message.agentType?.replace('_', ' ').toUpperCase()}
                   </span>
                 </div>
               )}
               <SafeMessageContent content={message.content} type={message.type} />
-              <div className="flex items-center gap-2 mt-0.5">
+              <div className="flex items-center gap-2 mt-1">
                 <p
                   className={cn(
-                    'text-xs',
+                    'text-size-4',
                     message.type === 'user'
                       ? 'text-red-200'
                       : message.type === 'agent'
@@ -726,7 +726,7 @@ export function ComplexChatInterface() {
                 {/* Message status indicator */}
                 {message.status && message.type === 'user' && (
                   <span className={cn(
-                    'text-xs',
+                    'text-size-4',
                     message.status === 'pending' && 'text-gray-400',
                     message.status === 'sending' && 'text-yellow-400',
                     message.status === 'sent' && 'text-blue-400',
@@ -741,22 +741,22 @@ export function ComplexChatInterface() {
                   </span>
                 )}
                 {message.metadata?.executionTime && (
-                  <p className="text-xs text-red-400">
+                  <p className="text-size-4 text-red-400">
                     ⚡ {(message.metadata.executionTime / 1000).toFixed(2)}s
                   </p>
                 )}
                 {message.metadata?.confidence && (
-                  <span className="text-xs text-yellow-400">
+                  <span className="text-size-4 text-yellow-400">
                     {Math.round(message.metadata.confidence * 100)}%
                   </span>
                 )}
                 {message.metadata?.powerLevel && (
-                  <span className="text-xs text-orange-400">
+                  <span className="text-size-4 text-orange-400">
                     ⚡{message.metadata.powerLevel.toLocaleString()}
                   </span>
                 )}
                 {message.metadata?.dragonBallMessage && (
-                  <span className="text-xs text-orange-300 italic pl-1">
+                  <span className="text-size-4 text-orange-300 italic pl-1">
                     🐲 {message.metadata.dragonBallMessage}
                   </span>
                 )}
@@ -769,11 +769,11 @@ export function ComplexChatInterface() {
           <div className="space-y-1 relative z-10">
             {typingIndicators.map((indicator) => (
               <div key={indicator.agentId} className="flex justify-start">
-                <div className="bg-gradient-to-r from-gray-900 to-black rounded-lg px-2 py-1 border border-red-800 text-sm">
+                <div className="bg-gradient-to-r from-gray-900 to-black rounded-lg px-2 py-1 border border-red-800 text-size-3">
                   <div className="flex items-center gap-1">
-                    <div className="text-sm animate-pulse">{getAgentIcon(indicator.agentType)}</div>
-                    <Sparkles className="h-2.5 w-2.5 animate-spin text-red-400" />
-                    <span className="text-xs text-red-300">
+                    <div className="text-size-3 animate-pulse">{getAgentIcon(indicator.agentType)}</div>
+                    <Sparkles className="h-3 w-3 animate-spin text-red-400" />
+                    <span className="text-size-4 text-red-300">
                       typing...
                     </span>
                   </div>
@@ -788,9 +788,9 @@ export function ComplexChatInterface() {
           <div className="flex justify-start relative z-10">
             <div className="bg-gradient-to-r from-gray-900 to-black rounded-lg px-2 py-1 border border-red-800">
               <div className="flex items-center gap-1">
-                <div className="text-sm animate-pulse">🐉</div>
-                <Sparkles className="h-2.5 w-2.5 animate-spin text-red-400" />
-                <span className="text-xs text-red-300">typing...</span>
+                <div className="text-size-3 animate-pulse">🐉</div>
+                <Sparkles className="h-3 w-3 animate-spin text-red-400" />
+                <span className="text-size-4 text-red-300">typing...</span>
               </div>
             </div>
           </div>
@@ -816,7 +816,7 @@ export function ComplexChatInterface() {
               onFocus={() => safeDebug('Input focused', { sessionId })}
               onBlur={() => safeDebug('Input blurred', { sessionId })}
               placeholder="Tell Seiron your investing wishes... 🐉"
-              className="w-full resize-none rounded-lg border border-red-700 bg-gray-900 text-red-100 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-red-600 focus:border-red-500 placeholder-red-400"
+              className="w-full resize-none rounded-lg border border-red-700 bg-gray-900 text-red-100 px-2 py-1 text-size-3 focus:outline-none focus:ring-1 focus:ring-red-600 focus:border-red-500 placeholder-red-400"
               rows={1}
             />
             <div className="absolute right-1 top-1 text-red-600 opacity-50">
@@ -839,14 +839,14 @@ export function ComplexChatInterface() {
           </button>
         </div>
         <div className="flex items-center justify-between mt-1">
-          <p className="text-xs text-red-400">
+          <p className="text-size-4 text-red-400">
             🔥 Powered by SAK + Hive + MCP
           </p>
-          <div className="flex items-center gap-1 text-xs">
+          <div className="flex items-center gap-1 text-size-4">
             <span className="text-orange-400">⚡ Power: {powerLevel.toLocaleString()}</span>
             {networkStatus && (
               <span className={cn(
-                "px-1 py-0.5 rounded text-xs",
+                "px-2 py-1 rounded text-size-4",
                 networkStatus.networkStatus === 'healthy' ? 'bg-green-100 text-green-700' :
                 networkStatus.networkStatus === 'congested' ? 'bg-yellow-100 text-yellow-700' :
                 'bg-red-100 text-red-700'
@@ -855,7 +855,7 @@ export function ComplexChatInterface() {
               </span>
             )}
             {hiveInsights.length > 0 && (
-              <span className="bg-blue-100 text-blue-700 px-1 py-0.5 rounded text-xs">
+              <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-size-4">
                 {hiveInsights.length} AI Insights
               </span>
             )}

@@ -33,7 +33,7 @@ export function VoiceErrorBoundary({ children, onReset }: VoiceErrorBoundaryProp
                 window.location.reload()
               }
             }}
-            className="flex items-center gap-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors"
           >
             <RefreshCw className="h-3 w-3" />
             Reset Voice

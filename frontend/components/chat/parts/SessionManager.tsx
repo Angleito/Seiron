@@ -131,13 +131,13 @@ export const SessionManager = React.memo(function SessionManager({
     <div className={`bg-gradient-to-b from-orange-900/20 to-red-900/20 border border-orange-500/30 rounded-lg p-4 ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-orange-300 flex items-center gap-2">
-          <span className="text-2xl">🐉</span>
+        <h2 className="text-size-1 font-semibold text-orange-300 flex items-center gap-2">
+          <span className="text-size-1">🐉</span>
           Chat Sessions
         </h2>
         <Button
           onClick={() => setShowCreateForm(!showCreateForm)}
-          className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 text-sm"
+          className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 text-size-3"
           disabled={isCreating}
         >
           {isCreating ? <LoadingSpinner size="sm" /> : '+ New Session'}
@@ -148,20 +148,20 @@ export const SessionManager = React.memo(function SessionManager({
       {stats && (
         <div className="grid grid-cols-4 gap-2 mb-4">
           <Badge variant="warning" className="text-center">
-            <div className="text-xs">Total</div>
-            <div className="font-bold">{stats.total_sessions}</div>
+            <div className="text-size-4">Total</div>
+            <div className="font-semibold">{stats.total_sessions}</div>
           </Badge>
           <Badge variant="success" className="text-center">
-            <div className="text-xs">Active</div>
-            <div className="font-bold">{stats.active_sessions}</div>
+            <div className="text-size-4">Active</div>
+            <div className="font-semibold">{stats.active_sessions}</div>
           </Badge>
           <Badge variant="default" className="text-center">
-            <div className="text-xs">Archived</div>
-            <div className="font-bold">{stats.archived_sessions}</div>
+            <div className="text-size-4">Archived</div>
+            <div className="font-semibold">{stats.archived_sessions}</div>
           </Badge>
           <Badge variant="info" className="text-center">
-            <div className="text-xs">Messages</div>
-            <div className="font-bold">{stats.total_messages}</div>
+            <div className="text-size-4">Messages</div>
+            <div className="font-semibold">{stats.total_messages}</div>
           </Badge>
         </div>
       )}
@@ -232,12 +232,12 @@ export const SessionManager = React.memo(function SessionManager({
       {/* Error Display */}
       {error && (
         <div className="mb-4 p-3 bg-red-900/30 border border-red-500/50 rounded-md">
-          <div className="text-red-300 text-sm font-medium mb-1">Error</div>
-          <div className="text-red-200 text-sm">{error.message}</div>
+          <div className="text-red-300 text-size-3 font-normal mb-1">Error</div>
+          <div className="text-red-200 text-size-3">{error.message}</div>
           <Button
             onClick={clearError}
             variant="ghost"
-            className="text-red-300 hover:text-red-200 text-xs mt-1"
+            className="text-red-300 hover:text-red-200 text-size-4 mt-1"
           >
             Dismiss
           </Button>
@@ -275,7 +275,7 @@ export const SessionManager = React.memo(function SessionManager({
       {/* Pagination */}
       {pagination && pagination.totalPages > 1 && (
         <div className="flex justify-between items-center mt-4 pt-4 border-t border-orange-500/30">
-          <div className="text-sm text-orange-300/70">
+          <div className="text-size-3 text-orange-300/70">
             Page {pagination.page} of {pagination.totalPages}
           </div>
           <div className="flex gap-2">
@@ -359,7 +359,7 @@ const SessionCard = React.memo(function SessionCard({
               <Input
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
-                className="bg-black/30 border-orange-500/50 text-white text-sm"
+                className="bg-black/30 border-orange-500/50 text-white text-size-3"
                 onKeyPress={(e) => e.key === 'Enter' && handleSaveEdit()}
                 onBlur={handleSaveEdit}
                 autoFocus
@@ -376,7 +376,7 @@ const SessionCard = React.memo(function SessionCard({
           ) : (
             <div>
               <h3 className="font-semibold text-white truncate">{session.title}</h3>
-              <div className="flex items-center gap-2 text-sm text-orange-300/70">
+              <div className="flex items-center gap-2 text-size-3 text-orange-300/70">
                 <span>{formatDate(session.last_message_at)}</span>
                 <span>•</span>
                 <span>{session.message_count} messages</span>

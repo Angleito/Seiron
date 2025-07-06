@@ -200,9 +200,9 @@ export function PowerLevelDisplay({
   }, [currentConfig?.tier, previousTier, onTierChange, currentConfig])
 
   const sizeClasses = {
-    sm: 'text-sm p-3',
-    md: 'text-base p-4',
-    lg: 'text-lg p-6'
+    sm: 'text-size-3 p-3',
+    md: 'text-size-2 p-4',
+    lg: 'text-size-1 p-6'
   }
 
   const iconSizes = {
@@ -279,12 +279,12 @@ export function PowerLevelDisplay({
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity }}
-                  className="text-4xl mb-2"
+                  className="text-size-1 mb-2"
                 >
                   ⭐
                 </motion.div>
-                <p className="font-bold text-yellow-600">TIER UP!</p>
-                <p className="text-sm text-yellow-700">{currentConfig.tier}</p>
+                <p className="font-semibold text-yellow-600">TIER UP!</p>
+                <p className="text-size-3 text-yellow-700">{currentConfig.tier}</p>
               </div>
             </motion.div>
           )}
@@ -293,9 +293,9 @@ export function PowerLevelDisplay({
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span className="text-2xl">{currentConfig.emoji}</span>
+            <span className="text-size-1">{currentConfig.emoji}</span>
             <div>
-              <h3 className={cn("font-bold", currentConfig.color)}>
+              <h3 className={cn("font-semibold", currentConfig.color)}>
                 {currentConfig.title}
               </h3>
               <p className="text-xs text-gray-600">{currentConfig.tier}</p>

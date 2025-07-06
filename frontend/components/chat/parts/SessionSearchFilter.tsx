@@ -157,7 +157,7 @@ export const SessionSearchFilter = React.memo(function SessionSearchFilter({
             placeholder="Search sessions... (e.g., 'Training with King Kai')"
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="bg-black/30 border-orange-500/50 text-white placeholder-orange-300/50 pr-10"
+            className="bg-black/30 border-orange-500/50 text-white placeholder-orange-300/50 pr-12"
             disabled={isLoading}
           />
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2">

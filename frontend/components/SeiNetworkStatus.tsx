@@ -112,26 +112,26 @@ export function SeiNetworkStatus({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'healthy':
-        return 'text-green-600 bg-green-100'
+        return 'text-green-600 bg-gray-900'
       case 'congested':
-        return 'text-yellow-600 bg-yellow-100'
+        return 'text-yellow-600 bg-gray-900'
       case 'offline':
-        return 'text-red-600 bg-red-100'
+        return 'text-red-600 bg-gray-900'
       default:
-        return 'text-gray-600 bg-gray-100'
+        return 'text-gray-600 bg-gray-900'
     }
   }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'healthy':
-        return <Activity className="h-4 w-4 text-green-600" />
+        return <Activity className="h-4 w-4 text-gray-400" />
       case 'congested':
-        return <Activity className="h-4 w-4 text-yellow-600 animate-pulse" />
+        return <Activity className="h-4 w-4 text-gray-400 animate-pulse" />
       case 'offline':
-        return <Activity className="h-4 w-4 text-red-600" />
+        return <Activity className="h-4 w-4 text-gray-500" />
       default:
-        return <Activity className="h-4 w-4 text-gray-600" />
+        return <Activity className="h-4 w-4 text-gray-400" />
     }
   }
 
@@ -151,7 +151,7 @@ export function SeiNetworkStatus({
 
   if (!networkStatus) {
     return (
-      <div className={cn("bg-white rounded-lg p-4 shadow-md border border-gray-200", className)}>
+      <div className={cn("bg-gray-900 rounded-lg p-4 shadow-md border border-gray-700", className)}>
         <div className="flex items-center justify-center">
           <Activity className="h-6 w-6 animate-spin text-gray-400" />
           <span className="ml-2 text-gray-600">Connecting to Sei Network...</span>
@@ -164,12 +164,12 @@ export function SeiNetworkStatus({
     // Compact view
     return (
       <div className={cn(
-        "flex items-center gap-3 bg-white rounded-lg px-3 py-2 shadow-sm border border-gray-200",
+        "flex items-center gap-3 bg-gray-900 rounded-lg px-3 py-2 shadow-sm border border-gray-700",
         className
       )}>
         {getStatusIcon(networkStatus.networkStatus)}
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-700">
+          <span className="text-sm font-medium text-gray-300">
             Block {formatNumber(networkStatus.blockNumber)}
           </span>
           <span className={cn(
@@ -180,7 +180,7 @@ export function SeiNetworkStatus({
           </span>
         </div>
         <div className="flex items-center gap-1 text-xs text-gray-500">
-          <Zap className="h-3 w-3 text-orange-500" />
+          <Zap className="h-3 w-3 text-red-500" />
           <span>{powerLevel.toLocaleString()}</span>
         </div>
       </div>
@@ -189,13 +189,13 @@ export function SeiNetworkStatus({
 
   // Detailed view
   return (
-    <div className={cn("bg-white rounded-lg shadow-md border border-gray-200", className)}>
+    <div className={cn("bg-gray-900 rounded-lg shadow-md border border-gray-700", className)}>
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-700">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-gray-200 flex items-center gap-2">
             🌐 Sei Network Status
-            {isConnected && <span className="text-xs text-green-600">🟢 LIVE</span>}
+            {isConnected && <span className="text-xs text-gray-400">🟢 LIVE</span>}
           </h3>
           <div className="flex items-center gap-2">
             <span className={cn(
@@ -205,14 +205,14 @@ export function SeiNetworkStatus({
               {networkStatus.networkStatus.toUpperCase()}
             </span>
             <div className="flex items-center gap-1">
-              <Zap className="h-4 w-4 text-orange-500" />
-              <span className="text-sm font-bold text-orange-600">
+              <Zap className="h-4 w-4 text-red-500" />
+              <span className="text-sm font-bold text-red-600">
                 {powerLevel.toLocaleString()}
               </span>
             </div>
           </div>
         </div>
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-gray-400 mt-1">
           Last updated: {lastUpdate.toLocaleTimeString()}
         </p>
       </div>
@@ -220,50 +220,50 @@ export function SeiNetworkStatus({
       {/* Network Metrics Grid */}
       <div className="p-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-blue-50 rounded-lg p-3">
+          <div className="bg-gray-800 rounded-lg p-3">
             <div className="flex items-center gap-2 mb-1">
-              <Activity className="h-4 w-4 text-blue-600" />
-              <span className="text-xs font-medium text-blue-700">Block Height</span>
+              <Activity className="h-4 w-4 text-gray-400" />
+              <span className="text-xs font-medium text-gray-300">Block Height</span>
             </div>
-            <p className="text-lg font-bold text-blue-800">
+            <p className="text-lg font-bold text-gray-200">
               {formatNumber(networkStatus.blockNumber)}
             </p>
-            <p className="text-xs text-blue-600">
+            <p className="text-xs text-gray-400">
               {networkStatus.avgBlockTime}s avg time
             </p>
           </div>
 
-          <div className="bg-green-50 rounded-lg p-3">
+          <div className="bg-gray-800 rounded-lg p-3">
             <div className="flex items-center gap-2 mb-1">
-              <TrendingUp className="h-4 w-4 text-green-600" />
-              <span className="text-xs font-medium text-green-700">TPS</span>
+              <TrendingUp className="h-4 w-4 text-gray-400" />
+              <span className="text-xs font-medium text-gray-300">TPS</span>
             </div>
-            <p className="text-lg font-bold text-green-800">
+            <p className="text-lg font-bold text-gray-200">
               {networkStatus.tps}
             </p>
-            <p className="text-xs text-green-600">transactions/sec</p>
+            <p className="text-xs text-gray-400">transactions/sec</p>
           </div>
 
-          <div className="bg-yellow-50 rounded-lg p-3">
+          <div className="bg-gray-800 rounded-lg p-3">
             <div className="flex items-center gap-2 mb-1">
-              <DollarSign className="h-4 w-4 text-yellow-600" />
-              <span className="text-xs font-medium text-yellow-700">Gas Price</span>
+              <DollarSign className="h-4 w-4 text-gray-400" />
+              <span className="text-xs font-medium text-gray-300">Gas Price</span>
             </div>
-            <p className="text-lg font-bold text-yellow-800">
+            <p className="text-lg font-bold text-gray-200">
               {formatGasPrice(networkStatus.gasPrice)}
             </p>
-            <p className="text-xs text-yellow-600">GWEI</p>
+            <p className="text-xs text-gray-400">GWEI</p>
           </div>
 
-          <div className="bg-purple-50 rounded-lg p-3">
+          <div className="bg-gray-800 rounded-lg p-3">
             <div className="flex items-center gap-2 mb-1">
-              <Users className="h-4 w-4 text-purple-600" />
-              <span className="text-xs font-medium text-purple-700">Validators</span>
+              <Users className="h-4 w-4 text-gray-400" />
+              <span className="text-xs font-medium text-gray-300">Validators</span>
             </div>
-            <p className="text-lg font-bold text-purple-800">
+            <p className="text-lg font-bold text-gray-200">
               {networkStatus.validators.length}
             </p>
-            <p className="text-xs text-purple-600">
+            <p className="text-xs text-gray-400">
               {networkStatus.validators.filter(v => v.status === 'active').length} active
             </p>
           </div>
@@ -272,42 +272,42 @@ export function SeiNetworkStatus({
         {/* Additional Metrics */}
         {networkMetrics && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-red-50 rounded-lg p-3">
+            <div className="bg-gray-800 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-1">
-                <TrendingUp className="h-4 w-4 text-red-600" />
-                <span className="text-xs font-medium text-red-700">Daily Txns</span>
+                <TrendingUp className="h-4 w-4 text-gray-400" />
+                <span className="text-xs font-medium text-gray-300">Daily Txns</span>
               </div>
-              <p className="text-lg font-bold text-red-800">
+              <p className="text-lg font-bold text-gray-200">
                 {formatNumber(networkMetrics.dailyTransactions)}
               </p>
             </div>
 
-            <div className="bg-indigo-50 rounded-lg p-3">
+            <div className="bg-gray-800 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-1">
-                <Users className="h-4 w-4 text-indigo-600" />
-                <span className="text-xs font-medium text-indigo-700">Addresses</span>
+                <Users className="h-4 w-4 text-gray-400" />
+                <span className="text-xs font-medium text-gray-300">Addresses</span>
               </div>
-              <p className="text-lg font-bold text-indigo-800">
+              <p className="text-lg font-bold text-gray-200">
                 {formatNumber(networkMetrics.totalAddresses)}
               </p>
             </div>
 
-            <div className="bg-pink-50 rounded-lg p-3">
+            <div className="bg-gray-800 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-1">
-                <DollarSign className="h-4 w-4 text-pink-600" />
-                <span className="text-xs font-medium text-pink-700">Market Cap</span>
+                <DollarSign className="h-4 w-4 text-gray-400" />
+                <span className="text-xs font-medium text-gray-300">Market Cap</span>
               </div>
-              <p className="text-lg font-bold text-pink-800">
+              <p className="text-lg font-bold text-gray-200">
                 ${formatNumber(networkMetrics.marketCap)}
               </p>
             </div>
 
-            <div className="bg-teal-50 rounded-lg p-3">
+            <div className="bg-gray-800 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-1">
-                <TrendingUp className="h-4 w-4 text-teal-600" />
-                <span className="text-xs font-medium text-teal-700">24h Volume</span>
+                <TrendingUp className="h-4 w-4 text-gray-400" />
+                <span className="text-xs font-medium text-gray-300">24h Volume</span>
               </div>
-              <p className="text-lg font-bold text-teal-800">
+              <p className="text-lg font-bold text-gray-200">
                 ${formatNumber(networkMetrics.volume24h)}
               </p>
             </div>
@@ -315,12 +315,12 @@ export function SeiNetworkStatus({
         )}
 
         {/* Dragon Ball Z Themed Status */}
-        <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-lg p-3 border border-red-200">
+        <div className="bg-gray-800 rounded-lg p-3 border border-gray-700">
           <div className="flex items-center gap-2 mb-2">
-            <Zap className="h-5 w-5 text-orange-500" />
-            <span className="font-semibold text-red-700">Network Power Level Analysis</span>
+            <Zap className="h-5 w-5 text-red-500" />
+            <span className="font-semibold text-gray-200">Network Power Level Analysis</span>
           </div>
-          <p className="text-sm text-red-600 mb-2">
+          <p className="text-sm text-gray-300 mb-2">
             {powerLevel > 100000 
               ? "🔥 INCREDIBLE! The Sei Network's power level has reached legendary status!" 
               : powerLevel > 50000 
@@ -328,10 +328,10 @@ export function SeiNetworkStatus({
               : "⚡ The network is gathering energy and building strength!"}
           </p>
           <div className="flex items-center justify-between text-xs">
-            <span className="text-red-500">
+            <span className="text-gray-400">
               Network Status: {networkStatus.networkStatus === 'healthy' ? 'Battle Ready' : 'Training Mode'}
             </span>
-            <span className="text-orange-600 font-bold">
+            <span className="text-red-600 font-bold">
               Power Level: {powerLevel.toLocaleString()}
             </span>
           </div>
@@ -340,27 +340,27 @@ export function SeiNetworkStatus({
         {/* Top Validators */}
         {networkStatus.validators.length > 0 && (
           <div className="mt-4">
-            <h4 className="text-sm font-medium text-gray-700 mb-3">Top Validators</h4>
+            <h4 className="text-sm font-medium text-gray-300 mb-3">Top Validators</h4>
             <div className="space-y-2">
               {networkStatus.validators
                 .filter(v => v.status === 'active')
                 .sort((a, b) => b.votingPower - a.votingPower)
                 .slice(0, 3)
                 .map((validator, index) => (
-                  <div key={validator.address} className="flex items-center justify-between bg-gray-50 rounded p-2">
+                  <div key={validator.address} className="flex items-center justify-between bg-gray-800 rounded p-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-700">
+                      <span className="text-sm font-medium text-gray-300">
                         #{index + 1} {validator.moniker}
                       </span>
-                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                      <span className="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded">
                         {validator.status}
                       </span>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium text-gray-800">
+                      <p className="text-sm font-medium text-gray-200">
                         {formatNumber(validator.votingPower)}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-400">
                         {validator.commission}% commission
                       </p>
                     </div>

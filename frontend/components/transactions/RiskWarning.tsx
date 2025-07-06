@@ -139,7 +139,7 @@ export function RiskWarning({
       <div className="p-4">
         <div className="flex items-start justify-between">
           <div className="flex items-start space-x-3">
-            <div className={`${config.textColor} mt-0.5`}>
+            <div className={`${config.textColor} mt-1`}>
               {config.icon}
             </div>
             <div className="flex-1">
@@ -147,11 +147,11 @@ export function RiskWarning({
                 <h3 className={`font-semibold ${config.textColor}`}>
                   {config.label}
                 </h3>
-                <span className="text-gray-400 text-sm">
+                <span className="text-gray-400 text-size-3">
                   (Score: {assessment.score}/100)
                 </span>
               </div>
-              <p className="text-gray-300 text-sm">
+              <p className="text-gray-300 text-size-3">
                 {assessment.summary}
               </p>
               
@@ -159,7 +159,7 @@ export function RiskWarning({
               {highRiskFactors.length > 0 && !showDetails && (
                 <div className="mt-2 space-y-1">
                   {highRiskFactors.slice(0, 2).map(factor => (
-                    <div key={factor.id} className="flex items-center gap-2 text-sm">
+                    <div key={factor.id} className="flex items-center gap-2 text-size-3">
                       <span className={getRiskConfig(factor.severity).textColor}>
                         {getFactorIcon(factor.type)}
                       </span>
@@ -167,7 +167,7 @@ export function RiskWarning({
                     </div>
                   ))}
                   {highRiskFactors.length > 2 && (
-                    <p className="text-gray-500 text-sm">
+                    <p className="text-gray-500 text-size-3">
                       +{highRiskFactors.length - 2} more risk factors
                     </p>
                   )}
@@ -198,7 +198,7 @@ export function RiskWarning({
             <div className="px-4 pb-4 space-y-4 border-t border-red-500/10">
               {/* Risk Factors */}
               <div className="mt-4">
-                <h4 className="text-white font-medium mb-3">Risk Factors</h4>
+                <h4 className="text-white font-normal mb-3">Risk Factors</h4>
                 <div className="space-y-2">
                   {assessment.factors.map(factor => {
                     const factorConfig = getRiskConfig(factor.severity);
@@ -214,12 +214,12 @@ export function RiskWarning({
                           className="w-full flex items-start justify-between text-left"
                         >
                           <div className="flex items-start space-x-2">
-                            <span className={`${factorConfig.textColor} mt-0.5`}>
+                            <span className={`${factorConfig.textColor} mt-1`}>
                               {getFactorIcon(factor.type)}
                             </span>
                             <div>
-                              <p className="text-white font-medium text-sm">{factor.title}</p>
-                              <p className="text-gray-400 text-sm mt-0.5">{factor.description}</p>
+                              <p className="text-white font-normal text-size-3">{factor.title}</p>
+                              <p className="text-gray-400 text-size-3 mt-1">{factor.description}</p>
                             </div>
                           </div>
                           <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
@@ -231,7 +231,7 @@ export function RiskWarning({
                               initial={{ height: 0, opacity: 0 }}
                               animate={{ height: 'auto', opacity: 1 }}
                               exit={{ height: 0, opacity: 0 }}
-                              className="mt-3 pl-6 space-y-2 text-sm"
+                              className="mt-3 pl-6 space-y-2 text-size-3"
                             >
                               {factor.impact && (
                                 <div>
@@ -257,11 +257,11 @@ export function RiskWarning({
               {/* Recommendations */}
               {assessment.recommendations.length > 0 && (
                 <div>
-                  <h4 className="text-white font-medium mb-2">Recommendations</h4>
+                  <h4 className="text-white font-normal mb-2">Recommendations</h4>
                   <ul className="space-y-1">
                     {assessment.recommendations.map((recommendation, index) => (
-                      <li key={index} className="flex items-start space-x-2 text-sm">
-                        <CheckCircle className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                      <li key={index} className="flex items-start space-x-2 text-size-3">
+                        <CheckCircle className="w-4 h-4 text-blue-400 mt-1 flex-shrink-0" />
                         <span className="text-gray-300">{recommendation}</span>
                       </li>
                     ))}
@@ -272,13 +272,13 @@ export function RiskWarning({
               {/* Protocol Audits */}
               {assessment.protocolAudits && assessment.protocolAudits.length > 0 && (
                 <div>
-                  <h4 className="text-white font-medium mb-2">Security Audits</h4>
+                  <h4 className="text-white font-normal mb-2">Security Audits</h4>
                   <div className="space-y-2">
                     {assessment.protocolAudits.map((audit, index) => (
-                      <div key={index} className="bg-black/30 rounded-lg p-3 text-sm">
+                      <div key={index} className="bg-black/30 rounded-lg p-3 text-size-3">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-white font-medium">{audit.name}</p>
+                            <p className="text-white font-normal">{audit.name}</p>
                             <p className="text-gray-400">by {audit.auditor} • {audit.date}</p>
                           </div>
                           {audit.reportUrl && (
@@ -308,7 +308,7 @@ export function RiskWarning({
                       onChange={(e) => setAcknowledged(e.target.checked)}
                       className="mt-1 w-4 h-4 text-red-600 bg-gray-900 border-gray-600 rounded focus:ring-red-500"
                     />
-                    <span className="text-sm text-gray-300">
+                    <span className="text-size-3 text-gray-300">
                       I understand and accept the risks associated with this transaction. 
                       I acknowledge that I may lose some or all of my funds.
                     </span>
@@ -322,7 +322,7 @@ export function RiskWarning({
                   {onRejectRisk && (
                     <button
                       onClick={onRejectRisk}
-                      className="flex-1 px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors font-medium"
+                      className="flex-1 px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors font-normal"
                     >
                       Cancel Transaction
                     </button>
@@ -331,7 +331,7 @@ export function RiskWarning({
                     <button
                       onClick={onAcceptRisk}
                       disabled={showAcknowledgment && !acknowledged}
-                      className="flex-1 px-4 py-2 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-lg hover:from-red-500 hover:to-red-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
+                      className="flex-1 px-4 py-2 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-lg hover:from-red-500 hover:to-red-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-normal"
                     >
                       Proceed with Transaction
                     </button>

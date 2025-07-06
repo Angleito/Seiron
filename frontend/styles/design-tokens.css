@@ -1,0 +1,184 @@
+/* ========================================
+   SEIRON DESIGN TOKENS
+   Following shadcn/ui with Tailwind v4 guidelines
+   ======================================== */
+
+/* 
+   Typography System: 4 Sizes, 2 Weights
+   ======================================== */
+:root {
+  /* Font Sizes - Only 4 distinct sizes */
+  --font-size-1: 1.25rem;  /* 20px - Large headings */
+  --font-size-2: 1rem;     /* 16px - Subheadings/Important content */
+  --font-size-3: 0.875rem; /* 14px - Body text */
+  --font-size-4: 0.75rem;  /* 12px - Small text/labels */
+
+  /* Font Weights - Only 2 weights */
+  --font-weight-normal: 400;    /* Regular - body text */
+  --font-weight-semibold: 600;  /* Semibold - headings and emphasis */
+
+  /* Line Heights */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+}
+
+/* 
+   8pt Grid System - All spacing divisible by 8 or 4
+   ======================================== */
+:root {
+  /* Base unit: 4px */
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.25rem;   /* 20px - exception, but close to 24px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-8: 2rem;      /* 32px */
+  --space-10: 2.5rem;   /* 40px */
+  --space-12: 3rem;     /* 48px */
+  --space-16: 4rem;     /* 64px */
+  --space-20: 5rem;     /* 80px */
+  --space-24: 6rem;     /* 96px */
+  
+  /* Remove these non-conforming values:
+     - 0.5 (2px) 
+     - 1.5 (6px)
+     - Any other non-divisible by 4 values */
+}
+
+/* 
+   60/30/10 Color System
+   ======================================== */
+:root {
+  /* 60% - Neutral Colors (Background/Base) */
+  --color-neutral-50: #fafafa;
+  --color-neutral-100: #f4f4f5;
+  --color-neutral-200: #e4e4e7;
+  --color-neutral-300: #d4d4d8;
+  --color-neutral-400: #a1a1aa;
+  --color-neutral-500: #71717a;
+  --color-neutral-600: #52525b;
+  --color-neutral-700: #3f3f46;
+  --color-neutral-800: #27272a;
+  --color-neutral-900: #18181b;
+  --color-neutral-950: #09090b;
+
+  /* 30% - Complementary Colors (Text/UI Elements) */
+  --color-foreground: var(--color-neutral-50);     /* Light mode: dark text */
+  --color-foreground-muted: var(--color-neutral-400);
+  --color-border: var(--color-neutral-700);
+  --color-border-muted: var(--color-neutral-800);
+
+  /* 10% - Accent Colors (Dragon/Brand) */
+  --color-accent-primary: #dc2626;     /* Dragon red */
+  --color-accent-hover: #ef4444;       /* Dragon red hover */
+  --color-accent-muted: #fca5a5;       /* Dragon red muted */
+  
+  /* Semantic accent colors - use sparingly */
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-error: #dc2626;
+  --color-info: #3b82f6;
+}
+
+/* 
+   Component-Specific Tokens
+   ======================================== */
+:root {
+  /* Border Radius */
+  --radius-sm: 0.25rem;    /* 4px */
+  --radius-md: 0.5rem;     /* 8px */
+  --radius-lg: 0.75rem;    /* 12px */
+  --radius-xl: 1rem;       /* 16px */
+  --radius-full: 9999px;   /* Full circle */
+
+  /* Shadows - Simplified */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+
+  /* Transitions */
+  --transition-fast: 150ms ease-in-out;
+  --transition-base: 300ms ease-in-out;
+  --transition-slow: 500ms ease-in-out;
+
+  /* Z-index scale */
+  --z-base: 0;
+  --z-dropdown: 10;
+  --z-sticky: 20;
+  --z-modal: 30;
+  --z-popover: 40;
+  --z-tooltip: 50;
+}
+
+/* 
+   Dark Mode Overrides
+   ======================================== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Flip neutral colors for dark mode */
+    --color-background: var(--color-neutral-950);
+    --color-foreground: var(--color-neutral-50);
+    --color-foreground-muted: var(--color-neutral-400);
+    --color-border: var(--color-neutral-800);
+    --color-border-muted: var(--color-neutral-700);
+  }
+}
+
+/* 
+   Typography Utility Classes
+   ======================================== */
+.text-size-1 { font-size: var(--font-size-1); }
+.text-size-2 { font-size: var(--font-size-2); }
+.text-size-3 { font-size: var(--font-size-3); }
+.text-size-4 { font-size: var(--font-size-4); }
+
+.font-normal { font-weight: var(--font-weight-normal); }
+.font-semibold { font-weight: var(--font-weight-semibold); }
+
+/* 
+   Spacing Utility Classes (8pt Grid)
+   ======================================== */
+.p-grid-1 { padding: var(--space-1); }
+.p-grid-2 { padding: var(--space-2); }
+.p-grid-3 { padding: var(--space-3); }
+.p-grid-4 { padding: var(--space-4); }
+.p-grid-6 { padding: var(--space-6); }
+.p-grid-8 { padding: var(--space-8); }
+
+.m-grid-1 { margin: var(--space-1); }
+.m-grid-2 { margin: var(--space-2); }
+.m-grid-3 { margin: var(--space-3); }
+.m-grid-4 { margin: var(--space-4); }
+.m-grid-6 { margin: var(--space-6); }
+.m-grid-8 { margin: var(--space-8); }
+
+.gap-grid-1 { gap: var(--space-1); }
+.gap-grid-2 { gap: var(--space-2); }
+.gap-grid-3 { gap: var(--space-3); }
+.gap-grid-4 { gap: var(--space-4); }
+.gap-grid-6 { gap: var(--space-6); }
+.gap-grid-8 { gap: var(--space-8); }
+
+/* 
+   Color Distribution Classes
+   ======================================== */
+.bg-neutral { background-color: var(--color-neutral-900); }
+.bg-neutral-subtle { background-color: var(--color-neutral-800); }
+.text-neutral { color: var(--color-foreground); }
+.text-neutral-muted { color: var(--color-foreground-muted); }
+
+.bg-accent { background-color: var(--color-accent-primary); }
+.text-accent { color: var(--color-accent-primary); }
+.border-accent { border-color: var(--color-accent-primary); }
+
+/* Limit accent usage to 10% */
+.accent-minimal {
+  /* Use accent colors only for:
+     - Primary CTAs
+     - Active states
+     - Important alerts
+     - Dragon power indicators */
+}

@@ -21,10 +21,10 @@ export const KeyMetrics = React.memo(function KeyMetrics({ data }: KeyMetricsPro
     <div className="grid grid-cols-2 gap-2 mt-4">
       {data.exchangeRate && (
         <div className="bg-black/30 rounded-lg p-2 border border-red-500/5">
-          <p className="text-gray-500 text-xs flex items-center gap-1">
+          <p className="text-gray-500 text-size-4 flex items-center gap-1">
             <ArrowRightLeft className="w-3 h-3" /> Rate
           </p>
-          <p className="text-white text-sm font-medium">
+          <p className="text-white text-size-3 font-normal">
             1 {data.inputToken?.symbol} = {data.exchangeRate.toFixed(4)} {data.outputToken?.symbol}
           </p>
         </div>
@@ -32,10 +32,10 @@ export const KeyMetrics = React.memo(function KeyMetrics({ data }: KeyMetricsPro
       
       {data.priceImpact !== undefined && (
         <div className="bg-black/30 rounded-lg p-2 border border-red-500/5">
-          <p className="text-gray-500 text-xs flex items-center gap-1">
+          <p className="text-gray-500 text-size-4 flex items-center gap-1">
             <Percent className="w-3 h-3" /> Price Impact
           </p>
-          <p className={`text-sm font-medium ${
+          <p className={`text-size-3 font-normal ${
             data.priceImpact > 3 ? 'text-red-400' : 
             data.priceImpact > 1 ? 'text-yellow-400' : 
             'text-white'
@@ -47,20 +47,20 @@ export const KeyMetrics = React.memo(function KeyMetrics({ data }: KeyMetricsPro
       
       {(data.apy || data.apr) && (
         <div className="bg-black/30 rounded-lg p-2 border border-red-500/5">
-          <p className="text-gray-500 text-xs flex items-center gap-1">
+          <p className="text-gray-500 text-size-4 flex items-center gap-1">
             <TrendingUp className="w-3 h-3" /> {data.apy ? 'APY' : 'APR'}
           </p>
-          <p className="text-green-400 text-sm font-medium">
+          <p className="text-green-400 text-size-3 font-normal">
             {(data.apy || data.apr)?.toFixed(2)}%
           </p>
         </div>
       )}
       
       <div className="bg-black/30 rounded-lg p-2 border border-red-500/5">
-        <p className="text-gray-500 text-xs flex items-center gap-1">
+        <p className="text-gray-500 text-size-4 flex items-center gap-1">
           <Fuel className="w-3 h-3" /> Network Fee
         </p>
-        <p className="text-white text-sm font-medium">
+        <p className="text-white text-size-3 font-normal">
           {parseFloat(networkFee).toFixed(4)} SEI
         </p>
       </div>

@@ -56,21 +56,21 @@ export const ChatErrorDisplay = React.memo(function ChatErrorDisplay({
   }
 
   return (
-    <Card className={`p-4 bg-gradient-to-r from-red-900/30 to-orange-900/30 border-red-500/50 ${className}`}>
+    <Card className={`p-4 bg-gray-900/50 border-gray-700 ${className}`}>
       <div className="flex items-start gap-3">
-        <div className="text-2xl flex-shrink-0">{getErrorIcon(error.type)}</div>
+        <div className="text-size-1 flex-shrink-0">{getErrorIcon(error.type)}</div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-semibold text-red-300">{getErrorTitle(error.type)}</h3>
+            <h3 className="font-semibold text-gray-200">{getErrorTitle(error.type)}</h3>
             <Badge variant="danger" size="sm">{error.type}</Badge>
           </div>
-          <p className="text-red-200 text-sm mb-2">{error.message}</p>
-          <p className="text-red-300/70 text-xs mb-3">{getErrorSuggestion(error.type)}</p>
+          <p className="text-gray-300 text-size-3 mb-2">{error.message}</p>
+          <p className="text-gray-400 text-size-4 mb-3">{getErrorSuggestion(error.type)}</p>
           
           {error.details && (
-            <details className="text-xs text-red-300/50 mb-3">
-              <summary className="cursor-pointer hover:text-red-300/70">Show details</summary>
-              <pre className="mt-1 p-2 bg-black/30 rounded text-xs overflow-auto">
+            <details className="text-size-4 text-gray-500 mb-3">
+              <summary className="cursor-pointer hover:text-gray-400">Show details</summary>
+              <pre className="mt-1 p-2 bg-black/30 rounded text-size-4 overflow-auto">
                 {JSON.stringify(error.details, null, 2)}
               </pre>
             </details>
@@ -91,7 +91,7 @@ export const ChatErrorDisplay = React.memo(function ChatErrorDisplay({
                 onClick={onDismiss}
                 variant="ghost"
                 size="sm"
-                className="text-red-300 hover:text-red-200"
+                className="text-gray-400 hover:text-gray-300"
               >
                 Dismiss
               </Button>
@@ -112,9 +112,9 @@ export const SessionLoadingError = React.memo(function SessionLoadingError({
 }: ErrorStateProps) {
   return (
     <div className={`p-6 text-center ${className}`}>
-      <div className="text-6xl mb-4">🐉💥</div>
-      <h2 className="text-xl font-bold text-red-300 mb-2">Failed to Load Sessions</h2>
-      <p className="text-red-200 mb-4">
+      <div className="text-size-1 mb-4">🐉💥</div>
+      <h2 className="text-size-1 font-semibold text-gray-200 mb-2">Failed to Load Sessions</h2>
+      <p className="text-gray-300 mb-4">
         The Dragon Balls are scattered! We couldn't load your chat sessions.
       </p>
       <ChatErrorDisplay
@@ -135,9 +135,9 @@ export const MessageLoadingError = React.memo(function MessageLoadingError({
 }: ErrorStateProps) {
   return (
     <div className={`p-6 text-center ${className}`}>
-      <div className="text-6xl mb-4">💬❌</div>
-      <h2 className="text-xl font-bold text-red-300 mb-2">Failed to Load Messages</h2>
-      <p className="text-red-200 mb-4">
+      <div className="text-size-1 mb-4">💬❌</div>
+      <h2 className="text-size-1 font-semibold text-gray-200 mb-2">Failed to Load Messages</h2>
+      <p className="text-gray-300 mb-4">
         The conversation history is lost in the void. Let's try to recover it!
       </p>
       <ChatErrorDisplay
@@ -159,10 +159,10 @@ export const SessionCreationError = React.memo(function SessionCreationError({
   return (
     <div className={`p-4 ${className}`}>
       <div className="flex items-center gap-3 mb-3">
-        <span className="text-2xl">🆕❌</span>
-        <h3 className="text-lg font-semibold text-red-300">Failed to Create Session</h3>
+        <span className="text-size-1">🆕❌</span>
+        <h3 className="text-size-2 font-semibold text-gray-200">Failed to Create Session</h3>
       </div>
-      <p className="text-red-200 text-sm mb-3">
+      <p className="text-gray-300 text-size-3 mb-3">
         Couldn't create a new chat session. The Dragon may be busy!
       </p>
       <ChatErrorDisplay
@@ -183,17 +183,17 @@ export const MessageSendingError = React.memo(function MessageSendingError({
   className = ''
 }: ErrorStateProps & { messageContent?: string }) {
   return (
-    <div className={`p-3 bg-red-900/20 border border-red-500/30 rounded-lg ${className}`}>
+    <div className={`p-3 bg-gray-900/50 border border-gray-700 rounded-lg ${className}`}>
       <div className="flex items-start gap-2">
-        <span className="text-lg">📤❌</span>
+        <span className="text-size-2">📤❌</span>
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-medium text-red-300 mb-1">Message Failed to Send</div>
+          <div className="text-size-3 font-normal text-gray-200 mb-1">Message Failed to Send</div>
           {messageContent && (
-            <div className="text-xs text-red-200/70 mb-2 p-2 bg-black/20 rounded">
+            <div className="text-size-4 text-gray-400 mb-2 p-2 bg-black/20 rounded">
               "{messageContent.slice(0, 100)}{messageContent.length > 100 ? '...' : ''}"
             </div>
           )}
-          <div className="text-xs text-red-300/70 mb-2">{error.message}</div>
+          <div className="text-size-4 text-gray-400 mb-2">{error.message}</div>
           <div className="flex gap-2">
             {onRetry && (
               <Button
@@ -209,7 +209,7 @@ export const MessageSendingError = React.memo(function MessageSendingError({
                 onClick={onDismiss}
                 variant="ghost"
                 size="sm"
-                className="text-red-300 hover:text-red-200 text-xs px-2 py-1"
+                className="text-gray-400 hover:text-gray-300 text-xs px-2 py-1"
               >
                 Dismiss
               </Button>
@@ -229,12 +229,12 @@ export const VoiceError = React.memo(function VoiceError({
   className = ''
 }: ErrorStateProps) {
   return (
-    <div className={`p-3 bg-red-900/20 border border-red-500/30 rounded-lg ${className}`}>
+    <div className={`p-3 bg-gray-900/50 border border-gray-700 rounded-lg ${className}`}>
       <div className="flex items-center gap-3">
         <span className="text-xl">🎤❌</span>
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-medium text-red-300">Voice Error</div>
-          <div className="text-xs text-red-300/70">{error.message}</div>
+          <div className="text-sm font-normal text-gray-200">Voice Error</div>
+          <div className="text-xs text-gray-400">{error.message}</div>
         </div>
         <div className="flex gap-1">
           {onRetry && (
@@ -242,7 +242,7 @@ export const VoiceError = React.memo(function VoiceError({
               onClick={onRetry}
               variant="ghost"
               size="sm"
-              className="text-red-300 hover:text-red-200 text-xs"
+              className="text-gray-400 hover:text-gray-300 text-xs"
             >
               Retry
             </Button>
@@ -252,7 +252,7 @@ export const VoiceError = React.memo(function VoiceError({
               onClick={onDismiss}
               variant="ghost"
               size="sm"
-              className="text-red-300 hover:text-red-200 text-xs"
+              className="text-gray-400 hover:text-gray-300 text-xs"
             >
               ×
             </Button>
@@ -274,8 +274,8 @@ export const NetworkError = React.memo(function NetworkError({
   return (
     <div className={`p-6 text-center ${className}`}>
       <div className="text-6xl mb-4">🌐💥</div>
-      <h2 className="text-xl font-bold text-red-300 mb-2">Connection Lost</h2>
-      <p className="text-red-200 mb-4">
+      <h2 className="text-xl font-semibold text-gray-200 mb-2">Connection Lost</h2>
+      <p className="text-gray-300 mb-4">
         The Dragon Radar can't connect to the network. Check your connection!
       </p>
       {onRetry && (
@@ -301,18 +301,18 @@ export const ChatErrorFallback = React.memo(function ChatErrorFallback({
   className?: string
 }) {
   return (
-    <div className={`p-8 text-center bg-gradient-to-b from-red-950/50 to-black ${className}`}>
+    <div className={`p-8 text-center bg-gradient-to-b from-gray-950/50 to-black ${className}`}>
       <div className="text-8xl mb-6">🐉💥</div>
-      <h1 className="text-2xl font-bold text-red-300 mb-4">
+      <h1 className="text-size-1 font-semibold text-gray-200 mb-4">
         The Dragon Has Encountered an Error!
       </h1>
-      <p className="text-red-200 mb-6 max-w-md mx-auto">
+      <p className="text-gray-300 mb-6 max-w-md mx-auto">
         Something went wrong with the chat system. The Dragon Balls need to be recalibrated!
       </p>
       
-      <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 mb-6 max-w-lg mx-auto">
-        <div className="text-sm font-medium text-red-300 mb-2">Error Details:</div>
-        <div className="text-xs text-red-200 font-mono bg-black/30 p-2 rounded">
+      <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-4 mb-6 max-w-lg mx-auto">
+        <div className="text-sm font-normal text-gray-200 mb-2">Error Details:</div>
+        <div className="text-xs text-gray-300 font-mono bg-black/30 p-2 rounded">
           {error.message}
         </div>
       </div>
@@ -328,7 +328,7 @@ export const ChatErrorFallback = React.memo(function ChatErrorFallback({
           <Button
             onClick={() => window.location.reload()}
             variant="ghost"
-            className="text-red-300 hover:text-red-200"
+            className="text-gray-400 hover:text-gray-300"
           >
             🔃 Reload Page
           </Button>
@@ -350,21 +350,21 @@ export const ChatErrorToast = React.memo(function ChatErrorToast({
 }) {
   return (
     <div
-      className={`fixed top-4 right-4 z-50 bg-gradient-to-r from-red-900/90 to-orange-900/90 border border-red-500/70 rounded-lg p-4 shadow-lg backdrop-blur-sm max-w-sm ${className}`}
+      className={`fixed top-4 right-4 z-50 bg-gray-900/90 border border-gray-700 rounded-lg p-4 shadow-lg backdrop-blur-sm max-w-sm ${className}`}
     >
       <div className="flex items-start gap-3">
         <span className="text-xl flex-shrink-0">⚠️</span>
         <div className="flex-1 min-w-0">
-          <div className="font-medium text-red-200 text-sm mb-1">
+          <div className="font-normal text-gray-200 text-sm mb-1">
             {error.type === 'network' ? 'Connection Error' : 'Error'}
           </div>
-          <div className="text-red-300/80 text-xs">{error.message}</div>
+          <div className="text-gray-400 text-xs">{error.message}</div>
         </div>
         <Button
           onClick={onDismiss}
           variant="ghost"
           size="sm"
-          className="text-red-300 hover:text-red-200 flex-shrink-0"
+          className="text-gray-400 hover:text-gray-300 flex-shrink-0"
         >
           ×
         </Button>
