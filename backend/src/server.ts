@@ -23,6 +23,7 @@ import { OrchestratorService } from './services/OrchestratorService';
 import { SeiIntegrationService } from './services/SeiIntegrationService';
 import { PortfolioAnalyticsService } from './services/PortfolioAnalyticsService';
 import { RealTimeDataService } from './services/RealTimeDataService';
+import { SupabaseService, createSupabaseService } from './services/SupabaseService';
 import { errorHandler } from './middleware/errorHandler';
 import { validateWallet } from './middleware/validateWallet';
 import { createWebSocketMiddleware } from './middleware/websocketMiddleware';
@@ -75,6 +76,24 @@ app.use(requestBodyLogger);
 
 // Initialize services
 const socketService = new SocketService(io);
+
+// Initialize Supabase service
+const supabaseServiceResult = createSupabaseService({
+  url: process.env.SUPABASE_URL || '',
+  anonKey: process.env.SUPABASE_ANON_KEY || '',
+  serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY
+});
+
+let supabaseService: SupabaseService;
+if (supabaseServiceResult._tag === 'Left') {
+  logger.error('Failed to initialize Supabase service', { 
+    error: supabaseServiceResult.left.message 
+  });
+  process.exit(1);
+} else {
+  supabaseService = supabaseServiceResult.right;
+  logger.info('Supabase service initialized successfully');
+}
 
 // Initialize WebSocket middleware
 const wsMiddleware = createWebSocketMiddleware({
@@ -145,7 +164,8 @@ app.use((req, _res, next) => {
     orchestrator: orchestratorService,
     seiIntegration: seiIntegrationService,
     portfolioAnalytics: portfolioAnalyticsService,
-    realTimeData: realTimeDataService
+    realTimeData: realTimeDataService,
+    supabase: supabaseService
   };
   next();
 });

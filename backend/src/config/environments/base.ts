@@ -79,7 +79,10 @@ const validateDatabaseConfig = (): Either<readonly import('../types').ConfigErro
     validateEnvWithDefault('REDIS_PASSWORD', undefined, (value) => right(value)),
     validateEnvWithDefault('REDIS_DB', 0, (value) => validateNumber('REDIS_DB', value)),
     validateEnvWithDefault('REDIS_MAX_RETRIES', 3, (value) => validateNumber('REDIS_MAX_RETRIES', value)),
-    validateEnvWithDefault('REDIS_RETRY_DELAY', 100, (value) => validateNumber('REDIS_RETRY_DELAY', value))
+    validateEnvWithDefault('REDIS_RETRY_DELAY', 100, (value) => validateNumber('REDIS_RETRY_DELAY', value)),
+    validateEnvString('SUPABASE_URL'),
+    validateEnvString('SUPABASE_ANON_KEY'),
+    validateEnvWithDefault('SUPABASE_SERVICE_ROLE_KEY', undefined, (value) => right(value))
   ];
 
   return pipe(
@@ -88,7 +91,7 @@ const validateDatabaseConfig = (): Either<readonly import('../types').ConfigErro
       if (result._tag === 'Left') {
         return result;
       }
-      const [host, port, password, db, maxRetriesPerRequest, retryDelayOnFailover] = result.right;
+      const [host, port, password, db, maxRetriesPerRequest, retryDelayOnFailover, supabaseUrl, supabaseAnonKey, supabaseServiceRoleKey] = result.right;
       return right({
         redis: {
           host,
@@ -97,6 +100,11 @@ const validateDatabaseConfig = (): Either<readonly import('../types').ConfigErro
           db,
           maxRetriesPerRequest,
           retryDelayOnFailover
+        },
+        supabase: {
+          url: supabaseUrl,
+          anonKey: supabaseAnonKey,
+          serviceRoleKey: supabaseServiceRoleKey
         }
       });
     }

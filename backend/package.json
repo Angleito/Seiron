@@ -14,6 +14,10 @@
     "test:integration": "jest --testPathPattern=tests/.*\\.test\\.ts$",
     "test:property": "jest --testPathPattern=.*\\.property\\.test\\.ts$",
     "test:verbose": "jest --verbose",
+    "test:supabase": "jest --config jest.supabase.integration.config.js",
+    "test:supabase:watch": "jest --config jest.supabase.integration.config.js --watch",
+    "test:supabase:coverage": "jest --config jest.supabase.integration.config.js --coverage",
+    "test:supabase:runner": "tsx src/__tests__/supabase.integration.runner.ts",
     "lint": "eslint src/**/*.ts",
     "audit:mocks": "tsx src/scripts/audit-mocks.ts",
     "docker:test": "docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit",
@@ -27,6 +31,7 @@
     "docker:coverage:serve": "docker-compose -f docker-compose.test.yml --profile coverage-ui up -d"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
     "@types/uuid": "^10.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",

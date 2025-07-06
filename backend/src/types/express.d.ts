@@ -6,6 +6,7 @@ import { OrchestratorService } from '../services/OrchestratorService';
 import { SeiIntegrationService } from '../services/SeiIntegrationService';
 import { PortfolioAnalyticsService } from '../services/PortfolioAnalyticsService';
 import { RealTimeDataService } from '../services/RealTimeDataService';
+import { SupabaseService } from '../services/SupabaseService';
 
 declare global {
   namespace Express {
@@ -19,6 +20,7 @@ declare global {
         seiIntegration: SeiIntegrationService;
         portfolioAnalytics: PortfolioAnalyticsService;
         realTimeData: RealTimeDataService;
+        supabase: SupabaseService;
       };
       walletAddress?: string;
       requestId?: string;

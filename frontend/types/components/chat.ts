@@ -2,6 +2,14 @@
 
 import { ReactNode } from 'react'
 import { AgentType } from '../agent'
+import { 
+  ChatSession as PersistentChatSession,
+  ChatMessage as PersistentChatMessage,
+  ChatPersistenceError,
+  PaginationInfo,
+  SessionsQueryParams,
+  MessagesQueryParams 
+} from '../../services/chat-persistence.service'
 
 export interface ChatProps {
   className?: string
@@ -408,4 +416,170 @@ export interface ChatAnalytics {
     count: number
     sentiment: 'positive' | 'negative' | 'neutral'
   }>
+}
+
+// Persistence Types (extending service types for UI components)
+export interface ChatSessionManagerProps {
+  userId?: string
+  currentSessionId?: string
+  onSessionSelect: (sessionId: string) => void
+  onSessionCreate?: (session: PersistentChatSession) => void
+  onSessionUpdate?: (session: PersistentChatSession) => void
+  onSessionDelete?: (sessionId: string) => void
+  showCreateForm?: boolean
+  enableSearch?: boolean
+  enableArchiving?: boolean
+  className?: string
+}
+
+export interface MessageHistoryProps {
+  sessionId: string
+  userId?: string
+  onMessagesLoaded?: (messages: PersistentChatMessage[]) => void
+  onMessageSelect?: (message: PersistentChatMessage) => void
+  enablePagination?: boolean
+  enableInfiniteScroll?: boolean
+  messagesPerPage?: number
+  className?: string
+}
+
+export interface MessagePaginationProps {
+  pagination: PaginationInfo
+  isLoading: boolean
+  isLoadingMore: boolean
+  onGoToPage: (page: number) => void
+  onGoToNextPage: () => void
+  onGoToPreviousPage: () => void
+  onLoadMoreMessages: () => void
+  showLoadMore?: boolean
+  showPageNumbers?: boolean
+  showMessageCount?: boolean
+  enableInfiniteScroll?: boolean
+  className?: string
+}
+
+export interface ChatPersistenceState {
+  // Session management
+  sessions: PersistentChatSession[]
+  currentSession: PersistentChatSession | null
+  sessionStats: {
+    total_sessions: number
+    active_sessions: number
+    archived_sessions: number
+    total_messages: number
+  } | null
+  
+  // Message history
+  messageHistory: PersistentChatMessage[]
+  messagesPagination: PaginationInfo | null
+  
+  // Loading states
+  isLoadingSessions: boolean
+  isLoadingMessages: boolean
+  isLoadingMore: boolean
+  isCreatingSession: boolean
+  isUpdatingSession: boolean
+  isDeletingSession: boolean
+  
+  // Error states
+  sessionError: ChatPersistenceError | null
+  messageError: ChatPersistenceError | null
+  persistenceError: ChatPersistenceError | null
+}
+
+export interface ChatPersistenceActions {
+  // Session actions
+  loadSessions: (params?: SessionsQueryParams) => Promise<void>
+  createSession: (title: string, description?: string, metadata?: Record<string, unknown>) => Promise<PersistentChatSession | null>
+  updateSession: (sessionId: string, updates: Partial<PersistentChatSession>) => Promise<PersistentChatSession | null>
+  deleteSession: (sessionId: string) => Promise<boolean>
+  archiveSession: (sessionId: string, archived: boolean) => Promise<PersistentChatSession | null>
+  selectSession: (sessionId: string) => void
+  
+  // Message actions
+  loadMessages: (sessionId: string, params?: MessagesQueryParams) => Promise<void>
+  loadMoreMessages: () => Promise<void>
+  refreshMessages: () => Promise<void>
+  
+  // Search and filter
+  searchSessions: (query: string) => Promise<void>
+  filterSessions: (params: SessionsQueryParams) => Promise<void>
+  
+  // Error handling
+  clearSessionError: () => void
+  clearMessageError: () => void
+  clearPersistenceError: () => void
+}
+
+export interface ChatWithPersistenceProps extends ChatInterfaceProps {
+  // Persistence configuration
+  userId?: string
+  enableSessionManagement?: boolean
+  enableMessageHistory?: boolean
+  enableAutoSave?: boolean
+  autoLoadHistory?: boolean
+  
+  // Session management
+  currentSessionId?: string
+  onSessionChange?: (sessionId: string) => void
+  onSessionCreate?: (session: PersistentChatSession) => void
+  
+  // Message history
+  messagesPerPage?: number
+  enableInfiniteScroll?: boolean
+  
+  // Error handling
+  onPersistenceError?: (error: ChatPersistenceError) => void
+}
+
+export interface ChatLoadingStateProps {
+  type: 'sessions' | 'messages' | 'creating' | 'updating' | 'deleting' | 'voice' | 'initial'
+  operation?: string
+  className?: string
+}
+
+export interface ChatErrorStateProps {
+  error: ChatPersistenceError
+  type?: 'inline' | 'modal' | 'toast' | 'full'
+  onRetry?: () => void
+  onDismiss?: () => void
+  className?: string
+}
+
+// Enhanced hook types with persistence
+export interface UseChatWithPersistenceOptions {
+  userId?: string
+  enablePersistence?: boolean
+  enableSessionManagement?: boolean
+  enableMessageHistory?: boolean
+  autoLoadHistory?: boolean
+  initialSessionId?: string
+  onSessionChange?: (sessionId: string) => void
+  onPersistenceError?: (error: ChatPersistenceError) => void
+}
+
+export interface UseChatWithPersistenceReturn extends UseChatReturn {
+  // Persistence state
+  persistenceState: ChatPersistenceState
+  persistenceActions: ChatPersistenceActions
+  
+  // Current session
+  currentSession: PersistentChatSession | null
+  currentSessionId: string | null
+  
+  // Message history
+  messageHistory: PersistentChatMessage[]
+  messagesPagination: PaginationInfo | null
+  
+  // Combined loading state
+  isLoadingAnything: boolean
+  
+  // Enhanced actions
+  sendMessageWithPersistence: (content: string, metadata?: Record<string, unknown>) => Promise<void>
+  createNewSession: (title: string, description?: string) => Promise<void>
+  switchToSession: (sessionId: string) => Promise<void>
+  
+  // Utility functions
+  exportSession: (format: 'json' | 'txt' | 'csv') => Promise<string>
+  importSession: (data: string, format: 'json') => Promise<void>
 }

@@ -32,6 +32,12 @@ const developmentOverrides = (config: AppConfig): AppConfig => ({
     redis: {
       ...config.database.redis,
       db: 0 // Use default Redis DB for development
+    },
+    supabase: {
+      ...config.database.supabase,
+      url: process.env.SUPABASE_URL || 'http://localhost:54321',
+      anonKey: process.env.SUPABASE_ANON_KEY || '',
+      serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY
     }
   },
   blockchain: {
@@ -94,5 +100,8 @@ export const developmentDefaults = {
   OPENAI_TEMPERATURE: '0.8',
   OPENAI_MAX_TOKENS: '1500',
   RATE_LIMIT_WINDOW_MS: '900000',
-  RATE_LIMIT_MAX: '1000' // Higher rate limit for development
+  RATE_LIMIT_MAX: '1000', // Higher rate limit for development
+  SUPABASE_URL: 'http://localhost:54321',
+  SUPABASE_ANON_KEY: '',
+  SUPABASE_SERVICE_ROLE_KEY: ''
 };

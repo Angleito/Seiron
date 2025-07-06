@@ -31,6 +31,11 @@ export interface DatabaseConfig {
     readonly maxRetriesPerRequest: number;
     readonly retryDelayOnFailover: number;
   };
+  readonly supabase: {
+    readonly url: string;
+    readonly anonKey: string;
+    readonly serviceRoleKey?: string;
+  };
 }
 
 /**

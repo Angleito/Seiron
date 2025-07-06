@@ -2,6 +2,7 @@ import { openai } from '@ai-sdk/openai';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 import { performance } from 'perf_hooks';
+import { createClient } from '@supabase/supabase-js';
 
 // Set maximum duration for the function (30 seconds)
 export const maxDuration = 30;
@@ -13,6 +14,29 @@ export const runtime = 'nodejs';
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const RATE_LIMIT_MAX_REQUESTS = 15; // 15 requests per minute for orchestrate
 const requestTracker = new Map();
+
+// Supabase client configuration
+let supabaseClient = null;
+
+function initializeSupabaseClient() {
+  if (!supabaseClient) {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+    
+    if (supabaseUrl && supabaseAnonKey) {
+      supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+        },
+      });
+      console.log('Supabase client initialized successfully');
+    } else {
+      console.warn('Supabase configuration not found - chat history will not be saved');
+    }
+  }
+  return supabaseClient;
+}
 
 function isRateLimited(identifier) {
   const now = Date.now();
@@ -63,6 +87,84 @@ function validateRequest(body) {
   }
   
   return { valid: true };
+}
+
+// Extract crypto context from intent and response
+function extractCryptoContext(intent, response, walletAddress) {
+  const cryptoContext = {
+    wallet_address: walletAddress || null,
+    intent_type: intent.type,
+    intent_action: intent.action,
+    agent_type: response.agentType,
+    risk_level: response.metadata.riskLevel,
+    confidence: response.metadata.confidence,
+    action_required: response.metadata.actionRequired,
+    timestamp: new Date().toISOString(),
+    portfolio_data: {},
+    lending_info: {},
+    swap_details: {},
+    market_data: {},
+    suggestions: response.metadata.suggestions || [],
+  };
+
+  // Add intent-specific context
+  switch (intent.type) {
+    case 'lending':
+      cryptoContext.lending_info = {
+        action: intent.action,
+        parameters: intent.parameters,
+        protocols: ['Compound', 'Aave', 'Silo'], // Common lending protocols
+      };
+      if (intent.parameters.amount) {
+        cryptoContext.lending_info.amount = intent.parameters.amount;
+        cryptoContext.lending_info.asset = intent.parameters.asset;
+      }
+      break;
+    
+    case 'liquidity':
+      cryptoContext.swap_details = {
+        action: intent.action,
+        parameters: intent.parameters,
+        protocols: ['Uniswap', 'SushiSwap', 'DragonSwap'], // Common DEX protocols
+      };
+      break;
+    
+    case 'portfolio':
+      cryptoContext.portfolio_data = {
+        action: intent.action,
+        parameters: intent.parameters,
+        analysis_requested: intent.action === 'show_positions',
+        rebalance_requested: intent.action === 'rebalance',
+      };
+      break;
+    
+    case 'trading':
+      cryptoContext.market_data = {
+        action: intent.action,
+        parameters: intent.parameters,
+        trade_type: intent.action === 'buy' ? 'buy' : 'sell',
+      };
+      break;
+    
+    case 'analysis':
+      cryptoContext.market_data = {
+        action: intent.action,
+        analysis_type: 'market_analysis',
+        parameters: intent.parameters,
+      };
+      break;
+    
+    case 'risk':
+      cryptoContext.portfolio_data = {
+        action: intent.action,
+        risk_assessment: true,
+        health_check: true,
+        parameters: intent.parameters,
+      };
+      break;
+  }
+
+  return cryptoContext;
 }
 
 // Enhanced intent parsing function
@@ -169,6 +271,121 @@ function formatAgentResponse(result, intent, executionTime) {
   };
 }
 
+// Get or create user in Supabase
+async function getOrCreateUser(supabase, walletAddress, sessionId) {
+  if (!supabase) return null;
+  
+  try {
+    // First try to get existing user by wallet address
+    if (walletAddress) {
+      const { data: existingUser, error: getUserError } = await supabase
+        .from('users')
+        .select('id, wallet_address')
+        .eq('wallet_address', walletAddress)
+        .single();
+      
+      if (existingUser && !getUserError) {
+        return existingUser.id;
+      }
+    }
+    
+    // If no user found or no wallet address, create a new user
+    const { data: newUser, error: createError } = await supabase
+      .from('users')
+      .insert([{
+        wallet_address: walletAddress || null,
+        username: sessionId, // Use session ID as username fallback
+      }])
+      .select('id')
+      .single();
+    
+    if (createError) {
+      console.error('Error creating user:', createError);
+      return null;
+    }
+    
+    return newUser.id;
+  } catch (error) {
+    console.error('Error in getOrCreateUser:', error);
+    return null;
+  }
+}
+
+// Get or create chat session
+async function getOrCreateSession(supabase, userId, sessionId) {
+  if (!supabase || !userId) return null;
+  
+  try {
+    // Try to get existing session
+    const { data: existingSession, error: getSessionError } = await supabase
+      .from('chat_sessions')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('session_name', sessionId)
+      .single();
+    
+    if (existingSession && !getSessionError) {
+      return existingSession.id;
+    }
+    
+    // Create new session
+    const { data: newSession, error: createError } = await supabase
+      .from('chat_sessions')
+      .insert([{
+        user_id: userId,
+        session_name: sessionId,
+        is_active: true,
+      }])
+      .select('id')
+      .single();
+    
+    if (createError) {
+      console.error('Error creating session:', createError);
+      return null;
+    }
+    
+    return newSession.id;
+  } catch (error) {
+    console.error('Error in getOrCreateSession:', error);
+    return null;
+  }
+}
+
+// Save message to Supabase
+async function saveMessage(supabase, sessionId, userId, role, content, cryptoContext = null, agentType = null) {
+  if (!supabase || !sessionId || !userId) return null;
+  
+  try {
+    const messageData = {
+      session_id: sessionId,
+      user_id: userId,
+      role: role,
+      content: content,
+      crypto_context: cryptoContext || {},
+      metadata: {
+        agent_type: agentType,
+        timestamp: new Date().toISOString(),
+      },
+    };
+    
+    const { data, error } = await supabase
+      .from('messages')
+      .insert([messageData])
+      .select('id')
+      .single();
+    
+    if (error) {
+      console.error('Error saving message:', error);
+      return null;
+    }
+    
+    return data.id;
+  } catch (error) {
+    console.error('Error in saveMessage:', error);
+    return null;
+  }
+}
+
 // Generate system prompt for structured response
 function generateSystemPrompt(intent, walletAddress) {
   const basePrompt = `You are Seiron, a powerful Dragon Ball Z-themed AI assistant for crypto portfolio management and DeFi operations. You speak with the wisdom and power of a mystical dragon while helping users with their crypto investments and DeFi strategies.
@@ -236,6 +453,11 @@ export default async function handler(req, res) {
     });
   }
   
+  // Initialize variables that need to be accessible in catch block
+  let userId = null;
+  let dbSessionId = null;
+  let supabase = null;
+  
   try {
     // Parse request body
     const body = req.body;
@@ -273,6 +495,9 @@ export default async function handler(req, res) {
       });
     }
     
+    // Initialize Supabase client
+    supabase = initializeSupabaseClient();
+    
     // Parse user intent
     const intent = parseUserIntent(message, sessionId, walletAddress);
     
@@ -287,6 +512,27 @@ export default async function handler(req, res) {
       messageLength: message.length,
       timestamp: new Date().toISOString()
     });
+    
+    // Get or create user and session for Supabase persistence
+    if (supabase) {
+      try {
+        userId = await getOrCreateUser(supabase, walletAddress, sessionId);
+        if (userId) {
+          dbSessionId = await getOrCreateSession(supabase, userId, sessionId);
+          
+          // Save user message to database
+          await saveMessage(supabase, dbSessionId, userId, 'user', message, {
+            intent_type: intent.type,
+            intent_action: intent.action,
+            wallet_address: walletAddress,
+            timestamp: new Date().toISOString(),
+          });
+        }
+      } catch (error) {
+        console.error(`[${requestId}] Error with Supabase setup:`, error);
+        // Continue without database persistence
+      }
+    }
     
     // Generate structured response using GPT-4o
     const result = await generateObject({
@@ -312,6 +558,33 @@ Respond as Seiron the mystical dragon with wisdom about crypto and DeFi. Make su
     // Format response to match API contract
     const response = formatAgentResponse(result.object, intent, executionTime);
     
+    // Save AI response to database with crypto context
+    if (supabase && userId && dbSessionId) {
+      try {
+        const cryptoContext = extractCryptoContext(intent, response, walletAddress);
+        await saveMessage(
+          supabase, 
+          dbSessionId, 
+          userId, 
+          'assistant', 
+          response.message, 
+          cryptoContext,
+          response.agentType
+        );
+        
+        console.log(`[${requestId}] Messages saved to database successfully`, {
+          sessionId,
+          userId,
+          dbSessionId,
+          agentType: response.agentType,
+          cryptoContextKeys: Object.keys(cryptoContext),
+        });
+      } catch (error) {
+        console.error(`[${requestId}] Error saving AI response to database:`, error);
+        // Continue without failing the request
+      }
+    }
+    
     // Log successful request
     console.log(`[${requestId}] Orchestrate request processed successfully`, {
       sessionId,
@@ -321,7 +594,8 @@ Respond as Seiron the mystical dragon with wisdom about crypto and DeFi. Make su
       agentType: response.agentType,
       confidence: response.metadata.confidence,
       executionTime,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      persistedToDb: !!(supabase && userId && dbSessionId)
     });
     
     res.status(200).json(response);
@@ -335,6 +609,28 @@ Respond as Seiron the mystical dragon with wisdom about crypto and DeFi. Make su
       duration: Math.round(duration),
       timestamp: new Date().toISOString()
     });
+    
+    // Try to save error to database for debugging
+    if (supabase && userId && dbSessionId) {
+      try {
+        await saveMessage(
+          supabase, 
+          dbSessionId, 
+          userId, 
+          'system', 
+          `Error: ${error.message}`, 
+          {
+            error_type: 'orchestrate_error',
+            error_message: error.message,
+            timestamp: new Date().toISOString(),
+            duration: Math.round(duration),
+          },
+          'error_handler'
+        );
+      } catch (dbError) {
+        console.error(`[${requestId}] Failed to save error to database:`, dbError);
+      }
+    }
     
     // Return error response in expected format
     res.status(500).json({

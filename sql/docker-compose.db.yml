@@ -1,0 +1,106 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database for Seiron
+  postgres:
+    image: postgres:15-alpine
+    container_name: seiron_postgres
+    environment:
+      POSTGRES_DB: seiron_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: seiron_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    command: >
+      postgres
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=all
+      -c pg_stat_statements.max=10000
+      -c log_statement=all
+      -c log_min_duration_statement=100
+      -c log_line_prefix='%t [%p-%l] %u@%d '
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d seiron_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - seiron_network
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: seiron_redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - seiron_network
+
+  # PgAdmin for database management (optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: seiron_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@seiron.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    restart: unless-stopped
+    networks:
+      - seiron_network
+
+  # Database migration runner
+  migration-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.migrations
+    container_name: seiron_migrations
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: seiron_db
+      DB_USER: postgres
+      DB_PASSWORD: seiron_password
+    volumes:
+      - ./migrations:/migrations
+    networks:
+      - seiron_network
+    command: ["./run_migrations.sh", "migrate"]
+    restart: "no"
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  seiron_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

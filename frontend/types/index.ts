@@ -4,6 +4,7 @@
 export * from './agent'
 export * from './portfolio'
 export * from './price-feed'
+export * from './realtime'
 
 // Note: Other type files removed during cleanup
 

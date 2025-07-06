@@ -4,11 +4,75 @@ import { pipe } from 'fp-ts/function';
 import * as TE from 'fp-ts/TaskEither';
 import * as E from 'fp-ts/Either';
 import { EnhancedUserIntent, OrchestrationResult } from '../services/OrchestratorService';
+import { MessageRecord } from '../services/SupabaseService';
 import { createServiceLogger } from '../services/LoggingService';
 import { performance } from 'perf_hooks';
 
 const router = Router();
 const logger = createServiceLogger('ChatRoute');
+
+// Helper function to save chat messages to Supabase
+async function saveChatMessage(
+  supabaseService: any,
+  walletAddress: string, 
+  role: 'user' | 'assistant',
+  content: string,
+  cryptoContext?: any,
+  sessionName?: string
+): Promise<E.Either<Error, any>> {
+  try {
+    // Get or create user
+    const userResult = await supabaseService.getOrCreateUser(walletAddress)();
+    if (userResult._tag === 'Left') {
+      return E.left(userResult.left);
+    }
+    
+    const user = userResult.right;
+    
+    // Get or create session
+    const sessionResult = await supabaseService.getOrCreateSession(user.id, sessionName)();
+    if (sessionResult._tag === 'Left') {
+      return E.left(sessionResult.left);
+    }
+    
+    const session = sessionResult.right;
+    
+    // Create message record
+    const messageData: Omit<MessageRecord, 'id' | 'created_at'> = {
+      session_id: session.id,
+      user_id: user.id,
+      role,
+      content,
+      crypto_context: cryptoContext || {},
+      metadata: {
+        saved_at: new Date().toISOString(),
+        wallet_address: walletAddress,
+      },
+    };
+    
+    const messageResult = await supabaseService.createMessage(messageData)();
+    if (messageResult._tag === 'Left') {
+      return E.left(messageResult.left);
+    }
+    
+    logger.debug('Message saved to Supabase', {
+      messageId: messageResult.right.id,
+      walletAddress,
+      role,
+      sessionId: session.id,
+    });
+    
+    return E.right(messageResult.right);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error('Failed to save message to Supabase', {
+      error: errorMessage,
+      walletAddress,
+      role,
+    });
+    return E.left(new Error(`Failed to save message: ${errorMessage}`));
+  }
+}
 
 // Parse user message to extract intent
 function parseUserIntent(message: string, sessionId: string, walletAddress?: string): EnhancedUserIntent {
@@ -218,11 +282,51 @@ router.post('/message', [
   const { message, walletAddress } = req.body;
 
   try {
+    // Save user message first
+    const userMessageStart = performance.now();
+    const userMessageResult = await saveChatMessage(
+      req.services.supabase,
+      walletAddress,
+      'user',
+      message
+    );
+    
+    if (userMessageResult._tag === 'Left') {
+      logger.warn('Failed to save user message', {
+        requestId,
+        walletAddress,
+        error: userMessageResult.left.message
+      });
+      // Continue processing even if saving fails
+    } else {
+      logger.debug('User message saved', {
+        requestId,
+        walletAddress,
+        messageId: userMessageResult.right.id,
+        duration: Math.round(performance.now() - userMessageStart)
+      });
+    }
+    
     // Get current portfolio data for context
     const portfolioStartTime = performance.now();
     const portfolioResult = await req.services.portfolio.getPortfolioData(walletAddress)();
     const portfolioData = portfolioResult._tag === 'Right' ? portfolioResult.right : undefined;
     const portfolioDuration = performance.now() - portfolioStartTime;
+    
+    // Build crypto context for persistence
+    const cryptoContext = {
+      portfolio_data: portfolioData,
+      wallet_info: {
+        address: walletAddress,
+        network: 'sei',
+        timestamp: new Date().toISOString()
+      },
+      request_context: {
+        request_id: requestId,
+        user_agent: req.get('User-Agent'),
+        ip_address: req.ip
+      }
+    };
     
     logger.debug('Portfolio data retrieved', {
       requestId,
@@ -247,6 +351,32 @@ router.post('/message', [
       return res.json({ success: false, error: result.left.message });
     }
     
+    // Save AI response
+    const aiMessageStart = performance.now();
+    const aiMessageResult = await saveChatMessage(
+      req.services.supabase,
+      walletAddress,
+      'assistant',
+      result.right.message,
+      cryptoContext
+    );
+    
+    if (aiMessageResult._tag === 'Left') {
+      logger.warn('Failed to save AI response', {
+        requestId,
+        walletAddress,
+        error: aiMessageResult.left.message
+      });
+      // Continue with response even if saving fails
+    } else {
+      logger.debug('AI response saved', {
+        requestId,
+        walletAddress,
+        messageId: aiMessageResult.right.id,
+        duration: Math.round(performance.now() - aiMessageStart)
+      });
+    }
+    
     logger.info('AI message processed successfully', {
       requestId,
       walletAddress,
@@ -254,7 +384,9 @@ router.post('/message', [
       totalDuration: Math.round(performance.now() - startTime),
       responseLength: result.right.message.length,
       hasCommand: !!result.right.command,
-      confidence: result.right.confidence
+      confidence: result.right.confidence,
+      userMessageSaved: userMessageResult._tag === 'Right',
+      aiMessageSaved: aiMessageResult._tag === 'Right'
     });
     
     // Send real-time update via Socket.io
@@ -272,7 +404,18 @@ router.post('/message', [
       });
     }
     
-    res.json({ success: true, data: result.right });
+    // Include persistence status in response
+    const responseData = {
+      ...result.right,
+      persistence: {
+        user_message_saved: userMessageResult._tag === 'Right',
+        ai_response_saved: aiMessageResult._tag === 'Right',
+        user_message_id: userMessageResult._tag === 'Right' ? userMessageResult.right.id : null,
+        ai_response_id: aiMessageResult._tag === 'Right' ? aiMessageResult.right.id : null
+      }
+    };
+    
+    res.json({ success: true, data: responseData });
     
   } catch (error) {
     const duration = performance.now() - startTime;
@@ -326,6 +469,40 @@ router.post('/orchestrate', [
   const { message, sessionId, walletAddress } = req.body;
 
   try {
+    // Save user message first (if wallet address is provided)
+    let userMessageResult: E.Either<Error, any> | null = null;
+    if (walletAddress) {
+      const userMessageStart = performance.now();
+      userMessageResult = await saveChatMessage(
+        req.services.supabase,
+        walletAddress,
+        'user',
+        message,
+        {
+          session_id: sessionId,
+          intent_parsing: true,
+          orchestrator_flow: true
+        }
+      );
+      
+      if (userMessageResult._tag === 'Left') {
+        logger.warn('Failed to save user message in orchestrate', {
+          requestId,
+          sessionId,
+          walletAddress,
+          error: userMessageResult.left.message
+        });
+      } else {
+        logger.debug('User message saved in orchestrate', {
+          requestId,
+          sessionId,
+          walletAddress,
+          messageId: userMessageResult.right.id,
+          duration: Math.round(performance.now() - userMessageStart)
+        });
+      }
+    }
+    
     // Parse user intent
     const intentStartTime = performance.now();
     const intent = parseUserIntent(message, sessionId, walletAddress);
@@ -369,6 +546,58 @@ router.post('/orchestrate', [
     const agentType = orchestrationResult.metadata?.adaptersUsed?.[0] || 'orchestrator';
     const formattedMessage = formatAgentResponse(orchestrationResult, agentType);
     
+    // Save AI response (if wallet address is provided)
+    let aiMessageResult: E.Either<Error, any> | null = null;
+    if (walletAddress) {
+      const aiMessageStart = performance.now();
+      const cryptoContext = {
+        orchestration_result: orchestrationResult,
+        intent_data: {
+          id: intent.id,
+          type: intent.type,
+          action: intent.action,
+          parameters: intent.parameters
+        },
+        execution_metadata: {
+          agent_type: agentType,
+          adapters_used: orchestrationResult.metadata?.adaptersUsed || [],
+          tasks_executed: orchestrationResult.metadata?.tasksExecuted || 0,
+          execution_time: orchestrationResult.metadata?.executionTime,
+          gas_used: orchestrationResult.metadata?.gasUsed
+        },
+        session_context: {
+          session_id: sessionId,
+          wallet_address: walletAddress,
+          timestamp: new Date().toISOString()
+        }
+      };
+      
+      aiMessageResult = await saveChatMessage(
+        req.services.supabase,
+        walletAddress,
+        'assistant',
+        formattedMessage,
+        cryptoContext
+      );
+      
+      if (aiMessageResult._tag === 'Left') {
+        logger.warn('Failed to save AI response in orchestrate', {
+          requestId,
+          sessionId,
+          walletAddress,
+          error: aiMessageResult.left.message
+        });
+      } else {
+        logger.debug('AI response saved in orchestrate', {
+          requestId,
+          sessionId,
+          walletAddress,
+          messageId: aiMessageResult.right.id,
+          duration: Math.round(performance.now() - aiMessageStart)
+        });
+      }
+    }
+    
     const totalDuration = performance.now() - startTime;
     
     logger.info('Orchestration completed successfully', {
@@ -380,7 +609,9 @@ router.post('/orchestrate', [
       orchestratorDuration: Math.round(orchestratorDuration),
       totalDuration: Math.round(totalDuration),
       responseLength: formattedMessage.length,
-      gasUsed: orchestrationResult.metadata?.gasUsed
+      gasUsed: orchestrationResult.metadata?.gasUsed,
+      userMessageSaved: userMessageResult ? userMessageResult._tag === 'Right' : null,
+      aiMessageSaved: aiMessageResult ? aiMessageResult._tag === 'Right' : null
     });
 
     const response = {
@@ -393,7 +624,15 @@ router.post('/orchestrate', [
         intent: intent.type,
         action: intent.action,
         confidence: orchestrationResult.metadata?.confidence,
-      }
+      },
+      ...(walletAddress && {
+        persistence: {
+          user_message_saved: userMessageResult ? userMessageResult._tag === 'Right' : null,
+          ai_response_saved: aiMessageResult ? aiMessageResult._tag === 'Right' : null,
+          user_message_id: userMessageResult && userMessageResult._tag === 'Right' ? userMessageResult.right.id : null,
+          ai_response_id: aiMessageResult && aiMessageResult._tag === 'Right' ? aiMessageResult.right.id : null
+        }
+      })
     };
 
     return res.json(response);
@@ -439,17 +678,79 @@ router.get('/history', async (req, res) => {
   }
 
   try {
-    const history = req.services.ai.getConversationHistory(walletAddress);
+    // Get conversation history from Supabase
+    const page = parseInt(req.query.page as string) || 1;
+    const pageSize = parseInt(req.query.pageSize as string) || 50;
     
-    logger.info('Chat history retrieved successfully', {
+    const historyResult = await req.services.supabase.getConversationHistory(walletAddress, page, pageSize)();
+    
+    if (historyResult._tag === 'Left') {
+      logger.error('Failed to retrieve chat history from Supabase', {
+        requestId,
+        walletAddress,
+        error: historyResult.left.message
+      });
+      
+      // Fallback to in-memory history from AI service
+      const fallbackHistory = req.services.ai.getConversationHistory(walletAddress);
+      
+      logger.info('Fallback chat history retrieved from AI service', {
+        requestId,
+        walletAddress,
+        messageCount: fallbackHistory.length,
+        source: 'ai_service_fallback'
+      });
+      
+      return res.json({ 
+        success: true, 
+        data: fallbackHistory,
+        source: 'fallback',
+        pagination: {
+          page: 1,
+          pageSize: fallbackHistory.length,
+          totalCount: fallbackHistory.length,
+          hasMore: false
+        }
+      });
+    }
+    
+    const { messages, totalCount, hasMore } = historyResult.right;
+    
+    logger.info('Chat history retrieved successfully from Supabase', {
       requestId,
       walletAddress,
-      messageCount: history.length,
-      oldestMessage: history[0]?.timestamp,
-      newestMessage: history[history.length - 1]?.timestamp
+      messageCount: messages.length,
+      totalCount,
+      page,
+      pageSize,
+      hasMore,
+      oldestMessage: messages[messages.length - 1]?.created_at,
+      newestMessage: messages[0]?.created_at
     });
     
-    res.json({ success: true, data: history });
+    // Transform messages to match expected format
+    const transformedMessages = messages.map(msg => ({
+      id: msg.id,
+      role: msg.role,
+      content: msg.content,
+      timestamp: msg.created_at,
+      crypto_context: msg.crypto_context,
+      metadata: msg.metadata,
+      session_id: msg.session_id,
+      user_id: msg.user_id
+    }));
+    
+    res.json({ 
+      success: true, 
+      data: transformedMessages,
+      source: 'supabase',
+      pagination: {
+        page,
+        pageSize,
+        totalCount,
+        hasMore
+      }
+    });
   } catch (error) {
     logger.error('Failed to retrieve chat history', {
       requestId,
@@ -492,23 +793,90 @@ router.delete('/history', [
   const { walletAddress } = req.body;
 
   try {
-    const result = await req.services.ai.clearConversationHistory(walletAddress)();
-
-    if (result._tag === 'Left') {
-      logger.error('Failed to clear chat history', {
+    // Clear from AI service first
+    const aiResult = await req.services.ai.clearConversationHistory(walletAddress)();
+    let aiCleared = false;
+    
+    if (aiResult._tag === 'Left') {
+      logger.warn('Failed to clear chat history from AI service', {
         requestId,
         walletAddress,
-        error: result.left.message
+        error: aiResult.left.message
       });
-      return res.json({ success: false, error: result.left.message });
+    } else {
+      aiCleared = true;
+      logger.debug('Chat history cleared from AI service', {
+        requestId,
+        walletAddress
+      });
+    }
+    
+    // Clear from Supabase - first get user to find their sessions
+    const userResult = await req.services.supabase.getOrCreateUser(walletAddress)();
+    let supabaseCleared = false;
+    let deletedCount = 0;
+    
+    if (userResult._tag === 'Left') {
+      logger.error('Failed to get user for history clearing', {
+        requestId,
+        walletAddress,
+        error: userResult.left.message
+      });
+    } else {
+      // For now, we'll delete all messages for this wallet address
+      // In the future, we could implement a more sophisticated session-based clearing
+      const messagesResult = await req.services.supabase.getMessagesByWallet(walletAddress, 1000)();
+        
+      if (messagesResult._tag === 'Left') {
+        logger.error('Failed to get user messages for clearing', {
+          requestId,
+          walletAddress,
+          error: messagesResult.left.message
+        });
+      } else {
+        // Group messages by session and delete by session
+        const sessionIds = new Set(messagesResult.right.map(msg => msg.session_id));
+        
+        for (const sessionId of sessionIds) {
+          const deleteResult = await req.services.supabase.deleteMessagesBySession(sessionId)();
+          if (deleteResult._tag === 'Right') {
+            deletedCount += deleteResult.right;
+          }
+        }
+        supabaseCleared = true;
+        
+        logger.info('Chat history cleared from Supabase', {
+          requestId,
+          walletAddress,
+          sessionsCleared: sessionIds.size,
+          messagesDeleted: deletedCount
+        });
+      }
     }
 
-    logger.info('Chat history cleared successfully', {
+    const success = aiCleared || supabaseCleared;
+    const message = success 
+      ? `Conversation history cleared successfully. ${deletedCount > 0 ? `Deleted ${deletedCount} messages.` : ''}`
+      : 'Failed to clear conversation history from both sources';
+
+    logger.info('Chat history clearing completed', {
       requestId,
-      walletAddress
+      walletAddress,
+      aiCleared,
+      supabaseCleared,
+      deletedCount,
+      success
     });
     
-    res.json({ success: true, message: 'Conversation history cleared' });
+    res.json({ 
+      success, 
+      message,
+      details: {
+        ai_service_cleared: aiCleared,
+        supabase_cleared: supabaseCleared,
+        messages_deleted: deletedCount
+      }
+    });
   } catch (error) {
     logger.error('Clear chat history endpoint error', {
       requestId,

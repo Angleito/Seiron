@@ -1,0 +1,16 @@
+FROM postgres:15-alpine
+
+# Install required packages
+RUN apk add --no-cache bash curl
+
+# Create migrations directory
+WORKDIR /migrations
+
+# Copy migration files
+COPY migrations/ /migrations/
+
+# Make the migration runner executable
+RUN chmod +x /migrations/run_migrations.sh
+
+# Set the entrypoint
+ENTRYPOINT ["/migrations/run_migrations.sh"]
