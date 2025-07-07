@@ -18,10 +18,21 @@ export default function HomePage() {
 
   const handleNavigation = (path: string) => {
     try {
-      console.log(`Navigating to ${path}`)
+      console.log(`🔍 DEBUG: handleNavigation called with path: ${path}`)
+      console.log(`🔍 DEBUG: navigate function exists:`, typeof navigate === 'function')
+      console.log(`🔍 DEBUG: Current timestamp:`, new Date().toISOString())
+      
+      // Test if navigate function is available
+      if (typeof navigate !== 'function') {
+        throw new Error('Navigate function is not available')
+      }
+      
+      console.log(`🔍 DEBUG: About to call navigate(${path})`)
       navigate(path)
+      console.log(`🔍 DEBUG: navigate() called successfully`)
     } catch (error) {
-      console.error(`Navigation error:`, error)
+      console.error(`🚨 Navigation error:`, error)
+      console.error(`🚨 Error stack:`, error instanceof Error ? error.stack : 'No stack trace')
     }
   }
 
@@ -64,7 +75,13 @@ export default function HomePage() {
           `}>
             <div className="flex gap-6 justify-center">
               <button
-                onClick={() => handleNavigation('/chat')}
+                onClick={(e) => {
+                  console.log(`🔍 DEBUG: SUMMON button clicked!`)
+                  console.log(`🔍 DEBUG: Event details:`, e)
+                  console.log(`🔍 DEBUG: Event target:`, e.target)
+                  console.log(`🔍 DEBUG: Event currentTarget:`, e.currentTarget)
+                  handleNavigation('/chat')
+                }}
                 className="
                 group relative overflow-hidden
                 px-10 py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 
@@ -93,7 +110,13 @@ export default function HomePage() {
                 </button>
               
               <button
-                onClick={() => handleNavigation('/about')}
+                onClick={(e) => {
+                  console.log(`🔍 DEBUG: ABOUT button clicked!`)
+                  console.log(`🔍 DEBUG: Event details:`, e)
+                  console.log(`🔍 DEBUG: Event target:`, e.target)
+                  console.log(`🔍 DEBUG: Event currentTarget:`, e.currentTarget)
+                  handleNavigation('/about')
+                }}
                 className="
                 group relative overflow-hidden
                 px-10 py-4 bg-gradient-to-r from-slate-800 to-slate-900
