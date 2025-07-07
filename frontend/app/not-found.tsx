@@ -1,100 +1,29 @@
-'use client';
+import Link from 'next/link'
 
-// Force dynamic rendering - prevent static generation
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic'
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 text-white relative overflow-hidden">
-      <style jsx global>{`
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0px) rotate(0deg);
-          }
-          33% {
-            transform: translateY(-20px) rotate(120deg);
-          }
-          66% {
-            transform: translateY(10px) rotate(240deg);
-          }
-        }
-        
-        .particle-1 {
-          position: absolute;
-          top: 25%;
-          left: 25%;
-          width: 0.5rem;
-          height: 0.5rem;
-          background-color: #fbbf24;
-          border-radius: 50%;
-          opacity: 0.6;
-          pointer-events: none;
-          animation: float 6s ease-in-out infinite;
-        }
-        
-        .particle-2 {
-          position: absolute;
-          top: 75%;
-          right: 25%;
-          width: 0.25rem;
-          height: 0.25rem;
-          background-color: #f87171;
-          border-radius: 50%;
-          opacity: 0.4;
-          pointer-events: none;
-          animation: float 6s ease-in-out infinite;
-          animation-delay: 2s;
-        }
-        
-        .particle-3 {
-          position: absolute;
-          top: 50%;
-          left: 75%;
-          width: 0.375rem;
-          height: 0.375rem;
-          background-color: #fb923c;
-          border-radius: 50%;
-          opacity: 0.5;
-          pointer-events: none;
-          animation: float 6s ease-in-out infinite;
-          animation-delay: 4s;
-        }
-      `}</style>
-      
-      <div className="max-w-lg mx-auto text-center relative z-10">
-        <div>
-          <h1 className="text-8xl md:text-9xl font-black bg-gradient-to-br from-red-500 to-orange-500 bg-clip-text text-transparent mb-8 leading-none">
-            404
-          </h1>
-        </div>
-        
-        <div>
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-red-900 to-slate-900 flex items-center justify-center p-4 text-white">
+      <div className="max-w-md mx-auto text-center">
+        <div className="mb-6">
+          <div className="text-6xl mb-4">🐉</div>
+          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-red-400 via-orange-400 to-yellow-400 bg-clip-text text-transparent">
             Dragon&apos;s Lair Not Found
-          </h2>
-          <p className="text-gray-300 text-lg leading-relaxed mb-8">
+          </h1>
+          <p className="text-gray-300 mb-6">
             The mystical path you seek has been consumed by dragon fire. 
             Even the legendary Seiron cannot grant wishes for pages that don&apos;t exist.
           </p>
         </div>
-
-        <div>
-          <a 
-            href="/" 
-            className="inline-flex items-center justify-center px-8 py-3 rounded-lg font-medium text-white bg-gradient-to-br from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 transition-all duration-300 hover:-translate-y-0.5 no-underline"
-          >
-            Return to Dragon&apos;s Domain
-          </a>
-          
-          <div className="text-sm text-gray-400 mt-4">
-            Or navigate back to continue your mystical journey
-          </div>
-        </div>
+        
+        <Link
+          href="/"
+          className="inline-block bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+        >
+          Return to Dragon&apos;s Domain
+        </Link>
       </div>
-
-      <div className="particle-1"></div>
-      <div className="particle-2"></div>
-      <div className="particle-3"></div>
     </div>
-  );
+  )
 }
