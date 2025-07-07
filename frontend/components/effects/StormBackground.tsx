@@ -248,14 +248,14 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
       
       {/* Atmospheric enhancement overlay */}
       <div 
-        className="absolute inset-0 bg-gradient-to-t from-transparent via-red-950/5 to-red-900/10"
+        className="absolute inset-0 bg-gradient-to-t from-transparent via-red-950/5 to-red-900/10 pointer-events-none"
         style={{ 
           zIndex: 60,
           transform: shouldAnimate ? `translateY(${calculateParallaxOffset(0.05)}px)` : 'none'
         }}
       />
       
-      {/* Content container */}
+      {/* Content container - Highest z-index for interactive elements like buttons */}
       <div 
         className="relative z-50 w-full h-full"
         style={{
@@ -264,6 +264,17 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
       >
         {children}
       </div>
+      
+      {/* Z-Index Hierarchy Documentation:
+          - Background gradient: z-5
+          - Cloud layers: z-10-30 (StormCloud components)
+          - Dragon Head 3D: no explicit z-index (between clouds and fog)
+          - Lightning Effects: z-40-50 (LightningEffect SVG and flash)
+          - Fog layers: z-10 (FogOverlay)
+          - Atmospheric overlay: z-60
+          - Content container: z-50 (buttons and interactive elements)
+          - Homepage button container: z-[100] (highest priority)
+       */}
       
       {/* Accessibility: Reduce motion styles */}
       <style dangerouslySetInnerHTML={{

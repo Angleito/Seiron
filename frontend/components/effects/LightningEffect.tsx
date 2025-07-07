@@ -43,15 +43,15 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
   const [isFlashing, setIsFlashing] = useState(false)
 
   const frequencyConfig = {
-    low: { minDelay: 12000, maxDelay: 25000 },
-    medium: { minDelay: 6000, maxDelay: 15000 },
-    high: { minDelay: 3000, maxDelay: 8000 }
+    low: { minDelay: 45000, maxDelay: 90000 },    // 45-90 seconds (rare, dramatic)
+    medium: { minDelay: 25000, maxDelay: 60000 }, // 25-60 seconds (moderate storms)
+    high: { minDelay: 15000, maxDelay: 35000 }    // 15-35 seconds (intense storms)
   }
 
   const intensityConfig = {
-    subtle: { maxBolts: 1, flashIntensity: 0.15, glowSize: 8 },
-    normal: { maxBolts: 1, flashIntensity: 0.25, glowSize: 12 },
-    intense: { maxBolts: 2, flashIntensity: 0.4, glowSize: 16 }
+    subtle: { maxBolts: 1, flashIntensity: 0.08, glowSize: 6, duration: 80 },
+    normal: { maxBolts: 1, flashIntensity: 0.15, glowSize: 10, duration: 120 },
+    intense: { maxBolts: 1, flashIntensity: 0.25, glowSize: 14, duration: 150 }
   }
 
   const generateJaggedPath = (startX: number, startY: number, endX: number, endY: number, segments: number = 15): LightningPoint[] => {
@@ -63,9 +63,14 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
       const baseX = startX + (endX - startX) * progress
       const baseY = startY + (endY - startY) * progress
       
-      // Add significant randomness for jagged lightning effect
-      const offsetX = (Math.random() - 0.5) * 8 * (1 - Math.abs(progress - 0.5) * 2) // More variation in middle
-      const offsetY = (Math.random() - 0.5) * 3
+      // More realistic lightning with primarily vertical movement and limited horizontal deviation
+      const maxHorizontalDeviation = 4 // Reduced from 8 for more realistic look
+      const maxVerticalDeviation = 1.5 // Reduced from 3 for straighter path
+      
+      // Reduce deviation at start and end for more natural attachment points
+      const deviationFactor = Math.sin(progress * Math.PI) // Peak deviation in middle
+      const offsetX = (Math.random() - 0.5) * maxHorizontalDeviation * deviationFactor
+      const offsetY = (Math.random() - 0.5) * maxVerticalDeviation * deviationFactor
       
       points.push({
         x: baseX + offsetX,
@@ -78,43 +83,45 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
   }
 
   const generateLightningBolt = useCallback((): LightningBolt => {
-    // Start from random top position
-    const startX = 10 + Math.random() * 80
-    const startY = -5 + Math.random() * 15
+    // Start from clouds area (top 20% of screen)
+    const startX = 20 + Math.random() * 60 // More centered starting position
+    const startY = -2 + Math.random() * 8  // Start from cloud layer
     
-    // End at random bottom position
-    const endX = startX + (Math.random() - 0.5) * 40
-    const endY = 85 + Math.random() * 20
+    // End position with limited horizontal drift for more realistic vertical path
+    const maxHorizontalDrift = 20 // Reduced from 40 for more vertical lightning
+    const endX = startX + (Math.random() - 0.5) * maxHorizontalDrift
+    const endY = 85 + Math.random() * 15
     
-    // Generate main lightning path with many segments for jagged effect
-    const mainSegments = 20 + Math.floor(Math.random() * 15)
+    // Generate main lightning path with optimal segment count
+    const mainSegments = 15 + Math.floor(Math.random() * 8) // Reduced from 20-35
     const mainPath = generateJaggedPath(startX, startY, endX, endY, mainSegments)
     
-    // Generate branches from random points along main path
+    // Generate fewer, more realistic branches
     const branches: LightningBranch[] = []
-    const numBranches = Math.floor(Math.random() * 4) + 2 // 2-5 branches
+    const numBranches = Math.floor(Math.random() * 2) + 1 // 1-2 branches (reduced from 2-5)
     
     for (let i = 0; i < numBranches; i++) {
-      // Pick random point along main path (avoid first and last 20%)
-      const branchIndex = Math.floor(mainPath.length * 0.2 + Math.random() * mainPath.length * 0.6)
+      // Pick random point along main path (avoid first and last 25%)
+      const branchIndex = Math.floor(mainPath.length * 0.25 + Math.random() * mainPath.length * 0.5)
       const branchStart = mainPath[branchIndex]
       
       if (branchStart) {
-        // Branch goes off at an angle
-        const branchLength = 15 + Math.random() * 25
-        const angle = (Math.random() - 0.5) * Math.PI * 0.8 // ±72 degrees
+        // More realistic branch angles (20-45 degrees)
+        const branchLength = 8 + Math.random() * 15 // Shorter branches
+        const maxAngle = Math.PI * 0.25 // ±45 degrees (reduced from ±72)
+        const angle = (Math.random() - 0.5) * maxAngle
         
         const branchEndX = branchStart.x + Math.cos(angle) * branchLength
-        const branchEndY = branchStart.y + Math.sin(angle) * branchLength + Math.random() * 10
+        const branchEndY = branchStart.y + Math.sin(Math.abs(angle)) * branchLength + Math.random() * 5
         
-        // Generate branch path
-        const branchSegments = 8 + Math.floor(Math.random() * 6)
+        // Generate branch path with fewer segments
+        const branchSegments = 4 + Math.floor(Math.random() * 4) // Reduced from 8-14
         const branchPath = generateJaggedPath(branchStart.x, branchStart.y, branchEndX, branchEndY, branchSegments)
         
         branches.push({
           points: branchPath,
-          width: 0.3 + Math.random() * 0.4, // Much thinner branches
-          opacity: 0.6 + Math.random() * 0.3
+          width: 0.2 + Math.random() * 0.25, // Thinner branches
+          opacity: 0.7 + Math.random() * 0.2
         })
       }
     }
@@ -123,8 +130,8 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
       id: `lightning-${Date.now()}-${Math.random()}`,
       mainPath,
       branches,
-      opacity: 0.9 + Math.random() * 0.1,
-      duration: 100 + Math.random() * 80
+      opacity: 0.85 + Math.random() * 0.15,
+      duration: 80 + Math.random() * 60 // Faster, more realistic duration
     }
   }, [])
 
@@ -132,20 +139,21 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
     if (!enabled || reducedMotion) return
 
     const config = intensityConfig[intensity]
-    const boltCount = 1 + Math.floor(Math.random() * Math.min(maxBolts, config.maxBolts))
-    const newBolts = Array.from({ length: boltCount }, () => generateLightningBolt())
+    // Always generate exactly 1 bolt for realism
+    const newBolts = [generateLightningBolt()]
 
     setLightningBolts(newBolts)
     setIsFlashing(true)
     onLightningStrike?.(true)
 
-    // Remove bolts after animation
+    // Use configured duration for more realistic timing
+    const flashDuration = config.duration
     setTimeout(() => {
       setLightningBolts([])
       setIsFlashing(false)
       onLightningStrike?.(false)
-    }, Math.max(...newBolts.map(bolt => bolt.duration)))
-  }, [enabled, reducedMotion, intensity, maxBolts, generateLightningBolt, onLightningStrike])
+    }, flashDuration)
+  }, [enabled, reducedMotion, intensity, generateLightningBolt, onLightningStrike])
 
   useEffect(() => {
     if (!enabled || reducedMotion) return
@@ -154,23 +162,29 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
       const config = frequencyConfig[frequency]
       const delay = config.minDelay + Math.random() * (config.maxDelay - config.minDelay)
       
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         triggerLightning()
         scheduleNext()
       }, delay)
+      
+      // Return cleanup function
+      return () => clearTimeout(timeoutId)
     }
 
-    scheduleNext()
+    const cleanup = scheduleNext()
+    
+    // Cleanup on unmount or dependency change
+    return cleanup
   }, [enabled, reducedMotion, frequency, triggerLightning])
 
   if (!enabled || reducedMotion) return null
 
   return (
     <div className={cn("absolute inset-0 pointer-events-none", className)}>
-      {/* Lightning flash overlay */}
+      {/* Lightning flash overlay - Enhanced golden theme */}
       <div
         className={cn(
-          "absolute inset-0 transition-opacity duration-75 bg-gradient-to-b from-yellow-100/20 via-yellow-300/10 to-transparent",
+          "absolute inset-0 transition-opacity duration-100 bg-gradient-to-b from-yellow-50/30 via-yellow-200/15 to-amber-100/5",
           isFlashing ? "opacity-100" : "opacity-0"
         )}
         style={{
@@ -184,12 +198,18 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
         <defs>
           <linearGradient id="lightningGradient" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
-            <stop offset="20%" stopColor="#fbbf24" stopOpacity="0.95" />
-            <stop offset="60%" stopColor="#f59e0b" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#d97706" stopOpacity="0.6" />
+            <stop offset="15%" stopColor="#fef3c7" stopOpacity="0.98" />
+            <stop offset="40%" stopColor="#fbbf24" stopOpacity="0.9" />
+            <stop offset="70%" stopColor="#f59e0b" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#d97706" stopOpacity="0.65" />
+          </linearGradient>
+          <linearGradient id="lightningCore" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
+            <stop offset="30%" stopColor="#fef9c3" stopOpacity="0.95" />
+            <stop offset="100%" stopColor="#fbbf24" stopOpacity="0.85" />
           </linearGradient>
           <filter id="lightningGlow">
-            <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+            <feGaussianBlur stdDeviation="1.2" result="coloredBlur"/>
             <feMerge>
               <feMergeNode in="coloredBlur"/>
               <feMergeNode in="SourceGraphic"/>
@@ -205,11 +225,11 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
           
           return (
             <g key={bolt.id}>
-              {/* Main lightning bolt - very thin */}
+              {/* Main lightning bolt - realistic thickness */}
               <path
                 d={mainPathD}
                 stroke="url(#lightningGradient)"
-                strokeWidth="0.4"
+                strokeWidth="0.5"
                 fill="none"
                 opacity={bolt.opacity}
                 filter="url(#lightningGlow)"
@@ -217,13 +237,13 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
                 strokeLinejoin="round"
               />
               
-              {/* Secondary glow for main bolt */}
+              {/* Bright core for main bolt - golden theme */}
               <path
                 d={mainPathD}
-                stroke="#ffffff"
-                strokeWidth="0.15"
+                stroke="url(#lightningCore)"
+                strokeWidth="0.2"
                 fill="none"
-                opacity={bolt.opacity * 0.8}
+                opacity={bolt.opacity * 0.9}
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
@@ -241,17 +261,17 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
                       stroke="url(#lightningGradient)"
                       strokeWidth={branch.width}
                       fill="none"
-                      opacity={branch.opacity * bolt.opacity}
+                      opacity={branch.opacity * bolt.opacity * 0.8}
                       filter="url(#lightningGlow)"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
                     <path
                       d={branchPathD}
-                      stroke="#ffffff"
-                      strokeWidth={branch.width * 0.4}
+                      stroke="url(#lightningCore)"
+                      strokeWidth={branch.width * 0.5}
                       fill="none"
-                      opacity={branch.opacity * bolt.opacity * 0.6}
+                      opacity={branch.opacity * bolt.opacity * 0.7}
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
@@ -263,21 +283,21 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
         })}
       </svg>
       
-      {/* Subtle glow effects along main path */}
+      {/* Enhanced golden glow effects along main path */}
       {lightningBolts.map((bolt) => {
-        // Create glow points along main path
-        const glowPoints = bolt.mainPath.filter((_, index) => index % 3 === 0) // Every 3rd point
+        // Create fewer, more subtle glow points for performance
+        const glowPoints = bolt.mainPath.filter((_, index) => index % 4 === 0) // Every 4th point (reduced from 3rd)
         
         return glowPoints.map((point, index) => (
           <div
             key={`glow-${bolt.id}-${index}`}
-            className="absolute rounded-full bg-white/10 blur-sm"
+            className="absolute rounded-full bg-gradient-to-r from-yellow-200/20 to-amber-300/15 blur-md"
             style={{
               left: `${point.x}%`,
               top: `${point.y}%`,
               width: `${intensityConfig[intensity].glowSize}px`,
               height: `${intensityConfig[intensity].glowSize}px`,
-              opacity: bolt.opacity * 0.3,
+              opacity: bolt.opacity * 0.25, // Slightly reduced for subtlety
               transform: 'translate(-50%, -50%)',
               zIndex: 35
             }}
