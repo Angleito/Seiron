@@ -41,7 +41,7 @@ function DragonHeadMesh({
     
     // Scale and position the dragon head
     cloned.scale.setScalar(0.8) // Adjust scale as needed
-    cloned.position.set(0, 0.5, 0) // Position slightly above center
+    cloned.position.set(0, -1.5, 0) // Position head so eyes are at center
     cloned.rotation.set(0.1, 0, 0) // Slight downward angle
     
     // Apply dark, metallic materials
@@ -243,7 +243,7 @@ export function DragonHead3D({
     <div className={`absolute inset-0 ${className}`}>
       <Canvas
         camera={{ 
-          position: [0, 0, 8], 
+          position: [0, 1, 8], 
           fov: 45,
           near: 0.1,
           far: 100
