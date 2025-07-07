@@ -16,7 +16,7 @@ export const characterConfig: Record<'user' | 'assistant', CharacterConfig> = {
   },
   assistant: {
     name: 'Seiron',
-    image: '/seiron.png', // Existing dragon mascot image
+    image: '/images/seiron.png', // Updated dragon mascot image
     position: 'left',
     powerLevel: 9000,
     title: 'Eternal Dragon of Finance'

@@ -84,7 +84,7 @@ export function SeironImage({
       
       {/* Main dragon image with mystical effects */}
       <img
-        src="/seiron.png"
+        src="/images/seiron.png"
         alt="Seiron Dragon"
         width={config.width}
         height={config.height}
