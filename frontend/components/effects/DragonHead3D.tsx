@@ -71,9 +71,9 @@ function DragonHeadMesh({
     const normalizedY = -(mouseY / window.innerHeight) * 2 + 1
     
     // Limit eye movement range (eyes can't rotate infinitely)
-    const maxRotation = Math.PI / 6 // 30 degrees max
-    const eyeRotationX = normalizedY * maxRotation * 0.3 // Reduce vertical movement
-    const eyeRotationY = normalizedX * maxRotation * 0.5 // More horizontal movement
+    const maxRotation = Math.PI / 4 // 45 degrees max
+    const eyeRotationX = normalizedY * maxRotation * 0.5 // Increased vertical movement
+    const eyeRotationY = normalizedX * maxRotation * 0.7 // More horizontal movement
     
     return { x: eyeRotationX, y: eyeRotationY }
   }
@@ -103,8 +103,8 @@ function DragonHeadMesh({
     // Apply eye rotations (we'll need to identify eye objects in the mesh)
     // For now, we'll apply subtle head movement to simulate eye tracking
     if (isMouseActive && enableEyeTracking) {
-      meshRef.current.rotation.x = 0.1 + eyeRotX * 0.1
-      meshRef.current.rotation.y = eyeRotY * 0.15
+      meshRef.current.rotation.x = 0.1 + eyeRotX * 0.4
+      meshRef.current.rotation.y = eyeRotY * 0.6
     } else {
       // Return to neutral position when mouse is inactive
       meshRef.current.rotation.x = THREE.MathUtils.lerp(meshRef.current.rotation.x, 0.1, delta * 2)
