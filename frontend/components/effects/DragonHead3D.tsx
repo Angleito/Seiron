@@ -41,7 +41,7 @@ function DragonHeadMesh({
     
     // Scale and position the dragon head
     cloned.scale.setScalar(0.8) // Adjust scale as needed
-    cloned.position.set(0, -18, -10) // Position head so eyes are at center, moved back
+    cloned.position.set(0, -20, -10) // Position head so eyes are at center, moved back and down
     cloned.rotation.set(0.1, 0, 0) // Slight downward angle
     
     // Apply dark, metallic materials
