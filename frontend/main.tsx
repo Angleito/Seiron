@@ -1,14 +1,8 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { RouterProvider } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { PrivyProvider } from '@privy-io/react-auth'
-import { WagmiProvider } from 'wagmi'
-import { router } from './router'
 import HomePage3D from './src/pages/HomePage3D'
 import { RootErrorBoundary } from './components/error-boundaries/RootErrorBoundary'
-import { privyConfig } from './config/privy'
-import { wagmiConfig } from './config/wagmi'
 import './styles/globals.css'
 
 // Debug logging for app initialization
@@ -41,49 +35,18 @@ function renderApp() {
   console.log('🏗️ Creating React root...')
   const root = ReactDOM.createRoot(rootElement)
   
-  console.log('🎨 Rendering app...')
+  console.log('🎨 Rendering simplified dragon homepage...')
 
-  // Check if we have required environment variables for full app
-  const hasPrivyConfig = !!privyConfig.appId
-  const shouldUseFullApp = hasPrivyConfig && import.meta.env.PROD
-  
-  console.log('🔍 App configuration check:')
-  console.log('- Has Privy config:', hasPrivyConfig)
-  console.log('- Production mode:', import.meta.env.PROD)
-  console.log('- Will use full app:', shouldUseFullApp)
-
-  if (shouldUseFullApp) {
-    console.log('📱 Rendering full app with authentication')
-    // Full app for production with proper authentication
-    root.render(
-      <React.StrictMode>
-        <RootErrorBoundary>
-          <PrivyProvider 
-            appId={privyConfig.appId} 
-            config={privyConfig.config}>
-            <QueryClientProvider client={queryClient}>
-              <WagmiProvider config={wagmiConfig}>
-                <RouterProvider router={router} />
-              </WagmiProvider>
-            </QueryClientProvider>
-          </PrivyProvider>
-        </RootErrorBoundary>
-      </React.StrictMode>
-    )
-  } else {
-    console.log('🐉 Rendering simplified dragon homepage (fallback mode)')
-    console.log('- Reason: Missing Privy config or development mode')
-    // Fallback: render simple homepage without complex auth
-    root.render(
-      <React.StrictMode>
-        <RootErrorBoundary>
-          <QueryClientProvider client={queryClient}>
-            <HomePage3D />
-          </QueryClientProvider>
-        </RootErrorBoundary>
-      </React.StrictMode>
-    )
-  }
+  // Simplified: render just the homepage with minimal dependencies
+  root.render(
+    <React.StrictMode>
+      <RootErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <HomePage3D />
+        </QueryClientProvider>
+      </RootErrorBoundary>
+    </React.StrictMode>
+  )
   
   console.log('✅ App render complete')
 }
