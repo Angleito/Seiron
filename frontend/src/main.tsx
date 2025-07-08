@@ -7,6 +7,9 @@ import { WagmiProvider } from 'wagmi'
 import { router } from '../router'
 import SimpleHomePage from './pages/SimpleHomePage'
 import HomePage3D from './pages/HomePage3D'
+import { RootErrorBoundary } from '../components/error-boundaries/RootErrorBoundary'
+import { privyConfig } from '../config/privy'
+import { wagmiConfig } from '../config/wagmi'
 // Simplified imports for quick dragon display
 import '../styles/globals.css'
 
@@ -15,6 +18,10 @@ console.log('🚀 Seiron App Initializing...')
 console.log('Environment:', import.meta.env.MODE)
 console.log('Privy App ID available:', !!import.meta.env.VITE_PRIVY_APP_ID)
 console.log('Root element:', document.getElementById('root'))
+
+// Extract Privy configuration
+const appId = privyConfig.appId || import.meta.env.VITE_PRIVY_APP_ID || ''
+const safePrivyConfig = privyConfig.config
 
 const queryClient = new QueryClient({
   defaultOptions: {

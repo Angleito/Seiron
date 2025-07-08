@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { SeironGLBDragon } from './SeironGLBDragon'
+import { SeironGLBDragon } from '@/components/dragon/SeironGLBDragon'
 
 export interface VoiceAnimationState {
   isListening: boolean
