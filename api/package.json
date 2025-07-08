@@ -1,0 +1,10 @@
+{
+  "name": "seiron-vercel-api",
+  "version": "1.0.0",
+  "description": "Vercel API functions for Seiron",
+  "private": true,
+  "dependencies": {
+    "@vercel/node": "^3.0.0",
+    "openai": "^4.0.0"
+  }
+}
