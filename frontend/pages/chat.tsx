@@ -1,18 +1,25 @@
 import React, { useState, useEffect } from 'react'
 import { MinimalChatInterface } from '@/components/chat/MinimalChatInterface'
 import { ChatGPTInterface } from '@/components/chat/ChatGPTInterface'
+import { VoiceEnabledChat } from '@/components/chat/VoiceEnabledChat'
 import { useSearchParams } from 'react-router-dom'
+import { usePrivy } from '@privy-io/react-auth'
 import '@/styles/chatgpt-anime.css'
 
 export default function ChatPage() {
   const [searchParams] = useSearchParams()
-  const [interfaceType, setInterfaceType] = useState<'minimal' | 'chatgpt'>('minimal')
+  const [interfaceType, setInterfaceType] = useState<'minimal' | 'chatgpt' | 'voice'>('voice')
+  const { user } = usePrivy()
 
   useEffect(() => {
     // Check URL params for interface type
     const type = searchParams.get('interface')
     if (type === 'chatgpt' || type === 'anime') {
       setInterfaceType('chatgpt')
+    } else if (type === 'minimal') {
+      setInterfaceType('minimal')
+    } else if (type === 'voice') {
+      setInterfaceType('voice')
     }
   }, [searchParams])
 
@@ -21,7 +28,11 @@ export default function ChatPage() {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key === 't') {
         e.preventDefault()
-        setInterfaceType(prev => prev === 'minimal' ? 'chatgpt' : 'minimal')
+        setInterfaceType(prev => {
+          if (prev === 'voice') return 'minimal'
+          if (prev === 'minimal') return 'chatgpt'
+          return 'voice'
+        })
       }
     }
 
@@ -45,17 +56,53 @@ export default function ChatPage() {
         }} 
       />
       
-      {/* Interface Toggle Button */}
-      <button
-        onClick={() => setInterfaceType(prev => prev === 'minimal' ? 'chatgpt' : 'minimal')}
-        className="absolute top-4 right-4 z-20 px-4 py-2 bg-gray-800 text-gray-200 rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
-        title="Toggle interface (Ctrl+T)"
-      >
-        {interfaceType === 'minimal' ? 'Switch to Anime UI' : 'Switch to Minimal UI'}
-      </button>
+      {/* Interface Toggle Buttons */}
+      <div className="absolute top-4 right-4 z-20 flex gap-2">
+        <button
+          onClick={() => setInterfaceType('voice')}
+          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+            interfaceType === 'voice' 
+              ? 'bg-orange-600 text-white' 
+              : 'bg-gray-800 text-gray-200 hover:bg-gray-700'
+          }`}
+          title="AI Voice Chat (Default)"
+        >
+          🐉 AI Voice
+        </button>
+        <button
+          onClick={() => setInterfaceType('minimal')}
+          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+            interfaceType === 'minimal' 
+              ? 'bg-orange-600 text-white' 
+              : 'bg-gray-800 text-gray-200 hover:bg-gray-700'
+          }`}
+          title="Minimal UI"
+        >
+          Minimal
+        </button>
+        <button
+          onClick={() => setInterfaceType('chatgpt')}
+          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+            interfaceType === 'chatgpt' 
+              ? 'bg-orange-600 text-white' 
+              : 'bg-gray-800 text-gray-200 hover:bg-gray-700'
+          }`}
+          title="Anime UI"
+        >
+          Anime
+        </button>
+      </div>
       
       {/* Chat Interface */}
-      {interfaceType === 'minimal' ? (
+      {interfaceType === 'voice' ? (
+        <VoiceEnabledChat 
+          userId={user?.id || 'anonymous'}
+          enablePersistence={true}
+          enableSessionManagement={true}
+          autoLoadHistory={true}
+          className="h-full relative z-10"
+        />
+      ) : interfaceType === 'minimal' ? (
         <MinimalChatInterface className="h-full relative z-10" />
       ) : (
         <ChatGPTInterface className="h-full relative z-10" />
