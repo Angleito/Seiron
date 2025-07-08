@@ -24,7 +24,7 @@ export default defineConfig({
             style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
             img-src 'self' data: blob: https:;
             font-src 'self' data: https://fonts.gstatic.com;
-            connect-src 'self' https: wss: ws: blob: data: http://localhost:3001 ws://localhost:3001 https://api.web3modal.org https://explorer-api.walletconnect.com https://pulse.walletconnect.org https://rawcdn.githack.com;
+            connect-src 'self' https: wss: ws: blob: data: http://localhost:8000 ws://localhost:8000 https://api.web3modal.org https://explorer-api.walletconnect.com https://pulse.walletconnect.org https://rawcdn.githack.com;
             media-src 'self';
             object-src 'none';
             base-uri 'self';

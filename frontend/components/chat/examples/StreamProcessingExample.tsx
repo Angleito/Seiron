@@ -26,7 +26,7 @@ export function StreamProcessingExample() {
   useEffect(() => {
     const chatService = new ChatStreamService({
       apiEndpoint: '/api',
-      wsEndpoint: 'ws://localhost:3001',
+      wsEndpoint: 'ws://localhost:8000',
       sessionId: 'example-session'
     })
     

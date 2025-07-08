@@ -65,8 +65,8 @@ describe('Orchestrator Client - Essential Wrapper Tests', () => {
   let orchestrator: Orchestrator
 
   const testConfig = {
-    apiEndpoint: 'http://localhost:3001',
-    wsEndpoint: 'ws://localhost:3001',
+    apiEndpoint: 'http://localhost:8000',
+    wsEndpoint: 'ws://localhost:8000',
     timeout: 5000,
   }
 

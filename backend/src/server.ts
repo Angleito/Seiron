@@ -10,11 +10,13 @@ import * as TE from 'fp-ts/TaskEither';
 import logger from './utils/logger';
 
 import { chatRouter } from './routes/chat';
+import { sessionsRouter } from './routes/sessions';
 import { portfolioRouter } from './routes/portfolio';
 import { aiRouter } from './routes/ai';
 import { confirmationRouter } from './routes/confirmation';
 import voiceRouter from './routes/voice';
 import { websocketRouter } from './routes/websocket';
+import authRouter from './routes/auth';
 import { SocketService } from './services/SocketService';
 import { PortfolioService } from './services/PortfolioService';
 import { AIService } from './services/AIService';
@@ -24,8 +26,10 @@ import { SeiIntegrationService } from './services/SeiIntegrationService';
 import { PortfolioAnalyticsService } from './services/PortfolioAnalyticsService';
 import { RealTimeDataService } from './services/RealTimeDataService';
 import { SupabaseService, createSupabaseService } from './services/SupabaseService';
+import { AdapterInitializer, createAdapterConfig } from './services/AdapterInitializer';
 import { errorHandler } from './middleware/errorHandler';
 import { validateWallet } from './middleware/validateWallet';
+import { requireAuth, optionalAuth } from './middleware/authenticate';
 import { createWebSocketMiddleware } from './middleware/websocketMiddleware';
 import { 
   requestIdMiddleware, 
@@ -111,6 +115,11 @@ const wsMiddleware = createWebSocketMiddleware({
 const confirmationService = new ConfirmationService(socketService);
 const portfolioService = new PortfolioService(socketService, confirmationService);
 const aiService = new AIService();
+
+// Initialize adapters
+const adapterConfig = createAdapterConfig();
+const adapterInitializer = new AdapterInitializer(adapterConfig);
+
 const seiIntegrationService = new SeiIntegrationService({
   hive: {
     enabled: true,
@@ -171,20 +180,28 @@ app.use((req, _res, next) => {
 });
 
 // Routes
-// Chat router - orchestrate endpoint doesn't require wallet validation
+
+// Auth routes - no authentication required
+app.use('/api/auth', authRouter);
+
+// Chat router - requires authentication for most endpoints
 app.use('/api/chat', (req, res, next) => {
-  // Skip wallet validation for orchestrate endpoint
+  // Skip auth for orchestrate endpoint if it's a public endpoint
   if (req.path === '/orchestrate' && req.method === 'POST') {
-    return next();
+    return optionalAuth(req, res, next);
   }
-  return validateWallet(req, res, next);
+  return requireAuth(req, res, next);
 }, chatRouter);
 
-app.use('/api/portfolio', validateWallet, portfolioRouter);
-app.use('/api/ai', validateWallet, aiRouter);
-app.use('/api', validateWallet, confirmationRouter);
-app.use('/api/voice', voiceRouter);
-app.use('/api/websocket', websocketRouter);
+// Sessions router - requires authentication
+app.use('/api/chat/sessions', requireAuth, sessionsRouter);
+
+// Protected routes - require authentication
+app.use('/api/portfolio', requireAuth, portfolioRouter);
+app.use('/api/ai', requireAuth, aiRouter);
+app.use('/api', requireAuth, confirmationRouter);
+app.use('/api/voice', requireAuth, voiceRouter);
+app.use('/api/websocket', requireAuth, websocketRouter);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -433,7 +450,31 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 8000;
 
-server.listen(PORT, () => {
+// Initialize adapters before starting server
+const startServer = async () => {
+  try {
+    // Initialize adapters if enabled
+    const adapterResult = await adapterInitializer.registerAdapters(
+      seiIntegrationService,
+      aiService
+    )();
+    
+    if (adapterResult._tag === 'Left') {
+      logger.error('Failed to initialize adapters', {
+        error: adapterResult.left.message
+      });
+      // Continue anyway - adapters are optional
+    } else {
+      logger.info('Adapters initialized successfully');
+    }
+  } catch (error) {
+    logger.error('Error during adapter initialization', {
+      error: error instanceof Error ? error.message : String(error)
+    });
+    // Continue anyway - adapters are optional
+  }
+
+  server.listen(PORT, () => {
   logger.info('🚀 Sei Portfolio Manager API started', {
     port: PORT,
     environment: process.env.NODE_ENV || 'development',
@@ -447,6 +488,33 @@ server.listen(PORT, () => {
     redisUrl: process.env.REDIS_URL ? '[CONFIGURED]' : '[NOT CONFIGURED]',
     openaiApiKey: process.env.OPENAI_API_KEY ? '[CONFIGURED]' : '[NOT CONFIGURED]',
     seiRpcUrl: process.env.SEI_RPC_URL || 'https://sei-rpc.polkachu.com'
+  });
+});
+};
+
+// Start the server
+startServer().catch(error => {
+  logger.error('Failed to start server', {
+    error: error instanceof Error ? error.message : String(error)
+  });
+  process.exit(1);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  logger.info('SIGTERM received, shutting down gracefully');
+  
+  try {
+    await adapterInitializer.cleanup()();
+  } catch (error) {
+    logger.error('Error during adapter cleanup', {
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+  
+  server.close(() => {
+    logger.info('Server closed');
+    process.exit(0);
   });
 });
 

@@ -545,6 +545,499 @@ export class SupabaseService {
         }
       )
     );
+
+  /**
+   * Get user by ID or create if not exists
+   */
+  getOrCreateUserById = (userId: string): TE.TaskEither<Error, { id: string; wallet_address?: string }> =>
+    pipe(
+      TE.tryCatch(
+        async () => {
+          logger.debug('Getting or creating user by ID', { userId });
+
+          // Try to get existing user first
+          const { data: existingUser, error: getUserError } = await this.client
+            .from('users')
+            .select('id, wallet_address')
+            .eq('id', userId)
+            .single();
+
+          if (existingUser && !getUserError) {
+            logger.debug('User already exists', { userId });
+            return existingUser;
+          }
+
+          // If user doesn't exist, create new one
+          const { data: newUser, error: createError } = await this.client
+            .from('users')
+            .insert([{
+              id: userId,
+              wallet_address: null, // User ID based user without wallet
+            }])
+            .select('id, wallet_address')
+            .single();
+
+          if (createError) {
+            logger.error('Failed to create user by ID', {
+              error: createError.message,
+              code: createError.code,
+              userId,
+            });
+            throw new Error(`Failed to create user: ${createError.message}`);
+          }
+
+          logger.debug('User created successfully by ID', { userId });
+          return newUser;
+        },
+        (error) => {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          logger.error('Error getting or creating user by ID', { error: errorMessage, userId });
+          return new Error(`Supabase get/create user by ID error: ${errorMessage}`);
+        }
+      )
+    );
+
+  /**
+   * Get sessions for a user with pagination and filters
+   */
+  getSessionsForUser = (userId: string, params: {
+    page: number;
+    limit: number;
+    search?: string;
+    archived: boolean;
+    order: 'asc' | 'desc';
+  }): TE.TaskEither<Error, { sessions: any[]; total: number; totalPages: number }> =>
+    pipe(
+      TE.tryCatch(
+        async () => {
+          logger.debug('Getting sessions for user', { userId, params });
+
+          let query = this.client
+            .from('chat_sessions')
+            .select('*', { count: 'exact' })
+            .eq('user_id', userId)
+            .eq('is_archived', params.archived);
+
+          if (params.search) {
+            query = query.ilike('session_name', `%${params.search}%`);
+          }
+
+          query = query
+            .order('updated_at', { ascending: params.order === 'asc' })
+            .range((params.page - 1) * params.limit, params.page * params.limit - 1);
+
+          const { data, error, count } = await query;
+
+          if (error) {
+            logger.error('Failed to get sessions', {
+              error: error.message,
+              userId,
+              params
+            });
+            throw new Error(`Failed to get sessions: ${error.message}`);
+          }
+
+          const total = count || 0;
+          const totalPages = Math.ceil(total / params.limit);
+
+          // Get message counts for each session
+          const sessionsWithCounts = await Promise.all(
+            (data || []).map(async (session) => {
+              const { count: messageCount } = await this.client
+                .from('messages')
+                .select('*', { count: 'exact', head: true })
+                .eq('session_id', session.id);
+              
+              return {
+                ...session,
+                message_count: messageCount || 0
+              };
+            })
+          );
+
+          logger.debug('Sessions retrieved successfully', {
+            userId,
+            sessionCount: sessionsWithCounts.length,
+            total,
+            totalPages
+          });
+
+          return { sessions: sessionsWithCounts, total, totalPages };
+        },
+        (error) => {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          logger.error('Error getting sessions', { error: errorMessage, userId });
+          return new Error(`Supabase get sessions error: ${errorMessage}`);
+        }
+      )
+    );
+
+  /**
+   * Create session with detailed information
+   */
+  createSessionWithDetails = (
+    userId: string,
+    title: string,
+    description?: string,
+    metadata?: Record<string, unknown>
+  ): TE.TaskEither<Error, any> =>
+    pipe(
+      TE.tryCatch(
+        async () => {
+          logger.debug('Creating session with details', { userId, title });
+
+          const { data, error } = await this.client
+            .from('chat_sessions')
+            .insert([{
+              user_id: userId,
+              session_name: title,
+              description,
+              metadata: metadata || {},
+              is_active: true,
+              is_archived: false
+            }])
+            .select()
+            .single();
+
+          if (error) {
+            logger.error('Failed to create session', {
+              error: error.message,
+              userId,
+              title
+            });
+            throw new Error(`Failed to create session: ${error.message}`);
+          }
+
+          logger.debug('Session created successfully', { sessionId: data.id, userId });
+          return data;
+        },
+        (error) => {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          logger.error('Error creating session', { error: errorMessage, userId });
+          return new Error(`Supabase create session error: ${errorMessage}`);
+        }
+      )
+    );
+
+  /**
+   * Verify session ownership
+   */
+  verifySessionOwnership = (sessionId: string, userId: string): TE.TaskEither<Error, boolean> =>
+    pipe(
+      TE.tryCatch(
+        async () => {
+          logger.debug('Verifying session ownership', { sessionId, userId });
+
+          const { data, error } = await this.client
+            .from('chat_sessions')
+            .select('user_id')
+            .eq('id', sessionId)
+            .single();
+
+          if (error || !data) {
+            logger.warn('Session not found', { sessionId });
+            throw new Error('Session not found');
+          }
+
+          if (data.user_id !== userId) {
+            logger.warn('Session ownership mismatch', { sessionId, userId, ownerId: data.user_id });
+            throw new Error('Access denied');
+          }
+
+          return true;
+        },
+        (error) => {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          logger.error('Error verifying session ownership', { error: errorMessage, sessionId, userId });
+          return new Error(errorMessage);
+        }
+      )
+    );
+
+  /**
+   * Update session
+   */
+  updateSession = (sessionId: string, updates: {
+    session_name?: string;
+    title?: string;
+    description?: string;
+    metadata?: Record<string, unknown>;
+    is_archived?: boolean;
+  }): TE.TaskEither<Error, any> =>
+    pipe(
+      TE.tryCatch(
+        async () => {
+          logger.debug('Updating session', { sessionId, updates: Object.keys(updates) });
+
+          // Map title to session_name if provided
+          const dbUpdates: any = { ...updates };
+          if (updates.title) {
+            dbUpdates.session_name = updates.title;
+            delete dbUpdates.title;
+          }
+
+          const { data, error } = await this.client
+            .from('chat_sessions')
+            .update(dbUpdates)
+            .eq('id', sessionId)
+            .select()
+            .single();
+
+          if (error) {
+            logger.error('Failed to update session', {
+              error: error.message,
+              sessionId
+            });
+            throw new Error(`Failed to update session: ${error.message}`);
+          }
+
+          logger.debug('Session updated successfully', { sessionId });
+          return data;
+        },
+        (error) => {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          logger.error('Error updating session', { error: errorMessage, sessionId });
+          return new Error(`Supabase update session error: ${errorMessage}`);
+        }
+      )
+    );
+
+  /**
+   * Delete session
+   */
+  deleteSession = (sessionId: string): TE.TaskEither<Error, void> =>
+    pipe(
+      TE.tryCatch(
+        async () => {
+          logger.debug('Deleting session', { sessionId });
+
+          const { error } = await this.client
+            .from('chat_sessions')
+            .delete()
+            .eq('id', sessionId);
+
+          if (error) {
+            logger.error('Failed to delete session', {
+              error: error.message,
+              sessionId
+            });
+            throw new Error(`Failed to delete session: ${error.message}`);
+          }
+
+          logger.debug('Session deleted successfully', { sessionId });
+        },
+        (error) => {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          logger.error('Error deleting session', { error: errorMessage, sessionId });
+          return new Error(`Supabase delete session error: ${errorMessage}`);
+        }
+      )
+    );
+
+  /**
+   * Get session by ID
+   */
+  getSessionById = (sessionId: string): TE.TaskEither<Error, any> =>
+    pipe(
+      TE.tryCatch(
+        async () => {
+          logger.debug('Getting session by ID', { sessionId });
+
+          const { data, error } = await this.client
+            .from('chat_sessions')
+            .select('*')
+            .eq('id', sessionId)
+            .single();
+
+          if (error) {
+            logger.error('Failed to get session', {
+              error: error.message,
+              sessionId
+            });
+            throw new Error(`Failed to get session: ${error.message}`);
+          }
+
+          logger.debug('Session retrieved successfully', { sessionId });
+          return data;
+        },
+        (error) => {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          logger.error('Error getting session', { error: errorMessage, sessionId });
+          return new Error(`Supabase get session error: ${errorMessage}`);
+        }
+      )
+    );
+
+  /**
+   * Get messages for a session with pagination
+   */
+  getMessagesForSession = (sessionId: string, params: {
+    page: number;
+    limit: number;
+    cursor?: string;
+    order: 'asc' | 'desc';
+  }): TE.TaskEither<Error, { messages: DatabaseMessage[]; total: number; totalPages: number }> =>
+    pipe(
+      TE.tryCatch(
+        async () => {
+          logger.debug('Getting messages for session', { sessionId, params });
+
+          let query = this.client
+            .from('messages')
+            .select('*', { count: 'exact' })
+            .eq('session_id', sessionId);
+
+          if (params.cursor) {
+            query = params.order === 'desc' 
+              ? query.lt('id', params.cursor)
+              : query.gt('id', params.cursor);
+          }
+
+          query = query
+            .order('created_at', { ascending: params.order === 'asc' })
+            .range((params.page - 1) * params.limit, params.page * params.limit - 1);
+
+          const { data, error, count } = await query;
+
+          if (error) {
+            logger.error('Failed to get messages', {
+              error: error.message,
+              sessionId,
+              params
+            });
+            throw new Error(`Failed to get messages: ${error.message}`);
+          }
+
+          const total = count || 0;
+          const totalPages = Math.ceil(total / params.limit);
+
+          logger.debug('Messages retrieved successfully', {
+            sessionId,
+            messageCount: data?.length || 0,
+            total,
+            totalPages
+          });
+
+          return { 
+            messages: (data || []) as DatabaseMessage[], 
+            total, 
+            totalPages 
+          };
+        },
+        (error) => {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          logger.error('Error getting messages', { error: errorMessage, sessionId });
+          return new Error(`Supabase get messages error: ${errorMessage}`);
+        }
+      )
+    );
+
+  /**
+   * Get session statistics for a user
+   */
+  getSessionStats = (userId: string): TE.TaskEither<Error, {
+    total_sessions: number;
+    active_sessions: number;
+    archived_sessions: number;
+    total_messages: number;
+  }> =>
+    pipe(
+      TE.tryCatch(
+        async () => {
+          logger.debug('Getting session stats', { userId });
+
+          // Get session counts
+          const { count: totalSessions } = await this.client
+            .from('chat_sessions')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId);
+
+          const { count: activeSessions } = await this.client
+            .from('chat_sessions')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId)
+            .eq('is_archived', false);
+
+          const { count: archivedSessions } = await this.client
+            .from('chat_sessions')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId)
+            .eq('is_archived', true);
+
+          // Get total messages for user's sessions
+          const { data: sessions } = await this.client
+            .from('chat_sessions')
+            .select('id')
+            .eq('user_id', userId);
+
+          let totalMessages = 0;
+          if (sessions && sessions.length > 0) {
+            const sessionIds = sessions.map(s => s.id);
+            const { count } = await this.client
+              .from('messages')
+              .select('*', { count: 'exact', head: true })
+              .in('session_id', sessionIds);
+            totalMessages = count || 0;
+          }
+
+          const stats = {
+            total_sessions: totalSessions || 0,
+            active_sessions: activeSessions || 0,
+            archived_sessions: archivedSessions || 0,
+            total_messages: totalMessages
+          };
+
+          logger.debug('Session stats retrieved', { userId, stats });
+          return stats;
+        },
+        (error) => {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          logger.error('Error getting session stats', { error: errorMessage, userId });
+          return new Error(`Supabase get session stats error: ${errorMessage}`);
+        }
+      )
+    );
+
+  /**
+   * Delete all messages in a session
+   */
+  deleteMessagesBySession = (sessionId: string): TE.TaskEither<Error, number> =>
+    pipe(
+      TE.tryCatch(
+        async () => {
+          logger.debug('Deleting messages by session', { sessionId });
+
+          // Get count of messages first
+          const { count } = await this.client
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('session_id', sessionId);
+
+          // Delete all messages
+          const { error } = await this.client
+            .from('messages')
+            .delete()
+            .eq('session_id', sessionId);
+
+          if (error) {
+            logger.error('Failed to delete messages by session', {
+              error: error.message,
+              sessionId
+            });
+            throw new Error(`Failed to delete messages: ${error.message}`);
+          }
+
+          const deletedCount = count || 0;
+          logger.debug('Messages deleted successfully', { sessionId, deletedCount });
+          return deletedCount;
+        },
+        (error) => {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          logger.error('Error deleting messages by session', { error: errorMessage, sessionId });
+          return new Error(`Supabase delete messages error: ${errorMessage}`);
+        }
+      )
+    );
 }
 
 /**

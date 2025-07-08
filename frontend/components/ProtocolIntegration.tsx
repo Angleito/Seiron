@@ -147,7 +147,7 @@ export function ProtocolIntegration({
   useEffect(() => {
     const orchestrator = getOrchestrator({
       apiEndpoint: import.meta.env.VITE_ORCHESTRATOR_API || '/api',
-      wsEndpoint: import.meta.env.VITE_ORCHESTRATOR_WS || 'ws://localhost:3001',
+      wsEndpoint: import.meta.env.VITE_ORCHESTRATOR_WS || 'ws://localhost:8000',
     })
 
     // Subscribe to protocol updates

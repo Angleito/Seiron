@@ -1,5 +1,14 @@
+import { createAuthenticatedFetch } from '../lib/auth/authInterceptor'
+
 // API endpoint configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
+// Create authenticated fetch instance
+const authFetch = createAuthenticatedFetch({
+  enableAuth: true,
+  enableLogging: true,
+  refreshOnUnauthorized: true,
+})
 
 export interface ChatResponse {
   message: string
@@ -23,7 +32,7 @@ export async function processChat(message: string, sessionId: string, walletAddr
     }
 
     // Call backend chat orchestrate endpoint
-    const response = await fetch(`${API_BASE_URL}/chat/orchestrate`, {
+    const response = await authFetch(`${API_BASE_URL}/chat/orchestrate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

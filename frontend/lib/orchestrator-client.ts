@@ -16,6 +16,7 @@ import {
   MCPContractQueryResult
 } from './adapters'
 import { WebSocketManager, WebSocketManagerImpl } from './services/WebSocketManager'
+import { createAuthenticatedFetch } from './auth/authInterceptor'
 
 // Re-export types for backward compatibility
 export type { 
@@ -35,12 +36,20 @@ export class Orchestrator {
   private config: OrchestratorConfig
   private wsManager: WebSocketManager
   private adapterFactory: ReturnType<typeof getAdapterFactory>
+  private fetch: typeof fetch
 
   constructor(config: OrchestratorConfig) {
     this.config = {
       timeout: 30000, // 30 seconds default
       ...config,
     }
+    
+    // Initialize authenticated fetch
+    this.fetch = createAuthenticatedFetch({
+      enableAuth: true,
+      enableLogging: true,
+      refreshOnUnauthorized: true,
+    })
     
     // Initialize WebSocket manager
     this.wsManager = new WebSocketManagerImpl({
@@ -106,7 +115,7 @@ export class Orchestrator {
         context
       })
       
-      const response = await fetch(url, {
+      const response = await this.fetch(url, {
         ...enhancedOptions,
         signal: AbortSignal.timeout(this.config.timeout!),
       })

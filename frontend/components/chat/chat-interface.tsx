@@ -114,7 +114,7 @@ export function ComplexChatInterface() {
   const chatService = useMemo(() => {
     return new ChatStreamService({
       apiEndpoint: import.meta.env.VITE_ORCHESTRATOR_API || '/api',
-      wsEndpoint: import.meta.env.VITE_ORCHESTRATOR_WS || 'ws://localhost:3001',
+      wsEndpoint: import.meta.env.VITE_ORCHESTRATOR_WS || 'ws://localhost:8000',
       sessionId,
       maxRetries: 3,
       retryDelay: 1000,
@@ -265,7 +265,7 @@ export function ComplexChatInterface() {
     // Legacy orchestrator events (will be migrated to streams)
     const orchestrator = getOrchestrator({
       apiEndpoint: import.meta.env.VITE_ORCHESTRATOR_API || '/api',
-      wsEndpoint: import.meta.env.VITE_ORCHESTRATOR_WS || 'ws://localhost:3001',
+      wsEndpoint: import.meta.env.VITE_ORCHESTRATOR_WS || 'ws://localhost:8000',
     })
     
     // Subscribe to Hive Intelligence events

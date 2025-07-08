@@ -62,7 +62,7 @@ This directory implements the adapter pattern for the Seiron orchestrator-client
 import { getAdapterFactory } from '@/lib/adapters'
 
 const factory = getAdapterFactory({
-  apiEndpoint: 'http://localhost:3001',
+  apiEndpoint: 'http://localhost:8000',
   timeout: 30000
 })
 
@@ -104,8 +104,8 @@ for (const [type, health] of healthMap) {
 import { Orchestrator } from '@/lib/orchestrator-client'
 
 const orchestrator = new Orchestrator({
-  apiEndpoint: 'http://localhost:3001',
-  wsEndpoint: 'ws://localhost:3001'
+  apiEndpoint: 'http://localhost:8000',
+  wsEndpoint: 'ws://localhost:8000'
 })
 
 // Execute actions through adapter pattern

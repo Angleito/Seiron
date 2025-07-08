@@ -604,21 +604,116 @@ Keep the analysis concise and actionable.`;
       adapterStatus: this.getAdapterStatus()
     });
     
-    // Mock implementation for now
-    const mockData = {
-      hiveData: { query, insights: [], timestamp: new Date().toISOString() },
-      sakData: { tools: [], executions: [], timestamp: new Date().toISOString() },
-      mcpData: { state: 'connected', data: {}, timestamp: new Date().toISOString() }
-    };
-    
-    const duration = performance.now() - startTime;
-    this.logger.debug('Adapter data gathered', {
-      walletAddress,
-      duration: Math.round(duration),
-      dataKeys: Object.keys(mockData)
-    });
-    
-    return TE.right(mockData);
+    return pipe(
+      TE.tryCatch(
+        async () => {
+          const results: any = {
+            hiveData: null,
+            sakData: null,
+            mcpData: null,
+            timestamp: new Date().toISOString()
+          };
+
+          // Gather Hive Intelligence data
+          if (this.hiveAdapter) {
+            try {
+              this.logger.debug('Calling Hive Intelligence adapter', { query, walletAddress });
+              const hiveResult = await this.hiveAdapter.search(query, { walletAddress });
+              results.hiveData = hiveResult;
+              this.logger.debug('Hive data gathered successfully', { walletAddress, hasData: !!hiveResult });
+            } catch (error) {
+              this.logger.warn('Hive adapter failed', { 
+                walletAddress, 
+                error: error instanceof Error ? error.message : String(error) 
+              });
+              results.hiveData = { error: 'Hive adapter unavailable', query, timestamp: new Date().toISOString() };
+            }
+          } else {
+            this.logger.debug('Hive adapter not available', { walletAddress });
+            results.hiveData = { error: 'Hive adapter not initialized', query, timestamp: new Date().toISOString() };
+          }
+
+          // Gather SAK (Sei Agent Kit) data
+          if (this.sakAdapter) {
+            try {
+              this.logger.debug('Calling SAK adapter', { query, walletAddress });
+              const sakTools = await this.sakAdapter.getTools();
+              results.sakData = { 
+                tools: sakTools, 
+                walletAddress,
+                timestamp: new Date().toISOString() 
+              };
+              this.logger.debug('SAK data gathered successfully', { walletAddress, toolCount: sakTools?.length || 0 });
+            } catch (error) {
+              this.logger.warn('SAK adapter failed', { 
+                walletAddress, 
+                error: error instanceof Error ? error.message : String(error) 
+              });
+              results.sakData = { error: 'SAK adapter unavailable', timestamp: new Date().toISOString() };
+            }
+          } else {
+            this.logger.debug('SAK adapter not available', { walletAddress });
+            results.sakData = { error: 'SAK adapter not initialized', timestamp: new Date().toISOString() };
+          }
+
+          // Gather MCP (real-time blockchain) data
+          if (this.mcpAdapter && this.mcpAdapter.isConnected()) {
+            try {
+              this.logger.debug('Calling MCP adapter', { walletAddress });
+              const [blockchainState, walletBalance] = await Promise.all([
+                this.mcpAdapter.getBlockchainState(),
+                this.mcpAdapter.getWalletBalance(walletAddress)
+              ]);
+              results.mcpData = { 
+                blockchainState, 
+                walletBalance,
+                isConnected: true,
+                timestamp: new Date().toISOString() 
+              };
+              this.logger.debug('MCP data gathered successfully', { walletAddress, hasBalance: !!walletBalance });
+            } catch (error) {
+              this.logger.warn('MCP adapter failed', { 
+                walletAddress, 
+                error: error instanceof Error ? error.message : String(error) 
+              });
+              results.mcpData = { error: 'MCP adapter failed', isConnected: false, timestamp: new Date().toISOString() };
+            }
+          } else {
+            this.logger.debug('MCP adapter not available or disconnected', { 
+              walletAddress, 
+              isAvailable: !!this.mcpAdapter,
+              isConnected: this.mcpAdapter?.isConnected() || false 
+            });
+            results.mcpData = { 
+              error: 'MCP adapter not connected', 
+              isConnected: false, 
+              timestamp: new Date().toISOString() 
+            };
+          }
+
+          const duration = performance.now() - startTime;
+          this.logger.info('All adapter data gathered', {
+            walletAddress,
+            duration: Math.round(duration),
+            hiveSuccess: !!results.hiveData && !results.hiveData.error,
+            sakSuccess: !!results.sakData && !results.sakData.error,
+            mcpSuccess: !!results.mcpData && !results.mcpData.error
+          });
+
+          return results;
+        },
+        (error) => {
+          const duration = performance.now() - startTime;
+          this.logger.error('Failed to gather adapter data', {
+            walletAddress,
+            query,
+            duration: Math.round(duration),
+            error: error instanceof Error ? error.message : String(error)
+          });
+          return new Error(`Failed to gather adapter data: ${error}`);
+        }
+      )
+    );
   };
 
   /**
