@@ -39,7 +39,7 @@ const FEATURES: FeatureCard[] = [
       glow: 'rgba(255, 107, 53, 0.6)',
       star: '#ff2e2e'
     },
-    starCount: 1
+    starCount: 4
   },
   {
     id: 'radar',
@@ -53,7 +53,7 @@ const FEATURES: FeatureCard[] = [
       glow: 'rgba(59, 130, 246, 0.6)',
       star: '#3b82f6'
     },
-    starCount: 2
+    starCount: 5
   },
   {
     id: 'fusion',
@@ -67,7 +67,7 @@ const FEATURES: FeatureCard[] = [
       glow: 'rgba(34, 197, 94, 0.6)',
       star: '#22c55e'
     },
-    starCount: 3
+    starCount: 6
   },
   {
     id: 'kamehameha',
@@ -81,32 +81,46 @@ const FEATURES: FeatureCard[] = [
       glow: 'rgba(255, 211, 61, 0.8)',
       star: '#ffd93d'
     },
-    starCount: 4
+    starCount: 7
   }
 ]
 
-// Helper function to generate symmetrical star positions like dice
+// Helper function to generate symmetrical star positions like DBZ Dragon Balls
 const getStarPositions = (starCount: number): Array<{x: number, y: number}> => {
   const positions = {
-    1: [{ x: 50, y: 50 }], // Center
-    2: [
-      { x: 30, y: 30 }, // Top-left
-      { x: 70, y: 70 }  // Bottom-right
-    ],
-    3: [
-      { x: 30, y: 30 }, // Top-left
-      { x: 50, y: 50 }, // Center
-      { x: 70, y: 70 }  // Bottom-right
-    ],
     4: [
       { x: 30, y: 30 }, // Top-left
       { x: 70, y: 30 }, // Top-right
       { x: 30, y: 70 }, // Bottom-left
       { x: 70, y: 70 }  // Bottom-right
+    ],
+    5: [
+      { x: 30, y: 30 }, // Top-left
+      { x: 70, y: 30 }, // Top-right
+      { x: 50, y: 50 }, // Center
+      { x: 30, y: 70 }, // Bottom-left
+      { x: 70, y: 70 }  // Bottom-right
+    ],
+    6: [
+      { x: 25, y: 25 }, // Top-left
+      { x: 50, y: 20 }, // Top-center
+      { x: 75, y: 25 }, // Top-right
+      { x: 25, y: 75 }, // Bottom-left
+      { x: 50, y: 80 }, // Bottom-center
+      { x: 75, y: 75 }  // Bottom-right
+    ],
+    7: [
+      { x: 25, y: 25 }, // Top-left
+      { x: 50, y: 20 }, // Top-center
+      { x: 75, y: 25 }, // Top-right
+      { x: 20, y: 50 }, // Middle-left
+      { x: 50, y: 50 }, // Center
+      { x: 80, y: 50 }, // Middle-right
+      { x: 50, y: 80 }  // Bottom-center
     ]
   }
   
-  return positions[starCount as keyof typeof positions] || positions[1]
+  return positions[starCount as keyof typeof positions] || positions[4]
 }
 
 const DragonBallOrb: React.FC<{
@@ -423,7 +437,7 @@ export const DragonBallFeatureCards: React.FC<DragonBallFeatureCardsProps> = ({
         <div className="inline-flex items-center space-x-2 px-6 py-3 rounded-full bg-gradient-to-r from-slate-800/80 to-slate-900/80 backdrop-blur-sm border border-yellow-400/30">
           <Activity className="w-5 h-5 text-yellow-400" />
           <span className="text-yellow-400 font-semibold">
-            {activeCard ? `${FEATURES.find(f => f.id === activeCard)?.starCount}-Star Dragon Ball: ${FEATURES.find(f => f.id === activeCard)?.title} Activated!` : 'Hover to Activate Dragon Balls (1-4 Stars)'}
+            {activeCard ? `${FEATURES.find(f => f.id === activeCard)?.starCount}-Star Dragon Ball: ${FEATURES.find(f => f.id === activeCard)?.title} Activated!` : 'Hover to Activate Dragon Balls (4-7 Stars)'}
           </span>
           <Zap className="w-5 h-5 text-yellow-400" />
         </div>
