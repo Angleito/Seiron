@@ -47,25 +47,25 @@ export default function AboutPage() {
             <FeatureCard
               icon={<Mic className="h-8 w-8" />}
               title="Voice-Powered Interface"
-              description="Speak your wishes to Seiron using natural voice commands. The guardian spirit listens, understands, and responds with ancient wisdom enhanced by modern AI."
+              description="Speak your wishes to Seiron using natural voice commands. The guardian dragon listens, understands, and responds with ancient wisdom enhanced by OpenAI GPT-4."
             />
             
             <FeatureCard
               icon={<MessageSquare className="h-8 w-8" />}
-              title="AI Chat Assistant"
-              description="Engage in conversations about investments, market analysis, and financial strategies. Seiron combines mythical knowledge with real-time data."
+              title="Multi-Agent AI System"
+              description="Specialized dragon agents for lending (Yei Finance), liquidity (DragonSwap), market analysis (Symphony), and NFT management (Takara) work together to optimize your portfolio."
             />
             
             <FeatureCard
               icon={<Zap className="h-8 w-8" />}
-              title="Lightning-Fast Responses"
-              description="Powered by cutting-edge AI technology, Seiron delivers instant insights and executes commands at the speed of lightning."
+              title="Real-Time DeFi Integration"
+              description="Native integration with Sei Network protocols. Execute trades, manage liquidity, and optimize yields across the entire Sei ecosystem with dragon-speed transactions."
             />
             
             <FeatureCard
               icon={<Sparkles className="h-8 w-8" />}
-              title="Mystical Spirit Animations"
-              description="Watch as the ASCII spirit responds to your voice, breathing and moving with each interaction, bringing ancient magic to modern finance."
+              title="3D Dragon Animations"
+              description="Experience the legendary dragon in full 3D glory with progressive loading, adaptive quality modes, and voice-reactive animations that respond to your every command."
             />
           </div>
 
@@ -85,10 +85,40 @@ export default function AboutPage() {
                 for the gods of finance.
               </p>
               <p>
-                Every interaction with Seiron is enhanced by storm effects, lightning animations, 
-                and the spirit's responsive ASCII form that breathes with life. This is not just 
-                a financial tool—it's a journey into a realm where technology and mythology unite.
+                Every interaction with Seiron is enhanced by immersive storm effects and the dragon's 
+                majestic 3D form that breathes with life, tracking your movements and responding to 
+                your voice. This is not just a financial tool—it's a journey into a realm where 
+                cutting-edge technology and ancient mythology unite.
               </p>
+            </div>
+          </div>
+
+          {/* Technical Details */}
+          <div className="bg-gradient-to-r from-gray-900/80 to-black/80 rounded-2xl p-8 backdrop-blur-sm border border-yellow-500/20 mb-16">
+            <h3 className="text-3xl font-bold mb-4 text-yellow-400">Technical Architecture</h3>
+            <div className="grid md:grid-cols-2 gap-6 text-gray-300">
+              <div>
+                <h4 className="text-xl font-semibold text-yellow-400 mb-2">Frontend Stack</h4>
+                <ul className="space-y-1 text-sm">
+                  <li>• React 18 with TypeScript</li>
+                  <li>• Vite for blazing-fast builds</li>
+                  <li>• Three.js & React Three Fiber for 3D</li>
+                  <li>• TailwindCSS for styling</li>
+                  <li>• Web Speech API for voice</li>
+                  <li>• ElevenLabs for text-to-speech</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-xl font-semibold text-yellow-400 mb-2">Backend & AI</h4>
+                <ul className="space-y-1 text-sm">
+                  <li>• Node.js with Express</li>
+                  <li>• OpenAI GPT-4 integration</li>
+                  <li>• Multi-agent orchestration system</li>
+                  <li>• Real-time WebSocket support</li>
+                  <li>• Sei Network RPC integration</li>
+                  <li>• Non-custodial wallet connection</li>
+                </ul>
+              </div>
             </div>
           </div>
 
@@ -115,7 +145,7 @@ export default function AboutPage() {
         {/* Footer */}
         <footer className="mt-24 py-8 border-t border-yellow-500/20">
           <div className="container mx-auto px-4 text-center text-yellow-400/60">
-            <p>© 2024 Seiron - The Guardian of Financial Wisdom</p>
+            <p>© 2025 Seiron - The Guardian of Financial Wisdom</p>
             <p className="mt-2 text-sm">Powered by Sei Network • Enhanced by AI • Blessed by Ancient Spirits</p>
           </div>
         </footer>

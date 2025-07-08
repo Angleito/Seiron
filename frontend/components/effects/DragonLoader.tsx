@@ -182,7 +182,7 @@ export function DragonLoader({
         const preloadLink = document.createElement('link')
         preloadLink.rel = 'preload'
         preloadLink.as = 'fetch'
-        preloadLink.href = '/models/dragon-head.obj' // Adjust path as needed
+        preloadLink.href = '/models/dragon_head.obj' // Correct path to OBJ file
         preloadLink.crossOrigin = 'anonymous'
         document.head.appendChild(preloadLink)
 
