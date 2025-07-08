@@ -76,9 +76,9 @@ export default function ChatPage() {
               ? 'bg-orange-600 text-white' 
               : 'bg-gray-800 text-gray-200 hover:bg-gray-700'
           }`}
-          title="Anime UI"
+          title="Minimal Anime UI"
         >
-          Anime
+          Minimal Anime
         </button>
         <button
           onClick={() => setInterfaceType('minimal')}
@@ -115,7 +115,7 @@ export default function ChatPage() {
                 onClick={() => setInterfaceType('chatgpt')}
                 className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
               >
-                Try Anime
+                Try Minimal Anime
               </button>
             </div>
           </div>

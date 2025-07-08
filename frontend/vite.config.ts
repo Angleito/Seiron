@@ -66,6 +66,7 @@ export default defineConfig({
           'utils-vendor': ['fp-ts', 'rxjs', 'clsx', 'tailwind-merge'],
           
           // Feature-specific chunks for lazy loading
+          'dragon-3d': ['three', '@react-three/fiber', '@react-three/drei'],
         },
         
         // Optimize chunk names for better caching
@@ -92,7 +93,7 @@ export default defineConfig({
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: true,
+        drop_console: process.env.NODE_ENV === 'production',
         drop_debugger: true,
       },
     },

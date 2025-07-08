@@ -2,8 +2,15 @@ import React, { useEffect, useState, useCallback, lazy, Suspense } from 'react'
 import { cn } from '@/lib/utils'
 import { useStormPerformance } from '@/hooks/useStormPerformance'
 
+// Import fallback dragon
+import DragonFallback from './DragonFallback'
+
 // Lazy load dragon loader for progressive loading
-const DragonLoader = lazy(() => import('./DragonLoader'))
+const DragonLoader = lazy(() => import('./DragonLoader').catch((error) => {
+  console.error('Failed to load DragonLoader component:', error)
+  // Return the fallback component
+  return { default: DragonFallback }
+}))
 
 interface StormBackgroundProps {
   className?: string
@@ -146,7 +153,12 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
       />
       
       {/* Dragon Head - Main focus element with progressive loading */}
-      <Suspense fallback={null}>
+      <Suspense fallback={
+        <DragonFallback 
+          className="absolute inset-0" 
+          intensity={normalizedIntensity} 
+        />
+      }>
         <DragonLoader
           className="absolute inset-0"
           intensity={normalizedIntensity}
