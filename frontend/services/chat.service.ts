@@ -1,7 +1,7 @@
 import { createAuthenticatedFetch } from '../lib/auth/authInterceptor'
 
-// API endpoint configuration - using frontend API endpoints
-const API_BASE_URL = ''
+// API endpoint configuration - using backend API endpoints
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 
 // Create authenticated fetch instance
 const authFetch = createAuthenticatedFetch({
@@ -31,8 +31,8 @@ export async function processChat(message: string, sessionId: string, walletAddr
       throw new Error('Message and session ID are required for processing')
     }
 
-    // Call frontend API chat orchestrate endpoint
-    const response = await authFetch(`/api/chat/orchestrate`, {
+    // Call backend API chat orchestrate endpoint
+    const response = await authFetch(`${API_BASE_URL}/api/chat/orchestrate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -90,7 +90,7 @@ export const ChatGPTInterface = forwardRef<ChatGPTInterfaceRef, ChatGPTInterface
 
       try {
         // Make actual API call to orchestrate endpoint
-        const response = await fetch('/api/chat/orchestrate', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/chat/orchestrate`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -170,7 +170,7 @@ export const ChatGPTInterface = forwardRef<ChatGPTInterfaceRef, ChatGPTInterface
 
       try {
         // Make actual API call to orchestrate endpoint
-        const response = await fetch('/api/chat/orchestrate', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/chat/orchestrate`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
