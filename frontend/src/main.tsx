@@ -1,22 +1,24 @@
-import React, { useState } from 'react'
+import React, { useState, Suspense } from 'react'
 import ReactDOM from 'react-dom/client'
 import '../styles/globals.css'
 
-// Simplified version for debugging
+// Import 3D dragon with lazy loading
+const DragonHead3DOptimized = React.lazy(() => import('../components/effects/DragonHead3DOptimized'))
+
 console.log('🚀 Main.tsx: Starting React app initialization')
 
 function SimpleApp() {
   console.log('🚀 SimpleApp: Component rendering')
-  const [test, setTest] = useState(false)
+  const [show3D, setShow3D] = useState(false)
   
   return (
     <div style={{ minHeight: '100vh', background: 'black', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ textAlign: 'center' }}>
         <h1 style={{ fontSize: '3rem', color: '#facc15', marginBottom: '1rem' }}>
-          Seiron Debug Mode v3
+          🐉 Seiron Dragon Portal
         </h1>
         <p style={{ fontSize: '1.25rem', color: '#d1d5db', marginBottom: '1rem' }}>
-          React is working! Build system fixed!
+          Unleash the legendary dragon's power!
         </p>
         <button 
           style={{ 
@@ -26,20 +28,49 @@ function SimpleApp() {
             border: 'none', 
             borderRadius: '8px',
             fontWeight: 'bold',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            marginBottom: '1rem'
           }}
           onClick={() => {
-            console.log('🚀 Button clicked - React events working')
-            setTest(!test)
+            console.log('🐉 Dragon Toggle clicked')
+            setShow3D(!show3D)
           }}
         >
-          {test ? 'Hide Test' : 'Show Test'}
+          {show3D ? '🌙 Hide Dragon' : '🔥 Summon Dragon'}
         </button>
-        {test && (
-          <div style={{ marginTop: '1rem', padding: '1rem', background: '#1f2937', borderRadius: '8px' }}>
-            <p>✅ React is working correctly!</p>
-            <p>✅ State management functional!</p>
-            <p>✅ Event handlers working!</p>
+        
+        {/* 3D Dragon Container */}
+        {show3D && (
+          <div style={{ 
+            position: 'fixed', 
+            top: '50%', 
+            left: '50%', 
+            transform: 'translate(-50%, -50%)',
+            width: '400px', 
+            height: '400px', 
+            border: '2px solid #facc15', 
+            borderRadius: '12px',
+            background: 'rgba(0, 0, 0, 0.8)',
+            zIndex: 1000
+          }}>
+            <div style={{ color: '#facc15', fontSize: '14px', padding: '8px', textAlign: 'center' }}>
+              🐉 Dragon Render Zone
+            </div>
+            <div style={{ width: '100%', height: 'calc(100% - 40px)' }}>
+              <Suspense fallback={
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  height: '100%',
+                  color: '#facc15'
+                }}>
+                  🌀 Loading Dragon...
+                </div>
+              }>
+                <DragonHead3DOptimized />
+              </Suspense>
+            </div>
           </div>
         )}
       </div>
