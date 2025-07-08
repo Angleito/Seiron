@@ -95,6 +95,7 @@ export const developmentDefaults = {
   REDIS_DB: '0',
   SEI_RPC_URL: 'https://rpc.sei-testnet.com',
   SEI_CHAIN_ID: '713715',
+  JWT_SECRET: 'dev-jwt-secret-change-in-production',
   DRAGONSWAP_TIMEOUT: '10000',
   YEIFINANCE_TIMEOUT: '10000',
   OPENAI_TEMPERATURE: '0.8',
@@ -103,5 +104,6 @@ export const developmentDefaults = {
   RATE_LIMIT_MAX: '1000', // Higher rate limit for development
   SUPABASE_URL: 'http://localhost:54321',
   SUPABASE_ANON_KEY: '',
-  SUPABASE_SERVICE_ROLE_KEY: ''
+  SUPABASE_SERVICE_ROLE_KEY: '',
+  OPENAI_API_KEY: 'sk-dummy-key-for-development'
 };

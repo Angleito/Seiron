@@ -194,7 +194,19 @@ app.use('/api/chat', (req, res, next) => {
 }, chatRouter);
 
 // Sessions router - requires authentication
+app.use('/api/sessions', requireAuth, sessionsRouter);
 app.use('/api/chat/sessions', requireAuth, sessionsRouter);
+
+// Messages router - mount the messages route from sessions router separately
+app.use('/api/messages', requireAuth, (req, res, next) => {
+  // Route /api/messages/:sessionId to the sessions router's messages endpoint
+  if (req.params.sessionId || req.url.match(/^\/[a-f0-9-]{36}/)) {
+    // Rewrite the URL to match the sessions router pattern
+    req.url = `/messages${req.url}`;
+    return sessionsRouter(req, res, next);
+  }
+  next();
+});
 
 // Protected routes - require authentication
 app.use('/api/portfolio', requireAuth, portfolioRouter);
@@ -211,6 +223,21 @@ app.get('/health', (req, res) => {
     requestId: req.requestId 
   });
 });
+
+// Development route info (only in development)
+if (process.env.NODE_ENV === 'development') {
+  app.get('/dev/routes', (req, res) => {
+    res.json({
+      routes: {
+        sessions: '/api/sessions',
+        messages: '/api/messages/:sessionId',
+        chat_sessions: '/api/chat/sessions',
+        chat_messages: '/api/chat/sessions/messages/:sessionId'
+      },
+      note: 'These routes require authentication'
+    });
+  });
+}
 
 // Error handling
 app.use(errorRequestLogger);
@@ -448,10 +475,14 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 8000;
+const PORT = parseInt(process.env.PORT || '8000');
 
 // Initialize adapters before starting server
 const startServer = async () => {
+  logger.info('Starting server initialization', {
+    port: PORT,
+    portType: typeof PORT
+  });
   try {
     // Initialize adapters if enabled
     const adapterResult = await adapterInitializer.registerAdapters(
@@ -474,7 +505,12 @@ const startServer = async () => {
     // Continue anyway - adapters are optional
   }
 
-  server.listen(PORT, () => {
+  logger.info('Attempting to start server', {
+    port: PORT,
+    host: '0.0.0.0'
+  });
+
+  server.listen(PORT, '0.0.0.0', () => {
   logger.info('🚀 Sei Portfolio Manager API started', {
     port: PORT,
     environment: process.env.NODE_ENV || 'development',
@@ -489,8 +525,39 @@ const startServer = async () => {
     openaiApiKey: process.env.OPENAI_API_KEY ? '[CONFIGURED]' : '[NOT CONFIGURED]',
     seiRpcUrl: process.env.SEI_RPC_URL || 'https://sei-rpc.polkachu.com'
   });
-});
+  })
+  .on('error', (error) => {
+    logger.error('Server failed to start', {
+      error: error.message,
+      port: PORT,
+      code: error.code
+    });
+    process.exit(1);
+  })
+  .on('listening', () => {
+    logger.info('Server listening event triggered', {
+      port: PORT,
+      address: server.address()
+    });
+  });
 };
+
+// Add global error handlers to catch crashes
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught exception occurred', {
+    error: error.message,
+    stack: error.stack
+  });
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled promise rejection', {
+    reason: reason instanceof Error ? reason.message : String(reason),
+    promise: promise
+  });
+  process.exit(1);
+});
 
 // Start the server
 startServer().catch(error => {

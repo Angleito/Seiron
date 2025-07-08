@@ -32,7 +32,7 @@ export const HTTP_STATUS = {
 export const NETWORKS = {
   SEI: {
     name: 'Sei',
-    chainId: 'sei-chain',
+    chainId: parseInt(process.env.SEI_CHAIN_ID || '1329'),
     prefix: 'sei',
     rpcUrl: process.env.SEI_RPC_URL || 'https://rpc.sei-apis.com',
     gasPrice: '0.1usei'

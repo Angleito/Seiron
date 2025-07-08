@@ -91,7 +91,7 @@ export class ChatPersistenceService {
   private readonly apiBaseUrl: string
   private readonly defaultUserId: string
 
-  constructor(apiBaseUrl: string = '/api', defaultUserId: string = 'anonymous') {
+  constructor(apiBaseUrl: string = '/api/chat', defaultUserId: string = 'anonymous') {
     this.apiBaseUrl = apiBaseUrl
     this.defaultUserId = defaultUserId
   }
