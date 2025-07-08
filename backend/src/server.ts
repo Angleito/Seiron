@@ -194,19 +194,7 @@ app.use('/api/chat', (req, res, next) => {
 }, chatRouter);
 
 // Sessions router - requires authentication
-app.use('/api/sessions', requireAuth, sessionsRouter);
 app.use('/api/chat/sessions', requireAuth, sessionsRouter);
-
-// Messages router - mount the messages route from sessions router separately
-app.use('/api/messages', requireAuth, (req, res, next) => {
-  // Route /api/messages/:sessionId to the sessions router's messages endpoint
-  if (req.params.sessionId || req.url.match(/^\/[a-f0-9-]{36}/)) {
-    // Rewrite the URL to match the sessions router pattern
-    req.url = `/messages${req.url}`;
-    return sessionsRouter(req, res, next);
-  }
-  next();
-});
 
 // Protected routes - require authentication
 app.use('/api/portfolio', requireAuth, portfolioRouter);
