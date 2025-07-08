@@ -77,8 +77,7 @@ export default function HomePage3D() {
         gl={{ 
           outputColorSpace: THREE.LinearSRGBColorSpace,
           toneMapping: THREE.NoToneMapping,
-          toneMappingExposure: 1,
-          physicallyCorrectLights: true
+          toneMappingExposure: 1
         }}
       >
         <ambientLight intensity={1} />
