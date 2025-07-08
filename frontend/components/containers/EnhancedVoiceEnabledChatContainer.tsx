@@ -11,10 +11,13 @@ import { sanitizeVoiceTranscript, sanitizeChatMessage } from '@lib/sanitize'
 import { pipe } from 'fp-ts/function'
 import * as O from 'fp-ts/Option'
 import * as A from 'fp-ts/Array'
+import * as E from 'fp-ts/Either'
 import { ChatSession, ChatPersistenceError, ChatMessage as PersistenceMessage } from '../../services/chat-persistence.service'
 import { EnhancedVoiceEnabledChatPresentation } from '../chat/EnhancedVoiceEnabledChatPresentation'
 import { ChatMessage, UnifiedChatMessage, getMessageTimestamp } from '../../types/components/chat'
 import { StreamMessage } from '../../types/chat-stream'
+import { useAIMemory } from '@hooks/chat/useAIMemory'
+import { ChatPreferences, ChatPreferencesData } from '../chat/ChatPreferences'
 
 interface EnhancedVoiceEnabledChatContainerProps {
   userId?: string
@@ -22,6 +25,9 @@ interface EnhancedVoiceEnabledChatContainerProps {
   enablePersistence?: boolean
   enableSessionManagement?: boolean
   autoLoadHistory?: boolean
+  enableAIMemory?: boolean
+  enablePreferences?: boolean
+  initialPreferences?: Partial<ChatPreferencesData>
   className?: string
 }
 
@@ -59,6 +65,9 @@ export const EnhancedVoiceEnabledChatContainer = React.memo(function EnhancedVoi
   enablePersistence = true,
   enableSessionManagement = true,
   autoLoadHistory = true,
+  enableAIMemory = true,
+  enablePreferences = true,
+  initialPreferences,
   className = ''
 }: EnhancedVoiceEnabledChatContainerProps) {
   // Basic chat state
@@ -71,7 +80,9 @@ export const EnhancedVoiceEnabledChatContainer = React.memo(function EnhancedVoi
   // UI state
   const [showSessionManager, setShowSessionManager] = useState(enableSessionManagement)
   const [showMessageHistory, setShowMessageHistory] = useState(false)
+  const [showPreferences, setShowPreferences] = useState(false)
   const [persistenceErrors, setPersistenceErrors] = useState<ChatPersistenceError[]>([])
+  const [userPreferences, setUserPreferences] = useState<ChatPreferencesData | undefined>(initialPreferences as ChatPreferencesData | undefined)
   
   // ElevenLabs configuration - memoized
   const elevenLabsConfig: ElevenLabsConfig = useMemo(() => ({
@@ -150,6 +161,39 @@ export const EnhancedVoiceEnabledChatContainer = React.memo(function EnhancedVoi
     }
   })
 
+  // AI Memory hook for persistent user context
+  const {
+    memories,
+    isLoading: isLoadingMemory,
+    saveMemory,
+    updateMemory,
+    getMemory,
+    searchMemories,
+    getMemoriesByCategory,
+    hasMemory
+  } = useAIMemory({
+    userId,
+    sessionId: currentSessionId,
+    autoSync: enableAIMemory,
+    onSyncError: (error) => {
+      handlePersistenceError({
+        type: 'unknown',
+        message: `AI Memory sync error: ${error.message}`,
+        details: { originalError: error.message }
+      })
+    }
+  })
+
+  // Load user preferences from memory on mount
+  useEffect(() => {
+    if (enableAIMemory && enablePreferences && !userPreferences) {
+      const prefMemory = getMemory('chat_preferences')
+      if (O.isSome(prefMemory)) {
+        setUserPreferences(prefMemory.value.value as ChatPreferencesData)
+      }
+    }
+  }, [enableAIMemory, enablePreferences, getMemory, userPreferences])
+
   // Combine historical and stream messages
   const allMessages = useMemo(() => {
     if (!enablePersistence) {
@@ -213,6 +257,40 @@ export const EnhancedVoiceEnabledChatContainer = React.memo(function EnhancedVoi
     }
   }, [createSession, clearMessages, isVoiceEnabled, enablePersistence])
 
+  // Build AI context from memory and preferences
+  const buildAIContext = useCallback(() => {
+    const context: Record<string, any> = {}
+    
+    if (enableAIMemory) {
+      // Add user preferences
+      if (userPreferences) {
+        context.preferences = userPreferences
+      }
+      
+      // Add relevant memories
+      const contextMemories = getMemoriesByCategory('context')
+      const factMemories = getMemoriesByCategory('fact')
+      
+      if (contextMemories.length > 0) {
+        context.contextHistory = contextMemories.map(m => ({
+          key: m.key,
+          value: m.value,
+          confidence: m.confidence
+        }))
+      }
+      
+      if (factMemories.length > 0) {
+        context.knownFacts = factMemories.map(m => ({
+          key: m.key,
+          value: m.value,
+          confidence: m.confidence
+        }))
+      }
+    }
+    
+    return context
+  }, [enableAIMemory, userPreferences, getMemoriesByCategory])
+
   // Handle voice transcript updates with sentence completion detection
   const handleTranscriptChange = useCallback((transcript: string) => {
     const sanitizedTranscript = sanitizeVoiceTranscript(transcript)
@@ -223,26 +301,32 @@ export const EnhancedVoiceEnabledChatContainer = React.memo(function EnhancedVoi
         sanitizedTranscript.trim() && 
         sanitizedTranscript.match(/[.!?]$/)) {
       setLastProcessedTranscript(sanitizedTranscript)
+      const aiContext = buildAIContext()
+      
       sendVoiceMessage(sanitizedTranscript.trim(), {
         voiceEnabled: true,
         timestamp: Date.now(),
-        sessionId: currentSessionId
+        sessionId: currentSessionId,
+        ...(Object.keys(aiContext).length > 0 && { aiContext })
       })
       setVoiceTranscript('')
     }
-  }, [lastProcessedTranscript, sendVoiceMessage, currentSessionId])
+  }, [lastProcessedTranscript, sendVoiceMessage, currentSessionId, buildAIContext])
   
   // Handle text input send
   const handleSend = useCallback(() => {
     if (!input.trim() || isLoading) return
     
     const sanitizedInput = sanitizeChatMessage(input.trim())
+    const aiContext = buildAIContext()
+    
     sendMessage(sanitizedInput, {
       sessionId: currentSessionId,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      ...(Object.keys(aiContext).length > 0 && { aiContext })
     })
     setInput('')
-  }, [input, isLoading, sendMessage, currentSessionId])
+  }, [input, isLoading, sendMessage, currentSessionId, buildAIContext])
   
   // Handle voice errors
   const handleVoiceError = useCallback((error: Error) => {
@@ -266,25 +350,53 @@ export const EnhancedVoiceEnabledChatContainer = React.memo(function EnhancedVoi
     setPersistenceErrors(prev => prev.filter((_, i) => i !== index))
   }, [])
 
-  // Auto-play AI responses when voice is enabled
+  // Handle preferences save
+  const handlePreferencesSave = useCallback((preferences: ChatPreferencesData) => {
+    setUserPreferences(preferences)
+    // Preferences are already saved to memory by the ChatPreferences component
+    logger.info('User preferences updated', { preferences })
+  }, [])
+
+  // Auto-play AI responses when voice is enabled and save to memory if enabled
   useEffect(() => {
-    if (!isVoiceEnabled || allMessages.length === 0) return
+    if (allMessages.length === 0) return
     
     pipe(
       A.last(allMessages),
       O.filter((lastMessage) => 
         (lastMessage.type === 'agent' || lastMessage.role === 'assistant') && 
         !lastMessage.metadata?.error && 
-        (lastMessage.status === 'delivered' || !lastMessage.status) &&
-        !isPlaying
+        (lastMessage.status === 'delivered' || !lastMessage.status)
       ),
       O.map((lastMessage) => {
-        playResponse(lastMessage.content).catch(error => {
-          logger.error('Failed to play audio response:', error)
-        })
+        // Auto-play voice if enabled
+        if (isVoiceEnabled && !isPlaying) {
+          playResponse(lastMessage.content).catch(error => {
+            logger.error('Failed to play audio response:', error)
+          })
+        }
+        
+        // Auto-learn from AI responses if enabled
+        if (enableAIMemory && userPreferences?.autoLearn && lastMessage.metadata?.reasoning) {
+          // Save AI reasoning as context
+          saveMemory(
+            `ai_reasoning_${Date.now()}`,
+            {
+              content: lastMessage.content,
+              reasoning: lastMessage.metadata.reasoning,
+              confidence: lastMessage.metadata.confidence || 0.8
+            },
+            'context',
+            lastMessage.metadata.confidence || 0.8
+          ).then(result => {
+            if (E.isLeft(result)) {
+              logger.error('Failed to save AI reasoning to memory:', result.left)
+            }
+          })
+        }
       })
     )
-  }, [allMessages, isVoiceEnabled, isPlaying, playResponse])
+  }, [allMessages, isVoiceEnabled, isPlaying, playResponse, enableAIMemory, userPreferences, saveMemory])
 
   // Handle errors from hooks
   useEffect(() => {
@@ -358,6 +470,14 @@ export const EnhancedVoiceEnabledChatContainer = React.memo(function EnhancedVoi
       // Error handling
       persistenceErrors={persistenceErrors}
       
+      // AI integration props
+      enableAIMemory={enableAIMemory}
+      enablePreferences={enablePreferences}
+      userPreferences={userPreferences}
+      showPreferences={showPreferences}
+      aiMemories={memories}
+      isLoadingMemory={isLoadingMemory}
+      
       // Event handlers
       onInputChange={setInput}
       onSend={handleSend}
@@ -383,6 +503,10 @@ export const EnhancedVoiceEnabledChatContainer = React.memo(function EnhancedVoi
       onClearPersistenceError={clearPersistenceError}
       onClearSessionError={clearSessionError}
       onClearHistoryError={clearHistoryError}
+      
+      // AI/Preferences handlers
+      onTogglePreferences={() => setShowPreferences(!showPreferences)}
+      onPreferencesSave={handlePreferencesSave}
       
       className={className}
     />

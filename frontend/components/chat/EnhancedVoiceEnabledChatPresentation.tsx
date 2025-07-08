@@ -30,6 +30,7 @@ import { SessionSearchFilter } from './parts/SessionSearchFilter'
 import { Button } from '../ui/forms/Button'
 import { Card } from '../ui/display/Card'
 import { Badge } from '../ui/display/Badge'
+import { ChatPreferences } from './ChatPreferences'
 
 interface ConnectionStatus {
   isConnected: boolean
@@ -84,6 +85,14 @@ interface EnhancedVoiceEnabledChatPresentationProps {
   // Error handling
   persistenceErrors: ChatPersistenceError[]
   
+  // AI integration props
+  enableAIMemory?: boolean
+  enablePreferences?: boolean
+  userPreferences?: any // ChatPreferencesData
+  showPreferences?: boolean
+  aiMemories?: any[] // AIMemoryEntry[]
+  isLoadingMemory?: boolean
+  
   // Event handlers
   onInputChange: (value: string) => void
   onSend: () => void
@@ -109,6 +118,10 @@ interface EnhancedVoiceEnabledChatPresentationProps {
   onClearPersistenceError: (index: number) => void
   onClearSessionError: () => void
   onClearHistoryError: () => void
+  
+  // AI/Preferences handlers
+  onTogglePreferences?: () => void
+  onPreferencesSave?: (preferences: any) => void
   
   className?: string
 }
@@ -150,6 +163,14 @@ export const EnhancedVoiceEnabledChatPresentation = React.memo(function Enhanced
   // Error handling
   persistenceErrors,
   
+  // AI integration props
+  enableAIMemory,
+  enablePreferences,
+  userPreferences,
+  showPreferences,
+  aiMemories,
+  isLoadingMemory,
+  
   // Event handlers
   onInputChange,
   onSend,
@@ -175,6 +196,10 @@ export const EnhancedVoiceEnabledChatPresentation = React.memo(function Enhanced
   onClearPersistenceError,
   onClearSessionError,
   onClearHistoryError,
+  
+  // AI/Preferences handlers
+  onTogglePreferences,
+  onPreferencesSave,
   
   className = ''
 }: EnhancedVoiceEnabledChatPresentationProps) {
@@ -243,6 +268,31 @@ export const EnhancedVoiceEnabledChatPresentation = React.memo(function Enhanced
             >
               📚 History ({messagesPagination.total})
             </Button>
+          )}
+          
+          {/* AI Preferences Toggle */}
+          {enablePreferences && (
+            <Button
+              onClick={onTogglePreferences}
+              variant={showPreferences ? 'secondary' : 'ghost'}
+              size="sm"
+              className={showPreferences ? 'bg-orange-600 text-white' : 'text-orange-300 hover:text-orange-200'}
+            >
+              ⚙️ AI Settings
+            </Button>
+          )}
+          
+          {/* AI Memory Indicator */}
+          {enableAIMemory && (
+            <div className="flex items-center gap-1">
+              {isLoadingMemory ? (
+                <div className="animate-pulse text-orange-300 text-sm">🧠 Syncing...</div>
+              ) : (
+                <Badge variant="success" size="sm">
+                  🧠 Memory Active
+                </Badge>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -373,6 +423,21 @@ export const EnhancedVoiceEnabledChatPresentation = React.memo(function Enhanced
               onClearHistoryError()
             }}
           />
+        </div>
+      )}
+
+      {/* AI Preferences Modal */}
+      {showPreferences && enablePreferences && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="my-8">
+            <ChatPreferences
+              userId={userId}
+              sessionId={currentSessionId}
+              initialPreferences={userPreferences}
+              onSave={onPreferencesSave}
+              onClose={onTogglePreferences}
+            />
+          </div>
         </div>
       )}
     </div>

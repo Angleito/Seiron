@@ -1,0 +1,16 @@
+{
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "nodejs20.x"
+    }
+  },
+  "env": {
+    "NEXTAUTH_SECRET": "@nextauth-secret",
+    "NEXT_PUBLIC_SUPABASE_URL": "@supabase-url",
+    "SUPABASE_SERVICE_KEY": "@supabase-service-key",
+    "UPSTASH_REDIS_REST_URL": "@upstash-redis-url",
+    "UPSTASH_REDIS_REST_TOKEN": "@upstash-redis-token",
+    "OPENAI_API_KEY": "@openai-api-key",
+    "ANTHROPIC_API_KEY": "@anthropic-api-key"
+  }
+}

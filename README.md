@@ -109,6 +109,10 @@ NEXT_PUBLIC_VOICE_ENABLED=true
 # Sei Network
 NEXT_PUBLIC_SEI_RPC_URL=https://evm-rpc.sei-apis.com
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_walletconnect_project_id_here
+
+# Supabase Configuration (Required for persistence)
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 ```
 
 #### Backend Environment Variables
@@ -124,6 +128,16 @@ FRONTEND_URL=http://localhost:3000
 
 # Additional configurations in backend/.env.example
 ```
+
+#### 🤖 AI Integration Setup
+
+Seiron's AI features require proper API key configuration and deployment setup. For detailed instructions on:
+- Setting up OpenAI and Anthropic API keys
+- Deploying to Vercel with proper environment variables
+- Configuring Supabase for data persistence
+- Security best practices for API keys
+
+See the **[AI Integration Setup Guide](docs/AI_INTEGRATION_SETUP.md)** 📚
 
 ### Dragon Summoning Examples
 
