@@ -9,18 +9,17 @@ import * as E from 'fp-ts/Either'
 
 // Mock the hooks
 jest.mock('../../../hooks/voice/useSpeechRecognition')
-jest.mock('../../../hooks/voice/useElevenLabsTTS')
+jest.mock('../../../hooks/voice/useSecureElevenLabsTTS')
 
 // Import mocked versions
 import { useSpeechRecognition } from '../../../hooks/voice/useSpeechRecognition'
-import { useElevenLabsTTS } from '../../../hooks/voice/useElevenLabsTTS'
+import { useSecureElevenLabsTTS } from '../../../hooks/voice/useSecureElevenLabsTTS'
 
 const mockUseSpeechRecognition = useSpeechRecognition as jest.MockedFunction<typeof useSpeechRecognition>
-const mockUseElevenLabsTTS = useElevenLabsTTS as jest.MockedFunction<typeof useElevenLabsTTS>
+const mockUseSecureElevenLabsTTS = useSecureElevenLabsTTS as jest.MockedFunction<typeof useSecureElevenLabsTTS>
 
 // Property generators
 const arbitraryElevenLabsConfig = fc.record({
-  apiKey: fc.string({ minLength: 10, maxLength: 50 }),
   voiceId: fc.string({ minLength: 5, maxLength: 20 }),
   modelId: fc.option(fc.string({ minLength: 5, maxLength: 30 })),
   voiceSettings: fc.option(fc.record({

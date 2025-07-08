@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useChatStream } from '../chat/useChatStream'
 import { useVoiceInterfaceAudio } from '@components/voice'
-import { ElevenLabsConfig } from '@hooks/voice/useElevenLabsTTS'
+import { SecureElevenLabsConfig as ElevenLabsConfig } from '@hooks/voice/useSecureElevenLabsTTS'
 import { logger } from '@lib/logger'
 import { sanitizeVoiceTranscript, sanitizeChatMessage } from '@lib/sanitize'
 import { pipe } from 'fp-ts/function'

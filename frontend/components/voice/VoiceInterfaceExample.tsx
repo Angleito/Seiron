@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react'
 import { VoiceInterface, useVoiceInterfaceAudio } from './index'
-import { ElevenLabsConfig } from '../../hooks/voice/useElevenLabsTTS'
+import { SecureElevenLabsConfig as ElevenLabsConfig } from '../../hooks/voice/useSecureElevenLabsTTS'
 
 /**
  * Example implementation of the VoiceInterface component
@@ -12,7 +12,6 @@ const VoiceInterfaceExample: React.FC = () => {
 
   // ElevenLabs configuration - now using backend proxy
   const elevenLabsConfig: ElevenLabsConfig = {
-    apiKey: import.meta.env.VITE_ELEVENLABS_API_KEY || '',
     voiceId: import.meta.env.VITE_ELEVENLABS_VOICE_ID || '',
     modelId: 'eleven_monolingual_v1',
     voiceSettings: {

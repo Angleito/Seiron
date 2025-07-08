@@ -3,7 +3,7 @@
 import React from 'react'
 import { VoiceInterface } from '@components/voice'
 import { VoiceErrorBoundary } from '@components/error-boundaries'
-import { ElevenLabsConfig } from '@hooks/voice/useElevenLabsTTS'
+import { SecureElevenLabsConfig as ElevenLabsConfig } from '@hooks/voice/useSecureElevenLabsTTS'
 import { DragonBallLoadingStates } from '@components/chat/parts/DragonBallLoadingStates'
 
 interface VoiceSectionProps {

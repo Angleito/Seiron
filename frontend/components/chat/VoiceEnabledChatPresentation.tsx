@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { StreamMessage } from './ChatStreamService'
-import { ElevenLabsConfig } from '@hooks/voice/useElevenLabsTTS'
+import { SecureElevenLabsConfig as ElevenLabsConfig } from '@hooks/voice/useSecureElevenLabsTTS'
 import { ChatStatusBar } from './parts/ChatStatusBar'
 import { MessagesArea } from './sections/MessagesArea'
 import { VoiceSection } from './sections/VoiceSection'

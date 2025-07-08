@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react'
 import { StreamMessage } from './ChatStreamService'
 import { UnifiedChatMessage } from '../../types/components/chat'
-import { ElevenLabsConfig } from '@hooks/voice/useElevenLabsTTS'
+import { SecureElevenLabsConfig as ElevenLabsConfig } from '@hooks/voice/useSecureElevenLabsTTS'
 import { ChatSession, ChatMessage, ChatPersistenceError, PaginationInfo } from '../../services/chat-persistence.service'
 
 // Convert UnifiedChatMessage to StreamMessage
