@@ -106,11 +106,11 @@ export class AdapterInitializer {
         // Register with SeiIntegrationService
         seiIntegrationService.registerAdapters(adapters);
 
-        // Register with AIService
+        // Register with AIService - cast to any to avoid interface mismatch
         aiService.initializeAdapters(
-          adapters.hive,
-          adapters.sak,
-          adapters.mcp
+          adapters.hive as any,
+          adapters.sak as any,
+          adapters.mcp as any
         );
 
         logger.info('Adapters registered with services', {
