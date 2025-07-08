@@ -86,8 +86,8 @@ export const EnhancedVoiceEnabledChatContainer = React.memo(function EnhancedVoi
   
   // ElevenLabs configuration - memoized
   const elevenLabsConfig: ElevenLabsConfig = useMemo(() => ({
-    apiKey: process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY || '',
-    voiceId: process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID || '',
+    // API key no longer needed - handled server-side
+    voiceId: import.meta.env.VITE_ELEVENLABS_VOICE_ID || '',
     modelId: 'eleven_monolingual_v1',
     voiceSettings: {
       stability: 0.5,

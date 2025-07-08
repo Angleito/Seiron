@@ -132,7 +132,7 @@ export class VoiceApiClient {
     return pipe(
       TE.tryCatch(
         async (): Promise<ArrayBuffer> => {
-          const url = `${this.config.apiBaseUrl}/api/voice/synthesize`
+          const url = this.config.apiBaseUrl ? `${this.config.apiBaseUrl}/api/voice/synthesize` : '/api/voice/synthesize'
           const timeout = this.config.timeout || 30000
           
           logger.debug('🔊 Making voice synthesis API request', {
@@ -246,18 +246,8 @@ export class VoiceApiClient {
 }
 
 // Default client instance
-const getApiBaseUrl = (): string => {
-  // Try to get from environment variable first
-  if (typeof window !== 'undefined' && window.location) {
-    return window.location.origin
-  }
-  
-  // Fallback to localhost for development
-  return 'http://localhost:3000'
-}
-
 export const defaultVoiceApiClient = new VoiceApiClient({
-  apiBaseUrl: getApiBaseUrl(),
+  apiBaseUrl: '', // Use relative URLs for Vercel functions
   timeout: 30000
 })
 

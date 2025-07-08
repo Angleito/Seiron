@@ -83,6 +83,7 @@
     "@types/three": "^0.170.0",
     "@typescript-eslint/eslint-plugin": "^8.35.1",
     "@typescript-eslint/parser": "^8.35.1",
+    "@vercel/node": "^5.3.4",
     "@vitejs/plugin-react": "^4.4.4",
     "axe-core": "^4.8.4",
     "eslint": "^8",

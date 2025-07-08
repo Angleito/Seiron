@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSpeechRecognition } from '../../hooks/voice/useSpeechRecognition'
-import { useElevenLabsTTS, ElevenLabsConfig } from '../../hooks/voice/useElevenLabsTTS'
+import { useSecureElevenLabsTTS, SecureElevenLabsConfig as ElevenLabsConfig } from '../../hooks/voice/useSecureElevenLabsTTS'
 import * as E from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
 import * as O from 'fp-ts/Option'
@@ -13,12 +13,10 @@ import { LightningEffect } from '../effects/LightningEffect'
 
 // Log environment variables at module load
 const envStatus = {
-  hasElevenLabsKey: typeof process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY !== 'undefined',
-  elevenLabsKeyLength: process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY?.length || 0,
-  hasVoiceId: typeof process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID !== 'undefined',
-  voiceIdValue: process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID || 'NOT_SET',
-  voiceEnabled: process.env.NEXT_PUBLIC_VOICE_ENABLED || 'NOT_SET',
-  nodeEnv: process.env.NODE_ENV || 'unknown'
+  hasVoiceId: typeof import.meta.env.VITE_ELEVENLABS_VOICE_ID !== 'undefined',
+  voiceIdValue: import.meta.env.VITE_ELEVENLABS_VOICE_ID || 'NOT_SET',
+  voiceEnabled: import.meta.env.VITE_VOICE_ENABLED || 'NOT_SET',
+  nodeEnv: import.meta.env.MODE || 'unknown'
 }
 
 logger.debug('🔊 VoiceInterface module loaded, checking environment', envStatus)
@@ -51,7 +49,6 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
     hasOnTranscriptChange: !!onTranscriptChange,
     hasOnError: !!onError,
     autoReadResponses,
-    configApiKeyLength: elevenLabsConfig.apiKey?.length || 0,
     configVoiceId: elevenLabsConfig.voiceId,
     configModelId: elevenLabsConfig.modelId,
     hasVoiceSettings: !!elevenLabsConfig.voiceSettings
@@ -93,7 +90,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
     isLoading: isTTSLoading,
     error: ttsError,
     speak
-  } = useElevenLabsTTS(elevenLabsConfig)
+  } = useSecureElevenLabsTTS(elevenLabsConfig)
   
   logger.debug('🔊 ElevenLabs TTS hook initialized', {
     isSpeaking,
@@ -622,7 +619,7 @@ export default VoiceInterface
 
 // Export utility function for external audio playback
 export const useVoiceInterfaceAudio = (elevenLabsConfig: ElevenLabsConfig) => {
-  const { speak, stop, isSpeaking } = useElevenLabsTTS(elevenLabsConfig)
+  const { speak, stop, isSpeaking } = useSecureElevenLabsTTS(elevenLabsConfig)
   
   return {
     playResponse: async (text: string) => {
