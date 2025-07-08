@@ -1,192 +1,298 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { z } from 'zod'
-
-// Rate limiting using in-memory store (for simple implementation)
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
 
 // Rate limiting configuration
-const RATE_LIMIT_WINDOW = 15 * 60 * 1000 // 15 minutes
-const RATE_LIMIT_MAX = 100 // 100 requests per window
+const RATE_LIMIT_WINDOW = 60 * 1000 // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 10
+const requestCounts = new Map<string, { count: number; resetTime: number }>()
 
-// Validation schema
-const synthesizeTextSchema = z.object({
-  text: z.string().min(1).max(5000),
-  modelId: z.string().optional(),
-  voiceSettings: z.object({
-    stability: z.number().min(0).max(1).optional(),
-    similarityBoost: z.number().min(0).max(1).optional(),
-    style: z.number().min(0).max(1).optional(),
-    useSpeakerBoost: z.boolean().optional()
-  }).optional()
-})
+// Input validation constants
+const MAX_TEXT_LENGTH = 1000
+const MIN_TEXT_LENGTH = 1
+const ALLOWED_CONTENT_TYPES = ['text/plain', 'text/html']
 
-// Helper function to get client IP
-function getClientIp(req: VercelRequest): string {
-  return (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || 
-         req.headers['x-real-ip'] as string || 
-         'unknown'
+// ElevenLabs API constants
+const ELEVENLABS_API_URL = 'https://api.elevenlabs.io/v1/text-to-speech'
+const DEFAULT_MODEL_ID = 'eleven_monolingual_v1'
+
+// CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 }
 
-// Simple in-memory rate limiting
-function checkRateLimit(ip: string): { allowed: boolean; remaining: number } {
+// Error response types
+interface ErrorResponse {
+  success: false
+  error: string
+  code?: string
+}
+
+interface SuccessResponse {
+  success: true
+  data: {
+    audioBuffer: string // base64 encoded audio
+    contentType: string
+    duration?: number
+    characterCount: number
+  }
+}
+
+type ApiResponse = ErrorResponse | SuccessResponse
+
+// Rate limiting helper
+function checkRateLimit(clientId: string): boolean {
   const now = Date.now()
-  const record = rateLimitStore.get(ip)
-
-  // Clean up old entries
-  if (record && now > record.resetTime) {
-    rateLimitStore.delete(ip)
-  }
-
-  // Check current rate limit
-  const current = rateLimitStore.get(ip) || { count: 0, resetTime: now + RATE_LIMIT_WINDOW }
+  const clientData = requestCounts.get(clientId)
   
-  if (current.count >= RATE_LIMIT_MAX) {
-    return { allowed: false, remaining: 0 }
+  if (!clientData || now > clientData.resetTime) {
+    // Reset or create new window
+    requestCounts.set(clientId, {
+      count: 1,
+      resetTime: now + RATE_LIMIT_WINDOW
+    })
+    return true
   }
-
-  // Update count
-  current.count++
-  rateLimitStore.set(ip, current)
-
-  return { allowed: true, remaining: RATE_LIMIT_MAX - current.count }
+  
+  if (clientData.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return false
+  }
+  
+  clientData.count++
+  return true
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+// Input validation
+function validateTextInput(text: unknown): string | null {
+  if (typeof text !== 'string') {
+    return 'Text must be a string'
+  }
+  
+  if (text.length < MIN_TEXT_LENGTH) {
+    return 'Text is too short'
+  }
+  
+  if (text.length > MAX_TEXT_LENGTH) {
+    return `Text is too long (max ${MAX_TEXT_LENGTH} characters)`
+  }
+  
+  // Basic content filtering - prevent potentially harmful content
+  const suspiciousPatterns = [
+    /<script/i,
+    /javascript:/i,
+    /vbscript:/i,
+    /on\w+\s*=/i,
+    /data:text\/html/i
+  ]
+  
+  for (const pattern of suspiciousPatterns) {
+    if (pattern.test(text)) {
+      return 'Text contains potentially harmful content'
+    }
+  }
+  
+  return null
+}
 
-  // Handle OPTIONS request
+// Voice settings validation
+function validateVoiceSettings(settings: any): any {
+  if (!settings || typeof settings !== 'object') {
+    return {
+      stability: 0.5,
+      similarity_boost: 0.5,
+      style: 0.0,
+      use_speaker_boost: false
+    }
+  }
+  
+  return {
+    stability: typeof settings.stability === 'number' && settings.stability >= 0 && settings.stability <= 1 
+      ? settings.stability : 0.5,
+    similarity_boost: typeof settings.similarity_boost === 'number' && settings.similarity_boost >= 0 && settings.similarity_boost <= 1 
+      ? settings.similarity_boost : 0.5,
+    style: typeof settings.style === 'number' && settings.style >= 0 && settings.style <= 1 
+      ? settings.style : 0.0,
+    use_speaker_boost: typeof settings.use_speaker_boost === 'boolean' 
+      ? settings.use_speaker_boost : false
+  }
+}
+
+// ElevenLabs API call
+async function synthesizeWithElevenLabs(
+  text: string,
+  voiceId: string,
+  modelId: string,
+  voiceSettings: any
+): Promise<{ audioBuffer: ArrayBuffer; contentType: string }> {
+  const apiKey = process.env.ELEVENLABS_API_KEY
+  
+  if (!apiKey) {
+    throw new Error('ElevenLabs API key not configured')
+  }
+  
+  const response = await fetch(`${ELEVENLABS_API_URL}/${voiceId}`, {
+    method: 'POST',
+    headers: {
+      'xi-api-key': apiKey,
+      'Content-Type': 'application/json',
+      'Accept': 'audio/mpeg'
+    },
+    body: JSON.stringify({
+      text,
+      model_id: modelId,
+      voice_settings: voiceSettings
+    })
+  })
+  
+  if (!response.ok) {
+    const errorText = await response.text()
+    
+    // Handle specific error cases
+    if (response.status === 401) {
+      throw new Error('Invalid API key')
+    } else if (response.status === 429) {
+      throw new Error('Rate limit exceeded')
+    } else if (response.status === 400) {
+      throw new Error('Invalid request parameters')
+    } else {
+      throw new Error(`API error: ${response.status} - ${errorText}`)
+    }
+  }
+  
+  const audioBuffer = await response.arrayBuffer()
+  const contentType = response.headers.get('Content-Type') || 'audio/mpeg'
+  
+  return { audioBuffer, contentType }
+}
+
+// Main handler
+export default async function handler(
+  req: VercelRequest,
+  res: VercelResponse
+): Promise<void> {
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    res.status(200).end()
+    res.status(200).setHeaders(corsHeaders).end()
     return
   }
-
+  
   // Only allow POST
   if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Method not allowed' })
-    return
-  }
-
-  // Check rate limit
-  const clientIp = getClientIp(req)
-  const { allowed, remaining } = checkRateLimit(clientIp)
-  
-  res.setHeader('X-RateLimit-Limit', RATE_LIMIT_MAX.toString())
-  res.setHeader('X-RateLimit-Remaining', remaining.toString())
-
-  if (!allowed) {
-    res.status(429).json({
+    const errorResponse: ErrorResponse = {
       success: false,
-      error: 'Too many voice synthesis requests from this IP, please try again later.',
-      code: 'RATE_LIMIT_EXCEEDED'
-    })
-    return
-  }
-
-  // Validate request body
-  const validation = synthesizeTextSchema.safeParse(req.body)
-  if (!validation.success) {
-    res.status(400).json({
-      success: false,
-      error: 'Validation error',
-      code: 'VALIDATION_ERROR'
-    })
-    return
-  }
-
-  const { text, modelId, voiceSettings } = validation.data
-
-  // Get configuration from environment variables
-  const elevenLabsApiKey = process.env.ELEVENLABS_API_KEY
-  const elevenLabsVoiceId = process.env.ELEVENLABS_VOICE_ID || process.env.VITE_ELEVENLABS_VOICE_ID
-
-  if (!elevenLabsApiKey || !elevenLabsVoiceId) {
-    console.error('ElevenLabs configuration missing')
-    res.status(500).json({
-      success: false,
-      error: 'Voice synthesis service is not properly configured',
-      code: 'CONFIG_ERROR'
-    })
-    return
-  }
-
-  try {
-    // Convert camelCase to snake_case for ElevenLabs API
-    const apiVoiceSettings = voiceSettings ? {
-      stability: voiceSettings.stability ?? 0.5,
-      similarity_boost: voiceSettings.similarityBoost ?? 0.75,
-      style: voiceSettings.style ?? 0.5,
-      use_speaker_boost: voiceSettings.useSpeakerBoost ?? true
-    } : {
-      stability: 0.5,
-      similarity_boost: 0.75,
-      style: 0.5,
-      use_speaker_boost: true
+      error: 'Method not allowed',
+      code: 'METHOD_NOT_ALLOWED'
     }
-
-    const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${elevenLabsVoiceId}`,
-      {
-        method: 'POST',
-        headers: {
-          'xi-api-key': elevenLabsApiKey,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          text,
-          model_id: modelId || 'eleven_monolingual_v1',
-          voice_settings: apiVoiceSettings
-        })
-      }
-    )
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        console.warn('ElevenLabs API quota exceeded')
-        res.status(429).json({
-          success: false,
-          error: 'Voice synthesis quota exceeded. Please try again later.',
-          code: 'QUOTA_EXCEEDED'
-        })
-        return
-      }
-
-      const errorText = await response.text()
-      console.error('ElevenLabs API error:', {
-        status: response.status,
-        statusText: response.statusText,
-        body: errorText
-      })
-
-      res.status(response.status).json({
+    res.status(405).setHeaders(corsHeaders).json(errorResponse)
+    return
+  }
+  
+  try {
+    // Rate limiting
+    const clientId = req.headers['x-forwarded-for'] as string || 
+                     req.headers['x-real-ip'] as string || 
+                     req.connection?.remoteAddress || 
+                     'unknown'
+    
+    if (!checkRateLimit(clientId)) {
+      const errorResponse: ErrorResponse = {
         success: false,
-        error: 'Failed to synthesize speech',
-        code: 'API_ERROR'
-      })
+        error: 'Rate limit exceeded. Please try again later.',
+        code: 'RATE_LIMIT_EXCEEDED'
+      }
+      res.status(429).setHeaders(corsHeaders).json(errorResponse)
       return
     }
-
-    const audioBuffer = await response.arrayBuffer()
+    
+    // Validate request body
+    const { text, voiceId, modelId, voiceSettings } = req.body
+    
+    if (!text) {
+      const errorResponse: ErrorResponse = {
+        success: false,
+        error: 'Text is required',
+        code: 'MISSING_TEXT'
+      }
+      res.status(400).setHeaders(corsHeaders).json(errorResponse)
+      return
+    }
+    
+    if (!voiceId) {
+      const errorResponse: ErrorResponse = {
+        success: false,
+        error: 'Voice ID is required',
+        code: 'MISSING_VOICE_ID'
+      }
+      res.status(400).setHeaders(corsHeaders).json(errorResponse)
+      return
+    }
+    
+    // Validate text input
+    const textValidationError = validateTextInput(text)
+    if (textValidationError) {
+      const errorResponse: ErrorResponse = {
+        success: false,
+        error: textValidationError,
+        code: 'INVALID_TEXT'
+      }
+      res.status(400).setHeaders(corsHeaders).json(errorResponse)
+      return
+    }
+    
+    // Validate and sanitize voice settings
+    const sanitizedVoiceSettings = validateVoiceSettings(voiceSettings)
+    const sanitizedModelId = typeof modelId === 'string' && modelId.length > 0 
+      ? modelId : DEFAULT_MODEL_ID
+    
+    // Call ElevenLabs API
+    const { audioBuffer, contentType } = await synthesizeWithElevenLabs(
+      text,
+      voiceId,
+      sanitizedModelId,
+      sanitizedVoiceSettings
+    )
+    
+    // Convert to base64 for JSON response
     const base64Audio = Buffer.from(audioBuffer).toString('base64')
-
-    // Return base64 encoded audio for consistency with the frontend client
-    res.status(200).json({
+    
+    const successResponse: SuccessResponse = {
       success: true,
       data: {
         audioBuffer: base64Audio,
-        contentType: 'audio/mpeg',
+        contentType,
         characterCount: text.length
       }
-    })
-
+    }
+    
+    res.status(200).setHeaders(corsHeaders).json(successResponse)
+    
   } catch (error) {
     console.error('Voice synthesis error:', error)
-    res.status(500).json({
+    
+    let errorMessage = 'Internal server error'
+    let errorCode = 'INTERNAL_ERROR'
+    
+    if (error instanceof Error) {
+      errorMessage = error.message
+      
+      // Map common error types to codes
+      if (error.message.includes('API key')) {
+        errorCode = 'API_KEY_ERROR'
+      } else if (error.message.includes('Rate limit')) {
+        errorCode = 'RATE_LIMIT_ERROR'
+      } else if (error.message.includes('Invalid request')) {
+        errorCode = 'INVALID_REQUEST'
+      } else if (error.message.includes('network') || error.message.includes('fetch')) {
+        errorCode = 'NETWORK_ERROR'
+      }
+    }
+    
+    const errorResponse: ErrorResponse = {
       success: false,
-      error: 'Failed to process voice synthesis request',
-      code: 'INTERNAL_ERROR'
-    })
+      error: errorMessage,
+      code: errorCode
+    }
+    
+    res.status(500).setHeaders(corsHeaders).json(errorResponse)
   }
 }
