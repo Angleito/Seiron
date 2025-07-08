@@ -89,34 +89,34 @@ const FEATURES: FeatureCard[] = [
 const getStarPositions = (starCount: number): Array<{x: number, y: number}> => {
   const positions = {
     4: [
-      { x: 30, y: 30 }, // Top-left
-      { x: 70, y: 30 }, // Top-right
-      { x: 30, y: 70 }, // Bottom-left
-      { x: 70, y: 70 }  // Bottom-right
+      { x: 32, y: 32 }, // Top-left
+      { x: 68, y: 32 }, // Top-right
+      { x: 32, y: 68 }, // Bottom-left
+      { x: 68, y: 68 }  // Bottom-right
     ],
     5: [
-      { x: 30, y: 30 }, // Top-left
-      { x: 70, y: 30 }, // Top-right
+      { x: 32, y: 32 }, // Top-left
+      { x: 68, y: 32 }, // Top-right
       { x: 50, y: 50 }, // Center
-      { x: 30, y: 70 }, // Bottom-left
-      { x: 70, y: 70 }  // Bottom-right
+      { x: 32, y: 68 }, // Bottom-left
+      { x: 68, y: 68 }  // Bottom-right
     ],
     6: [
-      { x: 25, y: 25 }, // Top-left
-      { x: 50, y: 20 }, // Top-center
-      { x: 75, y: 25 }, // Top-right
-      { x: 25, y: 75 }, // Bottom-left
-      { x: 50, y: 80 }, // Bottom-center
-      { x: 75, y: 75 }  // Bottom-right
+      { x: 30, y: 30 }, // Top-left
+      { x: 50, y: 25 }, // Top-center
+      { x: 70, y: 30 }, // Top-right
+      { x: 30, y: 70 }, // Bottom-left
+      { x: 50, y: 75 }, // Bottom-center
+      { x: 70, y: 70 }  // Bottom-right
     ],
     7: [
-      { x: 25, y: 25 }, // Top-left
-      { x: 50, y: 20 }, // Top-center
-      { x: 75, y: 25 }, // Top-right
-      { x: 20, y: 50 }, // Middle-left
+      { x: 28, y: 28 }, // Top-left
+      { x: 50, y: 23 }, // Top-center
+      { x: 72, y: 28 }, // Top-right
+      { x: 25, y: 50 }, // Middle-left
       { x: 50, y: 50 }, // Center
-      { x: 80, y: 50 }, // Middle-right
-      { x: 50, y: 80 }  // Bottom-center
+      { x: 75, y: 50 }, // Middle-right
+      { x: 50, y: 77 }  // Bottom-center
     ]
   }
   
