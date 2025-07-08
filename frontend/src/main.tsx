@@ -1,50 +1,48 @@
 import React, { useState } from 'react'
 import ReactDOM from 'react-dom/client'
-import '@/styles/globals.css'
-
-// Import the minimal 3D test component
-import MinimalThreeTest from '../components/effects/MinimalThreeTest'
+import '../styles/globals.css'
 
 // Simplified version for debugging
 console.log('🚀 Main.tsx: Starting React app initialization')
 
 function SimpleApp() {
   console.log('🚀 SimpleApp: Component rendering')
-  const [show3D, setShow3D] = useState(false)
+  const [test, setTest] = useState(false)
   
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-yellow-400 mb-4">
-            Seiron Debug Mode v2
-          </h1>
-          <p className="text-lg text-gray-300 mb-4">
-            React is working! Now testing 3D components...
-          </p>
-          <div className="space-y-4">
-            <button 
-              className="px-6 py-3 bg-yellow-500 text-black font-bold rounded hover:bg-yellow-400 mr-4"
-              onClick={() => {
-                console.log('🚀 Button clicked - React events working')
-                setShow3D(!show3D)
-              }}
-            >
-              {show3D ? 'Hide 3D Test' : 'Show 3D Test'}
-            </button>
+    <div style={{ minHeight: '100vh', background: 'black', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ textAlign: 'center' }}>
+        <h1 style={{ fontSize: '3rem', color: '#facc15', marginBottom: '1rem' }}>
+          Seiron Debug Mode v3
+        </h1>
+        <p style={{ fontSize: '1.25rem', color: '#d1d5db', marginBottom: '1rem' }}>
+          React is working! Build system fixed!
+        </p>
+        <button 
+          style={{ 
+            padding: '12px 24px', 
+            background: '#facc15', 
+            color: 'black', 
+            border: 'none', 
+            borderRadius: '8px',
+            fontWeight: 'bold',
+            cursor: 'pointer'
+          }}
+          onClick={() => {
+            console.log('🚀 Button clicked - React events working')
+            setTest(!test)
+          }}
+        >
+          {test ? 'Hide Test' : 'Show Test'}
+        </button>
+        {test && (
+          <div style={{ marginTop: '1rem', padding: '1rem', background: '#1f2937', borderRadius: '8px' }}>
+            <p>✅ React is working correctly!</p>
+            <p>✅ State management functional!</p>
+            <p>✅ Event handlers working!</p>
           </div>
-        </div>
+        )}
       </div>
-      
-      {/* 3D Test Area */}
-      {show3D && (
-        <div className="fixed top-20 right-20 w-64 h-64 border-2 border-yellow-400 bg-gray-900">
-          <div className="text-yellow-400 text-sm p-2">3D Test Area</div>
-          <div className="w-full h-56">
-            <MinimalThreeTest className="w-full h-full" />
-          </div>
-        </div>
-      )}
     </div>
   )
 }
