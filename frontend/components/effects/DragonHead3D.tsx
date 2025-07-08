@@ -48,9 +48,9 @@ function DragonHeadMesh({
     cloned.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         child.material = new THREE.MeshPhongMaterial({
-          color: new THREE.Color(0.15, 0.12, 0.1), // Dark brown/black
-          shininess: 30,
-          specular: new THREE.Color(0.3, 0.2, 0.1), // Subtle golden highlights
+          color: new THREE.Color(0.7, 0.15, 0.1), // Rich crimson red
+          shininess: 40,
+          specular: new THREE.Color(0.9, 0.6, 0.2), // Enhanced golden highlights
         })
         child.castShadow = true
         child.receiveShadow = true
@@ -119,7 +119,7 @@ function DragonHeadMesh({
     if (lightningActive) {
       meshRef.current.traverse((child) => {
         if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshPhongMaterial) {
-          child.material.emissive.setHex(0x444422) // Golden glow during lightning
+          child.material.emissive.setHex(0x664422) // Enhanced golden-red glow during lightning
         }
       })
     } else {
@@ -162,7 +162,7 @@ function DragonLighting({ lightningActive = false }: { lightningActive: boolean 
   return (
     <>
       {/* Ambient light for overall illumination */}
-      <ambientLight ref={ambientRef} color="#4a5568" intensity={0.3} />
+      <ambientLight ref={ambientRef} color="#5a4545" intensity={0.3} />
       
       {/* Main directional light */}
       <directionalLight
@@ -185,7 +185,7 @@ function DragonLighting({ lightningActive = false }: { lightningActive: boolean 
       <pointLight
         position={[8, 2, 8]}
         intensity={0.5}
-        color="#d97706"
+        color="#e6a700"
         distance={20}
       />
     </>
