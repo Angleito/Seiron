@@ -15,14 +15,21 @@ interface PowerLevelCounterProps {
   onLevelChange?: (level: number) => void
 }
 
-const POWER_LEVELS = [
+interface PowerLevel {
+  threshold: number
+  name: string
+  color: string
+  aura: string
+}
+
+const POWER_LEVELS: PowerLevel[] = [
   { threshold: 0, name: 'Earthling', color: 'text-gray-400', aura: 'bg-gray-400/20' },
   { threshold: 1000, name: 'Fighter', color: 'text-blue-400', aura: 'bg-blue-400/20' },
   { threshold: 10000, name: 'Elite', color: 'text-green-400', aura: 'bg-green-400/20' },
   { threshold: 50000, name: 'Super Saiyan', color: 'text-yellow-400', aura: 'bg-yellow-400/30' },
   { threshold: 100000, name: 'Legendary', color: 'text-orange-400', aura: 'bg-orange-400/30' },
   { threshold: 500000, name: 'God Tier', color: 'text-red-400', aura: 'bg-red-400/40' },
-]
+] as const
 
 export const PowerLevelCounter: React.FC<PowerLevelCounterProps> = ({
   targetValue = 42000,
@@ -42,11 +49,19 @@ export const PowerLevelCounter: React.FC<PowerLevelCounterProps> = ({
     lg: 'text-6xl xl:text-7xl'
   }
 
-  const currentLevel = useMemo(() => {
-    const level = POWER_LEVELS.reduceRight((acc, level) => 
-      currentValue >= level.threshold ? level : acc
-    , POWER_LEVELS[0])
-    return level
+  const currentLevel = useMemo((): PowerLevel => {
+    // Find the highest level that the current value qualifies for
+    let matchedLevel: PowerLevel = POWER_LEVELS[0]! // Default to first level
+    
+    for (let i = POWER_LEVELS.length - 1; i >= 0; i--) {
+      const level = POWER_LEVELS[i]!
+      if (currentValue >= level.threshold) {
+        matchedLevel = level
+        break
+      }
+    }
+    
+    return matchedLevel
   }, [currentValue])
 
   useEffect(() => {

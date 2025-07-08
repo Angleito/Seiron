@@ -72,11 +72,12 @@ export const EnhancedHeroSection: React.FC<EnhancedHeroSectionProps> = ({
 
       return () => clearTimeout(timer)
     }
+    return undefined
   }, [isLoaded, showPowerLevel])
 
   // Rotate taglines
   useEffect(() => {
-    if (!enableAnimations || customTaglines.length <= 1) return
+    if (!enableAnimations || customTaglines.length <= 1) return undefined
 
     const interval = setInterval(() => {
       setCurrentTaglineIndex(prev => (prev + 1) % customTaglines.length)

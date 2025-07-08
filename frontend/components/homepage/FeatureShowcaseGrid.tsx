@@ -184,28 +184,19 @@ const FeatureCardComponent: React.FC<{
       opacity: 1, 
       y: 0,
       scale: 1,
-      rotate: 0,
-      transition: {
-        duration: 0.6,
-        delay: index * 0.2,
-        ease: [0.4, 0, 0.2, 1]
-      }
+      rotate: 0
     }
   }
 
-  const hoverVariants = {
-    rest: { 
-      scale: 1,
-      y: 0
-    },
-    hover: { 
-      scale: 1.02,
-      y: -8,
-      transition: {
-        duration: 0.3,
-        ease: "easeOut"
-      }
-    }
+  const cardTransition = {
+    duration: 0.6,
+    delay: index * 0.2,
+    ease: [0.25, 0.46, 0.45, 0.94] as const
+  }
+
+  const hoverTransition = {
+    duration: 0.3,
+    ease: [0.25, 0.46, 0.45, 0.94] as const
   }
 
   return (
@@ -214,8 +205,8 @@ const FeatureCardComponent: React.FC<{
       variants={animated ? cardVariants : undefined}
       initial={animated ? "hidden" : undefined}
       animate={animated && isInView ? "visible" : undefined}
-      whileHover={animated ? "hover" : undefined}
-      variants={animated ? { ...cardVariants, ...hoverVariants } : undefined}
+      transition={animated ? cardTransition : undefined}
+      whileHover={animated ? { scale: 1.02, y: -8 } : undefined}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
       className={cn(

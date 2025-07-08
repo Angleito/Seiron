@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { TrendingUp, Activity, Search, Shield, Zap, Sparkles } from 'lucide-react'
-import { cn } from '@lib/utils'
+import { cn } from '@/lib/utils'
 
 interface FeatureCard {
   id: string

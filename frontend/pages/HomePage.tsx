@@ -62,7 +62,7 @@ export default function HomePage() {
                 Master the art of DeFi with legendary powers
               </p>
             </div>
-            <DragonBallFeatureCards animated={isLoaded} />
+            <DragonBallFeatureCards />
           </div>
         </section>
         
