@@ -28,11 +28,16 @@ export const seiMainnet = defineChain({
 const appId = import.meta.env.VITE_PRIVY_APP_ID || '';
 const clientId = import.meta.env.VITE_PRIVY_CLIENT_ID || '';
 
-// Debug logging only in development
-if (import.meta.env.DEV) {
-  console.log('Privy App ID:', appId);
-  console.log('Privy App ID length:', appId.length);
-  console.log('Privy App ID present:', !!appId);
+// Debug logging with safe fallbacks
+console.log('🔐 Privy Configuration Status:');
+console.log('- App ID present:', !!appId);
+console.log('- App ID length:', appId?.length || 0);
+console.log('- Environment:', import.meta.env.MODE);
+console.log('- Client ID present:', !!clientId);
+
+// Warn if missing in production
+if (import.meta.env.PROD && !appId) {
+  console.warn('⚠️ Missing VITE_PRIVY_APP_ID in production environment');
 }
 
 // Ensure config is always defined with proper structure
