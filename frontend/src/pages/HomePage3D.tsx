@@ -8,8 +8,26 @@ function Dragon3D() {
   const { scene } = useGLTF('/models/seiron.glb')
   const meshRef = useRef<THREE.Group>(null)
   
-  // Clone scene to avoid conflicts
-  const clonedScene = React.useMemo(() => scene.clone(), [scene])
+  // Clone scene to avoid conflicts and preserve original materials
+  const clonedScene = React.useMemo(() => {
+    const cloned = scene.clone()
+    
+    // Traverse and ensure materials maintain their original properties
+    cloned.traverse((child) => {
+      if (child instanceof THREE.Mesh && child.material) {
+        // Clone material to avoid affecting the original
+        child.material = child.material.clone()
+        
+        // Ensure we're not modifying material properties
+        if (child.material instanceof THREE.MeshStandardMaterial) {
+          // Reset any modifications that might affect appearance
+          child.material.needsUpdate = true
+        }
+      }
+    })
+    
+    return cloned
+  }, [scene])
   
   // Animation
   useFrame((state) => {
@@ -56,15 +74,18 @@ export default function HomePage3D() {
       <Canvas
         camera={{ position: [0, 0, 15], fov: 45 }}
         style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+        gl={{ 
+          outputColorSpace: THREE.LinearSRGBColorSpace,
+          toneMapping: THREE.NoToneMapping,
+          toneMappingExposure: 1,
+          physicallyCorrectLights: true
+        }}
       >
-        <ambientLight intensity={0.3} />
-        <directionalLight position={[10, 10, 5]} intensity={1} color="#fbbf24" />
-        <directionalLight position={[-10, 5, -5]} intensity={0.5} color="#f59e0b" />
-        <pointLight position={[0, 10, 0]} intensity={0.5} color="#fbbf24" />
+        <ambientLight intensity={1} />
+        <directionalLight position={[5, 5, 5]} intensity={0.5} color="#ffffff" castShadow={false} />
         
         <Suspense fallback={null}>
           <Dragon3D />
-          <Environment preset="sunset" />
         </Suspense>
         
         <OrbitControls 
