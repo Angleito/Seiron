@@ -6,10 +6,9 @@ import { logger } from '../../lib/logger'
 import { voiceLogger, logTTS, logEnvironment, logPerformance } from '../../lib/voice-logger'
 import { 
   defaultVoiceApiClient, 
-  type VoiceSynthesisRequest, 
   type VoiceApiConfig 
 } from '../../lib/voice-api-client'
-import type { TTSError, TTSState } from '../../types/api/elevenlabs'
+import type { TTSError, TTSState, VoiceSynthesisRequest } from '../../types/api/elevenlabs'
 
 // Add webkitAudioContext to Window interface
 declare global {
