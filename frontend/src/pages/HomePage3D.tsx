@@ -48,6 +48,12 @@ function Dragon3D() {
     
     const cloned = obj.clone()
     
+    // Calculate bounding box for debugging
+    const box = new THREE.Box3().setFromObject(cloned)
+    const size = box.getSize(new THREE.Vector3())
+    console.log('Model size:', size)
+    console.log('Model center:', box.getCenter(new THREE.Vector3()))
+    
     // Traverse and apply materials to OBJ model
     cloned.traverse((child: THREE.Object3D) => {
       if (child instanceof THREE.Mesh) {
@@ -69,8 +75,8 @@ function Dragon3D() {
   useFrame((state) => {
     if (!meshRef.current) return
     
-    // Responsive scale based on viewport
-    const baseScale = isMobile ? 6 : 10
+    // Responsive scale based on viewport - much smaller for OBJ
+    const baseScale = isMobile ? 0.5 : 1
     
     // Breathing animation
     const breathingScale = 1 + Math.sin(state.clock.elapsedTime * 0.5) * 0.05
@@ -92,7 +98,7 @@ function Dragon3D() {
   if (!clonedModel) {
     // Fallback with a simple dragon-like shape
     return (
-      <group position={[0, isMobile ? -2 : -4, 0]}>
+      <group position={[0, isMobile ? 0 : -1, 0]}>
         <mesh position={[0, 0, 0]}>
           <sphereGeometry args={[1, 16, 16]} />
           <meshStandardMaterial color="#ff6b35" />
@@ -110,7 +116,7 @@ function Dragon3D() {
   }
   
   return (
-    <group ref={meshRef} position={[0, isMobile ? -2 : -4, 0]}>
+    <group ref={meshRef} position={[0, isMobile ? 0 : -1, 0]}>
       <primitive object={clonedModel} />
     </group>
   )
