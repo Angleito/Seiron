@@ -1,0 +1,8 @@
+Model Information:
+* title:	Wyvern animated
+* source:	https://sketchfab.com/3d-models/wyvern-animated-1dc70bbf15c2456a85290c8613b6c1ff
+* author:	charliecatling (https://sketchfab.com/charliecatling)
+
+Model License:
+* license type:	SKETCHFAB Standard (https://sketchfab.com/licenses)
+* requirements:	Under basic restrictions, use worldwide, on all types of media, commercially or not, and in all types of derivative works
