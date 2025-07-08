@@ -5,6 +5,11 @@ import OpenAI from 'openai';
 import { createServiceLogger } from './LoggingService';
 import { withErrorRecovery } from './ErrorHandlingService';
 import { performance } from 'perf_hooks';
+import type {
+  HiveIntelligenceAdapter,
+  SeiAgentKitAdapter,
+  SeiMCPAdapter
+} from './SeiIntegrationService';
 
 // Types will be defined locally for now
 export interface Command {
@@ -618,9 +623,14 @@ Keep the analysis concise and actionable.`;
           if (this.hiveAdapter) {
             try {
               this.logger.debug('Calling Hive Intelligence adapter', { query, walletAddress });
-              const hiveResult = await this.hiveAdapter.search(query, { walletAddress });
-              results.hiveData = hiveResult;
-              this.logger.debug('Hive data gathered successfully', { walletAddress, hasData: !!hiveResult });
+              const hiveResult = await this.hiveAdapter.search(query, { walletAddress })();
+              if (E.isRight(hiveResult)) {
+                results.hiveData = hiveResult.right;
+                this.logger.debug('Hive data gathered successfully', { walletAddress, hasData: !!hiveResult.right });
+              } else {
+                this.logger.error('Hive adapter call failed', { error: hiveResult.left.message, walletAddress });
+                results.hiveData = { error: 'Hive adapter failed', query, timestamp: new Date().toISOString() };
+              }
             } catch (error) {
               this.logger.warn('Hive adapter failed', { 
                 walletAddress, 
@@ -637,7 +647,8 @@ Keep the analysis concise and actionable.`;
           if (this.sakAdapter) {
             try {
               this.logger.debug('Calling SAK adapter', { query, walletAddress });
-              const sakTools = await this.sakAdapter.getTools();
+              const sakToolsResult = this.sakAdapter.getSAKTools();
+              const sakTools = E.isRight(sakToolsResult) ? sakToolsResult.right : [];
               results.sakData = { 
                 tools: sakTools, 
                 walletAddress,
@@ -660,10 +671,11 @@ Keep the analysis concise and actionable.`;
           if (this.mcpAdapter && this.mcpAdapter.isConnected()) {
             try {
               this.logger.debug('Calling MCP adapter', { walletAddress });
-              const [blockchainState, walletBalance] = await Promise.all([
-                this.mcpAdapter.getBlockchainState(),
-                this.mcpAdapter.getWalletBalance(walletAddress)
-              ]);
+              const blockchainStateResult = await this.mcpAdapter.getBlockchainState()();
+              const walletBalanceResult = await this.mcpAdapter.getWalletBalance(walletAddress)();
+              
+              const blockchainState = E.isRight(blockchainStateResult) ? blockchainStateResult.right : null;
+              const walletBalance = E.isRight(walletBalanceResult) ? walletBalanceResult.right : null;
               results.mcpData = { 
                 blockchainState, 
                 walletBalance,
@@ -767,22 +779,6 @@ Keep the analysis concise and actionable.`;
 }
 
 // Adapter interface types
-interface HiveIntelligenceAdapter {
-  search: (query: string, metadata?: any) => Promise<any>;
-  getAnalytics: (query: string, metadata?: any) => Promise<any>;
-}
-
-interface SeiAgentKitAdapter {
-  executeTool: (toolName: string, params: any) => Promise<any>;
-  getTools: () => Promise<any>;
-}
-
-interface SeiMCPAdapter {
-  isConnected: () => boolean;
-  getBlockchainState: () => Promise<any>;
-  getWalletBalance: (address: string) => Promise<any>;
-}
-
 // ChatInterface class implementation
 class ChatInterface {
   parseCommand(message: string): E.Either<Error, Command | undefined> {
