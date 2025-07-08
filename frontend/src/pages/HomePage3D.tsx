@@ -27,7 +27,7 @@ function Dragon3D() {
       },
       (error) => {
         console.error('Error loading OBJ:', error)
-        setError(error.message || 'Failed to load dragon model')
+        setError(error instanceof Error ? error.message : 'Failed to load dragon model')
       }
     )
   }, [])
