@@ -6,9 +6,31 @@ import * as THREE from 'three'
 
 // 3D Dragon Component
 function Dragon3D() {
-  const obj = useLoader(OBJLoader, '/models/dragon_head.obj')
   const meshRef = useRef<THREE.Group>(null)
   const [isMobile, setIsMobile] = React.useState(false)
+  const [obj, setObj] = React.useState<THREE.Group | null>(null)
+  const [error, setError] = React.useState<string | null>(null)
+  
+  // Load OBJ with error handling
+  React.useEffect(() => {
+    const loader = new OBJLoader()
+    console.log('Loading OBJ from:', '/models/dragon_head.obj')
+    
+    loader.load(
+      '/models/dragon_head.obj',
+      (object) => {
+        console.log('OBJ loaded successfully:', object)
+        setObj(object)
+      },
+      (progress) => {
+        console.log('Loading progress:', progress)
+      },
+      (error) => {
+        console.error('Error loading OBJ:', error)
+        setError(error.message || 'Failed to load dragon model')
+      }
+    )
+  }, [])
   
   // Check if mobile
   React.useEffect(() => {
@@ -22,6 +44,8 @@ function Dragon3D() {
   
   // Clone and setup OBJ model
   const clonedModel = React.useMemo(() => {
+    if (!obj) return null
+    
     const cloned = obj.clone()
     
     // Traverse and apply materials to OBJ model
@@ -56,6 +80,35 @@ function Dragon3D() {
     meshRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.1
   })
   
+  if (error) {
+    return (
+      <mesh position={[0, 0, 0]}>
+        <boxGeometry args={[4, 4, 4]} />
+        <meshStandardMaterial color="#ff0000" />
+      </mesh>
+    )
+  }
+  
+  if (!clonedModel) {
+    // Fallback with a simple dragon-like shape
+    return (
+      <group position={[0, isMobile ? -2 : -4, 0]}>
+        <mesh position={[0, 0, 0]}>
+          <sphereGeometry args={[1, 16, 16]} />
+          <meshStandardMaterial color="#ff6b35" />
+        </mesh>
+        <mesh position={[0, 0.5, 0]}>
+          <sphereGeometry args={[0.6, 16, 16]} />
+          <meshStandardMaterial color="#ff6b35" />
+        </mesh>
+        <mesh position={[0, 1, 0]}>
+          <sphereGeometry args={[0.4, 16, 16]} />
+          <meshStandardMaterial color="#ff6b35" />
+        </mesh>
+      </group>
+    )
+  }
+  
   return (
     <group ref={meshRef} position={[0, isMobile ? -2 : -4, 0]}>
       <primitive object={clonedModel} />
@@ -63,28 +116,43 @@ function Dragon3D() {
   )
 }
 
-// Loading component
+// Loading component for inside Canvas
 function LoadingDragon3D() {
   return (
-    <div style={{
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-      color: '#fbbf24',
-      fontSize: '2rem',
-      textAlign: 'center'
-    }}>
-      <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🐉</div>
-      <div>Loading 3D Dragon...</div>
-    </div>
+    <mesh position={[0, 0, 0]}>
+      <boxGeometry args={[2, 2, 2]} />
+      <meshStandardMaterial color="#fbbf24" wireframe />
+    </mesh>
   )
 }
 
 export default function HomePage3D() {
+  const [isLoading, setIsLoading] = React.useState(true)
+  
+  React.useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 3000)
+    return () => clearTimeout(timer)
+  }, [])
   
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: '#000', overflow: 'hidden' }}>
+      {/* Loading overlay */}
+      {isLoading && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          color: '#fbbf24',
+          fontSize: '2rem',
+          textAlign: 'center',
+          zIndex: 10
+        }}>
+          <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🐉</div>
+          <div>Loading 3D Dragon...</div>
+        </div>
+      )}
+      
       {/* Vignette effect for focus */}
       <div style={{
         position: 'absolute',
@@ -96,7 +164,7 @@ export default function HomePage3D() {
       
       {/* 3D Canvas */}
       <Canvas
-        camera={{ position: [0, 0, 15], fov: 45 }}
+        camera={{ position: [0, 0, 10], fov: 45 }}
         style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
         gl={{ 
           outputColorSpace: THREE.LinearSRGBColorSpace,
@@ -107,7 +175,7 @@ export default function HomePage3D() {
         <ambientLight intensity={1} />
         <directionalLight position={[5, 5, 5]} intensity={0.5} color="#ffffff" castShadow={false} />
         
-        <Suspense fallback={null}>
+        <Suspense fallback={<LoadingDragon3D />}>
           <Dragon3D />
         </Suspense>
         
