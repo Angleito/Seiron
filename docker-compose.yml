@@ -80,14 +80,16 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - VITE_API_URL=http://backend:3001
-      - VITE_WS_URL=ws://backend:3001
+      - VITE_API_URL=https://seiron-git-dev-angleitos-projects.vercel.app
+      - VITE_WS_URL=wss://seiron-git-dev-angleitos-projects.vercel.app
       - VITE_PRIVY_APP_ID=${VITE_PRIVY_APP_ID}
       - VITE_PRIVY_CLIENT_ID=${VITE_PRIVY_CLIENT_ID}
       - VITE_WALLETCONNECT_PROJECT_ID=${VITE_WALLETCONNECT_PROJECT_ID}
       - VITE_SEI_RPC_URL=${VITE_SEI_RPC_URL:-https://evm-rpc.sei-apis.com}
-      - VITE_ORCHESTRATOR_API=http://backend:3001
-      - VITE_ORCHESTRATOR_WS=ws://backend:3001
+      - VITE_ORCHESTRATOR_API=https://seiron-git-dev-angleitos-projects.vercel.app
+      - VITE_ORCHESTRATOR_WS=wss://seiron-git-dev-angleitos-projects.vercel.app
+      - ORCHESTRATOR_ENDPOINT=https://seiron-git-dev-angleitos-projects.vercel.app
+      - ORCHESTRATOR_WS_ENDPOINT=wss://seiron-git-dev-angleitos-projects.vercel.app
       - VITE_ELEVENLABS_API_KEY=${VITE_ELEVENLABS_API_KEY}
       - VITE_ELEVENLABS_VOICE_ID=${VITE_ELEVENLABS_VOICE_ID}
       - VITE_VOICE_ENABLED=${VITE_VOICE_ENABLED:-true}
@@ -96,8 +98,6 @@ services:
       - ENABLE_PERFORMANCE_MONITORING=${ENABLE_PERFORMANCE_MONITORING:-true}
     volumes:
       - ./logs/frontend:/app/logs
-    depends_on:
-      - backend
     logging:
       driver: json-file
       options:
