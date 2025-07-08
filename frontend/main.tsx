@@ -1,8 +1,14 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import { RouterProvider } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { PrivyProvider } from '@privy-io/react-auth'
+import { WagmiProvider } from 'wagmi'
+import { router } from './router'
 import HomePage3D from './src/pages/HomePage3D'
 import { RootErrorBoundary } from './components/error-boundaries/RootErrorBoundary'
+import { privyConfig } from './config/privy'
+import { wagmiConfig } from './config/wagmi'
 import './styles/globals.css'
 
 // Debug logging for app initialization
@@ -25,7 +31,7 @@ const queryClient = new QueryClient({
   },
 })
 
-// Simplified rendering logic with better error handling
+// Enhanced rendering logic with router and provider support
 function renderApp() {
   const rootElement = document.getElementById('root')
   if (!rootElement) {
@@ -35,18 +41,46 @@ function renderApp() {
   console.log('🏗️ Creating React root...')
   const root = ReactDOM.createRoot(rootElement)
   
-  console.log('🎨 Rendering simplified dragon homepage...')
+  // Check if we have authentication configuration
+  const hasPrivyConfig = !!privyConfig.appId
+  const useFullAuth = hasPrivyConfig
+  
+  console.log('🔍 App configuration check:')
+  console.log('- Has Privy config:', hasPrivyConfig)
+  console.log('- Production mode:', import.meta.env.PROD)
+  console.log('- Will use authentication:', useFullAuth)
 
-  // Simplified: render just the homepage with minimal dependencies
-  root.render(
-    <React.StrictMode>
-      <RootErrorBoundary>
-        <QueryClientProvider client={queryClient}>
-          <HomePage3D />
-        </QueryClientProvider>
-      </RootErrorBoundary>
-    </React.StrictMode>
-  )
+  if (useFullAuth) {
+    console.log('🎨 Rendering full app with authentication and routing...')
+    // Full app with authentication and routing
+    root.render(
+      <React.StrictMode>
+        <RootErrorBoundary>
+          <PrivyProvider 
+            appId={privyConfig.appId} 
+            config={privyConfig.config}>
+            <QueryClientProvider client={queryClient}>
+              <WagmiProvider config={wagmiConfig}>
+                <RouterProvider router={router} />
+              </WagmiProvider>
+            </QueryClientProvider>
+          </PrivyProvider>
+        </RootErrorBoundary>
+      </React.StrictMode>
+    )
+  } else {
+    console.log('🎨 Rendering app with routing but without authentication...')
+    // App with routing but no authentication (fallback mode)
+    root.render(
+      <React.StrictMode>
+        <RootErrorBoundary>
+          <QueryClientProvider client={queryClient}>
+            <RouterProvider router={router} />
+          </QueryClientProvider>
+        </RootErrorBoundary>
+      </React.StrictMode>
+    )
+  }
   
   console.log('✅ App render complete')
 }

@@ -68,7 +68,7 @@ export const router = createBrowserRouter([
         index: true,
         element: (
           <PageLoader pageName="Home">
-            <HomePage3D />
+            <HomePage />
           </PageLoader>
         ),
       },
@@ -77,6 +77,14 @@ export const router = createBrowserRouter([
         element: (
           <PageLoader pageName="Simple Home">
             <SimpleHomePage />
+          </PageLoader>
+        ),
+      },
+      {
+        path: '3d',
+        element: (
+          <PageLoader pageName="3D Dragon">
+            <HomePage3D />
           </PageLoader>
         ),
       },
