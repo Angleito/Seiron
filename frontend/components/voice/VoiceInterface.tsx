@@ -448,7 +448,6 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
         {/* Main Dragon Display */}
         <div className="relative bg-gray-900/30 border border-orange-800/50 rounded-full p-6 transition-all duration-300">
           <DragonRenderer
-            dragonType="ascii"
             size="lg"
             voiceState={voiceAnimationState}
             className="animate-pulse"

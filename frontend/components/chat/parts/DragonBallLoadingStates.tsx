@@ -108,7 +108,6 @@ export const DragonBallAILoadingState = React.memo(function DragonBallAILoadingS
       {showDragon && (
         <div className="flex-shrink-0">
           <DragonRenderer
-            dragonType="ascii"
             size="sm"
             voiceState={{
               isListening: false,

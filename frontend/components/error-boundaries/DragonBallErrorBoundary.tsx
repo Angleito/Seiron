@@ -183,7 +183,6 @@ export class DragonBallErrorBoundary extends Component<Props, State> {
             {enableDragonAnimation && (level === 'page' || level === 'app') && (
               <div className="absolute top-0 right-0 w-32 h-32 opacity-30">
                 <DragonRenderer 
-                  dragonType="ascii"
                   size="sm"
                   voiceState={{
                     isListening: false,

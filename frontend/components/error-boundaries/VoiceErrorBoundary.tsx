@@ -19,7 +19,6 @@ const VoiceErrorFallback = ({
     <div className="flex flex-col items-center justify-center p-6 bg-gray-900/50 rounded-lg border border-orange-800/50">
       <div className="mb-4">
         <DragonRenderer
-          dragonType="ascii"
           size="md"
           voiceState={{
             isListening: false,

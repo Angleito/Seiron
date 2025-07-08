@@ -31,7 +31,6 @@ const ChatErrorFallback = ({
     <div className="flex flex-col items-center justify-center p-8 bg-gray-900/50 rounded-lg border border-orange-800">
       <div className="relative mb-6">
         <DragonRenderer
-          dragonType="ascii"
           size="lg"
           voiceState={{
             isListening: false,

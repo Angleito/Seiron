@@ -1,8 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { cn } from '@/lib/utils'
-import { useStormPerformance } from '@/hooks/useStormPerformance'
-
-// Direct import DragonLoader - no lazy loading to isolate issue
+import { cn } from '../../lib/utils'
 import DragonLoader from './DragonLoader'
 
 interface StormBackgroundProps {
@@ -93,8 +90,21 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
   const shouldAnimate = animated && !prefersReducedMotion
   const scrollState = useScrollTracking(shouldAnimate)
   
-  // Use performance hook to detect device capabilities
-  const { isMobile, isTablet } = useStormPerformance()
+  // Simple device detection
+  const [isMobile, setIsMobile] = useState(false)
+  const [isTablet, setIsTablet] = useState(false)
+  
+  useEffect(() => {
+    const checkDevice = () => {
+      const width = window.innerWidth
+      setIsMobile(width < 768)
+      setIsTablet(width >= 768 && width < 1024)
+    }
+    
+    checkDevice()
+    window.addEventListener('resize', checkDevice)
+    return () => window.removeEventListener('resize', checkDevice)
+  }, [])
 
   // Normalize intensity to 0-1 range
   const normalizedIntensity = Math.max(0, Math.min(1, intensity))

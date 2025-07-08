@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, BookOpen, Zap, TrendingUp } from 'lucide-react'
 import { StormBackground } from '../effects/StormBackground'
 import { PowerLevelCounter } from './PowerLevelCounter'
+import { DragonRenderer } from '../dragon/DragonRenderer'
 import { cn } from '@/lib/utils'
 
 interface EnhancedHeroSectionProps {
@@ -106,6 +107,15 @@ export const EnhancedHeroSection: React.FC<EnhancedHeroSectionProps> = ({
       intensity={0.8}
       animated={enableAnimations}
     >
+      {/* Gigantic GLB Dragon Background */}
+      <div className="absolute inset-0 z-10">
+        <DragonRenderer
+          size="gigantic"
+          enableAnimations={enableAnimations}
+          className="w-full h-full"
+        />
+      </div>
+
       {/* Main Content */}
       <div className="relative z-50 flex flex-col items-center justify-center min-h-screen px-4">
         <div className="text-center max-w-4xl">

@@ -2,9 +2,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useInView } from 'react-intersection-observer'
-import { usePerformanceMonitor, PerformanceOverlay } from '@/hooks/usePerformanceMonitor'
-
-// Direct import dragon component for debugging - no lazy loading
 import DragonHead3D from './DragonHead3DOptimized'
 
 interface DragonLoaderProps {
@@ -127,14 +124,8 @@ export function DragonLoader({
   const [error, setError] = useState<Error | null>(null)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
-  // Performance monitoring
-  const performanceMonitor = usePerformanceMonitor({
-    componentName: 'DragonLoader',
-    enabled: true,
-    onPerformanceWarning: (metrics) => {
-      console.warn('DragonLoader performance warning:', metrics)
-    }
-  })
+  // Simple performance tracking
+  const performanceRef = useRef({ loadTime: 0 })
   
   // Use intersection observer to load dragon only when visible
   const { ref, inView } = useInView({
