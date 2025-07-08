@@ -8,8 +8,10 @@ import DragonFallback from './DragonFallback'
 // Lazy load dragon loader for progressive loading
 const DragonLoader = lazy(() => import('./DragonLoader').catch((error) => {
   console.error('Failed to load DragonLoader component:', error)
-  // Return the fallback component
-  return { default: DragonFallback }
+  // Return the fallback component with correct type
+  return { 
+    default: (props: any) => <DragonFallback {...props} />
+  }
 }))
 
 interface StormBackgroundProps {

@@ -6,6 +6,12 @@ import { motion } from 'framer-motion'
 interface DragonFallbackProps {
   className?: string
   intensity?: number
+  enableEyeTracking?: boolean
+  lightningActive?: boolean
+  loadingTimeout?: number
+  onLoadError?: (error: Error) => void
+  forceQuality?: 'low' | 'medium' | 'high' | 'auto'
+  showPerformanceOverlay?: boolean
 }
 
 /**
@@ -13,7 +19,13 @@ interface DragonFallbackProps {
  */
 export const DragonFallback: React.FC<DragonFallbackProps> = ({
   className = '',
-  intensity = 0.6
+  intensity = 0.6,
+  enableEyeTracking,
+  lightningActive,
+  loadingTimeout,
+  onLoadError,
+  forceQuality,
+  showPerformanceOverlay
 }) => {
   return (
     <div className={`${className} flex items-center justify-center`}>
