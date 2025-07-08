@@ -1,11 +1,11 @@
 {
   "version": 2,
-  "buildCommand": "ls -la && pwd && cd frontend && npm install && npm run build",
-  "outputDirectory": "frontend/dist",
-  "installCommand": "npm install && ls -la && cd frontend && npm install",
-  "framework": null,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "framework": "vite",
   "functions": {
-    "api/**/*.ts": {
+    "../api/**/*.ts": {
       "runtime": "@vercel/node@3.0.0",
       "maxDuration": 30
     }
