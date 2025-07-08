@@ -94,18 +94,32 @@ export default function ChatPage() {
       </div>
       
       {/* Chat Interface */}
-      {interfaceType === 'voice' ? (
-        <VoiceEnabledChat 
-          userId={user?.id || 'anonymous'}
-          enablePersistence={false}
-          enableSessionManagement={false}
-          autoLoadHistory={false}
-          className="h-full relative z-10"
-        />
-      ) : interfaceType === 'minimal' ? (
+      {interfaceType === 'minimal' ? (
         <MinimalChatInterface className="h-full relative z-10" />
-      ) : (
+      ) : interfaceType === 'chatgpt' ? (
         <ChatGPTInterface className="h-full relative z-10" />
+      ) : (
+        <div className="h-full relative z-10 flex items-center justify-center">
+          <div className="text-center p-8 bg-gray-800/50 rounded-lg backdrop-blur-sm">
+            <h2 className="text-2xl font-bold text-orange-400 mb-4">🐉 Voice Chat Temporarily Disabled</h2>
+            <p className="text-gray-300 mb-4">Voice interface is experiencing technical issues.</p>
+            <p className="text-gray-400 text-sm">Please use Minimal or Anime interface for now.</p>
+            <div className="mt-6 flex gap-4 justify-center">
+              <button 
+                onClick={() => setInterfaceType('minimal')}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Try Minimal
+              </button>
+              <button 
+                onClick={() => setInterfaceType('chatgpt')}
+                className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+              >
+                Try Anime
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
