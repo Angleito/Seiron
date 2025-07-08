@@ -97,9 +97,9 @@ export default function ChatPage() {
       {interfaceType === 'voice' ? (
         <VoiceEnabledChat 
           userId={user?.id || 'anonymous'}
-          enablePersistence={true}
-          enableSessionManagement={true}
-          autoLoadHistory={true}
+          enablePersistence={false}
+          enableSessionManagement={false}
+          autoLoadHistory={false}
           className="h-full relative z-10"
         />
       ) : interfaceType === 'minimal' ? (
