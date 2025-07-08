@@ -1,73 +1,46 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { RouterProvider } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { PrivyProvider } from '@privy-io/react-auth'
-import { WagmiProvider } from 'wagmi'
-import { Analytics } from '@vercel/analytics/react'
-import { router } from '../router'
-import { wagmiConfig } from '@config/wagmi'
-import { privyConfig } from '@config/privy'
-import { RootErrorBoundary } from '@components/error-boundaries'
 import '@/styles/globals.css'
 
-// Add defensive checks for configs
-if (!privyConfig) {
-  console.error('privyConfig is undefined')
-}
-if (!privyConfig?.config) {
-  console.error('privyConfig.config is undefined')
-}
-if (!wagmiConfig) {
-  console.error('wagmiConfig is undefined')
-}
+// Simplified version for debugging
+console.log('🚀 Main.tsx: Starting React app initialization')
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60 * 1000,
-      retry: 1,
-      throwOnError: false, // Let error boundaries handle errors
-    },
-    mutations: {
-      throwOnError: false,
-    },
-  },
-})
-
-// Create safe config with fallbacks
-const safePrivyConfig = privyConfig?.config || {
-  appearance: {
-    theme: 'dark' as const,
-    accentColor: '#ef4444' as const,
-    showWalletLoginFirst: true,
-  },
-  loginMethods: ['email', 'wallet'] as ('email' | 'wallet')[],
-  embeddedWallets: {
-    createOnLogin: 'users-without-wallets' as const,
-    requireUserPasswordOnCreate: true,
-    noPromptOnSignature: false,
-  },
+function SimpleApp() {
+  console.log('🚀 SimpleApp: Component rendering')
+  
+  return (
+    <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold text-yellow-400 mb-4">
+          Seiron Debug Mode
+        </h1>
+        <p className="text-lg text-gray-300">
+          React is working! Now testing 3D components...
+        </p>
+        <div className="mt-8">
+          <button 
+            className="px-6 py-3 bg-yellow-500 text-black font-bold rounded hover:bg-yellow-400"
+            onClick={() => console.log('🚀 Button clicked - React events working')}
+          >
+            Test Button
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
-const appId = privyConfig?.appId || import.meta.env.VITE_PRIVY_APP_ID || ''
+const root = document.getElementById('root')
+console.log('🚀 Main.tsx: Root element found:', !!root)
 
-// Only render if we have required configs
-if (!appId) {
-  console.error('Privy App ID is missing. Please set VITE_PRIVY_APP_ID environment variable.')
+if (root) {
+  console.log('🚀 Main.tsx: Creating React root')
+  ReactDOM.createRoot(root).render(
+    <React.StrictMode>
+      <SimpleApp />
+    </React.StrictMode>
+  )
+  console.log('🚀 Main.tsx: React app rendered')
+} else {
+  console.error('🚀 Main.tsx: Root element not found!')
 }
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <RootErrorBoundary>
-      <PrivyProvider appId={appId} config={safePrivyConfig}>
-        <QueryClientProvider client={queryClient}>
-          <WagmiProvider config={wagmiConfig}>
-            <RouterProvider router={router} />
-            <Analytics />
-          </WagmiProvider>
-        </QueryClientProvider>
-      </PrivyProvider>
-    </RootErrorBoundary>
-  </React.StrictMode>
-)
