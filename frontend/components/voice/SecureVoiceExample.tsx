@@ -1,8 +1,5 @@
 import React, { useState } from 'react'
 import { useSecureElevenLabsTTS } from '../../hooks/voice'
-import { pipe } from 'fp-ts/function'
-import * as TE from 'fp-ts/TaskEither'
-import * as T from 'fp-ts/Task'
 
 interface SecureVoiceExampleProps {
   voiceId?: string
@@ -35,35 +32,35 @@ export const SecureVoiceExample: React.FC<SecureVoiceExampleProps> = ({
 
     setLastError(null)
     
-    const result = await tts.speak(text.trim())()
-    
-    pipe(
-      result,
-      TE.fold(
-        (error: any) => T.of(() => {
-          console.error('Voice synthesis error:', error)
-          switch (error.type) {
-            case 'QUOTA_EXCEEDED':
-              setLastError('Rate limit exceeded. Please try again in a moment.')
-              break
-            case 'API_ERROR':
-              setLastError(`API Error: ${error.message}`)
-              break
-            case 'NETWORK_ERROR':
-              setLastError('Network error. Please check your connection.')
-              break
-            case 'AUDIO_ERROR':
-              setLastError('Audio playback error. Please try again.')
-              break
-            default:
-              setLastError(`Unknown error: ${error.message}`)
-          }
-        }),
-        () => T.of(() => {
-          console.log('Voice synthesis completed successfully')
-        })
-      )
-    )()
+    try {
+      const result = await tts.speak(text.trim())()
+      
+      if (result._tag === 'Left') {
+        const error = result.left as any
+        console.error('Voice synthesis error:', error)
+        switch (error.type) {
+          case 'QUOTA_EXCEEDED':
+            setLastError('Rate limit exceeded. Please try again in a moment.')
+            break
+          case 'API_ERROR':
+            setLastError(`API Error: ${error.message}`)
+            break
+          case 'NETWORK_ERROR':
+            setLastError('Network error. Please check your connection.')
+            break
+          case 'AUDIO_ERROR':
+            setLastError('Audio playback error. Please try again.')
+            break
+          default:
+            setLastError(`Unknown error: ${error.message}`)
+        }
+      } else {
+        console.log('Voice synthesis completed successfully')
+      }
+    } catch (error) {
+      console.error('Voice synthesis error:', error)
+      setLastError('Unexpected error occurred. Please try again.')
+    }
   }
 
   const handleStop = () => {

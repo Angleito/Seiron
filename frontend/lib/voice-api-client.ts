@@ -267,4 +267,4 @@ export const synthesizeSpeech = (request: VoiceSynthesisRequest): TE.TaskEither<
 }
 
 // Export types for consumers
-export type { VoiceApiResponse, VoiceApiConfig }
+export type { VoiceApiResponse }
