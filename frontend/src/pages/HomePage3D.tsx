@@ -1,11 +1,12 @@
 import React, { Suspense, useRef } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
-import { useGLTF, OrbitControls, Environment } from '@react-three/drei'
+import { Canvas, useFrame, useLoader } from '@react-three/fiber'
+import { OrbitControls } from '@react-three/drei'
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js'
 import * as THREE from 'three'
 
 // 3D Dragon Component
 function Dragon3D() {
-  const { scene } = useGLTF('/models/seiron.glb')
+  const obj = useLoader(OBJLoader, '/models/dragon_head.obj')
   const meshRef = useRef<THREE.Group>(null)
   const [isMobile, setIsMobile] = React.useState(false)
   
@@ -19,26 +20,26 @@ function Dragon3D() {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
   
-  // Clone scene to avoid conflicts and preserve original materials
-  const clonedScene = React.useMemo(() => {
-    const cloned = scene.clone()
+  // Clone and setup OBJ model
+  const clonedModel = React.useMemo(() => {
+    const cloned = obj.clone()
     
-    // Traverse and ensure materials maintain their original properties
-    cloned.traverse((child) => {
-      if (child instanceof THREE.Mesh && child.material) {
-        // Clone material to avoid affecting the original
-        child.material = child.material.clone()
-        
-        // Ensure we're not modifying material properties
-        if (child.material instanceof THREE.MeshStandardMaterial) {
-          // Reset any modifications that might affect appearance
-          child.material.needsUpdate = true
-        }
+    // Traverse and apply materials to OBJ model
+    cloned.traverse((child: THREE.Object3D) => {
+      if (child instanceof THREE.Mesh) {
+        // Apply a standard material to the OBJ
+        child.material = new THREE.MeshStandardMaterial({
+          color: 0xff6b35, // Orange color for dragon
+          roughness: 0.7,
+          metalness: 0.3
+        })
+        child.castShadow = true
+        child.receiveShadow = true
       }
     })
     
     return cloned
-  }, [scene])
+  }, [obj])
   
   // Animation
   useFrame((state) => {
@@ -57,7 +58,7 @@ function Dragon3D() {
   
   return (
     <group ref={meshRef} position={[0, isMobile ? -2 : -4, 0]}>
-      <primitive object={clonedScene} />
+      <primitive object={clonedModel} />
     </group>
   )
 }
@@ -207,5 +208,5 @@ export default function HomePage3D() {
   )
 }
 
-// Preload the model
-useGLTF.preload('/models/seiron.glb')
+// Preload the OBJ model
+useLoader.preload(OBJLoader, '/models/dragon_head.obj')
