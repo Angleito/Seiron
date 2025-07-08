@@ -2,8 +2,8 @@ import * as E from 'fp-ts/Either';
 import * as TE from 'fp-ts/TaskEither';
 import * as O from 'fp-ts/Option';
 import { pipe } from 'fp-ts/function';
-import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
+import * as jwt from 'jsonwebtoken';
+import * as crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { AppConfig } from '../config/types';
 import logger from '../utils/logger';
@@ -92,11 +92,11 @@ export class AuthService {
 
     const accessToken = jwt.sign(payload, this.jwtSecret, {
       expiresIn: this.jwtExpiresIn,
-    });
+    } as jwt.SignOptions);
 
     const refreshToken = jwt.sign(payload, this.jwtSecret, {
       expiresIn: this.refreshTokenExpiresIn,
-    });
+    } as jwt.SignOptions);
 
     // Parse expiration time
     const decoded = jwt.decode(accessToken) as any;

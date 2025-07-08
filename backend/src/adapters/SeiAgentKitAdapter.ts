@@ -91,7 +91,8 @@ export class SeiAgentKitAdapter extends EventEmitter implements ISeiAgentKitAdap
   ): TE.TaskEither<Error, SAKOperationResult[]> => {
     return pipe(
       operations.map(op => this.executeSAKTool(op.toolName, op.params, context)),
-      TE.sequenceArray
+      TE.sequenceArray,
+      TE.map(results => [...results] as SAKOperationResult[])
     );
   };
 
@@ -226,27 +227,32 @@ export class SeiAgentKitAdapter extends EventEmitter implements ISeiAgentKitAdap
   /**
    * Execute tool operation
    */
-  private executeToolOperation = async (
+  private executeToolOperation = (
     toolName: string,
     params: any,
     context?: any
-  ): Promise<any> => {
-    switch (toolName) {
-      case 'get_native_balance':
-        return this.getNativeBalance(params);
-      case 'get_token_balance':
-        return this.getTokenBalance(params);
-      case 'transfer_token':
-        return this.transferToken(params);
-      case 'get_liquidity_pools':
-        return this.getLiquidityPools(params);
-      case 'get_lending_markets':
-        return this.getLendingMarkets(params);
-      case 'estimate_swap':
-        return this.estimateSwap(params);
-      default:
-        throw new Error(`Unknown tool: ${toolName}`);
-    }
+  ): TE.TaskEither<Error, any> => {
+    return TE.tryCatch(
+      async () => {
+        switch (toolName) {
+          case 'get_native_balance':
+            return await this.getNativeBalance(params);
+          case 'get_token_balance':
+            return await this.getTokenBalance(params);
+          case 'transfer_token':
+            return await this.transferToken(params);
+          case 'get_liquidity_pools':
+            return await this.getLiquidityPools(params);
+          case 'get_lending_markets':
+            return await this.getLendingMarkets(params);
+          case 'estimate_swap':
+            return await this.estimateSwap(params);
+          default:
+            throw new Error(`Unknown tool: ${toolName}`);
+        }
+      },
+      error => new Error(`Tool execution failed: ${error}`)
+    );
   };
 
   /**

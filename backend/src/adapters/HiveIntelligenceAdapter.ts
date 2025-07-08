@@ -188,115 +188,125 @@ export class HiveIntelligenceAdapter extends EventEmitter implements IHiveIntell
   /**
    * Perform the actual search using AI
    */
-  private performSearch = async (
+  private performSearch = (
     query: string,
     metadata?: HiveQueryMetadata
-  ): Promise<HiveSearchResult[]> => {
-    try {
-      // Get blockchain data from external sources
-      const blockchainData = await this.fetchBlockchainData(metadata?.walletAddress);
-      
-      // Use AI to analyze and search
-      const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4-turbo-preview',
-        messages: [
-          {
-            role: 'system',
-            content: `You are a blockchain data analyst specializing in the Sei Network. 
-                     Analyze the provided data and respond to search queries with relevant insights.
-                     Format your response as a JSON array of search results.`
-          },
-          {
-            role: 'user',
-            content: `Query: ${query}\n\nData: ${JSON.stringify(blockchainData)}\n\n
-                     Provide search results as JSON with this structure:
-                     [{
-                       "id": "unique-id",
-                       "title": "Result title",
-                       "description": "Detailed description",
-                       "type": "transaction|address|token|protocol|event",
-                       "chain": "sei",
-                       "relevanceScore": 0-100,
-                       "data": {},
-                       "timestamp": "ISO-8601"
-                     }]`
-          }
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.3,
-        max_tokens: 2000
-      });
+  ): TE.TaskEither<Error, HiveSearchResult[]> => {
+    return TE.tryCatch(
+      async () => {
+        try {
+          // Get blockchain data from external sources
+          const blockchainData = await this.fetchBlockchainData(metadata?.walletAddress);
+          
+          // Use AI to analyze and search
+          const completion = await this.openai.chat.completions.create({
+            model: 'gpt-4-turbo-preview',
+            messages: [
+              {
+                role: 'system',
+                content: `You are a blockchain data analyst specializing in the Sei Network. 
+                         Analyze the provided data and respond to search queries with relevant insights.
+                         Format your response as a JSON array of search results.`
+              },
+              {
+                role: 'user',
+                content: `Query: ${query}\n\nData: ${JSON.stringify(blockchainData)}\n\n
+                         Provide search results as JSON with this structure:
+                         [{
+                           "id": "unique-id",
+                           "title": "Result title",
+                           "description": "Detailed description",
+                           "type": "transaction|address|token|protocol|event",
+                           "chain": "sei",
+                           "relevanceScore": 0-100,
+                           "data": {},
+                           "timestamp": "ISO-8601"
+                         }]`
+              }
+            ],
+            response_format: { type: 'json_object' },
+            temperature: 0.3,
+            max_tokens: 2000
+          });
 
-      const response = JSON.parse(completion.choices[0].message.content || '{}');
-      return response.results || [];
-    } catch (error) {
-      logger.error('AI search failed:', error);
-      throw error;
-    }
+          const response = JSON.parse(completion.choices[0].message.content || '{}');
+          return response.results || [];
+        } catch (error) {
+          logger.error('AI search failed:', error);
+          throw error;
+        }
+      },
+      error => new Error(`AI search failed: ${error}`)
+    );
   };
 
   /**
    * Perform analytics using AI
    */
-  private performAnalytics = async (
+  private performAnalytics = (
     query: string,
     metadata?: HiveQueryMetadata
-  ): Promise<HiveAnalyticsResult> => {
-    try {
-      // Get comprehensive blockchain data
-      const blockchainData = await this.fetchBlockchainData(metadata?.walletAddress);
-      const marketData = await this.fetchMarketData();
-      
-      // Use AI to generate analytics
-      const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4-turbo-preview',
-        messages: [
-          {
-            role: 'system',
-            content: `You are a blockchain analytics expert specializing in DeFi and the Sei Network.
-                     Provide comprehensive analytics, insights, and recommendations based on the data.
-                     Focus on risk analysis, yield opportunities, and market trends.`
-          },
-          {
-            role: 'user',
-            content: `Query: ${query}\n\nBlockchain Data: ${JSON.stringify(blockchainData)}\n\n
-                     Market Data: ${JSON.stringify(marketData)}\n\n
-                     Provide analytics as JSON with this structure:
-                     {
-                       "insights": [{
-                         "id": "unique-id",
-                         "type": "trend|anomaly|opportunity|risk|correlation",
-                         "title": "Insight title",
-                         "description": "Detailed description",
-                         "confidence": 0-100,
-                         "data": {}
-                       }],
-                       "recommendations": [{
-                         "id": "unique-id",
-                         "type": "buy|sell|hold|monitor|optimize",
-                         "title": "Recommendation title",
-                         "description": "Detailed description",
-                         "priority": "high|medium|low",
-                         "expectedImpact": 0-100,
-                         "actionItems": []
-                       }]
-                     }`
-          }
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.5,
-        max_tokens: 3000
-      });
+  ): TE.TaskEither<Error, HiveAnalyticsResult> => {
+    return TE.tryCatch(
+      async () => {
+        try {
+          // Get comprehensive blockchain data
+          const blockchainData = await this.fetchBlockchainData(metadata?.walletAddress);
+          const marketData = await this.fetchMarketData();
+          
+          // Use AI to generate analytics
+          const completion = await this.openai.chat.completions.create({
+            model: 'gpt-4-turbo-preview',
+            messages: [
+              {
+                role: 'system',
+                content: `You are a blockchain analytics expert specializing in DeFi and the Sei Network.
+                         Provide comprehensive analytics, insights, and recommendations based on the data.
+                         Focus on risk analysis, yield opportunities, and market trends.`
+              },
+              {
+                role: 'user',
+                content: `Query: ${query}\n\nBlockchain Data: ${JSON.stringify(blockchainData)}\n\n
+                         Market Data: ${JSON.stringify(marketData)}\n\n
+                         Provide analytics as JSON with this structure:
+                         {
+                           "insights": [{
+                             "id": "unique-id",
+                             "type": "trend|anomaly|opportunity|risk|correlation",
+                             "title": "Insight title",
+                             "description": "Detailed description",
+                             "confidence": 0-100,
+                             "data": {}
+                           }],
+                           "recommendations": [{
+                             "id": "unique-id",
+                             "type": "buy|sell|hold|monitor|optimize",
+                             "title": "Recommendation title",
+                             "description": "Detailed description",
+                             "priority": "high|medium|low",
+                             "expectedImpact": 0-100,
+                             "actionItems": []
+                           }]
+                         }`
+              }
+            ],
+            response_format: { type: 'json_object' },
+            temperature: 0.5,
+            max_tokens: 3000
+          });
 
-      const response = JSON.parse(completion.choices[0].message.content || '{}');
-      return {
-        insights: response.insights || [],
-        recommendations: response.recommendations || []
-      };
-    } catch (error) {
-      logger.error('AI analytics failed:', error);
-      throw error;
-    }
+          const response = JSON.parse(completion.choices[0].message.content || '{}');
+          return {
+            insights: response.insights || [],
+            recommendations: response.recommendations || []
+          };
+        } catch (error) {
+          logger.error('AI analytics failed:', error);
+          throw error;
+        }
+      },
+      error => new Error(`AI analytics failed: ${error}`)
+    );
   };
 
   /**

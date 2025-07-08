@@ -1,7 +1,5 @@
 import * as E from 'fp-ts/Either'
-import * as TE from 'fp-ts/TaskEither'
 import * as O from 'fp-ts/Option'
-import { pipe } from 'fp-ts/function'
 import { secureLocalStorage, secureSessionStorage } from '../security/secureStorage'
 import { logger } from '../logger'
 
@@ -157,11 +155,17 @@ export class TokenManager {
   decodeToken(token: string): O.Option<TokenPayload> {
     try {
       const parts = token.split('.')
-      if (parts.length !== 3) {
+      if (parts.length !== 3 || !parts[1]) {
         return O.none
       }
 
-      const payload = JSON.parse(atob(parts[1]))
+      // Use safe base64 decoding that works in both browser and Node.js
+      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+      const decoded = typeof window !== 'undefined' && typeof atob === 'function'
+        ? atob(base64)
+        : Buffer.from(base64, 'base64').toString('utf-8')
+      
+      const payload = JSON.parse(decoded)
       return O.some(payload)
     } catch (error) {
       logger.error('Failed to decode token', { error })

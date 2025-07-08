@@ -197,7 +197,7 @@ export class AuthenticatedApiClient {
 
     // Handle empty responses
     const text = await response.text()
-    return text ? JSON.parse(text) : null
+    return text ? JSON.parse(text) : null as T
   }
 
   async get<T>(endpoint: string, headers?: Record<string, string>): Promise<T> {

@@ -12,7 +12,7 @@ import { z } from 'zod';
 // Validation Schemas
 // ============================================================================
 
-const loginSchema = z.object({
+const loginSchema = {
   body: z.object({
     email: z.string().email().optional(),
     walletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/).optional(),
@@ -22,9 +22,9 @@ const loginSchema = z.object({
     (data) => (data.email && data.password) || (data.walletAddress && data.signature),
     'Either email/password or walletAddress/signature must be provided'
   ),
-});
+};
 
-const registerSchema = z.object({
+const registerSchema = {
   body: z.object({
     email: z.string().email().optional(),
     walletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/).optional(),
@@ -34,20 +34,20 @@ const registerSchema = z.object({
     (data) => data.email || data.walletAddress,
     'Either email or walletAddress must be provided'
   ),
-});
+};
 
-const refreshTokenSchema = z.object({
+const refreshTokenSchema = {
   body: z.object({
     refreshToken: z.string(),
   }),
-});
+};
 
-const updateUserSchema = z.object({
+const updateUserSchema = {
   body: z.object({
     email: z.string().email().optional(),
     walletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/).optional(),
   }),
-});
+};
 
 // ============================================================================
 // Route Handlers

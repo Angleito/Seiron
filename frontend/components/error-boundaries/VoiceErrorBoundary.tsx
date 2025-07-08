@@ -27,7 +27,7 @@ const VoiceErrorFallback = ({
             isProcessing: false,
             isIdle: false,
             volume: 0,
-            emotion: 'confused'
+            emotion: 'angry'
           }}
         />
       </div>

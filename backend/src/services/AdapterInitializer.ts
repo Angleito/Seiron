@@ -73,7 +73,11 @@ export class AdapterInitializer {
       TE.bind('sak', () => this.initializeSAKAdapter()),
       TE.bind('mcp', () => this.initializeMCPAdapter()),
       TE.map(({ hive, sak, mcp }) => {
-        const adapters: any = {};
+        const adapters: {
+          hive?: HiveIntelligenceAdapter;
+          sak?: SeiAgentKitAdapter;
+          mcp?: SeiMCPAdapter;
+        } = {};
         if (hive) adapters.hive = hive;
         if (sak) adapters.sak = sak;
         if (mcp) adapters.mcp = mcp;

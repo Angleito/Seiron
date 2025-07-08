@@ -246,26 +246,16 @@ export class SeiMCPAdapter extends EventEmitter implements ISeiMCPAdapter {
       
       return {
         blockNumber: parseInt(blockData.sync_info.latest_block_height),
-        blockHash: blockData.sync_info.latest_block_hash,
-        timestamp: new Date(blockData.sync_info.latest_block_time).getTime(),
-        gasPrice: '0.025usei', // Default gas price
         networkStatus: this.determineNetworkStatus(netInfo),
-        validators: [],
-        totalSupply: '1000000000', // Would need to fetch from supply endpoint
-        inflation: 0.05 // Would need to fetch from mint module
+        gasPrice: '0.025usei' // Default gas price
       };
     } catch (error) {
       logger.error('Failed to fetch blockchain state:', error);
       // Return default state on error
       return {
         blockNumber: 0,
-        blockHash: '',
-        timestamp: Date.now(),
-        gasPrice: '0.025usei',
         networkStatus: 'offline',
-        validators: [],
-        totalSupply: '0',
-        inflation: 0
+        gasPrice: '0.025usei'
       };
     }
   };
@@ -308,16 +298,14 @@ export class SeiMCPAdapter extends EventEmitter implements ISeiMCPAdapter {
       return {
         address,
         balances: tokenBalances,
-        totalValueUSD,
-        lastUpdated: Date.now()
+        totalValueUSD
       };
     } catch (error) {
       logger.error('Failed to fetch wallet balance:', error);
       return {
         address,
         balances: [],
-        totalValueUSD: 0,
-        lastUpdated: Date.now()
+        totalValueUSD: 0
       };
     }
   };

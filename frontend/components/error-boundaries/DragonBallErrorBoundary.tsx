@@ -20,7 +20,7 @@ interface State {
 }
 
 // Dragon Ball Z themed error messages
-const DBZ_ERROR_MESSAGES = {
+const DBZ_ERROR_MESSAGES: Record<'component' | 'feature' | 'page' | 'app', string[]> = {
   component: [
     "This component's power level is too low!",
     "The technique failed! Need more training!",
@@ -68,6 +68,7 @@ export class DragonBallErrorBoundary extends Component<Props, State> {
     return {
       hasError: true,
       error,
+      errorInfo: null,
       errorCount: 0,
       lastErrorTime: Date.now()
     }
@@ -104,7 +105,7 @@ export class DragonBallErrorBoundary extends Component<Props, State> {
     }
   }
 
-  componentWillUnmount() {
+  override componentWillUnmount() {
     // Clear all timeouts
     this.retryTimeouts.forEach(timeout => clearTimeout(timeout))
     this.retryTimeouts.clear()
@@ -143,8 +144,9 @@ export class DragonBallErrorBoundary extends Component<Props, State> {
   }
 
   getRandomMessage(level: 'component' | 'feature' | 'page' | 'app'): string {
-    const messages = DBZ_ERROR_MESSAGES[level]
-    return messages[Math.floor(Math.random() * messages.length)]
+    const messages = DBZ_ERROR_MESSAGES[level] || DBZ_ERROR_MESSAGES.component
+    const selectedMessage = messages[Math.floor(Math.random() * messages.length)]
+    return selectedMessage || 'A critical system error has occurred!'
   }
 
   override render() {

@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { useEnhancedErrorHandler, EnhancedError } from '@hooks/useEnhancedErrorHandler'
+import React, { useState } from 'react'
+import { EnhancedError, ErrorType } from '@hooks/useEnhancedErrorHandler'
 import { DragonBallLoadingStates } from './DragonBallLoadingStates'
 import { Button } from '@components/ui/forms/Button'
 import { Card } from '@components/ui/display/Card'
@@ -17,7 +17,7 @@ interface ChatErrorRecoveryProps {
 
 // Dragon Ball Z themed recovery suggestions
 const getRecoverySuggestion = (error: EnhancedError): string => {
-  const suggestions: Record<typeof error.type, string[]> = {
+  const suggestions: Record<ErrorType, string[]> = {
     network: [
       "Check your ki connection and try again",
       "The Dragon Radar needs a stronger signal",
@@ -50,8 +50,8 @@ const getRecoverySuggestion = (error: EnhancedError): string => {
     ]
   }
   
-  const typeSuggestions = suggestions[error.type]
-  return typeSuggestions[Math.floor(Math.random() * typeSuggestions.length)]
+  const typeSuggestions = suggestions[error.type] || suggestions.unknown
+  return typeSuggestions[Math.floor(Math.random() * typeSuggestions.length)] || 'An unknown error occurred'
 }
 
 export const ChatErrorRecovery = React.memo(function ChatErrorRecovery({
@@ -74,12 +74,23 @@ export const ChatErrorRecovery = React.memo(function ChatErrorRecovery({
     }
   }
 
-  const getSeverityColor = (severity: EnhancedError['severity']) => {
+  const getSeverityColor = (severity: EnhancedError['severity']): string => {
     switch (severity) {
       case 'low': return 'blue'
       case 'medium': return 'yellow'
       case 'high': return 'orange'
       case 'critical': return 'red'
+      default: return 'gray'
+    }
+  }
+
+  const getSeverityBadgeVariant = (severity: EnhancedError['severity']): 'default' | 'success' | 'warning' | 'danger' | 'info' => {
+    switch (severity) {
+      case 'low': return 'info'
+      case 'medium': return 'warning'
+      case 'high': return 'warning'
+      case 'critical': return 'danger'
+      default: return 'default'
     }
   }
 
@@ -111,7 +122,7 @@ export const ChatErrorRecovery = React.memo(function ChatErrorRecovery({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold text-gray-200">{error.message}</h3>
-                <Badge variant={getSeverityColor(error.severity) as any} size="sm">
+                <Badge variant={getSeverityBadgeVariant(error.severity)} size="sm">
                   {error.type.toUpperCase()}
                 </Badge>
               </div>
@@ -226,7 +237,7 @@ export const ChatErrorRecoveryManager = React.memo(function ChatErrorRecoveryMan
   onClearAll: () => void
   className?: string
 }) {
-  const [retryingErrors, setRetryingErrors] = useState<Set<string>>(new Set())
+  const [, setRetryingErrors] = useState<Set<string>>(new Set())
 
   const handleRetry = async (errorId: string) => {
     setRetryingErrors(prev => new Set(prev).add(errorId))

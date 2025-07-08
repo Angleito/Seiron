@@ -3,8 +3,8 @@
 import React from 'react'
 import { EnhancedChat } from '../EnhancedChatWrapper'
 import { VoiceEnabledChat } from '../VoiceEnabledChat'
-import { VoiceErrorBoundary, SpeechRecognitionErrorBoundary, TTSErrorBoundary } from '@components/error-boundaries'
-import { VoiceInterface } from '@components/voice/VoiceInterface'
+import { SpeechRecognitionErrorBoundary, TTSErrorBoundary } from '@components/error-boundaries'
+import VoiceInterface from '@components/voice/VoiceInterface'
 import { useEnhancedErrorHandler } from '@hooks/useEnhancedErrorHandler'
 import { DragonBallLoadingStates } from '../parts/DragonBallLoadingStates'
 import { ChatErrorIndicator } from '../parts/ChatErrorRecovery'
@@ -82,7 +82,19 @@ export const ErrorHandlingExample = () => {
               <h3 className="text-sm font-semibold text-gray-400">Speech Recognition</h3>
               <SpeechRecognitionErrorBoundary>
                 <div className="p-4 bg-gray-900/50 rounded-lg border border-gray-700">
-                  <VoiceInterface />
+                  <VoiceInterface 
+                    elevenLabsConfig={{
+                      apiKey: process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY || '',
+                      voiceId: process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID || 'default-voice',
+                      modelId: 'eleven_monolingual_v1',
+                      voiceSettings: {
+                        stability: 0.75,
+                        similarityBoost: 0.75,
+                        style: 0.5,
+                        useSpeakerBoost: true
+                      }
+                    }}
+                  />
                 </div>
               </SpeechRecognitionErrorBoundary>
             </div>

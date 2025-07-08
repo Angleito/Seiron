@@ -2,7 +2,6 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { logger } from '@lib/logger'
 import { pipe } from 'fp-ts/function'
 import * as TE from 'fp-ts/TaskEither'
-import * as E from 'fp-ts/Either'
 import * as O from 'fp-ts/Option'
 
 export type ErrorSeverity = 'low' | 'medium' | 'high' | 'critical'
@@ -90,8 +89,8 @@ export function useEnhancedErrorHandler(options: ErrorHandlerOptions = {}) {
   const getErrorType = (error: any): ErrorType => {
     if (!error) return 'unknown'
     
-    const message = error.message?.toLowerCase() || ''
-    const code = error.code?.toLowerCase() || ''
+    const message = (error.message || '').toLowerCase()
+    const code = (error.code || '').toLowerCase()
     
     if (message.includes('network') || message.includes('fetch') || code === 'network_error') {
       return 'network'
@@ -146,8 +145,9 @@ export function useEnhancedErrorHandler(options: ErrorHandlerOptions = {}) {
   }
 
   const getRandomDBZMessage = (type: ErrorType): string => {
-    const messages = DBZ_ERROR_MESSAGES[type]
-    return messages[Math.floor(Math.random() * messages.length)]
+    const messages = DBZ_ERROR_MESSAGES[type] || DBZ_ERROR_MESSAGES.unknown
+    const selectedMessage = messages[Math.floor(Math.random() * messages.length)]
+    return selectedMessage || 'An unknown error has occurred!'
   }
 
   const createEnhancedError = (

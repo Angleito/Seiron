@@ -397,50 +397,6 @@ export class SupabaseService {
       )
     );
 
-  /**
-   * Delete messages for a session (for conversation cleanup)
-   */
-  deleteMessagesBySession = (sessionId: string): TE.TaskEither<Error, number> =>
-    pipe(
-      TE.tryCatch(
-        async () => {
-          logger.debug('Deleting messages by session', {
-            sessionId,
-          });
-
-          const { data, error } = await this.client
-            .from('messages')
-            .delete()
-            .eq('session_id', sessionId)
-            .select('id');
-
-          if (error) {
-            logger.error('Failed to delete messages by session', {
-              error: error.message,
-              code: error.code,
-              sessionId,
-            });
-            throw new Error(`Failed to delete messages: ${error.message}`);
-          }
-
-          const deletedCount = data?.length || 0;
-          logger.info('Messages deleted successfully', {
-            sessionId,
-            deletedCount,
-          });
-
-          return deletedCount;
-        },
-        (error) => {
-          const errorMessage = error instanceof Error ? error.message : String(error);
-          logger.error('Error deleting messages by session', {
-            error: errorMessage,
-            sessionId,
-          });
-          return new Error(`Supabase delete messages error: ${errorMessage}`);
-        }
-      )
-    );
 
   /**
    * Get conversation history with pagination
