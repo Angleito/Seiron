@@ -205,9 +205,9 @@ export const useSecureElevenLabsTTS = (config: SecureElevenLabsConfig) => {
         modelId: config.modelId || 'eleven_monolingual_v1',
         voiceSettings: config.voiceSettings ? {
           stability: config.voiceSettings.stability,
-          similarity_boost: config.voiceSettings.similarityBoost,
+          similarityBoost: config.voiceSettings.similarityBoost,
           style: config.voiceSettings.style,
-          use_speaker_boost: config.voiceSettings.useSpeakerBoost
+          useSpeakerBoost: config.voiceSettings.useSpeakerBoost
         } : undefined
       }
       
