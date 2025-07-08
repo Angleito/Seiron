@@ -224,6 +224,8 @@ export function DragonHead3DOptimized({
       
       return () => clearInterval(interval)
     }
+    // Return undefined for production case
+    return undefined
   }, [performanceMonitor])
 
   // Loading state
@@ -300,3 +302,6 @@ export function DragonHead3DOptimized({
 }
 
 export default DragonHead3DOptimized
+
+// Ensure TypeScript knows the component returns JSX
+export const DragonHead3D = DragonHead3DOptimized

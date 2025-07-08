@@ -101,13 +101,13 @@ class DragonErrorBoundary extends React.Component<
     return { hasError: true, error }
   }
 
-  componentDidCatch(error: Error) {
+  override componentDidCatch(error: Error) {
     if (this.props.onError) {
       this.props.onError(error)
     }
   }
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       return <DragonPlaceholder state="error" error={this.state.error} />
     }
@@ -200,6 +200,8 @@ export function DragonLoader({
         }
       }
     }
+    // Return undefined for browsers without requestIdleCallback
+    return undefined
   }, [])
 
   // Delay loading to prioritize critical content
@@ -214,6 +216,8 @@ export function DragonLoader({
       }, 100)
       return () => clearTimeout(timer)
     }
+    // Return undefined when condition is not met
+    return undefined
   }, [inView, shouldLoad, loadingState, performanceMonitor])
 
   // Set up loading timeout
@@ -231,6 +235,8 @@ export function DragonLoader({
         }
       }
     }
+    // Return undefined when not loading
+    return undefined
   }, [loadingState, loadingTimeout])
 
   // Clean up on unmount
@@ -250,7 +256,7 @@ export function DragonLoader({
           <DragonPlaceholder 
             className={props.className} 
             state={loadingState}
-            error={error}
+            error={error || undefined}
           />
         )}
         
