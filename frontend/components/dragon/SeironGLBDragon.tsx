@@ -30,15 +30,18 @@ function DragonMesh({
 }) {
   const meshRef = useRef<THREE.Group>(null)
   
-  // Add error handling for GLB loading
+  // Add error handling for GLTF loading
   let scene: THREE.Group
+  let animations: THREE.AnimationClip[]
   try {
-    console.log('🔄 Loading GLB model from /models/seiron.glb...')
-    const gltf = useGLTF('/models/seiron.glb')
+    console.log('🔄 Loading GLTF model from /models/seiron_animated.gltf...')
+    const gltf = useGLTF('/models/seiron_animated.gltf')
     scene = gltf.scene
-    console.log('✅ GLB model loaded successfully:', scene)
+    animations = gltf.animations || []
+    console.log('✅ GLTF model loaded successfully:', scene)
+    console.log('🎭 Available animations:', animations.map(clip => clip.name))
   } catch (error) {
-    console.error('❌ Failed to load GLB model:', error)
+    console.error('❌ Failed to load GLTF model:', error)
     throw error
   }
   
@@ -52,6 +55,10 @@ function DragonMesh({
   }
 
   const currentConfig = sizeConfig[size]
+
+  // Animation mixer setup
+  const mixerRef = useRef<THREE.AnimationMixer | null>(null)
+  const actionRef = useRef<THREE.AnimationAction | null>(null)
 
   // Clone the scene to avoid conflicts
   const clonedScene = React.useMemo(() => {
@@ -77,9 +84,38 @@ function DragonMesh({
         child.receiveShadow = true
       }
     })
+
+    // Initialize animation mixer
+    if (animations.length > 0) {
+      mixerRef.current = new THREE.AnimationMixer(cloned)
+      
+      // Find a suitable animation for looping (prefer flying or flapping)
+      let selectedAnimation = animations.find(clip => 
+        clip.name.includes('flying') || 
+        clip.name.includes('flaping') ||
+        clip.name.includes('flapping')
+      ) || animations[0] // fallback to first animation
+      
+      if (selectedAnimation) {
+        actionRef.current = mixerRef.current.clipAction(selectedAnimation)
+        actionRef.current.setLoop(THREE.LoopRepeat, Infinity)
+        actionRef.current.play()
+        console.log('🎭 Playing animation:', selectedAnimation.name)
+      }
+    }
     
     return cloned
   }, [scene, currentConfig])
+
+  // Cleanup animation mixer on unmount
+  useEffect(() => {
+    return () => {
+      if (mixerRef.current) {
+        mixerRef.current.stopAllAction()
+        mixerRef.current.uncacheRoot(mixerRef.current.getRoot())
+      }
+    }
+  }, [])
 
   // Animation loop
   useFrame((state, delta) => {
@@ -87,80 +123,14 @@ function DragonMesh({
 
     const time = state.clock.elapsedTime
 
-    // Base breathing animation
+    // Update animation mixer
+    if (mixerRef.current) {
+      mixerRef.current.update(delta)
+    }
+
+    // Simple breathing animation on top of the GLTF animation
     const breatheScale = Math.sin(time * 0.8) * 0.02
     meshRef.current.scale.setScalar(currentConfig.scale + breatheScale)
-
-    // Voice state animations
-    if (voiceState) {
-      let targetRotationY = 0
-      let targetPositionY = currentConfig.position[1] || 0
-      let glowIntensity = 0
-
-      if (voiceState.isListening) {
-        // Attentive pose - slight head tilt and lean forward
-        targetRotationY = Math.sin(time * 2) * 0.1
-        targetPositionY = (currentConfig.position[1] || 0) + 0.5
-        glowIntensity = 0.3
-        
-        // Apply blue glow effect
-        clonedScene.traverse((child) => {
-          if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
-            child.material.emissive.setRGB(0, 0.2 * glowIntensity, 0.4 * glowIntensity)
-          }
-        })
-      } else if (voiceState.isSpeaking) {
-        // Speaking animation - more dynamic movement
-        targetRotationY = Math.sin(time * 3) * 0.15
-        targetPositionY = (currentConfig.position[1] || 0) + Math.sin(time * 4) * 0.3
-        glowIntensity = 0.5
-        
-        // Apply orange/fire glow effect
-        clonedScene.traverse((child) => {
-          if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
-            child.material.emissive.setRGB(0.6 * glowIntensity, 0.3 * glowIntensity, 0)
-          }
-        })
-      } else if (voiceState.isProcessing) {
-        // Processing animation - contemplative swaying
-        targetRotationY = Math.sin(time * 1) * 0.2
-        targetPositionY = (currentConfig.position[1] || 0) + Math.sin(time * 2) * 0.2
-        glowIntensity = 0.4
-        
-        // Apply purple glow effect
-        clonedScene.traverse((child) => {
-          if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
-            child.material.emissive.setRGB(0.4 * glowIntensity, 0, 0.6 * glowIntensity)
-          }
-        })
-      } else {
-        // Idle state - remove glow
-        clonedScene.traverse((child) => {
-          if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
-            child.material.emissive.setRGB(0, 0, 0)
-          }
-        })
-      }
-
-      // Smooth transitions
-      meshRef.current.rotation.y = THREE.MathUtils.lerp(
-        meshRef.current.rotation.y, 
-        targetRotationY, 
-        delta * 2
-      )
-      
-      meshRef.current.position.y = THREE.MathUtils.lerp(
-        meshRef.current.position.y, 
-        targetPositionY, 
-        delta * 3
-      )
-      
-      // Volume-based intensity scaling
-      if (typeof voiceState.volume === 'number') {
-        const volumeScale = 1 + (voiceState.volume * 0.1)
-        meshRef.current.scale.setScalar((currentConfig.scale + breatheScale) * volumeScale)
-      }
-    }
   })
 
   return (
@@ -343,7 +313,7 @@ export const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
   )
 }
 
-// Preload the GLB model
-useGLTF.preload('/models/seiron.glb')
+// Preload the GLTF model
+useGLTF.preload('/models/seiron_animated.gltf')
 
 export default SeironGLBDragon

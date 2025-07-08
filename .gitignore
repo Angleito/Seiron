@@ -11,12 +11,17 @@ build/
 out/
 .tsbuildinfo
 
-# Environment files
+# Environment files - DO NOT COMMIT API KEYS
 .env
+.env.*
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env.logging
+# Allow .env.example files to be committed
+!.env.example
+!*.env.example
 
 # Runtime data
 pids
