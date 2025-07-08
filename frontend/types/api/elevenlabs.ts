@@ -210,3 +210,34 @@ export interface ElevenLabsErrorResponse {
     message: string
   }
 }
+
+// Secure Voice API Types
+export interface VoiceApiErrorResponse {
+  success: false
+  error: string
+  code?: string
+}
+
+export interface VoiceApiSuccessResponse {
+  success: true
+  data: {
+    audioBuffer: string // base64 encoded audio
+    contentType: string
+    duration?: number
+    characterCount: number
+  }
+}
+
+export type VoiceApiResponse = VoiceApiErrorResponse | VoiceApiSuccessResponse
+
+export interface VoiceSynthesisRequest {
+  text: string
+  voiceId: string
+  modelId?: string
+  voiceSettings?: {
+    stability?: number
+    similarity_boost?: number
+    style?: number
+    use_speaker_boost?: boolean
+  }
+}

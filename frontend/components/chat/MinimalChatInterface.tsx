@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react'
-import { Send, Loader2, Plus, Sparkles, Wifi, WifiOff, AlertCircle } from 'lucide-react'
+import { Send, Loader2, Plus, Sparkles, Wifi, WifiOff, AlertCircle, Mic, MicOff, Volume2, VolumeX } from 'lucide-react'
 import { cn } from '@lib/utils'
 import { SeironImage } from '@components/SeironImage'
 import { GameDialogueBox } from './GameDialogueBox'
@@ -33,6 +33,12 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  
+  // Voice integration state
+  const [voiceEnabled, setVoiceEnabled] = useState(false)
+  const [isVoiceListening, setIsVoiceListening] = useState(false)
+  const [ttsEnabled, setTTSEnabled] = useState(false)
+  const [interimTranscript, setInterimTranscript] = useState('')
   
   // Generate or get session ID
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`)
@@ -180,12 +186,61 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
                 disabled={isLoading}
               />
               
+              {/* Voice transcript overlay */}
+              {isVoiceListening && interimTranscript && (
+                <div className="absolute top-3 left-4 right-16 text-red-400/70 text-sm pointer-events-none">
+                  🎤 {interimTranscript}
+                </div>
+              )}
+              
               {/* Dragon Power Indicator */}
               <div className="absolute bottom-3 right-3 flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-orange-400 animate-pulse" />
-                <span className="text-size-4 text-orange-400">9000</span>
+                {isVoiceListening && (
+                  <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
+                )}
+                <Sparkles className={cn(
+                  "w-4 h-4 animate-pulse",
+                  isVoiceListening ? "text-red-400" : "text-orange-400"
+                )} />
+                <span className={cn(
+                  "text-size-4",
+                  isVoiceListening ? "text-red-400" : "text-orange-400"
+                )}>
+                  {isVoiceListening ? "VOICE" : "9000"}
+                </span>
               </div>
             </div>
+            
+            {/* Voice Controls - Only show when voice is enabled */}
+            {voiceEnabled && (
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => setIsVoiceListening(!isVoiceListening)}
+                  className={cn(
+                    "p-3 rounded-xl transition-all duration-200 text-sm",
+                    isVoiceListening
+                      ? "bg-red-500/20 text-red-400 border border-red-500/50"
+                      : "bg-gray-800/50 text-gray-400 hover:text-gray-300"
+                  )}
+                >
+                  {isVoiceListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => setTTSEnabled(!ttsEnabled)}
+                  className={cn(
+                    "p-3 rounded-xl transition-all duration-200 text-sm",
+                    ttsEnabled
+                      ? "bg-orange-500/20 text-orange-400 border border-orange-500/50"
+                      : "bg-gray-800/50 text-gray-400 hover:text-gray-300"
+                  )}
+                >
+                  {ttsEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                </button>
+              </div>
+            )}
             
             {/* Send Button */}
             <button
@@ -221,6 +276,14 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
                 {connectionStatus.isConnected ? "Connected" : "Disconnected"}
               </span>
             </div>
+            
+            {/* Voice toggle */}
+            <button
+              onClick={() => setVoiceEnabled(!voiceEnabled)}
+              className="text-size-3 text-gray-500 hover:text-gray-400 transition-colors"
+            >
+              {voiceEnabled ? "🎤 Voice On" : "🎤 Voice Off"}
+            </button>
             
             <div className="text-size-4 text-gray-500">
               The dragon listens to your every wish • Press Enter to send

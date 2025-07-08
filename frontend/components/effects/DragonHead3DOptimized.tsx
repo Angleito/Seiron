@@ -31,6 +31,9 @@ interface DragonHead3DOptimizedProps {
   onLoad?: () => void
 }
 
+// Import minimal test for debugging
+import MinimalThreeTest from './MinimalThreeTest'
+
 // Lazy load the full 3D component for better initial page load
 const FullDragonScene = lazy(() => import('./DragonHead3D').then(module => ({
   default: module.DragonHead3D
@@ -145,8 +148,14 @@ export function DragonHead3DOptimized({
   forceQuality = 'auto',
   onLoad
 }: DragonHead3DOptimizedProps) {
+  console.log('🐉 DragonHead3DOptimized: Component mounting with props:', {
+    className, intensity, enableEyeTracking, lightningActive, forceQuality
+  })
+
   const [renderMode, setRenderMode] = useState<'loading' | 'fallback' | 'lightweight' | 'full'>('loading')
   const { config, metrics, isMobile, isTablet } = useStormPerformance()
+  
+  console.log('🐉 DragonHead3DOptimized: Performance config:', { config, metrics, isMobile, isTablet })
   
   // Performance monitoring
   const performanceMonitor = usePerformanceMonitor({
@@ -171,35 +180,13 @@ export function DragonHead3DOptimized({
     
     // Determine render mode based on device and performance
     const determineRenderMode = () => {
-      if (forceQuality !== 'auto') {
-        switch (forceQuality) {
-          case 'low':
-            setRenderMode('fallback')
-            break
-          case 'medium':
-            setRenderMode('lightweight')
-            break
-          case 'high':
-            setRenderMode('full')
-            break
-        }
-        return
-      }
-
-      // Auto quality detection
-      if (isMobile || config.animationQuality === 'low') {
-        setRenderMode('fallback')
-      } else if (isTablet || config.animationQuality === 'medium') {
-        setRenderMode('lightweight')
-      } else {
-        setRenderMode('full')
-      }
+      // Force full 3D mode for debugging - remove device detection temporarily
+      console.log('🐉 DragonHead3DOptimized: Forcing full 3D mode for debugging')
+      setRenderMode('full')
       
       // End timer and log
       const determinationTime = performanceMonitor.endTimer('render-mode-determination')
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`🐉 Render mode determined in ${determinationTime.toFixed(0)}ms`)
-      }
+      console.log(`🐉 Render mode determined in ${determinationTime.toFixed(0)}ms - set to: full`)
     }
 
     // Small delay to prevent flash
@@ -288,16 +275,12 @@ export function DragonHead3DOptimized({
     )
   }
 
-  // Full quality for high-end devices
+  // Full quality for high-end devices - TEMPORARILY USE TEST COMPONENT
+  console.log('🐉 DragonHead3DOptimized: Rendering FULL mode with test component')
   return (
-    <Suspense fallback={<SimpleDragonFallback className={className} />}>
-      <FullDragonScene
-        className={className}
-        intensity={intensity}
-        enableEyeTracking={enableEyeTracking}
-        lightningActive={lightningActive}
-      />
-    </Suspense>
+    <div className={`absolute inset-0 ${className}`}>
+      <MinimalThreeTest className="absolute inset-0" />
+    </div>
   )
 }
 

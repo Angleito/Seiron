@@ -5,6 +5,10 @@
   "private": true,
   "dependencies": {
     "@vercel/node": "^3.0.0",
-    "openai": "^4.0.0"
+    "openai": "^5.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
   }
 }

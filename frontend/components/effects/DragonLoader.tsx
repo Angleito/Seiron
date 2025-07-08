@@ -1,11 +1,11 @@
 'use client'
 
-import React, { useState, useEffect, useRef, lazy, Suspense, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useInView } from 'react-intersection-observer'
 import { usePerformanceMonitor, PerformanceOverlay } from '@/hooks/usePerformanceMonitor'
 
-// Lazy load dragon components based on visibility and performance
-const DragonHead3D = lazy(() => import('./DragonHead3DOptimized'))
+// Direct import dragon component for debugging - no lazy loading
+import DragonHead3D from './DragonHead3DOptimized'
 
 interface DragonLoaderProps {
   className?: string
@@ -145,6 +145,7 @@ export function DragonLoader({
 
   // Handle successful load
   const handleLoad = useCallback(() => {
+    console.log('🐉 DragonLoader: handleLoad called - 3D model successfully loaded!')
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
       timeoutRef.current = null
@@ -155,13 +156,13 @@ export function DragonLoader({
     const loadTime = performanceMonitor.endTimer('dragon-loading')
     performanceMonitor.logMetrics()
     
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`🐉 Dragon loaded in ${loadTime.toFixed(0)}ms`)
-    }
+    console.log(`🐉 Dragon loaded successfully in ${loadTime.toFixed(0)}ms`)
   }, [performanceMonitor])
 
   // Handle load error
   const handleError = useCallback((error: Error) => {
+    console.error('🐉 DragonLoader: ERROR occurred during loading:', error)
+    console.error('🐉 DragonLoader: Error stack:', error.stack)
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
       timeoutRef.current = null
@@ -207,8 +208,10 @@ export function DragonLoader({
   // Delay loading to prioritize critical content
   useEffect(() => {
     if (inView && !shouldLoad && loadingState === 'idle') {
+      console.log('🐉 DragonLoader: Starting loading sequence...')
       // Small delay to let critical content render first
       const timer = setTimeout(() => {
+        console.log('🐉 DragonLoader: Setting shouldLoad=true, state=loading')
         setShouldLoad(true)
         setLoadingState('loading')
         // Start loading timer
@@ -260,21 +263,19 @@ export function DragonLoader({
           />
         )}
         
-        {/* Load dragon component when ready */}
+        {/* Load dragon component when ready - direct loading for debugging */}
         {shouldLoad && (
           <DragonErrorBoundary onError={handleError}>
-            <Suspense fallback={<DragonPlaceholder className={props.className} state="loading" />}>
-              <div 
-                className={`absolute inset-0 transition-opacity duration-1000 ${
-                  loadingState === 'loaded' ? 'opacity-100' : 'opacity-0'
-                }`}
-              >
-                <DragonHead3D 
-                  {...props}
-                  onLoad={handleLoad}
-                />
-              </div>
-            </Suspense>
+            <div 
+              className={`absolute inset-0 transition-opacity duration-1000 ${
+                loadingState === 'loaded' ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              <DragonHead3D 
+                {...props}
+                onLoad={handleLoad}
+              />
+            </div>
           </DragonErrorBoundary>
         )}
       </div>

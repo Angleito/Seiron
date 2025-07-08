@@ -1,18 +1,9 @@
-import React, { useEffect, useState, useCallback, lazy, Suspense } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import { useStormPerformance } from '@/hooks/useStormPerformance'
 
-// Import fallback dragon
-import DragonFallback from './DragonFallback'
-
-// Lazy load dragon loader for progressive loading
-const DragonLoader = lazy(() => import('./DragonLoader').catch((error) => {
-  console.error('Failed to load DragonLoader component:', error)
-  // Return the fallback component with correct type
-  return { 
-    default: (props: any) => <DragonFallback {...props} />
-  }
-}))
+// Direct import DragonLoader - no lazy loading to isolate issue
+import DragonLoader from './DragonLoader'
 
 interface StormBackgroundProps {
   className?: string
@@ -154,20 +145,13 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
         style={{ zIndex: 5 }}
       />
       
-      {/* Dragon Head - Main focus element with progressive loading */}
-      <Suspense fallback={
-        <DragonFallback 
-          className="absolute inset-0" 
-          intensity={normalizedIntensity} 
-        />
-      }>
-        <DragonLoader
-          className="absolute inset-0"
-          intensity={normalizedIntensity}
-          enableEyeTracking={shouldAnimate}
-          lightningActive={false}
-        />
-      </Suspense>
+      {/* Dragon Head - Main focus element - direct loading for debugging */}
+      <DragonLoader
+        className="absolute inset-0"
+        intensity={normalizedIntensity}
+        enableEyeTracking={shouldAnimate}
+        lightningActive={false}
+      />
       
       {/* Atmospheric enhancement overlay */}
       <div 
