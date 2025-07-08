@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend && npm install && npm run build",
+  "buildCommand": "ls -la && pwd && cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
-  "installCommand": "npm install && cd frontend && npm install",
+  "installCommand": "npm install && ls -la && cd frontend && npm install",
   "framework": null,
   "functions": {
     "api/**/*.ts": {

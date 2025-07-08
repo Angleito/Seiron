@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { PrivyProvider } from '@privy-io/react-auth'
 import { WagmiProvider } from 'wagmi'
+import { Analytics } from '@vercel/analytics/next'
 import { router } from '../router'
 import SimpleHomePage from './pages/SimpleHomePage'
 import HomePage3D from './pages/HomePage3D'
@@ -56,6 +57,7 @@ try {
     root.render(
       <React.StrictMode>
         <HomePage3D />
+        <Analytics />
       </React.StrictMode>
     )
   } else {
@@ -73,6 +75,7 @@ try {
             </QueryClientProvider>
           </PrivyProvider>
         </RootErrorBoundary>
+        <Analytics />
       </React.StrictMode>
     )
   }
