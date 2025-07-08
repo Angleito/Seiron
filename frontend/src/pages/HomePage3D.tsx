@@ -172,7 +172,7 @@ export default function HomePage3D() {
       </div>
       
       {/* CSS animations */}
-      <style jsx>{`
+      <style>{`
         @keyframes pulse {
           0%, 100% {
             opacity: 0.6;

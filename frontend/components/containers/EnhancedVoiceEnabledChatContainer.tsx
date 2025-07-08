@@ -5,7 +5,7 @@ import { useChatStream } from '../chat/useChatStream'
 import { useChatSessions } from '../../hooks/useChatSessions'
 import { useChatHistory } from '../../hooks/useChatHistory'
 import { useVoiceInterfaceAudio } from '@components/voice'
-import { ElevenLabsConfig } from '@hooks/voice/useElevenLabsTTS'
+import { SecureElevenLabsConfig as ElevenLabsConfig } from '@hooks/voice/useSecureElevenLabsTTS'
 import { logger } from '@lib/logger'
 import { sanitizeVoiceTranscript, sanitizeChatMessage } from '@lib/sanitize'
 import { pipe } from 'fp-ts/function'
@@ -86,7 +86,6 @@ export const EnhancedVoiceEnabledChatContainer = React.memo(function EnhancedVoi
   
   // ElevenLabs configuration - memoized
   const elevenLabsConfig: ElevenLabsConfig = useMemo(() => ({
-    // API key no longer needed - handled server-side
     voiceId: import.meta.env.VITE_ELEVENLABS_VOICE_ID || '',
     modelId: 'eleven_monolingual_v1',
     voiceSettings: {

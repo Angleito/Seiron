@@ -59,12 +59,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
   // Handle OPTIONS request
   if (req.method === 'OPTIONS') {
-    return res.status(200).end()
+    res.status(200).end()
+    return
   }
 
   // Only allow POST
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
+    res.status(405).json({ error: 'Method not allowed' })
+    return
   }
 
   // Check rate limit
@@ -75,21 +77,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   res.setHeader('X-RateLimit-Remaining', remaining.toString())
 
   if (!allowed) {
-    return res.status(429).json({
+    res.status(429).json({
       success: false,
       error: 'Too many voice synthesis requests from this IP, please try again later.',
       code: 'RATE_LIMIT_EXCEEDED'
     })
+    return
   }
 
   // Validate request body
   const validation = synthesizeTextSchema.safeParse(req.body)
   if (!validation.success) {
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       error: 'Validation error',
       code: 'VALIDATION_ERROR'
     })
+    return
   }
 
   const { text, modelId, voiceSettings } = validation.data
@@ -100,11 +104,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
   if (!elevenLabsApiKey || !elevenLabsVoiceId) {
     console.error('ElevenLabs configuration missing')
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       error: 'Voice synthesis service is not properly configured',
       code: 'CONFIG_ERROR'
     })
+    return
   }
 
   try {
@@ -140,11 +145,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     if (!response.ok) {
       if (response.status === 429) {
         console.warn('ElevenLabs API quota exceeded')
-        return res.status(429).json({
+        res.status(429).json({
           success: false,
           error: 'Voice synthesis quota exceeded. Please try again later.',
           code: 'QUOTA_EXCEEDED'
         })
+        return
       }
 
       const errorText = await response.text()
@@ -154,11 +160,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         body: errorText
       })
 
-      return res.status(response.status).json({
+      res.status(response.status).json({
         success: false,
         error: 'Failed to synthesize speech',
         code: 'API_ERROR'
       })
+      return
     }
 
     const audioBuffer = await response.arrayBuffer()
