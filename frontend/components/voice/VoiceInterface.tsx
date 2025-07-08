@@ -6,6 +6,9 @@ import { pipe } from 'fp-ts/function'
 import * as O from 'fp-ts/Option'
 import { logger } from '../../lib/logger'
 import { voiceLogger, logVoiceInterface, logEnvironment } from '../../lib/voice-logger'
+import { DragonBallLoadingStates } from '../chat/parts/DragonBallLoadingStates'
+import { DragonRenderer, VoiceAnimationState } from '../dragon/DragonRenderer'
+import { AnimeMessageBubble } from '../chat/AnimeMessageBubble'
 
 // Log environment variables at module load
 const envStatus = {
@@ -391,9 +394,20 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
   if (!isSpeechSupported) {
     logger.warn('🔊 Speech recognition not supported, rendering fallback UI')
     return (
-      <div className={`text-red-500 p-4 bg-red-900/20 rounded-lg ${className}`}>
-        <p>Speech recognition is not supported in this browser.</p>
-        <p className="text-sm mt-2">Please try using Chrome, Edge, or Safari for voice features.</p>
+      <div className={`${className}`}>
+        <DragonBallLoadingStates.ErrorRecovery 
+          message="Scouter technology not compatible with this dimension!"
+          className="w-full max-w-md mx-auto"
+        />
+        <div className="text-center mt-4 p-4 bg-red-900/20 border border-red-500/30 rounded-lg max-w-md mx-auto">
+          <p className="text-red-400 font-semibold">🛸 Capsule Corp Notice:</p>
+          <p className="text-sm text-red-300 mt-2">
+            Your browser lacks the advanced ki-sensing technology required for voice features.
+          </p>
+          <p className="text-xs text-gray-400 mt-2">
+            Please use Chrome, Edge, or Safari to unlock the dragon's voice power.
+          </p>
+        </div>
       </div>
     )
   }
@@ -407,128 +421,186 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
     hasError: !!state.lastError
   })
   
+  // Create voice animation state for dragon integration
+  const voiceAnimationState: VoiceAnimationState = useMemo(() => ({
+    isListening,
+    isSpeaking: state.isPlayingAudio,
+    isProcessing: isTTSLoading,
+    isIdle: !isListening && !state.isPlayingAudio && !isTTSLoading,
+    volume: state.currentTranscript.length / 100,
+    emotion: state.currentTranscript.includes('!') ? 'excited' : 
+             state.currentTranscript.includes('?') ? 'focused' : 'calm'
+  }), [isListening, state.isPlayingAudio, isTTSLoading, state.currentTranscript])
+
   return (
     <div className={`flex flex-col items-center space-y-6 p-6 ${className}`}>
-      {/* Voice Status Indicator */}
+      {/* Dragon Voice Status Visualization */}
       <div className="relative">
-        <div className="w-20 h-20 rounded-full bg-gray-800 border-2 border-gray-600 flex items-center justify-center transition-all duration-300">
-          <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center">
-            <svg
-              className="w-6 h-6 text-gray-300"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fillRule="evenodd"
-                d="M7 4a3 3 0 016 0v4a3 3 0 01-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0 5 5 0 01-10 0 1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z"
-                clipRule="evenodd"
-              />
-            </svg>
+        {/* Main Dragon Display */}
+        <div className="relative bg-gray-900/30 border border-orange-800/50 rounded-full p-6 transition-all duration-300">
+          <DragonRenderer
+            dragonType="ascii"
+            size="lg"
+            voiceState={voiceAnimationState}
+            className="animate-pulse"
+          />
+          
+          {/* Energy Aura Effect */}
+          <div className="absolute inset-0 rounded-full animate-ping opacity-30">
+            <div className={`w-full h-full rounded-full ${
+              isListening ? 'bg-blue-500' :
+              state.isPlayingAudio ? 'bg-orange-500' :
+              isTTSLoading ? 'bg-purple-500' : 'bg-gray-500'
+            }`} />
           </div>
         </div>
         
-        {/* Voice state indicator overlay */}
-        <div className="absolute -top-2 -right-2 flex space-x-1">
-          {isListening && (
-            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" title="Listening" />
-          )}
-          {state.isPlayingAudio && (
-            <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse" title="Speaking" />
-          )}
-          {isTTSLoading && (
-            <div className="w-3 h-3 bg-blue-500 rounded-full animate-spin" title="Processing" />
-          )}
+        {/* Scouter HUD Overlay */}
+        <div className="absolute -top-4 -right-4 bg-gray-900/80 border border-orange-600/50 rounded-lg p-2 min-w-[120px]">
+          <DragonBallLoadingStates.PowerLevelScanner 
+            currentLevel={state.currentTranscript.length * 50}
+            maxLevel={9000}
+          />
         </div>
       </div>
 
-      {/* Control Buttons */}
-      <div className="flex space-x-4">
-        {/* Microphone Button */}
+      {/* DBZ-Themed Control Buttons */}
+      <div className="flex space-x-6">
+        {/* Ki-Powered Microphone Button */}
         <button
           onClick={toggleMicrophone}
-          className={microphoneButtonClasses}
-          aria-label={isListening ? 'Stop recording' : 'Start recording'}
+          className="relative p-6 bg-gray-900/50 border border-orange-800/50 rounded-full transition-all duration-300 transform hover:scale-110 disabled:opacity-50"
+          aria-label={isListening ? 'Stop channeling your ki' : 'Channel your ki'}
           disabled={isTTSLoading}
         >
-          <svg
-            className="w-6 h-6 text-white"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              fillRule="evenodd"
-              d="M7 4a3 3 0 016 0v4a3 3 0 01-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0 5 5 0 01-10 0 1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z"
-              clipRule="evenodd"
+          <div className="relative">
+            <DragonBallLoadingStates.KiCharging
+              size="lg"
+              color={isListening ? "blue" : "orange"}
             />
-          </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-2xl">🎤</span>
+            </div>
+          </div>
+          
+          {/* Energy Ring Effect */}
           {isListening && (
-            <div className="absolute inset-0 rounded-full animate-ping bg-red-400 opacity-75" />
+            <div className="absolute inset-0 rounded-full">
+              <div className="w-full h-full rounded-full border-2 border-blue-400 animate-ping opacity-75" />
+              <div className="absolute inset-2 rounded-full border border-blue-300 animate-pulse" />
+            </div>
           )}
+          
+          {/* Button Label */}
+          <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs font-semibold">
+            <span className={isListening ? 'text-blue-400' : 'text-orange-400'}>
+              {isListening ? 'Listening' : 'Voice'}
+            </span>
+          </div>
         </button>
 
-        {/* Speaker Button */}
+        {/* Dragon Ball Speaker Toggle */}
         <button
           onClick={toggleSpeaker}
-          className={speakerButtonClasses}
-          aria-label={state.isSpeakerEnabled ? 'Disable auto-speak' : 'Enable auto-speak'}
+          className="relative p-6 bg-gray-900/50 border border-orange-800/50 rounded-full transition-all duration-300 transform hover:scale-110"
+          aria-label={state.isSpeakerEnabled ? 'Mute dragon voice' : 'Enable dragon voice'}
         >
-          <svg
-            className="w-6 h-6 text-white"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              fillRule="evenodd"
-              d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z"
-              clipRule="evenodd"
-            />
-          </svg>
+          <div className="relative">
+            {state.isSpeakerEnabled ? (
+              <div className="flex items-center justify-center">
+                <DragonBallLoadingStates.DragonBallCollector />
+              </div>
+            ) : (
+              <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center opacity-50">
+                <span className="text-2xl">🔇</span>
+              </div>
+            )}
+          </div>
+          
+          {/* Active Indicator */}
           {state.isSpeakerEnabled && (
-            <div className="absolute top-0 right-0 w-3 h-3 bg-orange-400 rounded-full animate-pulse" />
+            <div className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 rounded-full animate-pulse">
+              <div className="w-full h-full bg-orange-400 rounded-full animate-ping opacity-75" />
+            </div>
           )}
+          
+          {/* Button Label */}
+          <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs font-semibold">
+            <span className={state.isSpeakerEnabled ? 'text-orange-400' : 'text-gray-500'}>
+              {state.isSpeakerEnabled ? 'Dragon Voice' : 'Muted'}
+            </span>
+          </div>
         </button>
       </div>
 
-      {/* Status Indicators */}
-      <div className="flex flex-col items-center space-y-2 text-sm">
+      {/* DBZ Voice Status Indicators */}
+      <div className="w-full max-w-md space-y-3">
         {isListening && (
-          <div className="flex items-center space-x-2 text-red-400">
-            <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
-            <span>Listening...</span>
-          </div>
+          <DragonBallLoadingStates.Voice 
+            operation="listening"
+            className="animate-slideInFromLeft"
+          />
         )}
         {isTTSLoading && (
-          <div className="flex items-center space-x-2 text-orange-400">
-            <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse" />
-            <span>Preparing audio...</span>
-          </div>
+          <DragonBallLoadingStates.Voice 
+            operation="processing"
+            className="animate-slideInFromLeft"
+          />
         )}
         {state.isPlayingAudio && (
-          <div className="flex items-center space-x-2 text-orange-400">
-            <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse" />
-            <span>Playing audio...</span>
+          <DragonBallLoadingStates.Voice 
+            operation="speaking"
+            className="animate-slideInFromLeft"
+          />
+        )}
+        {!isListening && !isTTSLoading && !state.isPlayingAudio && (
+          <div className="text-center text-gray-500 py-4">
+            <span className="text-sm">🐉 Dragon is in meditation mode</span>
           </div>
         )}
       </div>
 
-      {/* Transcript Display */}
+      {/* Dragon Ball Z Themed Transcript Display */}
       {state.currentTranscript && (
-        <div className="w-full max-w-md p-4 bg-gray-800/50 rounded-lg border border-orange-500/30">
-          <p className="text-sm text-gray-300">
-            <span className="font-semibold text-orange-400">Transcript:</span> {state.currentTranscript}
-          </p>
+        <div className="w-full max-w-md">
+          <AnimeMessageBubble
+            message={{
+              id: `voice-transcript-${Date.now()}`,
+              role: 'user',
+              content: state.currentTranscript,
+              powerLevel: Math.min(state.currentTranscript.length * 50, 9000),
+              emotion: state.currentTranscript.includes('!') ? 'excited' : 
+                       state.currentTranscript.includes('?') ? 'serious' : 'neutral'
+            }}
+            enableAnimations={true}
+            showPowerLevel={true}
+            showTimestamp={false}
+            className="animate-fadeIn"
+          />
+          
+          {/* Real-time transcript analysis */}
+          <div className="mt-2 text-center">
+            <DragonBallLoadingStates.PowerLevelScanner 
+              currentLevel={state.currentTranscript.length * 50}
+              maxLevel={9000}
+            />
+            <div className="text-xs text-gray-400 mt-1">
+              Ki Level: {state.currentTranscript.length} words detected
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Error Display */}
+      {/* DBZ-Themed Error Display */}
       {state.lastError && (
-        <div className="w-full max-w-md p-4 bg-red-900/20 rounded-lg border border-red-500/30">
-          <p className="text-sm text-red-400">
-            <span className="font-semibold">Error:</span> {state.lastError.message}
-          </p>
+        <div className="w-full max-w-md">
+          <DragonBallLoadingStates.ErrorRecovery 
+            message={`Scouter malfunction detected: ${state.lastError.message}`}
+            className="animate-shake"
+          />
+          <div className="text-center text-xs text-red-400 mt-2">
+            💊 Using Senzu Bean to restore voice chakra...
+          </div>
         </div>
       )}
     </div>
