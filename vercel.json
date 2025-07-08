@@ -8,16 +8,12 @@
     "api/**/*.ts": {
       "runtime": "@vercel/node@3.0.0",
       "maxDuration": 30
-    },
-    "frontend/api/**/*.ts": {
-      "runtime": "@vercel/node@3.0.0",
-      "maxDuration": 30
     }
   },
   "rewrites": [
     {
       "source": "/api/voice/(.*)",
-      "destination": "/frontend/api/voice/$1"
+      "destination": "/api/voice/$1"
     }
   ],
   "headers": [
