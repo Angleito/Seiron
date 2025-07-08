@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 
 interface PerformanceMetrics {
   fps: number
@@ -9,6 +9,14 @@ interface PerformanceMetrics {
   memoryUsage: number | null
   renderTime: number
   animationSmoothness: number // 0-1 score
+  loadingTime: number
+  componentName: string
+  timestamp: number
+}
+
+interface PerformanceTimer {
+  startTimer: (label: string) => void
+  endTimer: (label: string) => number
 }
 
 interface UsePerformanceMonitorOptions {
@@ -22,9 +30,24 @@ interface UsePerformanceMonitorOptions {
     droppedFrames?: number
     memoryUsage?: number
   }
+  componentName?: string
 }
 
-export function usePerformanceMonitor(options: UsePerformanceMonitorOptions = {}) {
+interface UsePerformanceMonitorReturn extends PerformanceTimer {
+  metrics: PerformanceMetrics
+  isPerformanceGood: boolean
+  performanceScore: number
+  recommendation: string
+  isHighPerformance: boolean
+  shouldReduceQuality: boolean
+  shouldDisableAnimations: boolean
+  logMetrics: () => void
+  startMonitoring: () => void
+  stopMonitoring: () => void
+  isMonitoring: boolean
+}
+
+export function usePerformanceMonitor(options: UsePerformanceMonitorOptions = {}): UsePerformanceMonitorReturn {
   const {
     targetFPS = 60,
     sampleRate = 1000, // ms between samples
@@ -35,7 +58,8 @@ export function usePerformanceMonitor(options: UsePerformanceMonitorOptions = {}
       frameTime: 33, // ~30fps
       droppedFrames: 10,
       memoryUsage: 100 * 1024 * 1024 // 100MB
-    }
+    },
+    componentName = 'Component'
   } = options
 
   const [metrics, setMetrics] = useState<PerformanceMetrics>({
@@ -44,7 +68,10 @@ export function usePerformanceMonitor(options: UsePerformanceMonitorOptions = {}
     droppedFrames: 0,
     memoryUsage: null,
     renderTime: 0,
-    animationSmoothness: 1
+    animationSmoothness: 1,
+    loadingTime: 0,
+    componentName,
+    timestamp: Date.now()
   })
 
   const [isPerformanceGood, setIsPerformanceGood] = useState(true)
@@ -56,10 +83,38 @@ export function usePerformanceMonitor(options: UsePerformanceMonitorOptions = {}
   const frameTimes = useRef<number[]>([])
   const animationFrameRef = useRef<number>()
   const sampleIntervalRef = useRef<NodeJS.Timeout>()
+  const timersRef = useRef<Map<string, number>>(new Map())
+  const [isMonitoring, setIsMonitoring] = useState(enabled)
+
+  // Start performance timer
+  const startTimer = useCallback((label: string) => {
+    timersRef.current.set(label, performance.now())
+  }, [])
+
+  // End performance timer and return duration
+  const endTimer = useCallback((label: string): number => {
+    const startTime = timersRef.current.get(label)
+    if (startTime === undefined) {
+      console.warn(`Timer '${label}' was not started`)
+      return 0
+    }
+    
+    const duration = performance.now() - startTime
+    timersRef.current.delete(label)
+    
+    // Update metrics based on label
+    if (label === 'render') {
+      setMetrics(prev => ({ ...prev, renderTime: duration }))
+    } else if (label === 'loading') {
+      setMetrics(prev => ({ ...prev, loadingTime: duration }))
+    }
+    
+    return duration
+  }, [])
 
   // Calculate FPS and frame time
   const measureFrame = useCallback(() => {
-    if (!enabled) return
+    if (!isMonitoring) return
 
     const currentTime = performance.now()
     const deltaTime = currentTime - lastFrameTimeRef.current
@@ -81,7 +136,7 @@ export function usePerformanceMonitor(options: UsePerformanceMonitorOptions = {}
     
     // Continue measuring
     animationFrameRef.current = requestAnimationFrame(measureFrame)
-  }, [enabled, targetFPS])
+  }, [isMonitoring, targetFPS])
 
   // Calculate performance metrics
   const calculateMetrics = useCallback(() => {
@@ -111,7 +166,10 @@ export function usePerformanceMonitor(options: UsePerformanceMonitorOptions = {}
       droppedFrames,
       memoryUsage,
       renderTime,
-      animationSmoothness: smoothness
+      animationSmoothness: smoothness,
+      loadingTime: metrics.loadingTime,
+      componentName,
+      timestamp: Date.now()
     }
     
     setMetrics(newMetrics)
@@ -132,7 +190,7 @@ export function usePerformanceMonitor(options: UsePerformanceMonitorOptions = {}
     // Reset counters
     frameCountRef.current = 0
     droppedFramesRef.current = 0
-  }, [targetFPS, warningThreshold, onPerformanceWarning])
+  }, [targetFPS, warningThreshold, onPerformanceWarning, metrics.loadingTime, componentName])
 
   // Calculate animation smoothness (0-1, where 1 is perfectly smooth)
   const calculateSmoothness = (frameTimes: number[]): number => {
@@ -188,9 +246,44 @@ export function usePerformanceMonitor(options: UsePerformanceMonitorOptions = {}
     return 'Very poor performance - disable complex animations'
   }
 
+  // Log metrics to console
+  const logMetrics = useCallback(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.group(`🐉 Performance Metrics: ${componentName}`)
+      console.log(`⏱️  Render Time: ${metrics.renderTime.toFixed(2)}ms`)
+      console.log(`🎮 FPS: ${metrics.fps}`)
+      console.log(`📊 Frame Time: ${metrics.frameTime.toFixed(2)}ms`)
+      console.log(`⏳ Loading Time: ${metrics.loadingTime.toFixed(2)}ms`)
+      console.log(`📉 Dropped Frames: ${metrics.droppedFrames}`)
+      console.log(`🎯 Smoothness: ${(metrics.animationSmoothness * 100).toFixed(1)}%`)
+      console.log(`💯 Performance Score: ${performanceScore}`)
+      
+      if (metrics.memoryUsage) {
+        const usedMB = (metrics.memoryUsage / 1048576).toFixed(2)
+        console.log(`💾 Memory: ${usedMB}MB`)
+      }
+      
+      console.log(`💡 ${getPerformanceRecommendation()}`)
+      console.groupEnd()
+    }
+  }, [componentName, metrics, performanceScore])
+
+  // Start monitoring
+  const startMonitoring = useCallback(() => {
+    setIsMonitoring(true)
+  }, [])
+
+  // Stop monitoring
+  const stopMonitoring = useCallback(() => {
+    setIsMonitoring(false)
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current)
+    }
+  }, [])
+
   // Start/stop monitoring
   useEffect(() => {
-    if (!enabled) return
+    if (!isMonitoring) return
 
     // Start frame measurement
     animationFrameRef.current = requestAnimationFrame(measureFrame)
@@ -207,7 +300,7 @@ export function usePerformanceMonitor(options: UsePerformanceMonitorOptions = {}
         clearInterval(sampleIntervalRef.current)
       }
     }
-  }, [enabled, measureFrame, calculateMetrics, sampleRate])
+  }, [isMonitoring, measureFrame, calculateMetrics, sampleRate])
 
   return {
     metrics,
@@ -217,6 +310,109 @@ export function usePerformanceMonitor(options: UsePerformanceMonitorOptions = {}
     // Utility functions
     isHighPerformance: performanceScore >= 70,
     shouldReduceQuality: performanceScore < 50,
-    shouldDisableAnimations: performanceScore < 30
+    shouldDisableAnimations: performanceScore < 30,
+    // Timer functions
+    startTimer,
+    endTimer,
+    // Control functions
+    logMetrics,
+    startMonitoring,
+    stopMonitoring,
+    isMonitoring
   }
+}
+
+// Performance Overlay Component
+interface PerformanceOverlayProps {
+  metrics: PerformanceMetrics
+  isVisible: boolean
+  position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
+}
+
+export const PerformanceOverlay: React.FC<PerformanceOverlayProps> = ({
+  metrics,
+  isVisible,
+  position = 'top-right',
+}) => {
+  if (!isVisible || process.env.NODE_ENV !== 'development') {
+    return null
+  }
+
+  const positionStyles = {
+    'top-left': { top: 10, left: 10 },
+    'top-right': { top: 10, right: 10 },
+    'bottom-left': { bottom: 10, left: 10 },
+    'bottom-right': { bottom: 10, right: 10 },
+  }
+
+  const getFPSColor = (fps: number) => {
+    if (fps >= 55) return '#00ff00'
+    if (fps >= 30) return '#ffff00'
+    return '#ff0000'
+  }
+
+  const getLoadingTimeColor = (time: number) => {
+    if (time <= 1000) return '#00ff00'
+    if (time <= 3000) return '#ffff00'
+    return '#ff0000'
+  }
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        ...positionStyles[position],
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        color: '#ffffff',
+        padding: '10px',
+        borderRadius: '8px',
+        fontFamily: 'monospace',
+        fontSize: '12px',
+        zIndex: 9999,
+        minWidth: '200px',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        backdropFilter: 'blur(10px)',
+      }}
+    >
+      <div style={{ marginBottom: '5px', fontWeight: 'bold', borderBottom: '1px solid rgba(255, 255, 255, 0.2)', paddingBottom: '5px' }}>
+        🐉 {metrics.componentName}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+        <span>FPS:</span>
+        <span style={{ color: getFPSColor(metrics.fps), fontWeight: 'bold' }}>
+          {metrics.fps}
+        </span>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+        <span>Render:</span>
+        <span>{metrics.renderTime.toFixed(2)}ms</span>
+      </div>
+      {metrics.loadingTime > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+          <span>Load:</span>
+          <span style={{ color: getLoadingTimeColor(metrics.loadingTime) }}>
+            {metrics.loadingTime.toFixed(0)}ms
+          </span>
+        </div>
+      )}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+        <span>Dropped:</span>
+        <span style={{ color: metrics.droppedFrames > 10 ? '#ff0000' : '#ffffff' }}>
+          {metrics.droppedFrames}
+        </span>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+        <span>Smooth:</span>
+        <span>{(metrics.animationSmoothness * 100).toFixed(0)}%</span>
+      </div>
+      {metrics.memoryUsage && (
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span>Memory:</span>
+          <span>
+            {(metrics.memoryUsage / 1048576).toFixed(1)}MB
+          </span>
+        </div>
+      )}
+    </div>
+  )
 }

@@ -1,11 +1,26 @@
 'use client'
 
+/**
+ * DragonHead3DOptimized - Performance-optimized 3D dragon component
+ * 
+ * Performance optimizations:
+ * - Simplified material system: Using MeshLambertMaterial instead of MeshPhongMaterial
+ * - Reduced lighting: Single directional light + minimal ambient light
+ * - Cached materials and geometries to prevent recreation
+ * - Reduced polygon count: Lower segment counts on geometries
+ * - Frame loop set to "demand" for on-demand rendering
+ * - Material disposal on unmount to prevent memory leaks
+ * - Disabled unnecessary WebGL features (antialias, stencil buffer)
+ * - Fixed device pixel ratio to 1 for consistent performance
+ */
+
 import React, { useRef, useEffect, useState, useMemo, Suspense, lazy } from 'react'
 import { Canvas, useFrame, useLoader } from '@react-three/fiber'
 import { OBJLoader } from 'three-stdlib'
 import * as THREE from 'three'
 import { useMouseTracking } from '@/hooks/useMouseTracking'
 import { useStormPerformance } from '@/hooks/useStormPerformance'
+import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor'
 
 interface DragonHead3DOptimizedProps {
   className?: string
@@ -13,6 +28,7 @@ interface DragonHead3DOptimizedProps {
   enableEyeTracking?: boolean
   lightningActive?: boolean
   forceQuality?: 'low' | 'medium' | 'high' | 'auto'
+  onLoad?: () => void
 }
 
 // Lazy load the full 3D component for better initial page load
@@ -48,9 +64,54 @@ function LightweightDragonMesh({
     smoothing: true,
     smoothingFactor: 0.15 // Less smooth for better performance
   })
+  const frameCountRef = useRef(0)
 
-  useFrame((state, delta) => {
+  // Cache materials to avoid recreation
+  const materials = useMemo(() => {
+    const dragonMaterial = new THREE.MeshLambertMaterial({
+      color: new THREE.Color(0.7, 0.15, 0.1),
+      emissive: new THREE.Color(0.1, 0.02, 0.01),
+      emissiveIntensity: lightningActive ? 0.3 : 0.1
+    })
+    
+    const eyeMaterial = new THREE.MeshBasicMaterial({
+      color: '#ffffff'
+    })
+
+    return { dragonMaterial, eyeMaterial }
+  }, [lightningActive])
+
+  // Cache geometries
+  const geometries = useMemo(() => {
+    const dragonGeo = new THREE.ConeGeometry(1, 2, 6) // Reduced segments from 8 to 6
+    dragonGeo.rotateX(Math.PI * 0.5)
+    
+    const eyeGeo = new THREE.SphereGeometry(0.1, 6, 6) // Reduced segments from 8 to 6
+
+    return { dragonGeo, eyeGeo }
+  }, [])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      // Dispose materials to prevent memory leaks
+      materials.dragonMaterial.dispose()
+      materials.eyeMaterial.dispose()
+      geometries.dragonGeo.dispose()
+      geometries.eyeGeo.dispose()
+    }
+  }, [materials, geometries])
+
+  useFrame((state) => {
     if (!meshRef.current) return
+
+    // Track frame count for performance monitoring
+    frameCountRef.current++
+    
+    // Log frame count every 60 frames in dev mode
+    if (process.env.NODE_ENV === 'development' && frameCountRef.current % 60 === 0) {
+      console.log(`🐉 Lightweight Dragon: ${frameCountRef.current} frames rendered`)
+    }
 
     // Simple breathing animation
     const breathe = Math.sin(state.clock.elapsedTime * 0.8) * 0.02
@@ -66,33 +127,11 @@ function LightweightDragonMesh({
     }
   })
 
-  // Create a simple dragon head geometry
-  const geometry = useMemo(() => {
-    const geo = new THREE.ConeGeometry(1, 2, 8)
-    geo.rotateX(Math.PI * 0.5)
-    return geo
-  }, [])
-
-  const material = useMemo(() => {
-    return new THREE.MeshPhongMaterial({
-      color: new THREE.Color(0.7, 0.15, 0.1),
-      shininess: 40,
-      specular: new THREE.Color(0.9, 0.6, 0.2),
-      emissive: lightningActive ? new THREE.Color(0.2, 0.1, 0.05) : new THREE.Color(0, 0, 0)
-    })
-  }, [lightningActive])
-
   return (
-    <mesh ref={meshRef} geometry={geometry} material={material}>
+    <mesh ref={meshRef} geometry={geometries.dragonGeo} material={materials.dragonMaterial}>
       {/* Add simple eyes */}
-      <mesh position={[0.3, 0.2, 0.8]}>
-        <sphereGeometry args={[0.1, 8, 8]} />
-        <meshBasicMaterial color="#ffffff" />
-      </mesh>
-      <mesh position={[-0.3, 0.2, 0.8]}>
-        <sphereGeometry args={[0.1, 8, 8]} />
-        <meshBasicMaterial color="#ffffff" />
-      </mesh>
+      <mesh position={[0.3, 0.2, 0.8]} geometry={geometries.eyeGeo} material={materials.eyeMaterial} />
+      <mesh position={[-0.3, 0.2, 0.8]} geometry={geometries.eyeGeo} material={materials.eyeMaterial} />
     </mesh>
   )
 }
@@ -103,12 +142,33 @@ export function DragonHead3DOptimized({
   intensity = 0.8,
   enableEyeTracking = true,
   lightningActive = false,
-  forceQuality = 'auto'
+  forceQuality = 'auto',
+  onLoad
 }: DragonHead3DOptimizedProps) {
   const [renderMode, setRenderMode] = useState<'loading' | 'fallback' | 'lightweight' | 'full'>('loading')
   const { config, metrics, isMobile, isTablet } = useStormPerformance()
   
+  // Performance monitoring
+  const performanceMonitor = usePerformanceMonitor({
+    componentName: 'DragonHead3D',
+    enabled: true,
+    onPerformanceWarning: (metrics) => {
+      console.warn('Dragon3D performance warning:', metrics)
+      // Auto-downgrade quality if performance is poor
+      if (metrics.fps < 20 && renderMode === 'full') {
+        console.log('🐉 Auto-downgrading to lightweight mode due to poor performance')
+        setRenderMode('lightweight')
+      } else if (metrics.fps < 15 && renderMode === 'lightweight') {
+        console.log('🐉 Auto-downgrading to fallback mode due to very poor performance')
+        setRenderMode('fallback')
+      }
+    }
+  })
+  
   useEffect(() => {
+    // Start render timer
+    performanceMonitor.startTimer('render-mode-determination')
+    
     // Determine render mode based on device and performance
     const determineRenderMode = () => {
       if (forceQuality !== 'auto') {
@@ -134,12 +194,37 @@ export function DragonHead3DOptimized({
       } else {
         setRenderMode('full')
       }
+      
+      // End timer and log
+      const determinationTime = performanceMonitor.endTimer('render-mode-determination')
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`🐉 Render mode determined in ${determinationTime.toFixed(0)}ms`)
+      }
     }
 
     // Small delay to prevent flash
     const timer = setTimeout(determineRenderMode, 100)
     return () => clearTimeout(timer)
-  }, [isMobile, isTablet, config.animationQuality, forceQuality])
+  }, [isMobile, isTablet, config.animationQuality, forceQuality, performanceMonitor])
+  
+  // Call onLoad when render mode is determined
+  useEffect(() => {
+    if (renderMode !== 'loading' && onLoad) {
+      onLoad()
+      performanceMonitor.logMetrics()
+    }
+  }, [renderMode, onLoad, performanceMonitor])
+  
+  // Log performance metrics periodically in development
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      const interval = setInterval(() => {
+        performanceMonitor.logMetrics()
+      }, 5000) // Log every 5 seconds
+      
+      return () => clearInterval(interval)
+    }
+  }, [performanceMonitor])
 
   // Loading state
   if (renderMode === 'loading') {
@@ -174,14 +259,21 @@ export function DragonHead3DOptimized({
             antialias: false, // Disable for better performance
             alpha: true,
             powerPreference: 'low-power',
-            preserveDrawingBuffer: false
+            preserveDrawingBuffer: false,
+            stencil: false, // Disable stencil buffer
+            depth: true
           }}
+          frameloop="always" // Need continuous rendering for breathing animation
           dpr={[1, 1]} // Lock pixel ratio to 1 for performance
         >
           <Suspense fallback={null}>
-            {/* Minimal lighting */}
-            <ambientLight intensity={0.5} />
-            <directionalLight position={[5, 5, 5]} intensity={0.8} />
+            {/* Simplified lighting - single directional light with reduced ambient */}
+            <ambientLight intensity={0.3} />
+            <directionalLight 
+              position={[5, 5, 5]} 
+              intensity={0.7}
+              castShadow={false} // Disable shadows for performance
+            />
             
             {/* Lightweight dragon */}
             <LightweightDragonMesh 

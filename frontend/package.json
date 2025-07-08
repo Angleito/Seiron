@@ -23,7 +23,8 @@
     "test:ci": "jest --ci --coverage --watchAll=false",
     "test:integration:ci": "jest --config=jest.integration.config.js --ci --coverage --watchAll=false",
     "analyze:bundle": "npm run build && npx vite-bundle-analyzer dist",
-    "preload:features": "node scripts/preload-features.js"
+    "preload:features": "node scripts/preload-features.js",
+    "optimize:dragon": "node scripts/optimize-dragon-model.js"
   },
   "overrides": {
     "ox": "0.8.1",
@@ -51,6 +52,7 @@
     "postcss": "^8.4.49",
     "react": "^18",
     "react-dom": "^18",
+    "react-intersection-observer": "^9.16.0",
     "react-router-dom": "^6.30.1",
     "rxjs": "^7.8.2",
     "sonner": "^2.0.6",

@@ -1,12 +1,9 @@
-import React, { useEffect, useState, useCallback, useMemo, lazy, Suspense } from 'react'
+import React, { useEffect, useState, useCallback, lazy, Suspense } from 'react'
 import { cn } from '@/lib/utils'
-import { StormCloud } from './StormCloud'
-import { useStormPerformance, useLazyStormEffects } from '@/hooks/useStormPerformance'
+import { useStormPerformance } from '@/hooks/useStormPerformance'
 
-// Lazy load heavy components
-const LightningEffect = lazy(() => import('./LightningEffect'))
-const FogOverlay = lazy(() => import('./FogOverlay'))
-const DragonHead3D = lazy(() => import('./DragonHead3DOptimized'))
+// Lazy load dragon loader for progressive loading
+const DragonLoader = lazy(() => import('./DragonLoader'))
 
 interface StormBackgroundProps {
   className?: string
@@ -92,57 +89,15 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
   children
 }) => {
   const [isLoading, setIsLoading] = useState(true)
-  const [isLightningActive, setIsLightningActive] = useState(false)
   const prefersReducedMotion = useReducedMotion()
   const shouldAnimate = animated && !prefersReducedMotion
   const scrollState = useScrollTracking(shouldAnimate)
   
   // Use performance hook to detect device capabilities
-  const { isMobile, isTablet, config: perfConfig } = useStormPerformance()
+  const { isMobile, isTablet } = useStormPerformance()
 
   // Normalize intensity to 0-1 range
   const normalizedIntensity = Math.max(0, Math.min(1, intensity))
-
-  // Calculate dynamic properties based on intensity and device
-  const stormConfig = useMemo(() => {
-    // Base configuration
-    let baseConfig = {
-      clouds: {
-        opacity: 0.3 + (normalizedIntensity * 0.5),
-        speed: normalizedIntensity < 0.3 ? 'slow' as const : normalizedIntensity < 0.7 ? 'medium' as const : 'fast' as const,
-        layerCount: Math.ceil(2 + normalizedIntensity * 2) // 2-4 layers
-      },
-      lightning: {
-        enabled: false, // Temporarily disabled for performance
-        // enabled: normalizedIntensity > 0.2,
-        frequency: normalizedIntensity < 0.4 ? 'low' as const : normalizedIntensity < 0.8 ? 'medium' as const : 'high' as const,
-        intensity: normalizedIntensity < 0.3 ? 'subtle' as const : normalizedIntensity < 0.7 ? 'normal' as const : 'intense' as const,
-        maxBolts: Math.ceil(1 + normalizedIntensity * 2) // 1-3 bolts
-      },
-      fog: {
-        density: 0.2 + (normalizedIntensity * 0.6),
-        speed: 0.5 + (normalizedIntensity * 1.5),
-        opacity: 0.1 + (normalizedIntensity * 0.2),
-        particleCount: Math.ceil(4 + normalizedIntensity * 8) // 4-12 particles
-      },
-      enableParallax: true
-    }
-    
-    // Apply device-specific optimizations
-    if (isMobile) {
-      baseConfig.clouds.layerCount = Math.min(1, baseConfig.clouds.layerCount)
-      baseConfig.clouds.speed = 'slow'
-      baseConfig.fog.particleCount = Math.min(2, baseConfig.fog.particleCount)
-      baseConfig.fog.opacity *= 0.5
-      baseConfig.enableParallax = false
-    } else if (isTablet) {
-      baseConfig.clouds.layerCount = Math.min(2, baseConfig.clouds.layerCount)
-      baseConfig.fog.particleCount = Math.min(4, baseConfig.fog.particleCount)
-      baseConfig.fog.opacity *= 0.7
-    }
-    
-    return baseConfig
-  }, [normalizedIntensity, isMobile, isTablet])
 
   // Loading state management
   useEffect(() => {
@@ -152,27 +107,6 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
 
     return () => clearTimeout(timer)
   }, [])
-
-  // Cloud layers with proper z-index ordering
-  const cloudLayers = useMemo(() => {
-    const layers = []
-    const layerConfigs = ['background', 'midground', 'foreground'] as const
-    
-    for (let i = 0; i < Math.min(stormConfig.clouds.layerCount, 3); i++) {
-      const layerType = layerConfigs[i]
-      const baseZIndex = 10 + (i * 10)
-      
-      layers.push({
-        key: `cloud-${layerType}`,
-        type: layerType,
-        zIndex: baseZIndex,
-        opacity: stormConfig.clouds.opacity * (1 - i * 0.1),
-        size: i === 0 ? 'large' as const : i === 1 ? 'medium' as const : 'small' as const
-      })
-    }
-    
-    return layers
-  }, [stormConfig.clouds.layerCount, stormConfig.clouds.opacity])
 
   // Parallax effect calculation
   const calculateParallaxOffset = useCallback((baseMultiplier: number) => {
@@ -211,56 +145,13 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
         style={{ zIndex: 5 }}
       />
       
-      {/* Storm cloud layers */}
-      {cloudLayers.map((layer) => (
-        <StormCloud
-          key={layer.key}
-          className="absolute inset-0"
-          layer={layer.type}
-          scrollY={shouldAnimate ? scrollState.scrollY : 0}
-          opacity={layer.opacity}
-          animationSpeed={stormConfig.clouds.speed}
-          size={layer.size}
-          enableParallax={shouldAnimate && stormConfig.enableParallax}
-          reducedMotion={prefersReducedMotion}
-        />
-      ))}
-      
-      {/* Dragon Head - positioned behind fog but in front of clouds */}
+      {/* Dragon Head - Main focus element with progressive loading */}
       <Suspense fallback={null}>
-        <DragonHead3D
+        <DragonLoader
           className="absolute inset-0"
           intensity={normalizedIntensity}
           enableEyeTracking={shouldAnimate}
-          lightningActive={isLightningActive}
-        />
-      </Suspense>
-      
-      {/* Lightning effects - Temporarily disabled for performance */}
-      {/* {stormConfig.lightning.enabled && (
-        <Suspense fallback={null}>
-          <LightningEffect
-            className="absolute inset-0"
-            frequency={stormConfig.lightning.frequency}
-            intensity={stormConfig.lightning.intensity}
-            enabled={shouldAnimate}
-            reducedMotion={prefersReducedMotion}
-            maxBolts={stormConfig.lightning.maxBolts}
-            onLightningStrike={(isActive: boolean) => setIsLightningActive(isActive)}
-          />
-        </Suspense>
-      )} */}
-      
-      {/* Fog overlay - Lazy loaded */}
-      <Suspense fallback={null}>
-        <FogOverlay
-          className="absolute inset-0"
-          density={stormConfig.fog.density}
-          speed={shouldAnimate ? stormConfig.fog.speed : 0}
-          opacity={stormConfig.fog.opacity}
-          enableParallax={shouldAnimate && stormConfig.enableParallax}
-          particleCount={shouldAnimate ? stormConfig.fog.particleCount : 0}
-          reducedMotion={prefersReducedMotion}
+          lightningActive={false}
         />
       </Suspense>
       
@@ -282,17 +173,6 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
       >
         {children}
       </div>
-      
-      {/* Z-Index Hierarchy Documentation:
-          - Background gradient: z-5
-          - Cloud layers: z-10-30 (StormCloud components)
-          - Dragon Head 3D: no explicit z-index (between clouds and fog)
-          - Lightning Effects: z-40-50 (LightningEffect SVG and flash)
-          - Fog layers: z-10 (FogOverlay)
-          - Atmospheric overlay: z-60
-          - Content container: z-50 (buttons and interactive elements)
-          - Homepage button container: z-[100] (highest priority)
-       */}
       
       {/* Accessibility: Reduce motion styles */}
       <style dangerouslySetInnerHTML={{
