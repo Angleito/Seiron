@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react'
-import { Send, Loader2, Plus, Sparkles } from 'lucide-react'
+import { Send, Loader2, Plus, Sparkles, Wifi, WifiOff, AlertCircle } from 'lucide-react'
 import { cn } from '@lib/utils'
 import { SeironImage } from '@components/SeironImage'
 import { GameDialogueBox } from './GameDialogueBox'
 import { characterConfig } from '@/utils/character-config'
+import { useChatStream } from './useChatStream'
+import type { StreamMessage } from '@/lib/vercel-chat-service'
 import '@/styles/game-dialogue.css'
 
 interface Message {
@@ -28,18 +30,54 @@ export interface MinimalChatInterfaceRef {
 
 export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalChatInterfaceProps>(
   ({ onNewMessage, onUserMessage, className }, ref) => {
-  const [messages, setMessages] = useState<Message[]>([
+  const [input, setInput] = useState('')
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  
+  // Generate or get session ID
+  const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`)
+  
+  // Initialize chat stream
+  const {
+    messages: streamMessages,
+    isLoading,
+    sendMessage: sendStreamMessage,
+    connectionStatus
+  } = useChatStream({
+    sessionId,
+    apiEndpoint: '', // Base URL, service will append /api/chat/orchestrate
+    onMessage: (message: StreamMessage) => {
+      // Convert StreamMessage to Message format for callbacks
+      const convertedMessage: Message = {
+        id: message.id,
+        role: message.type === 'user' ? 'user' : 'assistant',
+        content: message.content,
+        timestamp: message.timestamp,
+        isLoading: message.status === 'pending' || message.status === 'sending'
+      }
+      
+      if (message.type === 'agent' || message.type === 'system') {
+        onNewMessage?.(convertedMessage)
+      }
+    }
+  })
+  
+  // Convert StreamMessage[] to Message[] for display
+  const messages: Message[] = [
     {
-      id: '1',
+      id: 'welcome',
       role: 'assistant',
       content: "Greetings, mortal! I am Seiron, the Dragon of Financial Wisdom. I possess legendary powers to grant your wildest investment wishes. What treasures do you seek today?",
       timestamp: new Date()
-    }
-  ])
-  const [input, setInput] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+    },
+    ...streamMessages.map(msg => ({
+      id: msg.id,
+      role: msg.type === 'user' ? 'user' as const : 'assistant' as const,
+      content: msg.content,
+      timestamp: msg.timestamp,
+      isLoading: msg.status === 'pending' || msg.status === 'sending'
+    }))
+  ]
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -59,55 +97,23 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
     const messageContent = content || input.trim()
     if (!messageContent || isLoading) return
 
+    // Create user message for callback
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: `user_${Date.now()}`,
       role: 'user',
       content: messageContent,
       timestamp: new Date()
     }
-
-    setMessages(prev => [...prev, userMessage])
+    
+    // Clear input if not using external content
     if (!content) setInput('')
-    setIsLoading(true)
     
     // Notify parent of user message
     onUserMessage?.(userMessage)
 
-    // Simulate AI response
-    const loadingMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      role: 'assistant',
-      content: '',
-      timestamp: new Date(),
-      isLoading: true
-    }
-    
-    setMessages(prev => [...prev, loadingMessage])
-
-    // Simulate API call
-    setTimeout(() => {
-      const dragonResponses = [
-        "By the power of the eternal dragon, I shall analyze your request with mystical precision...",
-        "Your wish resonates with ancient dragon wisdom. Let me consult the sacred scrolls of the market...",
-        "The dragon's eyes see great potential in your query. Allow me to channel the power of a thousand suns...",
-        "*Dragon fire intensifies* Your financial destiny awaits, mortal!"
-      ]
-      
-      const response = dragonResponses[Math.floor(Math.random() * dragonResponses.length)]
-      
-      const assistantMessage = { ...loadingMessage, content: response, isLoading: false } as Message
-      
-      setMessages(prev => prev.map(msg => 
-        msg.id === loadingMessage.id 
-          ? assistantMessage
-          : msg
-      ))
-      setIsLoading(false)
-      
-      // Notify parent of new assistant message
-      onNewMessage?.(assistantMessage)
-    }, 1500)
-  }, [input, isLoading, onNewMessage, onUserMessage])
+    // Send message through stream
+    sendStreamMessage(messageContent)
+  }, [input, isLoading, onNewMessage, onUserMessage, sendStreamMessage])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -130,16 +136,27 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto game-chat-background">
         <div className="max-w-5xl mx-auto px-4 py-8">
-          {messages.map((message) => (
-            <GameDialogueBox
-              key={message.id}
-              characterName={characterConfig[message.role].name}
-              characterImage={characterConfig[message.role].image}
-              message={message.isLoading ? "Channeling dragon wisdom..." : message.content}
-              position={characterConfig[message.role].position}
-              showPortrait={true}
-            />
-          ))}
+          {messages.map((message) => {
+            const streamMessage = streamMessages.find(m => m.id === message.id)
+            const isError = streamMessage?.status === 'failed'
+            
+            return (
+              <GameDialogueBox
+                key={message.id}
+                characterName={characterConfig[message.role].name}
+                characterImage={characterConfig[message.role].image}
+                message={
+                  message.isLoading 
+                    ? "Channeling dragon wisdom..." 
+                    : isError 
+                      ? "⚠️ The dragon's power failed to reach you. Try again, mortal!"
+                      : message.content
+                }
+                position={characterConfig[message.role].position}
+                showPortrait={true}
+              />
+            )
+          })}
           <div ref={messagesEndRef} />
         </div>
       </div>
@@ -189,10 +206,34 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
             </button>
           </div>
           
-          {/* Helper Text */}
-          <p className="mt-2 text-size-4 text-gray-500 text-center">
-            The dragon listens to your every wish • Press Enter to send
-          </p>
+          {/* Connection Status & Helper Text */}
+          <div className="mt-2 flex items-center justify-center gap-4">
+            <div className="flex items-center gap-2">
+              {connectionStatus.isConnected ? (
+                <Wifi className="w-3 h-3 text-green-500" />
+              ) : (
+                <WifiOff className="w-3 h-3 text-red-500" />
+              )}
+              <span className={cn(
+                "text-size-3 font-medium",
+                connectionStatus.isConnected ? "text-green-500" : "text-red-500"
+              )}>
+                {connectionStatus.isConnected ? "Connected" : "Disconnected"}
+              </span>
+            </div>
+            
+            <div className="text-size-4 text-gray-500">
+              The dragon listens to your every wish • Press Enter to send
+            </div>
+          </div>
+
+          {/* Error Display */}
+          {connectionStatus.error && (
+            <div className="mt-2 flex items-center justify-center gap-2 text-red-400">
+              <AlertCircle className="w-4 h-4" />
+              <span className="text-size-3">Connection error: {connectionStatus.error}</span>
+            </div>
+          )}
         </form>
       </div>
 

@@ -22,7 +22,7 @@ interface ChatGPTInterfaceProps {
 }
 
 export interface ChatGPTInterfaceRef {
-  sendMessage: (content: string) => void
+  sendMessage: (content: string) => Promise<void>
   addMessage: (message: Message) => void
 }
 
@@ -88,31 +88,59 @@ export const ChatGPTInterface = forwardRef<ChatGPTInterfaceRef, ChatGPTInterface
       setIsLoading(true)
       setShowTypingIndicator(true)
 
-      // Simulate AI response (replace with actual API call)
-      setTimeout(() => {
+      try {
+        // Make actual API call to orchestrate endpoint
+        const response = await fetch('/api/chat/orchestrate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: userMessage.content,
+            sessionId: `session_${Date.now()}`,
+            messages: messages.map(msg => ({
+              role: msg.role,
+              content: msg.content
+            }))
+          })
+        })
+
+        if (!response.ok) {
+          throw new Error(`API request failed: ${response.status}`)
+        }
+
+        const data = await response.json()
+        
+        if (!data.success || !data.data?.response) {
+          throw new Error('Invalid response format')
+        }
+
         const aiMessage: Message = {
           id: generateMessageId(),
           role: 'assistant',
-          content: `Your power level is impressive! Based on my analysis, ${getRandomDragonResponse()}`,
+          content: data.data.response,
           timestamp: new Date()
         }
         
         setShowTypingIndicator(false)
         addMessage(aiMessage)
+      } catch (error) {
+        console.error('Error sending message:', error)
+        setShowTypingIndicator(false)
+        
+        // Add error message
+        const errorMessage: Message = {
+          id: generateMessageId(),
+          role: 'assistant',
+          content: "My apologies, young warrior! There seems to be a disturbance in the digital realm. Please try again in a moment. 🐉",
+          timestamp: new Date()
+        }
+        addMessage(errorMessage)
+      } finally {
         setIsLoading(false)
-      }, 1500 + Math.random() * 1500)
-    }, [input, isLoading, addMessage, onUserMessage])
+      }
+    }, [input, isLoading, addMessage, onUserMessage, messages])
 
-    const getRandomDragonResponse = () => {
-      const responses = [
-        "the market ki is flowing strong today. I sense great opportunities in the tech sector!",
-        "my dragon senses detect a disturbance in the crypto force. Proceed with caution, young warrior.",
-        "like gathering the seven Dragon Balls, diversifying your portfolio requires patience and strategy.",
-        "the power of compound interest is like the Kamehameha wave - it grows stronger over time!",
-        "remember, even Goku trained for years. Your investment journey requires similar dedication."
-      ]
-      return responses[Math.floor(Math.random() * responses.length)]
-    }
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -121,14 +149,83 @@ export const ChatGPTInterface = forwardRef<ChatGPTInterfaceRef, ChatGPTInterface
       }
     }
 
+    // Send message directly without using input state
+    const sendMessageDirect = useCallback(async (content: string) => {
+      if (!content.trim() || isLoading) return
+
+      const userMessage: Message = {
+        id: generateMessageId(),
+        role: 'user',
+        content: content.trim(),
+        timestamp: new Date()
+      }
+
+      // Add user message
+      addMessage(userMessage)
+      onUserMessage?.(userMessage)
+      
+      // Show loading state
+      setIsLoading(true)
+      setShowTypingIndicator(true)
+
+      try {
+        // Make actual API call to orchestrate endpoint
+        const response = await fetch('/api/chat/orchestrate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: userMessage.content,
+            sessionId: `session_${Date.now()}`,
+            messages: messages.map(msg => ({
+              role: msg.role,
+              content: msg.content
+            }))
+          })
+        })
+
+        if (!response.ok) {
+          throw new Error(`API request failed: ${response.status}`)
+        }
+
+        const data = await response.json()
+        
+        if (!data.success || !data.data?.response) {
+          throw new Error('Invalid response format')
+        }
+
+        const aiMessage: Message = {
+          id: generateMessageId(),
+          role: 'assistant',
+          content: data.data.response,
+          timestamp: new Date()
+        }
+        
+        setShowTypingIndicator(false)
+        addMessage(aiMessage)
+      } catch (error) {
+        console.error('Error sending message:', error)
+        setShowTypingIndicator(false)
+        
+        // Add error message
+        const errorMessage: Message = {
+          id: generateMessageId(),
+          role: 'assistant',
+          content: "My apologies, young warrior! There seems to be a disturbance in the digital realm. Please try again in a moment. 🐉",
+          timestamp: new Date()
+        }
+        addMessage(errorMessage)
+      } finally {
+        setIsLoading(false)
+      }
+    }, [isLoading, addMessage, onUserMessage, messages])
+
     // Expose methods via ref
     useImperativeHandle(ref, () => ({
-      sendMessage: (content: string) => {
-        setInput(content)
-        handleSendMessage()
-      },
+      sendMessage: sendMessageDirect,
       addMessage
-    }), [handleSendMessage, addMessage])
+    }), [sendMessageDirect, addMessage])
 
     return (
       <div className={cn('chatgpt-anime-container', className)}>

@@ -43,6 +43,19 @@ export interface VercelChatConfig {
 }
 
 export interface OrchestrationResponse {
+  success: boolean
+  data: {
+    response: string
+    sessionId: string
+    timestamp: string
+    model: string
+    usage: object
+  }
+  error?: string
+}
+
+// Legacy format for backward compatibility
+export interface LegacyOrchestrationResponse {
   message: string
   timestamp: string
   agentType: string
@@ -163,18 +176,25 @@ export class VercelChatService {
       hasMetadata: !!metadata
     })
     
-    // Prepare request payload
+    // Prepare request payload in OpenAI orchestrate format
     const payload = {
       message: content,
       sessionId: this.config.sessionId,
+      messages: metadata?.messages || [],
+      // Include additional metadata for backward compatibility
       walletAddress: metadata?.walletAddress,
       metadata
     }
     
-    return this.makeAPIRequest('/api/orchestrate', payload, requestId).pipe(
+    return this.makeAPIRequest('/api/chat/orchestrate', payload, requestId).pipe(
       timeout(this.config.messageTimeout),
       retry(this.config.maxRetries),
       map((response: OrchestrationResponse) => {
+        // Check if response is successful
+        if (!response.success) {
+          throw new Error(response.error || 'Orchestration failed')
+        }
+        
         // Update user message status
         const updatedUserMessage: StreamMessage = {
           ...userMessage,
@@ -182,24 +202,22 @@ export class VercelChatService {
         }
         this.messageSubject$.next(updatedUserMessage)
         
-        // Create agent response message
+        // Create agent response message using OpenAI format
         const agentMessage: StreamMessage = {
           id: `agent_${Date.now()}_${++this.messageCounter}`,
           type: 'agent',
-          agentType: response.agentType as AgentType,
-          content: response.message,
-          timestamp: new Date(response.timestamp),
+          agentType: 'assistant' as AgentType, // Default to assistant for OpenAI format
+          content: response.data.response,
+          timestamp: new Date(response.data.timestamp),
           status: 'delivered',
           metadata: {
-            intent: response.metadata.intent as UserIntentType,
-            action: response.metadata.action,
-            confidence: response.metadata.confidence,
-            riskLevel: response.metadata.riskLevel,
-            actionRequired: response.metadata.actionRequired,
-            suggestions: response.metadata.suggestions,
-            intentId: response.intentId,
-            executionTime: response.executionTime,
-            requestId
+            model: response.data.model,
+            usage: response.data.usage,
+            sessionId: response.data.sessionId,
+            requestId,
+            // Set default values for backward compatibility
+            intent: metadata?.intent || 'general' as UserIntentType,
+            action: 'chat_response'
           }
         }
         
@@ -210,9 +228,9 @@ export class VercelChatService {
           serviceId: this.serviceId,
           messageId,
           requestId,
-          agentType: response.agentType,
-          executionTime: response.executionTime,
-          confidence: response.metadata.confidence
+          model: response.data.model,
+          sessionId: response.data.sessionId,
+          usage: response.data.usage
         })
         
         return E.right(agentMessage)
@@ -265,10 +283,12 @@ export class VercelChatService {
     
     this.messageSubject$.next(userMessage)
     
-    // Prepare request payload
+    // Prepare request payload in OpenAI orchestrate format
     const payload = {
       message: content,
       sessionId: this.config.sessionId,
+      messages: metadata?.messages || [],
+      // Include additional metadata for backward compatibility
       walletAddress: metadata?.walletAddress,
       metadata
     }

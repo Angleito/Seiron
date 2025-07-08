@@ -1,0 +1,893 @@
+/**
+ * Homepage Enhancement Styles
+ * Dragon Ball-inspired animations and effects for Seiron
+ * 
+ * This file extends the existing anime theme with homepage-specific
+ * animations and effects inspired by Dragon Ball aesthetics.
+ */
+
+/* ===========================
+   CSS Custom Properties
+   =========================== */
+:root {
+  /* Dragon Ball Colors */
+  --dragon-ball-orange: #ff6600;
+  --dragon-ball-star: #ffcc00;
+  --ki-energy-blue: #00ccff;
+  --ki-energy-yellow: #ffff00;
+  --saiyan-aura-gold: #ffd700;
+  --power-charge-purple: #9933ff;
+  
+  /* Animation Timings */
+  --orb-spin-duration: 20s;
+  --power-charge-duration: 2s;
+  --particle-float-duration: 15s;
+  --aura-pulse-duration: 3s;
+  --kamehameha-charge-duration: 1.5s;
+  --section-entrance-duration: 0.8s;
+  
+  /* Effect Intensities */
+  --aura-blur-amount: 20px;
+  --glow-intensity: 0 0 30px;
+  --particle-count: 50;
+  --orb-scale-hover: 1.1;
+}
+
+/* ===========================
+   Keyframe Animations
+   =========================== */
+
+/* Dragon Ball Spinning Animation */
+@keyframes dragon-ball-spin {
+  0% {
+    transform: rotate(0deg) scale(1);
+    box-shadow: 
+      0 0 20px var(--dragon-ball-orange),
+      0 0 40px var(--dragon-ball-orange),
+      inset 0 0 20px rgba(255, 102, 0, 0.5);
+  }
+  25% {
+    transform: rotate(90deg) scale(1.05);
+    box-shadow: 
+      0 0 25px var(--dragon-ball-orange),
+      0 0 50px var(--dragon-ball-orange),
+      inset 0 0 25px rgba(255, 102, 0, 0.6);
+  }
+  50% {
+    transform: rotate(180deg) scale(1);
+    box-shadow: 
+      0 0 30px var(--dragon-ball-star),
+      0 0 60px var(--dragon-ball-star),
+      inset 0 0 30px rgba(255, 204, 0, 0.5);
+  }
+  75% {
+    transform: rotate(270deg) scale(1.05);
+    box-shadow: 
+      0 0 25px var(--dragon-ball-orange),
+      0 0 50px var(--dragon-ball-orange),
+      inset 0 0 25px rgba(255, 102, 0, 0.6);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+    box-shadow: 
+      0 0 20px var(--dragon-ball-orange),
+      0 0 40px var(--dragon-ball-orange),
+      inset 0 0 20px rgba(255, 102, 0, 0.5);
+  }
+}
+
+/* Power Charging Animation */
+@keyframes power-charge {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(0, 204, 255, 0);
+    background: var(--anime-primary);
+  }
+  20% {
+    transform: scale(1.02);
+    box-shadow: 0 0 10px rgba(0, 204, 255, 0.3);
+  }
+  40% {
+    transform: scale(1.05);
+    box-shadow: 
+      0 0 20px rgba(0, 204, 255, 0.5),
+      inset 0 0 10px rgba(0, 204, 255, 0.2);
+  }
+  60% {
+    transform: scale(1.08);
+    box-shadow: 
+      0 0 30px rgba(0, 204, 255, 0.7),
+      inset 0 0 20px rgba(0, 204, 255, 0.3);
+    background: linear-gradient(135deg, var(--anime-primary), var(--ki-energy-blue));
+  }
+  80% {
+    transform: scale(1.1);
+    box-shadow: 
+      0 0 40px rgba(0, 204, 255, 0.9),
+      0 0 60px rgba(0, 204, 255, 0.5),
+      inset 0 0 30px rgba(0, 204, 255, 0.4);
+  }
+  100% {
+    transform: scale(1.12);
+    box-shadow: 
+      0 0 50px var(--ki-energy-blue),
+      0 0 80px rgba(0, 204, 255, 0.6),
+      inset 0 0 40px rgba(0, 204, 255, 0.5);
+    background: linear-gradient(135deg, var(--ki-energy-blue), var(--ki-energy-yellow));
+  }
+}
+
+/* Energy Particle Floating Animation */
+@keyframes energy-particles {
+  0% {
+    transform: translateY(100vh) translateX(0) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(90vh) translateX(10px) scale(1);
+  }
+  20% {
+    transform: translateY(80vh) translateX(-15px) scale(1.2);
+  }
+  30% {
+    transform: translateY(70vh) translateX(20px) scale(0.8);
+  }
+  40% {
+    transform: translateY(60vh) translateX(-10px) scale(1.1);
+  }
+  50% {
+    transform: translateY(50vh) translateX(15px) scale(0.9);
+    opacity: 1;
+  }
+  60% {
+    transform: translateY(40vh) translateX(-20px) scale(1.3);
+  }
+  70% {
+    transform: translateY(30vh) translateX(10px) scale(0.7);
+    opacity: 0.8;
+  }
+  80% {
+    transform: translateY(20vh) translateX(-15px) scale(1);
+    opacity: 0.5;
+  }
+  90% {
+    transform: translateY(10vh) translateX(20px) scale(0.5);
+    opacity: 0.2;
+  }
+  100% {
+    transform: translateY(-10vh) translateX(0) scale(0);
+    opacity: 0;
+  }
+}
+
+/* Saiyan Aura Pulsing Animation */
+@keyframes saiyan-aura {
+  0% {
+    filter: blur(0);
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  33% {
+    filter: blur(calc(var(--aura-blur-amount) * 0.5));
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+  66% {
+    filter: blur(var(--aura-blur-amount));
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    filter: blur(0);
+    opacity: 0.6;
+    transform: scale(1);
+  }
+}
+
+/* Kamehameha Beam Charging Animation */
+@keyframes kamehameha-charge {
+  0% {
+    width: 0;
+    opacity: 0;
+    background: linear-gradient(90deg, 
+      transparent,
+      var(--ki-energy-blue),
+      var(--ki-energy-yellow),
+      transparent
+    );
+  }
+  20% {
+    width: 20%;
+    opacity: 0.3;
+  }
+  40% {
+    width: 40%;
+    opacity: 0.6;
+    box-shadow: 
+      0 0 20px var(--ki-energy-blue),
+      0 0 40px rgba(0, 204, 255, 0.5);
+  }
+  60% {
+    width: 60%;
+    opacity: 0.8;
+    box-shadow: 
+      0 0 30px var(--ki-energy-blue),
+      0 0 60px rgba(0, 204, 255, 0.6);
+  }
+  80% {
+    width: 80%;
+    opacity: 0.9;
+    box-shadow: 
+      0 0 40px var(--ki-energy-blue),
+      0 0 80px rgba(0, 204, 255, 0.7);
+  }
+  100% {
+    width: 100%;
+    opacity: 1;
+    box-shadow: 
+      0 0 50px var(--ki-energy-blue),
+      0 0 100px rgba(0, 204, 255, 0.8),
+      inset 0 0 20px rgba(255, 255, 0, 0.5);
+  }
+}
+
+/* Section Power-up Entrance Animation */
+@keyframes section-powerup {
+  0% {
+    opacity: 0;
+    transform: translateY(50px) scale(0.9);
+    filter: brightness(0.5);
+  }
+  30% {
+    opacity: 0.3;
+    transform: translateY(30px) scale(0.95);
+    filter: brightness(0.7);
+  }
+  60% {
+    opacity: 0.7;
+    transform: translateY(10px) scale(0.98);
+    filter: brightness(1.2);
+  }
+  80% {
+    opacity: 0.9;
+    transform: translateY(5px) scale(1.02);
+    filter: brightness(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* ===========================
+   Utility Classes
+   =========================== */
+
+/* Dragon Ball Orb Styling */
+.homepage-dragon-ball {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    var(--dragon-ball-orange),
+    #cc5200
+  );
+  animation: dragon-ball-spin var(--orb-spin-duration) linear infinite;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.homepage-dragon-ball::before {
+  content: "★";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 24px;
+  color: var(--dragon-ball-star);
+  text-shadow: 0 0 10px rgba(255, 204, 0, 0.8);
+}
+
+.homepage-dragon-ball:hover {
+  transform: scale(var(--orb-scale-hover));
+  animation-play-state: paused;
+}
+
+/* Power Charging State */
+.power-charging {
+  position: relative;
+  overflow: hidden;
+  animation: power-charge var(--power-charge-duration) ease-in-out;
+  animation-fill-mode: forwards;
+  cursor: pointer;
+}
+
+.power-charging::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle,
+    rgba(0, 204, 255, 0.1) 0%,
+    transparent 70%
+  );
+  animation: saiyan-aura var(--aura-pulse-duration) ease-in-out infinite;
+  pointer-events: none;
+}
+
+.power-charging:hover {
+  animation-play-state: paused;
+}
+
+/* Energy Aura Effects */
+.energy-aura {
+  position: relative;
+  isolation: isolate;
+}
+
+.energy-aura::before,
+.energy-aura::after {
+  content: "";
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  right: -20px;
+  bottom: -20px;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.energy-aura::before {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 215, 0, 0.3) 0%,
+    rgba(255, 215, 0, 0.1) 40%,
+    transparent 70%
+  );
+  filter: blur(10px);
+  animation: saiyan-aura var(--aura-pulse-duration) ease-in-out infinite;
+}
+
+.energy-aura::after {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 204, 255, 0.2) 0%,
+    rgba(0, 204, 255, 0.05) 50%,
+    transparent 80%
+  );
+  filter: blur(20px);
+  animation: saiyan-aura var(--aura-pulse-duration) ease-in-out infinite reverse;
+}
+
+.energy-aura:hover::before,
+.energy-aura:hover::after {
+  opacity: 1;
+}
+
+/* Section Entrance Animations */
+.section-entrance {
+  opacity: 0;
+  animation: section-powerup var(--section-entrance-duration) ease-out forwards;
+}
+
+.section-entrance:nth-child(1) { animation-delay: 0.1s; }
+.section-entrance:nth-child(2) { animation-delay: 0.2s; }
+.section-entrance:nth-child(3) { animation-delay: 0.3s; }
+.section-entrance:nth-child(4) { animation-delay: 0.4s; }
+.section-entrance:nth-child(5) { animation-delay: 0.5s; }
+
+/* Kamehameha Button Styling */
+.kamehameha-button {
+  position: relative;
+  padding: 15px 40px;
+  background: var(--anime-primary);
+  color: var(--anime-text);
+  border: 2px solid var(--ki-energy-blue);
+  border-radius: 50px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.kamehameha-button::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -100%;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, 
+    transparent,
+    var(--ki-energy-blue),
+    var(--ki-energy-yellow),
+    transparent
+  );
+  transform: translateY(-50%);
+  transition: left 0.5s ease;
+}
+
+.kamehameha-button::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 100%;
+  background: rgba(0, 204, 255, 0.1);
+  transition: width 0.3s ease;
+}
+
+.kamehameha-button:hover {
+  transform: scale(1.05);
+  box-shadow: 
+    0 0 20px var(--ki-energy-blue),
+    0 0 40px rgba(0, 204, 255, 0.5);
+  border-color: var(--ki-energy-yellow);
+  text-shadow: 0 0 10px currentColor;
+}
+
+.kamehameha-button:hover::before {
+  left: 100%;
+  animation: kamehameha-charge var(--kamehameha-charge-duration) ease-out;
+}
+
+.kamehameha-button:hover::after {
+  width: 100%;
+}
+
+.kamehameha-button:active {
+  transform: scale(0.98);
+}
+
+/* ===========================
+   Energy Particle System
+   =========================== */
+.energy-particle-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.energy-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--ki-energy-blue);
+  border-radius: 50%;
+  box-shadow: 
+    0 0 6px var(--ki-energy-blue),
+    0 0 12px rgba(0, 204, 255, 0.5);
+  animation: energy-particles var(--particle-float-duration) linear infinite;
+}
+
+.energy-particle:nth-child(even) {
+  background: var(--ki-energy-yellow);
+  box-shadow: 
+    0 0 6px var(--ki-energy-yellow),
+    0 0 12px rgba(255, 255, 0, 0.5);
+  animation-duration: calc(var(--particle-float-duration) * 1.5);
+}
+
+.energy-particle:nth-child(3n) {
+  background: var(--saiyan-aura-gold);
+  box-shadow: 
+    0 0 6px var(--saiyan-aura-gold),
+    0 0 12px rgba(255, 215, 0, 0.5);
+  animation-duration: calc(var(--particle-float-duration) * 0.8);
+}
+
+/* Generate random positions for particles */
+.energy-particle:nth-child(1) { left: 5%; animation-delay: 0s; }
+.energy-particle:nth-child(2) { left: 15%; animation-delay: 2s; }
+.energy-particle:nth-child(3) { left: 25%; animation-delay: 4s; }
+.energy-particle:nth-child(4) { left: 35%; animation-delay: 6s; }
+.energy-particle:nth-child(5) { left: 45%; animation-delay: 8s; }
+.energy-particle:nth-child(6) { left: 55%; animation-delay: 10s; }
+.energy-particle:nth-child(7) { left: 65%; animation-delay: 12s; }
+.energy-particle:nth-child(8) { left: 75%; animation-delay: 14s; }
+.energy-particle:nth-child(9) { left: 85%; animation-delay: 16s; }
+.energy-particle:nth-child(10) { left: 95%; animation-delay: 18s; }
+
+/* ===========================
+   Special Effects
+   =========================== */
+
+/* Power Level Scanner Effect */
+.power-level-scanner {
+  position: relative;
+  display: inline-block;
+  padding: 10px 20px;
+  background: rgba(0, 255, 0, 0.1);
+  border: 2px solid #00ff00;
+  color: #00ff00;
+  font-family: monospace;
+  font-size: 18px;
+  text-transform: uppercase;
+  overflow: hidden;
+}
+
+.power-level-scanner::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent,
+    rgba(0, 255, 0, 0.4),
+    transparent
+  );
+  animation: scan 2s linear infinite;
+}
+
+@keyframes scan {
+  to {
+    left: 100%;
+  }
+}
+
+/* Fusion Dance Effect */
+.fusion-effect {
+  position: relative;
+  display: inline-block;
+}
+
+.fusion-effect::before,
+.fusion-effect::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: all 0.5s ease;
+}
+
+.fusion-effect::before {
+  left: -120px;
+  background: radial-gradient(circle, var(--ki-energy-blue), transparent);
+}
+
+.fusion-effect::after {
+  right: -120px;
+  background: radial-gradient(circle, var(--ki-energy-yellow), transparent);
+}
+
+.fusion-effect:hover::before {
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.8;
+}
+
+.fusion-effect:hover::after {
+  right: 50%;
+  transform: translate(50%, -50%);
+  opacity: 0.8;
+}
+
+/* ===========================
+   Responsive Design
+   =========================== */
+
+/* Tablet Styles */
+@media (max-width: 1024px) {
+  :root {
+    --orb-spin-duration: 15s;
+    --particle-float-duration: 12s;
+    --aura-blur-amount: 15px;
+  }
+  
+  .homepage-dragon-ball {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .homepage-dragon-ball::before {
+    font-size: 18px;
+  }
+  
+  .kamehameha-button {
+    padding: 12px 30px;
+    font-size: 14px;
+  }
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  :root {
+    --orb-spin-duration: 10s;
+    --particle-float-duration: 10s;
+    --aura-blur-amount: 10px;
+    --section-entrance-duration: 0.6s;
+  }
+  
+  .homepage-dragon-ball {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .homepage-dragon-ball::before {
+    font-size: 16px;
+  }
+  
+  .kamehameha-button {
+    padding: 10px 25px;
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+  
+  /* Reduce particle count on mobile */
+  .energy-particle:nth-child(n+6) {
+    display: none;
+  }
+  
+  /* Simplify animations on mobile */
+  .energy-aura::before,
+  .energy-aura::after {
+    animation: none;
+    opacity: 0.5;
+  }
+  
+  /* Disable hover effects on touch devices */
+  @media (hover: none) {
+    .power-charging:hover,
+    .homepage-dragon-ball:hover,
+    .kamehameha-button:hover {
+      animation-play-state: running;
+      transform: none;
+    }
+  }
+}
+
+/* Small Mobile Styles */
+@media (max-width: 480px) {
+  .homepage-dragon-ball {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .homepage-dragon-ball::before {
+    font-size: 14px;
+  }
+  
+  .kamehameha-button {
+    padding: 8px 20px;
+    font-size: 11px;
+  }
+  
+  /* Only show 3 particles on small screens */
+  .energy-particle:nth-child(n+4) {
+    display: none;
+  }
+}
+
+/* ===========================
+   Accessibility
+   =========================== */
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .homepage-dragon-ball {
+    animation: none;
+  }
+  
+  .power-charging {
+    animation: none;
+  }
+  
+  .energy-particle {
+    display: none;
+  }
+  
+  .section-entrance {
+    opacity: 1;
+    animation: none;
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .homepage-dragon-ball,
+  .kamehameha-button,
+  .power-level-scanner {
+    border-width: 3px;
+  }
+  
+  .energy-aura::before,
+  .energy-aura::after {
+    display: none;
+  }
+  
+  .kamehameha-button {
+    background: var(--anime-bg);
+    color: var(--anime-text);
+    border-color: currentColor;
+  }
+  
+  .kamehameha-button:hover {
+    background: var(--anime-text);
+    color: var(--anime-bg);
+  }
+}
+
+/* Focus Styles */
+.homepage-dragon-ball:focus,
+.kamehameha-button:focus,
+.power-charging:focus {
+  outline: 3px solid var(--ki-energy-blue);
+  outline-offset: 4px;
+}
+
+/* Screen Reader Only Content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ===========================
+   Print Styles
+   =========================== */
+@media print {
+  /* Hide decorative elements */
+  .energy-particle-container,
+  .energy-aura::before,
+  .energy-aura::after,
+  .homepage-dragon-ball::before,
+  .kamehameha-button::before,
+  .kamehameha-button::after {
+    display: none !important;
+  }
+  
+  /* Remove animations */
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  /* Simplify styles for print */
+  .homepage-dragon-ball {
+    border: 2px solid #000;
+    background: #fff;
+  }
+  
+  .kamehameha-button {
+    border: 2px solid #000;
+    background: #fff;
+    color: #000;
+    box-shadow: none;
+  }
+  
+  /* Ensure readability */
+  .power-level-scanner {
+    background: #fff;
+    border-color: #000;
+    color: #000;
+  }
+}
+
+/* ===========================
+   Performance Optimizations
+   =========================== */
+
+/* Use GPU acceleration for animations */
+.homepage-dragon-ball,
+.power-charging,
+.energy-particle,
+.section-entrance {
+  will-change: transform, opacity;
+}
+
+/* Optimize blur effects */
+.energy-aura::before,
+.energy-aura::after {
+  will-change: filter, opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Contain layout for performance */
+.energy-particle-container {
+  contain: layout style paint;
+}
+
+/* ===========================
+   Browser Compatibility
+   =========================== */
+
+/* Fallback for older browsers */
+@supports not (backdrop-filter: blur(10px)) {
+  .energy-aura::before,
+  .energy-aura::after {
+    background: rgba(255, 215, 0, 0.2);
+    filter: none;
+  }
+}
+
+/* Fallback for CSS Grid if needed */
+@supports not (display: grid) {
+  .section-entrance {
+    display: block;
+    margin-bottom: 2rem;
+  }
+}
+
+/* ===========================
+   Integration Helpers
+   =========================== */
+
+/* Combine with existing storm animations */
+.storm-active .homepage-dragon-ball {
+  animation: dragon-ball-spin var(--orb-spin-duration) linear infinite,
+            storm-shake 0.2s ease-in-out infinite;
+}
+
+/* Combine with existing anime styles */
+.anime-gradient-bg .kamehameha-button {
+  background: linear-gradient(135deg, var(--anime-primary), var(--anime-secondary));
+}
+
+/* Utility class for combining effects */
+.power-combo {
+  composes: power-charging energy-aura section-entrance;
+}
+
+/* ===========================
+   Custom Utility Modifiers
+   =========================== */
+
+/* Size variants for dragon balls */
+.homepage-dragon-ball--sm { width: 40px; height: 40px; }
+.homepage-dragon-ball--md { width: 60px; height: 60px; }
+.homepage-dragon-ball--lg { width: 100px; height: 100px; }
+.homepage-dragon-ball--xl { width: 120px; height: 120px; }
+
+/* Color variants for energy effects */
+.energy-aura--blue { --ki-energy-blue: #0099ff; }
+.energy-aura--green { --ki-energy-blue: #00ff99; }
+.energy-aura--red { --ki-energy-blue: #ff3366; }
+.energy-aura--purple { --ki-energy-blue: #cc66ff; }
+
+/* Animation speed modifiers */
+.animation-slow { animation-duration: calc(var(--orb-spin-duration) * 2); }
+.animation-fast { animation-duration: calc(var(--orb-spin-duration) * 0.5); }
+.animation-paused { animation-play-state: paused; }
+
+/* Intensity modifiers */
+.effect-subtle { opacity: 0.5; filter: brightness(0.8); }
+.effect-intense { opacity: 1; filter: brightness(1.2) contrast(1.1); }
+.effect-extreme { opacity: 1; filter: brightness(1.4) contrast(1.2) saturate(1.2); }

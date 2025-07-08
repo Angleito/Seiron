@@ -1,7 +1,7 @@
 import { createAuthenticatedFetch } from '../lib/auth/authInterceptor'
 
-// API endpoint configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+// API endpoint configuration - using frontend API endpoints
+const API_BASE_URL = ''
 
 // Create authenticated fetch instance
 const authFetch = createAuthenticatedFetch({
@@ -31,8 +31,8 @@ export async function processChat(message: string, sessionId: string, walletAddr
       throw new Error('Message and session ID are required for processing')
     }
 
-    // Call backend chat orchestrate endpoint
-    const response = await authFetch(`${API_BASE_URL}/chat/orchestrate`, {
+    // Call frontend API chat orchestrate endpoint
+    const response = await authFetch(`/api/chat/orchestrate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -63,8 +63,12 @@ export function getWebSocketEndpoint(sessionId: string) {
     throw new Error('Session ID is required for WebSocket connection')
   }
 
+  // Use frontend API WebSocket endpoint
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  const wsHost = window.location.host
+  
   return {
-    wsEndpoint: `${import.meta.env.VITE_ORCHESTRATOR_WS_ENDPOINT}/chat/${sessionId}`,
+    wsEndpoint: `${wsProtocol}//${wsHost}/api/chat/ws/${sessionId}`,
     protocol: 'agent-chat-v1',
   }
 }

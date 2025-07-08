@@ -505,7 +505,7 @@ export class ChatStreamService {
         })
         
         try {
-          const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+          const apiEndpoint = '/api/chat/orchestrate'
           const requestBody = {
             message: message.content,
             sessionId: this.config.sessionId,
@@ -517,7 +517,7 @@ export class ChatStreamService {
           logger.logRequest({
             requestId,
             method: 'POST',
-            url: `${apiBaseUrl}/chat/orchestrate`,
+            url: apiEndpoint,
             headers: { 'Content-Type': 'application/json' },
             body: requestBody,
             startTime: Date.now()
@@ -533,7 +533,7 @@ export class ChatStreamService {
             messageCounter: this.messageCounter
           })
           
-          const response = await fetch(`${apiBaseUrl}/chat/orchestrate`, {
+          const response = await fetch(apiEndpoint, {
             method: 'POST',
             headers: { 
               'Content-Type': 'application/json',
