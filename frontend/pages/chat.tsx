@@ -70,17 +70,6 @@ export default function ChatPage() {
           🐉 AI Voice
         </button>
         <button
-          onClick={() => setInterfaceType('minimal')}
-          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-            interfaceType === 'minimal' 
-              ? 'bg-orange-600 text-white' 
-              : 'bg-gray-800 text-gray-200 hover:bg-gray-700'
-          }`}
-          title="Minimal UI"
-        >
-          Minimal
-        </button>
-        <button
           onClick={() => setInterfaceType('chatgpt')}
           className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
             interfaceType === 'chatgpt' 
@@ -90,6 +79,17 @@ export default function ChatPage() {
           title="Anime UI"
         >
           Anime
+        </button>
+        <button
+          onClick={() => setInterfaceType('minimal')}
+          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+            interfaceType === 'minimal' 
+              ? 'bg-orange-600 text-white' 
+              : 'bg-gray-800 text-gray-200 hover:bg-gray-700'
+          }`}
+          title="Minimal UI"
+        >
+          Minimal
         </button>
       </div>
       
