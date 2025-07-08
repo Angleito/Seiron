@@ -151,26 +151,26 @@ export const DragonBallVoiceLoadingState = React.memo(function DragonBallVoiceLo
   const configs = {
     listening: {
       icon: '👂',
-      message: 'Sensing your ki...',
-      subMessage: 'Channel your energy through speech',
+      message: 'Sensing your investment wishes...',
+      subMessage: 'Share your DeFi desires with Sei-ron',
       color: 'blue' as const
     },
     processing: {
       icon: '🧠',
-      message: 'Analyzing power level...',
-      subMessage: 'Processing voice chakra',
+      message: 'Analyzing Sei network data...',
+      subMessage: 'Dragon wisdom processing your request',
       color: 'purple' as const
     },
     speaking: {
       icon: '🐉',
-      message: 'Dragon voice active...',
-      subMessage: 'Seiron is speaking',
+      message: 'Sei-ron grants your wish...',
+      subMessage: 'Portfolio dragon sharing Sei insights',
       color: 'orange' as const
     },
     initializing: {
       icon: '⚡',
-      message: 'Awakening the Dragon...',
-      subMessage: 'Initializing voice interface',
+      message: 'Awakening portfolio dragon...',
+      subMessage: 'Connecting to Sei blockchain oracles',
       color: 'yellow' as const
     }
   }

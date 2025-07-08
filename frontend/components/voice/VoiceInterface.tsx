@@ -9,6 +9,7 @@ import { voiceLogger, logVoiceInterface, logEnvironment } from '../../lib/voice-
 import { DragonBallLoadingStates } from '../chat/parts/DragonBallLoadingStates'
 import { DragonRenderer, VoiceAnimationState } from '../dragon/DragonRenderer'
 import { AnimeMessageBubble } from '../chat/AnimeMessageBubble'
+import { LightningEffect } from '../effects/LightningEffect'
 
 // Log environment variables at module load
 const envStatus = {
@@ -400,12 +401,12 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
           className="w-full max-w-md mx-auto"
         />
         <div className="text-center mt-4 p-4 bg-red-900/20 border border-red-500/30 rounded-lg max-w-md mx-auto">
-          <p className="text-red-400 font-semibold">🛸 Capsule Corp Notice:</p>
+          <p className="text-red-400 font-semibold">🐉 Sei-ron Dragon Notice:</p>
           <p className="text-sm text-red-300 mt-2">
-            Your browser lacks the advanced ki-sensing technology required for voice features.
+            Your browser cannot commune with Sei-ron's mystical voice powers.
           </p>
           <p className="text-xs text-gray-400 mt-2">
-            Please use Chrome, Edge, or Safari to unlock the dragon's voice power.
+            Please use Chrome, Edge, or Safari to unlock the portfolio dragon's wisdom.
           </p>
         </div>
       </div>
@@ -433,9 +434,17 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
   }), [isListening, state.isPlayingAudio, isTTSLoading, state.currentTranscript])
 
   return (
-    <div className={`flex flex-col items-center space-y-6 p-6 ${className}`}>
+    <div className={`flex flex-col items-center space-y-6 p-6 ${className} relative overflow-hidden`}>
+      {/* Thunder and Lightning Effects */}
+      <LightningEffect
+        frequency={isListening ? "high" : isTTSLoading ? "medium" : "low"}
+        intensity={state.isPlayingAudio ? "intense" : isListening ? "normal" : "subtle"}
+        enabled={isListening || state.isPlayingAudio || isTTSLoading}
+        className="absolute inset-0 z-0"
+      />
+      
       {/* Dragon Voice Status Visualization */}
-      <div className="relative">
+      <div className="relative z-10">
         {/* Main Dragon Display */}
         <div className="relative bg-gray-900/30 border border-orange-800/50 rounded-full p-6 transition-all duration-300">
           <DragonRenderer
@@ -465,7 +474,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
       </div>
 
       {/* DBZ-Themed Control Buttons */}
-      <div className="flex space-x-6">
+      <div className="flex space-x-6 relative z-10">
         {/* Ki-Powered Microphone Button */}
         <button
           onClick={toggleMicrophone}
@@ -534,7 +543,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
       </div>
 
       {/* DBZ Voice Status Indicators */}
-      <div className="w-full max-w-md space-y-3">
+      <div className="w-full max-w-md space-y-3 relative z-10">
         {isListening && (
           <DragonBallLoadingStates.Voice 
             operation="listening"
@@ -555,14 +564,17 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
         )}
         {!isListening && !isTTSLoading && !state.isPlayingAudio && (
           <div className="text-center text-gray-500 py-4">
-            <span className="text-sm">🐉 Dragon is in meditation mode</span>
+            <span className="text-sm">🐉 Sei-ron awaits your financial wishes</span>
+            <div className="text-xs text-gray-600 mt-1">
+              Voice your DeFi dreams to the portfolio dragon
+            </div>
           </div>
         )}
       </div>
 
       {/* Dragon Ball Z Themed Transcript Display */}
       {state.currentTranscript && (
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md relative z-10">
           <AnimeMessageBubble
             message={{
               id: `voice-transcript-${Date.now()}`,
@@ -585,7 +597,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
               maxLevel={9000}
             />
             <div className="text-xs text-gray-400 mt-1">
-              Ki Level: {state.currentTranscript.length} words detected
+              Wish Power: {state.currentTranscript.length} words • Sei Analysis Ready
             </div>
           </div>
         </div>
@@ -593,13 +605,13 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
 
       {/* DBZ-Themed Error Display */}
       {state.lastError && (
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md relative z-10">
           <DragonBallLoadingStates.ErrorRecovery 
             message={`Scouter malfunction detected: ${state.lastError.message}`}
             className="animate-shake"
           />
           <div className="text-center text-xs text-red-400 mt-2">
-            💊 Using Senzu Bean to restore voice chakra...
+            💊 Restoring Sei connection with Dragon Ball magic...
           </div>
         </div>
       )}

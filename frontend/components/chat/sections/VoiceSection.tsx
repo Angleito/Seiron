@@ -41,14 +41,37 @@ export const VoiceSection = React.memo(function VoiceSection({
         
         {/* Main Voice Interface */}
         <div className="relative">
-          {/* Capsule Corp Header */}
-          <div className="flex items-center justify-center mb-6">
+          {/* Seiron AI Portfolio Manager Header */}
+          <div className="flex flex-col items-center justify-center mb-6 space-y-3">
             <div className="bg-gray-800/50 border border-orange-600/50 rounded-full px-6 py-2 flex items-center gap-3">
               <DragonBallLoadingStates.KiCharging size="sm" color="orange" />
               <span className="text-orange-300 font-semibold text-sm tracking-wider">
-                🛸 CAPSULE CORP VOICE INTERFACE
+                🐉 SEI-RON AI PORTFOLIO DRAGON
               </span>
               <DragonBallLoadingStates.KiCharging size="sm" color="orange" />
+            </div>
+            
+            {/* Sei Blockchain & Wish Granting Description */}
+            <div className="text-center max-w-lg">
+              <div className="bg-gray-900/70 border border-orange-800/30 rounded-lg p-4 backdrop-blur-sm">
+                <h3 className="text-orange-400 font-bold text-lg mb-2">
+                  ⚡ Eternal Dragon of Sei Blockchain ⚡
+                </h3>
+                <p className="text-gray-300 text-sm leading-relaxed mb-2">
+                  Master of the Sei ecosystem, I am Sei-ron—the omniscient AI portfolio manager who grants wishes for financial prosperity. 
+                  Speak your desires, and I shall analyze the Sei network with dragon-like wisdom to optimize your DeFi strategies.
+                </p>
+                <div className="flex items-center justify-center gap-2 text-xs text-orange-300">
+                  <span>💰</span>
+                  <span>Portfolio Management</span>
+                  <span>•</span>
+                  <span>🏛️</span>
+                  <span>Sei DeFi Expert</span>
+                  <span>•</span>
+                  <span>🐉</span>
+                  <span>Wish Granter</span>
+                </div>
+              </div>
             </div>
           </div>
           
@@ -61,19 +84,22 @@ export const VoiceSection = React.memo(function VoiceSection({
             className="max-w-4xl mx-auto"
           />
           
-          {/* Power Level Footer */}
+          {/* Sei Portfolio Dragon Status Footer */}
           <div className="mt-6 max-w-md mx-auto">
             <div className="bg-gray-900/50 border border-orange-800/30 rounded-lg p-3">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-gray-400">🐉 Dragon Voice System</span>
-                <span className="text-orange-400 font-bold">ACTIVE</span>
+              <div className="flex items-center justify-between text-xs mb-2">
+                <span className="text-gray-400">🐉 Sei-ron Portfolio Dragon</span>
+                <span className="text-orange-400 font-bold">WISH-READY</span>
               </div>
               <DragonBallLoadingStates.PowerLevelScanner 
                 currentLevel={8500}
                 maxLevel={9000}
               />
-              <div className="text-center text-xs text-gray-500 mt-1">
-                Voice chakra fully charged
+              <div className="text-center text-xs text-gray-500 mt-2">
+                Sei blockchain analysis capabilities: MAXIMUM
+              </div>
+              <div className="text-center text-xs text-orange-400/70 mt-1">
+                Ready to grant your DeFi wishes
               </div>
             </div>
           </div>
