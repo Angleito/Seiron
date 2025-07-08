@@ -1,9 +1,9 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend && npm run build",
+  "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
-  "installCommand": "cd frontend && npm install",
-  "framework": "vite",
+  "installCommand": "npm install && cd frontend && npm install",
+  "framework": null,
   "functions": {
     "api/**/*.ts": {
       "runtime": "@vercel/node@3.0.0",
