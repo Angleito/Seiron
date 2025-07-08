@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useSecureElevenLabsTTS } from '../../hooks/voice'
 import { pipe } from 'fp-ts/function'
 import * as TE from 'fp-ts/TaskEither'
+import * as T from 'fp-ts/Task'
 
 interface SecureVoiceExampleProps {
   voiceId?: string
@@ -20,9 +21,9 @@ export const SecureVoiceExample: React.FC<SecureVoiceExampleProps> = ({
     modelId: 'eleven_monolingual_v1',
     voiceSettings: {
       stability: 0.5,
-      similarity_boost: 0.8,
+      similarityBoost: 0.8,
       style: 0.0,
-      use_speaker_boost: false
+      useSpeakerBoost: false
     }
   })
 
@@ -39,7 +40,7 @@ export const SecureVoiceExample: React.FC<SecureVoiceExampleProps> = ({
     pipe(
       result,
       TE.fold(
-        (error) => {
+        (error: any) => T.of(() => {
           console.error('Voice synthesis error:', error)
           switch (error.type) {
             case 'QUOTA_EXCEEDED':
@@ -57,12 +58,12 @@ export const SecureVoiceExample: React.FC<SecureVoiceExampleProps> = ({
             default:
               setLastError(`Unknown error: ${error.message}`)
           }
-        },
-        () => {
+        }),
+        () => T.of(() => {
           console.log('Voice synthesis completed successfully')
-        }
+        })
       )
-    )
+    )()
   }
 
   const handleStop = () => {

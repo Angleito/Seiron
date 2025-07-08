@@ -236,8 +236,8 @@ export interface VoiceSynthesisRequest {
   modelId?: string
   voiceSettings?: {
     stability?: number
-    similarity_boost?: number
+    similarityBoost?: number
     style?: number
-    use_speaker_boost?: boolean
+    useSpeakerBoost?: boolean
   }
 }

@@ -6,20 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Unleash the legendary dragon's power to fulfill your wildest investment dreams in the Sei ecosystem" />
     
-    <!-- Content Security Policy -->
+    <!-- Relaxed CSP for debugging -->
     <meta http-equiv="Content-Security-Policy" content="
-      default-src 'self';
-      script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline' https://vercel.live https://*.vercel-scripts.com;
-      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      default-src 'self' 'unsafe-inline' 'unsafe-eval';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https: data:;
+      style-src 'self' 'unsafe-inline' https:;
       img-src 'self' data: https: blob:;
-      font-src 'self' data: https://fonts.gstatic.com;
-      connect-src 'self' https: wss: ws: http://localhost:* ws://localhost:* https://api.web3modal.org https://explorer-api.walletconnect.com https://pulse.walletconnect.org https://vercel.live;
-      media-src 'self' blob:;
-      object-src 'none';
+      font-src 'self' data: https:;
+      connect-src 'self' https: wss: ws: http: data:;
+      media-src 'self' blob: data:;
+      object-src 'self';
       base-uri 'self';
       form-action 'self';
-      frame-src 'self' https://auth.privy.io https://verify.walletconnect.com https://verify.walletconnect.org https://vercel.live;
-      upgrade-insecure-requests;
+      frame-src 'self' https:;
     ">
     
     <!-- Additional security headers -->
@@ -32,6 +31,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/main.tsx"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

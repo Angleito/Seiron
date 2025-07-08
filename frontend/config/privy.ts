@@ -1,5 +1,4 @@
 import { defineChain } from 'viem'
-import { logger } from '@lib/logger'
 
 // Sei Network chain configuration
 export const seiMainnet = defineChain({
@@ -31,9 +30,9 @@ const clientId = import.meta.env.VITE_PRIVY_CLIENT_ID || '';
 
 // Debug logging only in development
 if (import.meta.env.DEV) {
-  logger.debug('Privy App ID:', appId);
-  logger.debug('Privy App ID length:', appId.length);
-  logger.debug('Privy App ID present:', !!appId);
+  console.log('Privy App ID:', appId);
+  console.log('Privy App ID length:', appId.length);
+  console.log('Privy App ID present:', !!appId);
 }
 
 // Ensure config is always defined with proper structure

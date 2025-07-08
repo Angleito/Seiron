@@ -1,7 +1,7 @@
 import * as TE from 'fp-ts/TaskEither'
 import * as O from 'fp-ts/Option'
 import { pipe } from 'fp-ts/function'
-import type { TTSError } from '../types/api/elevenlabs'
+import type { TTSError, VoiceSynthesisRequest } from '../types/api/elevenlabs'
 import { logger } from './logger'
 
 // API Response types
@@ -23,18 +23,6 @@ interface VoiceApiSuccessResponse {
 
 type VoiceApiResponse = VoiceApiErrorResponse | VoiceApiSuccessResponse
 
-// Voice synthesis request
-export interface VoiceSynthesisRequest {
-  text: string
-  voiceId: string
-  modelId?: string
-  voiceSettings?: {
-    stability?: number
-    similarity_boost?: number
-    style?: number
-    use_speaker_boost?: boolean
-  }
-}
 
 // Configuration
 export interface VoiceApiConfig {
@@ -279,4 +267,4 @@ export const synthesizeSpeech = (request: VoiceSynthesisRequest): TE.TaskEither<
 }
 
 // Export types for consumers
-export type { VoiceApiResponse, VoiceSynthesisRequest, VoiceApiConfig }
+export type { VoiceApiResponse, VoiceApiConfig }
