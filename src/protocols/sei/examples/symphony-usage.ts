@@ -10,7 +10,19 @@ import * as E from 'fp-ts/Either';
 import * as TE from 'fp-ts/TaskEither';
 import { createPublicClient, createWalletClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { sei } from 'viem/chains';
+// import { sei } from 'viem/chains'; // TODO: Update to correct chain import
+
+// Temporary placeholder for sei chain
+const sei = {
+  id: 1329,
+  name: 'Sei Network',
+  network: 'sei',
+  nativeCurrency: { name: 'Sei', symbol: 'SEI', decimals: 18 },
+  rpcUrls: {
+    default: { http: ['https://evm-rpc.sei-apis.com'] },
+    public: { http: ['https://evm-rpc.sei-apis.com'] }
+  }
+};
 
 import {
   createSymphonyProtocolWrapper,

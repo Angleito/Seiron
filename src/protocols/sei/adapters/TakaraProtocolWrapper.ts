@@ -111,7 +111,7 @@ export type TakaraLendingTransaction = LendingTransaction & {
   readonly liquidationIncentive?: bigint; // Liquidation incentive earned
 };
 
-export type TakaraError = LendingError 
+export type TakaraError = LendingError
   | { readonly type: 'market_not_listed'; readonly message: string }
   | { readonly type: 'market_not_entered'; readonly message: string }
   | { readonly type: 'insufficient_cash'; readonly message: string }
