@@ -39,7 +39,7 @@ const FEATURES: FeatureCard[] = [
       glow: 'rgba(255, 107, 53, 0.6)',
       star: '#ff2e2e'
     },
-    starCount: 4
+    starCount: 1
   },
   {
     id: 'radar',
@@ -53,7 +53,7 @@ const FEATURES: FeatureCard[] = [
       glow: 'rgba(59, 130, 246, 0.6)',
       star: '#3b82f6'
     },
-    starCount: 6
+    starCount: 2
   },
   {
     id: 'fusion',
@@ -81,9 +81,33 @@ const FEATURES: FeatureCard[] = [
       glow: 'rgba(255, 211, 61, 0.8)',
       star: '#ffd93d'
     },
-    starCount: 7
+    starCount: 4
   }
 ]
+
+// Helper function to generate symmetrical star positions like dice
+const getStarPositions = (starCount: number): Array<{x: number, y: number}> => {
+  const positions = {
+    1: [{ x: 50, y: 50 }], // Center
+    2: [
+      { x: 30, y: 30 }, // Top-left
+      { x: 70, y: 70 }  // Bottom-right
+    ],
+    3: [
+      { x: 30, y: 30 }, // Top-left
+      { x: 50, y: 50 }, // Center
+      { x: 70, y: 70 }  // Bottom-right
+    ],
+    4: [
+      { x: 30, y: 30 }, // Top-left
+      { x: 70, y: 30 }, // Top-right
+      { x: 30, y: 70 }, // Bottom-left
+      { x: 70, y: 70 }  // Bottom-right
+    ]
+  }
+  
+  return positions[starCount as keyof typeof positions] || positions[1]
+}
 
 const DragonBallOrb: React.FC<{
   feature: FeatureCard
@@ -141,32 +165,38 @@ const DragonBallOrb: React.FC<{
           )}
         />
 
-        {/* Stars */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="grid grid-cols-3 gap-2 p-4">
-            {[...Array(Math.min(feature.starCount, 7))].map((_, i) => (
-              <motion.div
-                key={i}
-                className="flex items-center justify-center"
-                animate={{
-                  scale: isActive ? [1, 1.2, 1] : 1,
-                  rotate: isActive ? [0, 180, 360] : 0
-                }}
-                transition={{
-                  duration: 2,
-                  delay: i * 0.1,
-                  repeat: isActive ? Infinity : 0
+        {/* Stars with symmetrical positioning */}
+        <div className="absolute inset-0">
+          {getStarPositions(feature.starCount).map((position, i) => (
+            <motion.div
+              key={i}
+              className="absolute"
+              style={{
+                left: `${position.x}%`,
+                top: `${position.y}%`,
+                transform: 'translate(-50%, -50%)'
+              }}
+              animate={{
+                scale: isActive ? [1, 1.2, 1] : 1,
+                rotate: isActive ? [0, 180, 360] : 0
+              }}
+              transition={{
+                duration: 2,
+                delay: i * 0.1,
+                repeat: isActive ? Infinity : 0
+              }}
+            >
+              <div
+                className="text-3xl drop-shadow-lg"
+                style={{ 
+                  color: feature.color.star,
+                  filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.5))'
                 }}
               >
-                <div
-                  className="text-2xl"
-                  style={{ color: feature.color.star }}
-                >
-                  ★
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                ★
+              </div>
+            </motion.div>
+          ))}
         </div>
 
         {/* Energy Aura */}
@@ -393,7 +423,7 @@ export const DragonBallFeatureCards: React.FC<DragonBallFeatureCardsProps> = ({
         <div className="inline-flex items-center space-x-2 px-6 py-3 rounded-full bg-gradient-to-r from-slate-800/80 to-slate-900/80 backdrop-blur-sm border border-yellow-400/30">
           <Activity className="w-5 h-5 text-yellow-400" />
           <span className="text-yellow-400 font-semibold">
-            {activeCard ? `${FEATURES.find(f => f.id === activeCard)?.title} Activated!` : 'Hover to Activate Dragon Balls'}
+            {activeCard ? `${FEATURES.find(f => f.id === activeCard)?.starCount}-Star Dragon Ball: ${FEATURES.find(f => f.id === activeCard)?.title} Activated!` : 'Hover to Activate Dragon Balls (1-4 Stars)'}
           </span>
           <Zap className="w-5 h-5 text-yellow-400" />
         </div>
