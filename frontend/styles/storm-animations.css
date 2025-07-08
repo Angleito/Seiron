@@ -661,6 +661,35 @@
 }
 
 /* ========================================
+   Missing Class Definitions
+   ======================================== */
+
+/* Mystical Aura Effect - for power level displays */
+.storm-mystical-aura {
+  position: relative;
+  transition: all var(--storm-duration-normal) var(--storm-ease-natural);
+}
+
+.storm-mystical-aura::after {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(circle, 
+    var(--storm-glow) 0%, 
+    transparent 70%);
+  opacity: 0.4;
+  pointer-events: none;
+  animation: storm-power-pulse var(--storm-duration-slow) ease-in-out infinite;
+}
+
+/* Power Manifestation Effect - for hero section animations */
+.storm-power-manifestation {
+  animation: storm-entrance-dramatic var(--storm-duration-normal) var(--storm-ease-dramatic) forwards;
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ========================================
    Print Styles
    ======================================== */
 
@@ -672,7 +701,9 @@
   .storm-breathing,
   .storm-power-pulse,
   .storm-entrance-dramatic,
-  .storm-entrance-lightning {
+  .storm-entrance-lightning,
+  .storm-mystical-aura,
+  .storm-power-manifestation {
     animation: none !important;
     transform: none !important;
     opacity: 1 !important;

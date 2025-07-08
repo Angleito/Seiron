@@ -6,7 +6,7 @@ import { useStormPerformance, useLazyStormEffects } from '@/hooks/useStormPerfor
 // Lazy load heavy components
 const LightningEffect = lazy(() => import('./LightningEffect'))
 const FogOverlay = lazy(() => import('./FogOverlay'))
-const DragonHead3D = lazy(() => import('./DragonHead3D'))
+const DragonHead3D = lazy(() => import('./DragonHead3DOptimized'))
 
 interface StormBackgroundProps {
   className?: string
@@ -96,20 +96,25 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
   const prefersReducedMotion = useReducedMotion()
   const shouldAnimate = animated && !prefersReducedMotion
   const scrollState = useScrollTracking(shouldAnimate)
+  
+  // Use performance hook to detect device capabilities
+  const { isMobile, isTablet, config: perfConfig } = useStormPerformance()
 
   // Normalize intensity to 0-1 range
   const normalizedIntensity = Math.max(0, Math.min(1, intensity))
 
-  // Calculate dynamic properties based on intensity
+  // Calculate dynamic properties based on intensity and device
   const stormConfig = useMemo(() => {
-    const baseConfig = {
+    // Base configuration
+    let baseConfig = {
       clouds: {
         opacity: 0.3 + (normalizedIntensity * 0.5),
         speed: normalizedIntensity < 0.3 ? 'slow' as const : normalizedIntensity < 0.7 ? 'medium' as const : 'fast' as const,
         layerCount: Math.ceil(2 + normalizedIntensity * 2) // 2-4 layers
       },
       lightning: {
-        enabled: normalizedIntensity > 0.2,
+        enabled: false, // Temporarily disabled for performance
+        // enabled: normalizedIntensity > 0.2,
         frequency: normalizedIntensity < 0.4 ? 'low' as const : normalizedIntensity < 0.8 ? 'medium' as const : 'high' as const,
         intensity: normalizedIntensity < 0.3 ? 'subtle' as const : normalizedIntensity < 0.7 ? 'normal' as const : 'intense' as const,
         maxBolts: Math.ceil(1 + normalizedIntensity * 2) // 1-3 bolts
@@ -123,8 +128,21 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
       enableParallax: true
     }
     
+    // Apply device-specific optimizations
+    if (isMobile) {
+      baseConfig.clouds.layerCount = Math.min(1, baseConfig.clouds.layerCount)
+      baseConfig.clouds.speed = 'slow'
+      baseConfig.fog.particleCount = Math.min(2, baseConfig.fog.particleCount)
+      baseConfig.fog.opacity *= 0.5
+      baseConfig.enableParallax = false
+    } else if (isTablet) {
+      baseConfig.clouds.layerCount = Math.min(2, baseConfig.clouds.layerCount)
+      baseConfig.fog.particleCount = Math.min(4, baseConfig.fog.particleCount)
+      baseConfig.fog.opacity *= 0.7
+    }
+    
     return baseConfig
-  }, [normalizedIntensity])
+  }, [normalizedIntensity, isMobile, isTablet])
 
   // Loading state management
   useEffect(() => {
@@ -218,8 +236,8 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
         />
       </Suspense>
       
-      {/* Lightning effects - Lazy loaded */}
-      {stormConfig.lightning.enabled && (
+      {/* Lightning effects - Temporarily disabled for performance */}
+      {/* {stormConfig.lightning.enabled && (
         <Suspense fallback={null}>
           <LightningEffect
             className="absolute inset-0"
@@ -231,7 +249,7 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
             onLightningStrike={(isActive: boolean) => setIsLightningActive(isActive)}
           />
         </Suspense>
-      )}
+      )} */}
       
       {/* Fog overlay - Lazy loaded */}
       <Suspense fallback={null}>
