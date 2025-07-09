@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm run build && cp -r public/models dist/",
+  "buildCommand": "npm run verify:models && npm run build && cp -r public/models dist/ && npm run verify:models",
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "framework": "vite",

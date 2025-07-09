@@ -94,8 +94,8 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
   enableFallback = true,
   fallbackType = '2d',
   enableProgressiveLoading = false,
-  lowQualityModel = '/models/seiron_optimized.glb',
-  highQualityModel = '/models/seiron_animated_optimized.gltf',
+  lowQualityModel = '/models/seiron.glb',
+  highQualityModel = '/models/seiron_animated.gltf',
   enablePerformanceMonitor = false,
   performanceMonitorPosition = 'top-left',
   onError,
@@ -106,13 +106,38 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
   const [hasError, setHasError] = useState(false)
   const [isLoadingHighQuality, setIsLoadingHighQuality] = useState(false)
   const [useHighQuality, setUseHighQuality] = useState(!enableProgressiveLoading)
+  const [modelAvailability, setModelAvailability] = useState<Record<string, boolean>>({})
   const errorCountRef = useRef(0)
   const mountedRef = useRef(true)
   const lastErrorTimeRef = useRef(0)
   const memoryManager = useRef(DragonMemoryManager.getInstance())
 
+  // Check model availability on mount
   useEffect(() => {
     mountedRef.current = true
+    
+    // Check availability of all models
+    const checkModels = async () => {
+      const modelsToCheck = [lowQualityModel, highQualityModel, '/models/seiron_animated_lod_high.gltf']
+      const availability: Record<string, boolean> = {}
+      
+      for (const model of modelsToCheck) {
+        try {
+          const response = await fetch(model, { method: 'HEAD' })
+          availability[model] = response.ok
+        } catch (error) {
+          availability[model] = false
+        }
+      }
+      
+      if (mountedRef.current) {
+        setModelAvailability(availability)
+        console.log('Model availability check:', availability)
+      }
+    }
+    
+    checkModels()
+    
     return () => {
       mountedRef.current = false
       
@@ -236,23 +261,33 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
       
       case 'glb':
       default:
-        // LOD selection based on size
+        // LOD selection based on size and availability
         const getLODModel = () => {
           if (enableProgressiveLoading) {
-            return useHighQuality ? highQualityModel : lowQualityModel
+            const targetModel = useHighQuality ? highQualityModel : lowQualityModel
+            // Check if target model is available, fallback if not
+            if (modelAvailability[targetModel] === false) {
+              const fallback = targetModel === highQualityModel ? lowQualityModel : highQualityModel
+              if (modelAvailability[fallback] !== false) {
+                console.log(`Using fallback model ${fallback} due to unavailable ${targetModel}`)
+                return fallback
+              }
+            }
+            return targetModel
           }
           
-          // LOD based on size
+          // LOD based on size with availability checking
           switch (size) {
             case 'sm':
             case 'md':
-              return lowQualityModel // Use low-quality for small sizes
+              return modelAvailability[lowQualityModel] !== false ? lowQualityModel : highQualityModel
             case 'lg':
-              return '/models/seiron_animated_lod_high.gltf' // Use high-quality LOD if available
+              const lodModel = '/models/seiron_animated_lod_high.gltf'
+              return modelAvailability[lodModel] !== false ? lodModel : highQualityModel
             case 'xl':
             case 'gigantic':
             default:
-              return highQualityModel // Use full-quality for large sizes
+              return modelAvailability[highQualityModel] !== false ? highQualityModel : lowQualityModel
           }
         }
         

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit --noUnusedLocals false --noUnusedParameters false && vite build",
+    "build": "npm run verify:models && tsc --noEmit --noUnusedLocals false --noUnusedParameters false && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "type-check": "tsc --noEmit",
@@ -24,7 +24,9 @@
     "test:integration:ci": "jest --config=jest.integration.config.js --ci --coverage --watchAll=false",
     "analyze:bundle": "npm run build && npx vite-bundle-analyzer dist",
     "preload:features": "node scripts/preload-features.js",
-    "optimize:dragon": "node scripts/optimize-dragon-model.js"
+    "optimize:dragon": "node scripts/optimize-dragon-model.js",
+    "verify:models": "node scripts/verify-models.js",
+    "build:safe": "npm run verify:models && npm run build"
   },
   "overrides": {
     "ox": "0.8.1",

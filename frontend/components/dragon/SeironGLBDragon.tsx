@@ -22,12 +22,23 @@ interface SeironGLBDragonProps {
   onError?: (error: Error) => void
 }
 
+// Model availability checker
+async function checkModelAvailability(modelPath: string): Promise<boolean> {
+  try {
+    const response = await fetch(modelPath, { method: 'HEAD' })
+    return response.ok
+  } catch (error) {
+    console.warn(`Model availability check failed for ${modelPath}:`, error)
+    return false
+  }
+}
+
 // Dragon mesh component that handles the GLB model
 function DragonMesh({ 
   voiceState,
   size = 'gigantic',
   enableAnimations = true,
-  modelPath = '/models/seiron_animated_optimized.gltf',
+  modelPath = '/models/seiron_animated.gltf',
   onError
 }: {
   voiceState?: VoiceAnimationState
@@ -38,22 +49,40 @@ function DragonMesh({
 }) {
   const meshRef = useRef<THREE.Group>(null)
   
-  // Add error handling for GLTF loading
+  // Model fallback hierarchy
+  const fallbackModels = [
+    modelPath,
+    '/models/seiron_animated.gltf',
+    '/models/seiron.glb'
+  ]
+  
+  // Try to load model with fallback
   let scene: THREE.Group
   let animations: THREE.AnimationClip[]
-  try {
-    console.log(`🔄 Loading GLTF model from ${modelPath}...`)
-    const gltf = useGLTF(modelPath)
-    scene = gltf.scene
-    animations = gltf.animations || []
-    console.log('✅ GLTF model loaded successfully:', scene)
-    console.log('🎭 Available animations:', animations.map(clip => clip.name))
-  } catch (error) {
-    console.error('❌ Failed to load GLTF model:', error)
-    if (onError) {
-      onError(error as Error)
+  let actualModelPath = modelPath
+  
+  // Find the first working model
+  for (const fallbackPath of fallbackModels) {
+    try {
+      console.log(`🔄 Attempting to load GLTF model from ${fallbackPath}...`)
+      const gltf = useGLTF(fallbackPath)
+      scene = gltf.scene
+      animations = gltf.animations || []
+      actualModelPath = fallbackPath
+      console.log('✅ GLTF model loaded successfully:', scene)
+      console.log('🎭 Available animations:', animations.map(clip => clip.name))
+      break
+    } catch (error) {
+      console.warn(`❌ Failed to load GLTF model from ${fallbackPath}:`, error)
+      if (fallbackPath === fallbackModels[fallbackModels.length - 1]) {
+        // Last fallback failed
+        console.error('❌ All model fallbacks failed')
+        if (onError) {
+          onError(new Error(`All model fallbacks failed. Last error: ${error}`))
+        }
+        throw error
+      }
     }
-    throw error
   }
   
   // Size configurations
@@ -288,7 +317,7 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
   size = 'gigantic',
   className = '',
   enableAnimations = true,
-  modelPath = '/models/seiron_animated_optimized.gltf',
+  modelPath = '/models/seiron_animated.gltf',
   isProgressiveLoading = false,
   isLoadingHighQuality = false,
   onError
@@ -421,10 +450,10 @@ const SeironGLBDragonWithErrorBoundary: React.FC<SeironGLBDragonProps> = (props)
 // Preload the optimized GLTF models only once
 if (typeof window !== 'undefined') {
   try {
-    // Preload the optimized high-quality model
-    useGLTF.preload('/models/seiron_animated_optimized.gltf')
-    // Preload the low-quality model for progressive loading
-    useGLTF.preload('/models/seiron_optimized.glb')
+    // Preload the working high-quality model
+    useGLTF.preload('/models/seiron_animated.gltf')
+    // Preload the working low-quality model for progressive loading
+    useGLTF.preload('/models/seiron.glb')
     // Preload the LOD models if they exist
     useGLTF.preload('/models/seiron_animated_lod_high.gltf')
   } catch (e) {
