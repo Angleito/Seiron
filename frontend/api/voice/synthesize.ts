@@ -21,6 +21,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 }
 
+// Helper function to set CORS headers
+function setCorsHeaders(res: VercelResponse) {
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    res.setHeader(key, value)
+  })
+}
+
 // Error response types
 interface ErrorResponse {
   success: false
@@ -172,7 +179,8 @@ export default async function handler(
 ): Promise<void> {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    res.status(200).setHeaders(corsHeaders).end()
+    setCorsHeaders(res)
+    res.status(200).end()
     return
   }
   
@@ -183,7 +191,8 @@ export default async function handler(
       error: 'Method not allowed',
       code: 'METHOD_NOT_ALLOWED'
     }
-    res.status(405).setHeaders(corsHeaders).json(errorResponse)
+    setCorsHeaders(res)
+    res.status(405).json(errorResponse)
     return
   }
   
@@ -200,7 +209,8 @@ export default async function handler(
         error: 'Rate limit exceeded. Please try again later.',
         code: 'RATE_LIMIT_EXCEEDED'
       }
-      res.status(429).setHeaders(corsHeaders).json(errorResponse)
+      setCorsHeaders(res)
+      res.status(429).json(errorResponse)
       return
     }
     
@@ -213,7 +223,8 @@ export default async function handler(
         error: 'Text is required',
         code: 'MISSING_TEXT'
       }
-      res.status(400).setHeaders(corsHeaders).json(errorResponse)
+      setCorsHeaders(res)
+      res.status(400).json(errorResponse)
       return
     }
     
@@ -223,7 +234,8 @@ export default async function handler(
         error: 'Voice ID is required',
         code: 'MISSING_VOICE_ID'
       }
-      res.status(400).setHeaders(corsHeaders).json(errorResponse)
+      setCorsHeaders(res)
+      res.status(400).json(errorResponse)
       return
     }
     
@@ -235,7 +247,8 @@ export default async function handler(
         error: textValidationError,
         code: 'INVALID_TEXT'
       }
-      res.status(400).setHeaders(corsHeaders).json(errorResponse)
+      setCorsHeaders(res)
+      res.status(400).json(errorResponse)
       return
     }
     
@@ -264,7 +277,8 @@ export default async function handler(
       }
     }
     
-    res.status(200).setHeaders(corsHeaders).json(successResponse)
+    setCorsHeaders(res)
+    res.status(200).json(successResponse)
     
   } catch (error) {
     console.error('Voice synthesis error:', error)
@@ -293,6 +307,7 @@ export default async function handler(
       code: errorCode
     }
     
-    res.status(500).setHeaders(corsHeaders).json(errorResponse)
+    setCorsHeaders(res)
+    res.status(500).json(errorResponse)
   }
 }
