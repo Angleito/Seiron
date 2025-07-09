@@ -394,20 +394,15 @@ export class WebGLRecoveryManager extends EventEmitter {
       
       // Clear any cached Three.js objects
       if (typeof THREE !== 'undefined') {
-        // Clear material cache
-        if (THREE.MaterialLoader && THREE.MaterialLoader.prototype.materialCache) {
-          THREE.MaterialLoader.prototype.materialCache = {};
-        }
-        
-        // Clear geometry cache
-        if (THREE.BufferGeometryUtils) {
-          // Clear any cached geometries
-        }
+        // Note: Material and geometry caches are handled internally by Three.js
+        // We don't have direct access to clear them, but disposing of materials
+        // and geometries will help with memory cleanup
       }
       
       // Request memory cleanup
-      if (typeof window !== 'undefined' && window.performance && window.performance.memory) {
-        const memoryBefore = window.performance.memory.usedJSHeapSize;
+      if (typeof window !== 'undefined' && window.performance && (window.performance as any).memory) {
+        const memory = (window.performance as any).memory;
+        const memoryBefore = memory.usedJSHeapSize;
         
         // Force a minor GC by creating and destroying objects
         const cleanup = [];
@@ -417,8 +412,8 @@ export class WebGLRecoveryManager extends EventEmitter {
         cleanup.length = 0;
         
         setTimeout(() => {
-          if (window.performance.memory) {
-            const memoryAfter = window.performance.memory.usedJSHeapSize;
+          if ((window.performance as any).memory) {
+            const memoryAfter = (window.performance as any).memory.usedJSHeapSize;
             console.log(`[WebGLRecovery] Memory cleanup: ${memoryBefore} -> ${memoryAfter} bytes`);
           }
         }, 100);
@@ -464,6 +459,7 @@ export class WebGLRecoveryManager extends EventEmitter {
       console.log('[WebGLRecovery] Renderer reinitialized successfully');
       
       // Record successful recovery
+      const recoveryTime = this.recoveryStartTime ? Date.now() - this.recoveryStartTime : 0;
       webglDiagnostics.recordError('WebGL context successfully restored');
       webglDiagnostics.recordContextRecovery(recoveryTime);
       
