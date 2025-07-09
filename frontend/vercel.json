@@ -12,11 +12,11 @@
   },
   "rewrites": [
     {
-      "source": "/api/voice/(.*)",
-      "destination": "/api/voice/$1"
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api).)*",
       "destination": "/index.html"
     }
   ],
