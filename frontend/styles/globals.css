@@ -237,6 +237,25 @@
   }
 }
 
+/* Canvas visibility fixes */
+canvas {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Ensure Three.js containers are visible */
+div[data-testid="dragon-renderer"],
+div[class*="dragon"] {
+  min-width: 100px;
+  min-height: 100px;
+}
+
+/* Debug: Make all canvases have a visible border */
+canvas {
+  border: 1px solid rgba(255, 255, 0, 0.5) !important;
+}
+
 /* Print styles */
 @media print {
   body {

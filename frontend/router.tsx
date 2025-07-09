@@ -21,6 +21,7 @@ const AgentTestPage = lazy(() => import('./pages/AgentTestPage'))
 const SecurityTestPage = lazy(() => import('./pages/SecurityTestPage'))
 const ChatPage = lazy(() => import('./pages/chat'))
 const AboutPage = lazy(() => import('./pages/about'))
+const DragonDebugPage = lazy(() => import('./pages/dragon-debug'))
 
 const PageLoader = ({ 
   children, 
@@ -133,6 +134,14 @@ export const router = createBrowserRouter([
         element: (
           <PageLoader pageName="About">
             <AboutPage />
+          </PageLoader>
+        ),
+      },
+      {
+        path: 'dragon-debug',
+        element: (
+          <PageLoader pageName="Dragon Debug">
+            <DragonDebugPage />
           </PageLoader>
         ),
       },

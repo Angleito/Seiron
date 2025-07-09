@@ -52,6 +52,12 @@ function DragonMesh({
 }) {
   const meshRef = useRef<THREE.Group>(null)
   
+  // Log when component mounts
+  useEffect(() => {
+    console.log('🐲 DragonMesh mounted with:', { size, modelPath, enableAnimations })
+    return () => console.log('🐲 DragonMesh unmounted')
+  }, [])
+  
   // Try to load model with fallback - use the model path directly
   let scene: THREE.Group
   let animations: THREE.AnimationClip[]
@@ -225,9 +231,36 @@ function DragonMesh({
     }
   })
 
+  // Log the mesh state in animation frame
+  useEffect(() => {
+    if (meshRef.current) {
+      console.log('🐲 Dragon mesh ref attached:', {
+        position: meshRef.current.position,
+        scale: meshRef.current.scale,
+        visible: meshRef.current.visible,
+        children: meshRef.current.children.length
+      })
+    }
+  }, [meshRef.current])
+
   return (
     <group ref={meshRef}>
-      <primitive object={clonedScene} />
+      {/* Add a debug sphere at dragon position */}
+      <mesh position={[0, 0, 0]}>
+        <sphereGeometry args={[1, 16, 16]} />
+        <meshBasicMaterial color="red" wireframe />
+      </mesh>
+      
+      <primitive 
+        object={clonedScene} 
+        onUpdate={(self: THREE.Object3D) => {
+          console.log('🐲 Primitive updated:', {
+            visible: self.visible,
+            position: self.position,
+            worldPosition: self.getWorldPosition(new THREE.Vector3())
+          })
+        }}
+      />
     </group>
   )
 }
@@ -313,8 +346,20 @@ function DragonScene({
   modelPath?: string
   onError?: (error: Error) => void
 }) {
+  // Log scene mounting
+  useEffect(() => {
+    console.log('🎬 DragonScene mounted')
+    return () => console.log('🎬 DragonScene unmounted')
+  }, [])
+  
   return (
     <Suspense fallback={<LoadingDragon />}>
+      {/* Add grid helper for debugging */}
+      <gridHelper args={[20, 20, 'yellow', 'gray']} />
+      
+      {/* Add axes helper for debugging */}
+      <axesHelper args={[5]} />
+      
       <DragonLighting voiceState={voiceState} />
       <DragonMesh 
         voiceState={voiceState}
@@ -496,8 +541,46 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
 
   console.log('🎨 Rendering Canvas with isLoaded:', isLoaded)
 
+  // Add debug styling and logging
+  useEffect(() => {
+    console.log('🐉 Dragon container dimensions:', {
+      className,
+      containerElement: document.querySelector(`.${className?.split(' ')[0]}`),
+      parentElement: document.querySelector(`.${className?.split(' ')[0]}`)?.parentElement
+    })
+  }, [className])
+
   return (
-    <div className={`w-full h-full ${className}`}>
+    <div 
+      className={`w-full h-full ${className}`}
+      style={{
+        // Force explicit dimensions and add debug border
+        minWidth: '200px',
+        minHeight: '200px',
+        border: '2px solid red', // Debug border
+        backgroundColor: 'rgba(255, 0, 0, 0.1)', // Debug background
+        position: 'relative'
+      }}
+    >
+      {/* Debug info overlay */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        padding: '4px',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        color: 'white',
+        fontSize: '10px',
+        zIndex: 1000,
+        pointerEvents: 'none'
+      }}>
+        <div>Dragon: {isLoaded ? 'Loaded' : 'Loading'}</div>
+        <div>Size: {size}</div>
+        <div>Model: {modelPath}</div>
+        <div>Error: {hasError ? errorMessage : 'None'}</div>
+        <div>Recovery: {isRecovering ? 'Yes' : 'No'}</div>
+      </div>
+      
       <Canvas
         ref={canvasRef}
         camera={{ 
@@ -507,8 +590,14 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
           far: 100
         }}
         style={{ 
-          background: 'transparent',
-          pointerEvents: 'none'
+          background: 'rgba(0, 255, 0, 0.2)', // Green debug background
+          pointerEvents: 'none',
+          width: '100%',
+          height: '100%',
+          display: 'block', // Ensure canvas is displayed
+          position: 'absolute', // Position absolutely within container
+          top: 0,
+          left: 0
         }}
         gl={{ 
           antialias: true, 
@@ -523,6 +612,14 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
         shadows
         onCreated={(state) => {
           console.log('🎮 Three.js Canvas created:', state)
+          console.log('📐 Canvas dimensions:', {
+            width: state.gl.domElement.width,
+            height: state.gl.domElement.height,
+            clientWidth: state.gl.domElement.clientWidth,
+            clientHeight: state.gl.domElement.clientHeight,
+            camera: state.camera.position,
+            viewport: state.viewport
+          })
           rendererRef.current = state.gl
           
           // Configure renderer for better recovery
@@ -539,6 +636,12 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
           handleError(new Error('Canvas creation failed'))
         }}
       >
+        {/* Always render a debug cube to test basic rendering */}
+        <mesh position={[0, 0, 0]}>
+          <boxGeometry args={[2, 2, 2]} />
+          <meshBasicMaterial color="yellow" wireframe />
+        </mesh>
+        
         {isLoaded && (
           <DragonScene 
             voiceState={voiceState}

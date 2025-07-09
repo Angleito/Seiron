@@ -139,6 +139,18 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
     )
   }
 
+  // Debug logging
+  useEffect(() => {
+    console.log('🌩️ StormBackground mounted with:', {
+      className,
+      intensity,
+      animated,
+      isMobile,
+      isTablet,
+      shouldAnimate
+    })
+  }, [className, intensity, animated, isMobile, isTablet, shouldAnimate])
+
   return (
     <div 
       className={cn(
@@ -146,6 +158,11 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
         "bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900",
         className
       )}
+      style={{
+        // Ensure minimum dimensions
+        minHeight: '500px',
+        minWidth: '100%'
+      }}
       role="presentation"
       aria-label="Storm background effect"
     >
@@ -156,28 +173,44 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
       />
       
       {/* Dragon Head - Main focus element - using modern DragonRenderer */}
-      <DragonRenderer
-        className="absolute inset-0"
-        size="lg"
-        dragonType="glb"
-        enableFallback={true}
-        fallbackType="2d"
-        enableAnimations={shouldAnimate}
-        voiceState={{
-          isListening: false,
-          isSpeaking: false,
-          isProcessing: false,
-          isIdle: true,
-          volume: normalizedIntensity,
-          emotion: 'calm'
+      <div 
+        className="absolute" 
+        style={{
+          // Explicit positioning and sizing
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '600px',
+          height: '600px',
+          // Debug styling
+          border: '3px solid blue',
+          backgroundColor: 'rgba(0, 0, 255, 0.1)',
+          zIndex: 20
         }}
-        onError={(error, type) => {
-          console.error(`Dragon ${type} error in StormBackground:`, error)
-        }}
-        onFallback={(fromType, toType) => {
-          console.log(`Dragon fallback in StormBackground: ${fromType} → ${toType}`)
-        }}
-      />
+      >
+        <DragonRenderer
+          className="w-full h-full"
+          size="lg"
+          dragonType="glb"
+          enableFallback={true}
+          fallbackType="2d"
+          enableAnimations={shouldAnimate}
+          voiceState={{
+            isListening: false,
+            isSpeaking: false,
+            isProcessing: false,
+            isIdle: true,
+            volume: normalizedIntensity,
+            emotion: 'calm'
+          }}
+          onError={(error, type) => {
+            console.error(`Dragon ${type} error in StormBackground:`, error)
+          }}
+          onFallback={(fromType, toType) => {
+            console.log(`Dragon fallback in StormBackground: ${fromType} → ${toType}`)
+          }}
+        />
+      </div>
       
       {/* Atmospheric enhancement overlay */}
       <div 
