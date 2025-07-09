@@ -29,6 +29,7 @@
     "optimize:dragon": "node scripts/optimize-dragon-model.js",
     "verify:models": "node scripts/verify-models.js",
     "test:model-fallback": "node scripts/test-model-fallback.js",
+    "check:production-models": "node scripts/check-production-models.js",
     "build:safe": "npm run verify:models && npm run build"
   },
   "overrides": {

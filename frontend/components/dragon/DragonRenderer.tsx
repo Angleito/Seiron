@@ -100,7 +100,7 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
   fallbackType = '2d',
   enableProgressiveLoading = false,
   lowQualityModel = '/models/seiron.glb',
-  highQualityModel = '/models/seiron_animated_optimized.gltf',
+  highQualityModel = '/models/seiron_animated.gltf', // Using non-optimized version that works in production
   enablePerformanceMonitor = false,
   performanceMonitorPosition = 'top-left',
   onError,
@@ -424,30 +424,29 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
           }
           
           // LOD based on size with availability checking and safe fallbacks
+          // Prioritize models that are confirmed to work in production
           const safeModels = [
-            '/models/seiron_optimized.glb',
-            '/models/seiron.glb',
-            '/models/seiron_animated_optimized.gltf',
-            '/models/seiron_animated_lod_high.gltf'
+            '/models/seiron_animated.gltf', // Primary working animated model
+            '/models/seiron.glb', // Working fallback model
+            '/models/seiron_animated_lod_high.gltf', // Working LOD model
+            '/models/seiron_optimized.glb', // May not work in production
+            '/models/seiron_animated_optimized.gltf' // May not work in production
           ]
           
           switch (size) {
             case 'sm':
             case 'md':
-              // Prefer optimized models for smaller sizes
-              return safeModels.find(model => modelAvailability[model] !== false) || '/models/seiron_optimized.glb'
+              // For smaller sizes, prefer simpler models
+              return safeModels.find(model => modelAvailability[model] !== false) || '/models/seiron.glb'
             case 'lg':
               const lodModel = '/models/seiron_animated_lod_high.gltf'
               if (modelAvailability[lodModel] !== false) return lodModel
-              return safeModels.find(model => modelAvailability[model] !== false) || '/models/seiron_optimized.glb'
+              return safeModels.find(model => modelAvailability[model] !== false) || '/models/seiron_animated.gltf'
             case 'xl':
             case 'gigantic':
             default:
-              // Try optimized animated first, then fallback to safe models
-              if (modelAvailability['/models/seiron_animated_optimized.gltf'] !== false) {
-                return '/models/seiron_animated_optimized.gltf'
-              }
-              return safeModels.find(model => modelAvailability[model] !== false) || '/models/seiron_optimized.glb'
+              // For larger sizes, use the best available model
+              return safeModels.find(model => modelAvailability[model] !== false) || '/models/seiron_animated.gltf'
           }
         }
         

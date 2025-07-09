@@ -5,7 +5,6 @@
  */
 
 import { Chain } from 'viem'
-import { seiMainnet } from '@config/privy'
 import { logger } from '@lib/logger'
 
 // ============================================================================
@@ -244,8 +243,8 @@ export const getChainCompatibilityInfo = (chainId: number): ChainCompatibilityIn
   
   // Get chain name from known chains
   let chainName = 'Unknown Chain'
-  if (chainId === seiMainnet.id) {
-    chainName = seiMainnet.name
+  if (chainId === 1329) {
+    chainName = 'Sei Network'
   } else if (chainId === 1) {
     chainName = 'Ethereum Mainnet'
   }
@@ -409,7 +408,7 @@ export const getCompatibilityErrorMessage = (
   
   if (!compatibilityInfo.isSupported) {
     const walletName = WALLET_DISPLAY_NAMES[walletType]
-    const chainName = chainId === seiMainnet.id ? seiMainnet.name : `Chain ${chainId}`
+    const chainName = chainId === 1329 ? 'Sei Network' : `Chain ${chainId}`
     
     let message = `${walletName} is not supported on ${chainName}.`
     

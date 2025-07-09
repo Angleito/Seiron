@@ -41,7 +41,7 @@ function DragonMesh({
   voiceState,
   size = 'gigantic',
   enableAnimations = true,
-  modelPath = '/models/seiron_animated_optimized.gltf',
+  modelPath = '/models/seiron_animated.gltf', // Using non-optimized version that works in production
   onError
 }: {
   voiceState?: VoiceAnimationState
@@ -331,7 +331,7 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
   size = 'gigantic',
   className = '',
   enableAnimations = true,
-  modelPath = '/models/seiron_animated_optimized.gltf',
+  modelPath = '/models/seiron_animated.gltf', // Using non-optimized version that works in production
   isProgressiveLoading = false,
   isLoadingHighQuality = false,
   onError,
@@ -614,13 +614,18 @@ const SeironGLBDragonWithWebGLErrorBoundary: React.FC<SeironGLBDragonProps> = (p
 // Preload the optimized GLTF models only once
 if (typeof window !== 'undefined') {
   try {
-    // Preload the working optimized models first
-    useGLTF.preload('/models/seiron_optimized.glb')
-    useGLTF.preload('/models/seiron_animated_optimized.gltf')
-    // Preload the working low-quality model for progressive loading
-    useGLTF.preload('/models/seiron.glb')
+    // Preload the working models first
+    useGLTF.preload('/models/seiron_animated.gltf') // Preload working model
+    useGLTF.preload('/models/seiron.glb') // Preload fallback model
     // Preload the LOD models if they exist
     useGLTF.preload('/models/seiron_animated_lod_high.gltf')
+    // Try to preload optimized versions (may fail in production)
+    try {
+      useGLTF.preload('/models/seiron_optimized.glb')
+      useGLTF.preload('/models/seiron_animated_optimized.gltf')
+    } catch (e) {
+      console.warn('Optimized models not available, using standard models')
+    }
   } catch (e) {
     console.warn('Failed to preload GLTF models:', e)
   }
