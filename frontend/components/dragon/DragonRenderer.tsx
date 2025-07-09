@@ -146,6 +146,9 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
       
       return () => clearTimeout(timer)
     }
+    
+    // Return cleanup function for other cases
+    return () => {}
   }, [enableProgressiveLoading, currentType, useHighQuality, isLoadingHighQuality, onProgressiveLoadComplete])
 
   const handleError = useCallback((error: Error) => {

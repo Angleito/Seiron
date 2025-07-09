@@ -204,8 +204,8 @@ export const DragonHead3DOptimized = React.memo(function DragonHead3DOptimized({
       setRenderMode(selectedMode)
       
       // End timer and log
-      const determinationTime = performanceMonitor.endTimer('render-mode-determination')
-      console.log(`🐉 Render mode determined in ${determinationTime.toFixed(0)}ms - set to: ${selectedMode}`)
+      performanceMonitor.endTimer('render-mode-determination')
+      console.log(`🐉 Render mode determined - set to: ${selectedMode}`)
     }
 
     // Small delay to prevent flash

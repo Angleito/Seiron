@@ -11,18 +11,8 @@ export interface PerformanceMetrics {
   }
 }
 
-export const PerformanceOverlay = ({ metrics }: { metrics: PerformanceMetrics }) => {
-  return (
-    <div className="fixed top-4 right-4 bg-black bg-opacity-50 text-white p-2 rounded text-xs">
-      <div>FPS: {metrics.fps}</div>
-      <div>Frame Time: {metrics.frameTime.toFixed(2)}ms</div>
-      <div>Render Time: {metrics.renderTime.toFixed(2)}ms</div>
-    </div>
-  )
-}
-
-export const usePerformanceMonitor = (config: boolean | { componentName?: string; enabled?: boolean; sampleRate?: number; onPerformanceWarning?: (metrics: any) => void; warningThreshold?: { fps: number } } = true) => {
-  const enabled = typeof config === 'boolean' ? config : config.enabled !== false
+export const usePerformanceMonitor = (config?: boolean | { componentName?: string; enabled?: boolean; sampleRate?: number; onPerformanceWarning?: (metrics: any) => void; warningThreshold?: { fps: number } }) => {
+  const enabled = typeof config === 'boolean' ? config : config?.enabled !== false
   const [metrics, setMetrics] = useState<PerformanceMetrics>({
     fps: 0,
     frameTime: 0,
@@ -42,13 +32,11 @@ export const usePerformanceMonitor = (config: boolean | { componentName?: string
       const deltaTime = currentTime - lastTime.current
       frameCount.current++
 
-      // Update metrics every 60 frames (roughly once per second at 60fps)
       if (frameCount.current % 60 === 0) {
         const fps = Math.round(1000 / (deltaTime / 60))
         const frameTime = deltaTime / 60
         const renderTime = currentTime - renderStartTime.current
 
-        // Get memory usage if available
         let memoryUsage
         if ('memory' in performance) {
           const memory = (performance as any).memory
@@ -124,3 +112,6 @@ export const usePerformanceMonitor = (config: boolean | { componentName?: string
     shouldDisableAnimations
   }
 }
+
+// Re-export the PerformanceOverlay component for backward compatibility
+export { PerformanceOverlay } from '../components/ui/PerformanceOverlay'

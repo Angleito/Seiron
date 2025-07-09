@@ -152,10 +152,10 @@ export function DragonLoader({
     errorHandledRef.current = false // Reset error flag on successful load
     
     // End loading timer and log performance
-    const loadTime = performanceMonitor.endTimer('dragon-loading')
+    performanceMonitor.endTimer('dragon-loading')
     performanceMonitor.logMetrics()
     
-    console.log(`🐉 Dragon loaded successfully in ${loadTime.toFixed(0)}ms`)
+    console.log(`🐉 Dragon loaded successfully`)
   }, [performanceMonitor])
 
   // Handle load error
