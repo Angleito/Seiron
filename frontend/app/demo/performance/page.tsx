@@ -1,12 +1,12 @@
 'use client'
 
 import React, { useState } from 'react'
-import { DragonLoader } from '@/components/effects/DragonLoader'
+import { DragonRenderer, VoiceAnimationState } from '@/components/dragon/DragonRenderer'
 import { usePerformanceMonitor, PerformanceOverlay } from '@/hooks/usePerformanceMonitor'
 
 export default function PerformanceDemoPage() {
   const [showOverlay, setShowOverlay] = useState(true)
-  const [forceQuality, setForceQuality] = useState<'low' | 'medium' | 'high' | 'auto'>('auto')
+  const [dragonType, setDragonType] = useState<'glb' | '2d' | 'ascii'>('glb')
   
   // Monitor page performance
   const pagePerformance = usePerformanceMonitor({
@@ -99,14 +99,29 @@ export default function PerformanceDemoPage() {
         
         {/* Dragon Container */}
         <div className="relative h-[600px] bg-gray-800 rounded-lg overflow-hidden">
-          <DragonLoader
-            showPerformanceOverlay={showOverlay}
-            forceQuality={forceQuality}
-            enableEyeTracking={true}
-            lightningActive={false}
-            onLoadError={(error) => {
-              console.error('Dragon load error:', error)
+          <DragonRenderer
+            size="lg"
+            dragonType="glb"
+            enableFallback={true}
+            fallbackType="2d"
+            enableAnimations={true}
+            enablePerformanceMonitor={showOverlay}
+            performanceMonitorPosition="top-right"
+            voiceState={{
+              isListening: false,
+              isSpeaking: false,
+              isProcessing: false,
+              isIdle: true,
+              volume: 0.5,
+              emotion: 'calm'
             }}
+            onError={(error, type) => {
+              console.error(`Dragon ${type} error:`, error)
+            }}
+            onFallback={(fromType, toType) => {
+              console.log(`Dragon fallback: ${fromType} → ${toType}`)
+            }}
+            className="w-full h-full"
           />
         </div>
         

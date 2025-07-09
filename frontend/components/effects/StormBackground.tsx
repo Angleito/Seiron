@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { cn } from '../../lib/utils'
-import DragonLoader from './DragonLoader'
+import { DragonRenderer, VoiceAnimationState } from '../dragon/DragonRenderer'
 
 interface StormBackgroundProps {
   className?: string
@@ -155,12 +155,28 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
         style={{ zIndex: 5 }}
       />
       
-      {/* Dragon Head - Main focus element - direct loading for debugging */}
-      <DragonLoader
+      {/* Dragon Head - Main focus element - using modern DragonRenderer */}
+      <DragonRenderer
         className="absolute inset-0"
-        intensity={normalizedIntensity}
-        enableEyeTracking={shouldAnimate}
-        lightningActive={false}
+        size="lg"
+        dragonType="glb"
+        enableFallback={true}
+        fallbackType="2d"
+        enableAnimations={shouldAnimate}
+        voiceState={{
+          isListening: false,
+          isSpeaking: false,
+          isProcessing: false,
+          isIdle: true,
+          volume: normalizedIntensity,
+          emotion: 'calm'
+        }}
+        onError={(error, type) => {
+          console.error(`Dragon ${type} error in StormBackground:`, error)
+        }}
+        onFallback={(fromType, toType) => {
+          console.log(`Dragon fallback in StormBackground: ${fromType} → ${toType}`)
+        }}
       />
       
       {/* Atmospheric enhancement overlay */}

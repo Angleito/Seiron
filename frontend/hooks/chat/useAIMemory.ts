@@ -23,6 +23,8 @@ export interface AIMemoryState {
   isLoading: boolean
   error: Error | null
   lastSync: Date | null
+  backendAvailable: boolean
+  failedAttempts: number
 }
 
 export interface UseAIMemoryOptions {
@@ -60,7 +62,9 @@ export function useAIMemory({
     entries: [],
     isLoading: false,
     error: null,
-    lastSync: null
+    lastSync: null,
+    backendAvailable: true,
+    failedAttempts: 0
   })
 
   const cacheRef = useRef<AIMemoryCache>({
@@ -70,8 +74,19 @@ export function useAIMemory({
 
   const syncTimeoutRef = useRef<NodeJS.Timeout>()
 
-  // Load memories from Supabase via API
+  // Load memories from backend via API with exponential backoff
   const loadMemories = useCallback(() => {
+    // Skip if too many failed attempts (exponential backoff)
+    if (state.failedAttempts >= 3) {
+      const backoffTime = Math.pow(2, state.failedAttempts) * 1000 // 8s, 16s, 32s, etc.
+      const timeSinceLastSync = state.lastSync ? Date.now() - state.lastSync.getTime() : Infinity
+      
+      if (timeSinceLastSync < backoffTime) {
+        logger.warn(`Skipping AI memory sync due to exponential backoff (${state.failedAttempts} failed attempts)`)
+        return Promise.resolve(E.right(state.entries))
+      }
+    }
+
     setState(prev => ({ ...prev, isLoading: true, error: null }))
 
     return pipe(
@@ -93,7 +108,7 @@ export function useAIMemory({
         },
         (error) => error as Error
       ),
-      TE.map((data: { memories: AIMemoryEntry[] }) => {
+      TE.map((data: { memories: AIMemoryEntry[], success?: boolean }) => {
         const entries = data.memories.map(m => ({
           ...m,
           createdAt: new Date(m.createdAt),
@@ -110,23 +125,32 @@ export function useAIMemory({
           cacheRef.current.lastUpdated = new Date()
         }
 
+        // Reset failed attempts on success
         setState({
           entries,
           isLoading: false,
           error: null,
-          lastSync: new Date()
+          lastSync: new Date(),
+          backendAvailable: true,
+          failedAttempts: 0
         })
 
         return entries
       }),
       TE.mapLeft((error) => {
-        setState(prev => ({ ...prev, isLoading: false, error }))
-        logger.error('Failed to load AI memories:', error)
+        setState(prev => ({ 
+          ...prev, 
+          isLoading: false, 
+          error,
+          backendAvailable: false,
+          failedAttempts: prev.failedAttempts + 1
+        }))
+        logger.error(`Failed to load AI memories (attempt ${state.failedAttempts + 1}):`, error)
         onSyncError?.(error)
         return error
       })
     )()
-  }, [userId, sessionId, cacheEnabled, onSyncError])
+  }, [userId, sessionId, cacheEnabled, onSyncError, state.failedAttempts, state.lastSync, state.entries])
 
   // Save a new memory entry
   const saveMemory = useCallback(async (
@@ -348,25 +372,40 @@ export function useAIMemory({
     }
   }, [state.entries, cacheEnabled])
 
-  // Auto-sync effect
+  // Auto-sync effect with intelligent backoff
   useEffect(() => {
     if (!autoSync) return
 
     // Initial load
     loadMemories()
 
-    // Set up periodic sync
-    syncTimeoutRef.current = setInterval(() => {
-      loadMemories()
-      clearExpiredMemories()
-    }, syncInterval)
+    // Set up periodic sync with adaptive interval
+    const adaptiveInterval = () => {
+      const baseInterval = syncInterval
+      const backoffMultiplier = Math.min(Math.pow(2, state.failedAttempts), 8) // Max 8x backoff
+      return baseInterval * backoffMultiplier
+    }
+
+    const scheduleNextSync = () => {
+      const interval = adaptiveInterval()
+      syncTimeoutRef.current = setTimeout(() => {
+        // Only sync if backend is available or enough time has passed
+        if (state.backendAvailable || state.failedAttempts < 5) {
+          loadMemories()
+          clearExpiredMemories()
+        }
+        scheduleNextSync()
+      }, interval)
+    }
+
+    scheduleNextSync()
 
     return () => {
       if (syncTimeoutRef.current) {
-        clearInterval(syncTimeoutRef.current)
+        clearTimeout(syncTimeoutRef.current)
       }
     }
-  }, [autoSync, syncInterval, loadMemories, clearExpiredMemories])
+  }, [autoSync, syncInterval, loadMemories, clearExpiredMemories, state.failedAttempts, state.backendAvailable])
 
   // Clean up expired memories periodically
   useEffect(() => {
@@ -380,6 +419,8 @@ export function useAIMemory({
     isLoading: state.isLoading,
     error: state.error,
     lastSync: state.lastSync,
+    backendAvailable: state.backendAvailable,
+    failedAttempts: state.failedAttempts,
 
     // Actions
     loadMemories,

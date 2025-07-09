@@ -14,7 +14,7 @@
  * - Fixed device pixel ratio to 1 for consistent performance
  */
 
-import React, { useRef, useEffect, useState, useMemo, Suspense, lazy, useCallback } from 'react'
+import React, { useRef, useEffect, useState, useMemo, Suspense, useCallback } from 'react'
 import { Canvas, useFrame, useLoader } from '@react-three/fiber'
 import { OBJLoader } from 'three-stdlib'
 import * as THREE from 'three'
@@ -34,10 +34,8 @@ interface DragonHead3DOptimizedProps {
 // Import minimal test for debugging
 import MinimalThreeTest from './MinimalThreeTest'
 
-// Lazy load the full 3D component for better initial page load
-const FullDragonScene = lazy(() => import('./DragonHead3D').then(module => ({
-  default: module.DragonHead3D
-})))
+// Direct import of the full 3D component - avoiding problematic lazy loading
+import DragonHead3D from './DragonHead3D'
 
 // Simple fallback dragon for low-end devices
 const SimpleDragonFallback = React.memo(function SimpleDragonFallback({ className }: { className?: string }) {
@@ -299,7 +297,7 @@ export const DragonHead3DOptimized = React.memo(function DragonHead3DOptimized({
   return (
     <div className={`absolute inset-0 ${className}`}>
       <Suspense fallback={<SimpleDragonFallback className={className} />}>
-        <FullDragonScene 
+        <DragonHead3D 
           className={className}
           intensity={intensity}
           enableEyeTracking={enableEyeTracking}
@@ -312,6 +310,3 @@ export const DragonHead3DOptimized = React.memo(function DragonHead3DOptimized({
 })
 
 export default DragonHead3DOptimized
-
-// Ensure TypeScript knows the component returns JSX
-export const DragonHead3D = DragonHead3DOptimized
