@@ -11,7 +11,18 @@ export interface PerformanceMetrics {
   }
 }
 
-export const usePerformanceMonitor = (enabled: boolean = true) => {
+export const PerformanceOverlay = ({ metrics }: { metrics: PerformanceMetrics }) => {
+  return (
+    <div className="fixed top-4 right-4 bg-black bg-opacity-50 text-white p-2 rounded text-xs">
+      <div>FPS: {metrics.fps}</div>
+      <div>Frame Time: {metrics.frameTime.toFixed(2)}ms</div>
+      <div>Render Time: {metrics.renderTime.toFixed(2)}ms</div>
+    </div>
+  )
+}
+
+export const usePerformanceMonitor = (config: boolean | { componentName?: string; enabled?: boolean; sampleRate?: number; onPerformanceWarning?: (metrics: any) => void; warningThreshold?: { fps: number } } = true) => {
+  const enabled = typeof config === 'boolean' ? config : config.enabled !== false
   const [metrics, setMetrics] = useState<PerformanceMetrics>({
     fps: 0,
     frameTime: 0,
@@ -81,9 +92,35 @@ export const usePerformanceMonitor = (enabled: boolean = true) => {
     setMetrics(prev => ({ ...prev, renderTime }))
   }
 
+  const startTimer = (name: string) => {
+    // Timer functionality for compatibility
+  }
+
+  const endTimer = (name: string) => {
+    // Timer functionality for compatibility
+  }
+
+  const logMetrics = () => {
+    console.log('Performance metrics:', metrics)
+  }
+
+  const performanceScore = metrics.fps > 30 ? 'good' : 'poor'
+  const recommendation = metrics.fps < 30 ? 'Consider reducing graphics quality' : 'Performance is good'
+  const isHighPerformance = metrics.fps > 50
+  const shouldReduceQuality = metrics.fps < 30
+  const shouldDisableAnimations = metrics.fps < 20
+
   return {
     metrics,
     startRender,
-    endRender
+    endRender,
+    startTimer,
+    endTimer,
+    logMetrics,
+    performanceScore,
+    recommendation,
+    isHighPerformance,
+    shouldReduceQuality,
+    shouldDisableAnimations
   }
 }
