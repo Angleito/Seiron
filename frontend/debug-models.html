@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Models</title>
+</head>
+<body>
+    <h1>Model Debug Test</h1>
+    <div id="results"></div>
+    <script>
+        const models = [
+            '/models/seiron_animated_optimized.gltf',
+            '/models/seiron_optimized.glb',
+            '/models/seiron_animated_lod_high.gltf',
+            '/models/dragon_head_optimized.glb'
+        ];
+
+        async function testModel(path) {
+            try {
+                const response = await fetch(path);
+                const size = response.headers.get('content-length');
+                const contentType = response.headers.get('content-type');
+                return {
+                    path,
+                    status: response.status,
+                    size: size ? parseInt(size) : 'unknown',
+                    contentType,
+                    accessible: response.ok
+                };
+            } catch (error) {
+                return {
+                    path,
+                    status: 'error',
+                    error: error.message,
+                    accessible: false
+                };
+            }
+        }
+
+        Promise.all(models.map(testModel)).then(results => {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<pre>' + JSON.stringify(results, null, 2) + '</pre>';
+        });
+    </script>
+</body>
+</html>
