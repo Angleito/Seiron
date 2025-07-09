@@ -5,7 +5,8 @@ const fs = require('fs').promises;
 const path = require('path');
 
 // Configuration
-const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+// Use deployed site by default, or override with BASE_URL env var
+const BASE_URL = process.env.BASE_URL || 'https://seiron.vercel.app';
 const CHAT_URL = `${BASE_URL}/chat`;
 const TIMEOUT = 30000; // 30 seconds
 
@@ -77,7 +78,10 @@ async function captureScreenshot(page, name) {
 async function runDiagnostics() {
   console.log('🐉 Seiron Chat Diagnostics Starting...\n');
   console.log(`Target URL: ${CHAT_URL}`);
-  console.log(`Timestamp: ${report.timestamp}\n`);
+  console.log(`Timestamp: ${report.timestamp}`);
+  console.log('\nNote: To test locally, run:');
+  console.log('  1. cd frontend && npm run dev');
+  console.log('  2. BASE_URL=http://localhost:5173 node scripts/diagnose-chat.js\n');
   
   let browser;
   
@@ -174,20 +178,18 @@ async function runDiagnostics() {
     // Test 2: Check for interface toggle buttons
     console.log('\n🔘 Test 2: Checking interface toggle buttons...');
     try {
-      const voiceButton = await page.$('button:has-text("AI Voice")');
-      const animeButton = await page.$('button:has-text("Minimal Anime")');
-      const minimalButton = await page.$('button:has-text("Minimal")');
+      const voiceButton = await page.$x('//button[contains(text(), "AI Voice")]');
+      const minimalButton = await page.$x('//button[contains(text(), "Minimal")]');
       
-      if (voiceButton && animeButton && minimalButton) {
+      if (voiceButton.length > 0 && minimalButton.length > 0) {
         addTest('Interface toggle buttons', 'passed', {
-          found: ['Voice', 'Anime', 'Minimal']
+          found: ['Voice', 'Minimal']
         });
       } else {
         addTest('Interface toggle buttons', 'failed', {
           error: 'Some buttons missing',
-          voiceButton: !!voiceButton,
-          animeButton: !!animeButton,
-          minimalButton: !!minimalButton
+          voiceButton: voiceButton.length > 0,
+          minimalButton: minimalButton.length > 0
         });
       }
     } catch (error) {
@@ -197,7 +199,6 @@ async function runDiagnostics() {
     // Test 3: Test each interface mode
     const modes = [
       { name: 'Minimal', buttonText: 'Minimal' },
-      { name: 'Minimal Anime', buttonText: 'Minimal Anime' },
       { name: 'Voice', buttonText: 'AI Voice' }
     ];
     
@@ -206,7 +207,7 @@ async function runDiagnostics() {
       
       try {
         // Click mode button
-        const button = await page.$(`button:has-text("${mode.buttonText}")`);
+        const [button] = await page.$x(`//button[contains(text(), "${mode.buttonText}")]`);
         if (button) {
           await button.click();
           await page.waitForTimeout(2000); // Wait for interface to load
@@ -216,7 +217,7 @@ async function runDiagnostics() {
           
           if (mode.name === 'Voice') {
             // Check for voice disabled message
-            const voiceDisabled = await page.$('text=/Voice Chat Temporarily Disabled/i');
+            const [voiceDisabled] = await page.$x('//text()[contains(translate(., "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "voice chat temporarily disabled")]');
             if (voiceDisabled) {
               addTest(`${mode.name} interface load`, 'passed', {
                 note: 'Voice interface shows disabled message'
@@ -253,14 +254,17 @@ async function runDiagnostics() {
     console.log('\n💬 Test 4: Testing message sending...');
     try {
       // Switch to Minimal interface
-      const minimalButton = await page.$('button:has-text("Minimal")');
+      const [minimalButton] = await page.$x('//button[contains(text(), "Minimal")]');
       if (minimalButton) {
         await minimalButton.click();
         await page.waitForTimeout(2000);
         
         // Find chat input
         const chatInput = await page.$('textarea[placeholder*="Seiron"], textarea[placeholder*="message"]');
-        const sendButton = await page.$('button:has([data-lucide="send"])');
+        // Find send button - look for button containing SVG with data-lucide="send" or similar send icon
+        const sendButton = await page.$('button[type="submit"]') || 
+                          await page.$('button[aria-label*="send" i]') ||
+                          await page.$('button[aria-label*="submit" i]');
         
         if (chatInput && sendButton) {
           // Type test message

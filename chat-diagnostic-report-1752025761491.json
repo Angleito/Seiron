@@ -1,0 +1,126 @@
+{
+  "timestamp": "2025-07-09T01:49:19.512Z",
+  "url": "https://seiron.vercel.app/chat",
+  "tests": [
+    {
+      "name": "Navigate to chat page",
+      "status": "passed",
+      "timestamp": "2025-07-09T01:49:21.285Z"
+    },
+    {
+      "name": "Interface toggle buttons",
+      "status": "failed",
+      "timestamp": "2025-07-09T01:49:21.389Z",
+      "error": "SyntaxError: Failed to execute 'querySelector' on 'Document': 'button:has-text(\"AI Voice\")' is not a valid selector."
+    },
+    {
+      "name": "Minimal interface load",
+      "status": "failed",
+      "timestamp": "2025-07-09T01:49:21.391Z",
+      "error": "SyntaxError: Failed to execute 'querySelector' on 'Document': 'button:has-text(\"Minimal\")' is not a valid selector."
+    },
+    {
+      "name": "Voice interface load",
+      "status": "failed",
+      "timestamp": "2025-07-09T01:49:21.391Z",
+      "error": "SyntaxError: Failed to execute 'querySelector' on 'Document': 'button:has-text(\"AI Voice\")' is not a valid selector."
+    },
+    {
+      "name": "Send message",
+      "status": "failed",
+      "timestamp": "2025-07-09T01:49:21.392Z",
+      "error": "SyntaxError: Failed to execute 'querySelector' on 'Document': 'button:has-text(\"Minimal\")' is not a valid selector."
+    },
+    {
+      "name": "No JavaScript errors",
+      "status": "failed",
+      "timestamp": "2025-07-09T01:49:21.422Z",
+      "errorCount": 2,
+      "errors": [
+        {
+          "type": "api_error",
+          "text": "API Error: 404  - https://seiron.vercel.app/chat",
+          "timestamp": "2025-07-09T01:49:20.348Z"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()",
+          "timestamp": "2025-07-09T01:49:20.352Z"
+        }
+      ]
+    },
+    {
+      "name": "API requests",
+      "status": "passed",
+      "timestamp": "2025-07-09T01:49:21.422Z",
+      "totalRequests": 0
+    },
+    {
+      "name": "Rate limiting",
+      "status": "passed",
+      "timestamp": "2025-07-09T01:49:21.422Z",
+      "note": "No rate limit errors detected"
+    },
+    {
+      "name": "CORS configuration",
+      "status": "passed",
+      "timestamp": "2025-07-09T01:49:21.422Z"
+    }
+  ],
+  "errors": [
+    {
+      "type": "api_error",
+      "text": "API Error: 404  - https://seiron.vercel.app/chat",
+      "timestamp": "2025-07-09T01:49:20.348Z"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "timestamp": "2025-07-09T01:49:20.352Z"
+    }
+  ],
+  "warnings": [],
+  "networkRequests": [
+    {
+      "url": "https://seiron.vercel.app/chat",
+      "method": "GET",
+      "timestamp": "2025-07-09T01:49:20.122Z",
+      "type": "request"
+    },
+    {
+      "url": "https://seiron.vercel.app/chat",
+      "method": "GET",
+      "status": 404,
+      "statusText": "",
+      "timestamp": "2025-07-09T01:49:20.348Z",
+      "type": "response"
+    }
+  ],
+  "consoleMessages": [
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "timestamp": "2025-07-09T01:49:20.352Z"
+    }
+  ],
+  "screenshots": [
+    {
+      "name": "initial-load",
+      "filename": "screenshot-initial-load-1752025761285.png",
+      "filepath": "/Users/angel/Projects/Seiron/diagnostic-screenshots/screenshot-initial-load-1752025761285.png",
+      "timestamp": "2025-07-09T01:49:21.372Z"
+    },
+    {
+      "name": "send-error",
+      "filename": "screenshot-send-error-1752025761392.png",
+      "filepath": "/Users/angel/Projects/Seiron/diagnostic-screenshots/screenshot-send-error-1752025761392.png",
+      "timestamp": "2025-07-09T01:49:21.422Z"
+    }
+  ],
+  "summary": {
+    "totalTests": 9,
+    "passed": 4,
+    "failed": 5,
+    "warnings": 0
+  }
+}

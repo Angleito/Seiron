@@ -13,10 +13,10 @@ import { LightningEffect } from '../effects/LightningEffect'
 
 // Log environment variables at module load
 const envStatus = {
-  hasVoiceId: typeof import.meta.env.VITE_ELEVENLABS_VOICE_ID !== 'undefined',
-  voiceIdValue: import.meta.env.VITE_ELEVENLABS_VOICE_ID || 'NOT_SET',
-  voiceEnabled: import.meta.env.VITE_VOICE_ENABLED || 'NOT_SET',
-  nodeEnv: import.meta.env.MODE || 'unknown'
+  hasVoiceId: typeof process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID !== 'undefined',
+  voiceIdValue: process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID || 'NOT_SET',
+  voiceEnabled: process.env.NEXT_PUBLIC_VOICE_ENABLED || 'NOT_SET',
+  nodeEnv: process.env.NODE_ENV || 'unknown'
 }
 
 logger.debug('🔊 VoiceInterface module loaded, checking environment', envStatus)
@@ -180,23 +180,39 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
         )
       )
     } else {
-      const result = await startListening()()
-      pipe(
-        result,
-        E.fold(
-          (error) => {
-            logger.error('🔊 Failed to start listening', {
-              errorType: error.type,
-              errorMessage: error.message
-            })
-            onError?.(new Error(error.message))
-          },
-          () => {
-            logger.debug('🔊 Successfully started listening')
-            setState(prev => ({ ...prev, isMicrophoneActive: true }))
-          }
+      // Request microphone permission explicitly before starting
+      try {
+        logger.debug('🔊 Requesting microphone permission')
+        const permission = await navigator.mediaDevices.getUserMedia({ audio: true })
+        
+        // Clean up the permission stream immediately
+        permission.getTracks().forEach(track => track.stop())
+        
+        logger.debug('🔊 Microphone permission granted, starting speech recognition')
+        const result = await startListening()()
+        
+        pipe(
+          result,
+          E.fold(
+            (error) => {
+              logger.error('🔊 Failed to start listening', {
+                errorType: error.type,
+                errorMessage: error.message
+              })
+              onError?.(new Error(error.message))
+            },
+            () => {
+              logger.debug('🔊 Successfully started listening')
+              setState(prev => ({ ...prev, isMicrophoneActive: true }))
+            }
+          )
         )
-      )
+      } catch (permissionError) {
+        logger.error('🔊 Microphone permission denied', {
+          error: permissionError
+        })
+        onError?.(new Error('Microphone permission denied. Please allow microphone access to use voice features.'))
+      }
     }
   }, [isListening, startListening, stopListening, onError])
 
@@ -389,21 +405,46 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
     return undefined
   }, [state.currentTranscript])
 
-  if (!isSpeechSupported) {
-    logger.warn('🔊 Speech recognition not supported, rendering fallback UI')
+  // Check for HTTPS requirement
+  const isSecureContext = typeof window !== 'undefined' && (
+    window.location.protocol === 'https:' || 
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1'
+  )
+
+  if (!isSpeechSupported || !isSecureContext) {
+    const errorMessage = !isSpeechSupported 
+      ? "Scouter technology not compatible with this dimension!"
+      : "Sei-ron's voice powers require a secure connection!"
+    
+    const detailMessage = !isSpeechSupported
+      ? "Your browser cannot commune with Sei-ron's mystical voice powers."
+      : "Voice features require HTTPS. Please use a secure connection to unlock the portfolio dragon's wisdom."
+    
+    const helpMessage = !isSpeechSupported
+      ? "Please use Chrome, Edge, or Safari to unlock the portfolio dragon's wisdom."
+      : "Try accessing the site via https:// or localhost"
+    
+    logger.warn('🔊 Voice features not available', {
+      speechSupported: isSpeechSupported,
+      secureContext: isSecureContext,
+      protocol: typeof window !== 'undefined' ? window.location.protocol : 'unknown',
+      hostname: typeof window !== 'undefined' ? window.location.hostname : 'unknown'
+    })
+    
     return (
       <div className={`${className}`}>
         <DragonBallLoadingStates.ErrorRecovery 
-          message="Scouter technology not compatible with this dimension!"
+          message={errorMessage}
           className="w-full max-w-md mx-auto"
         />
         <div className="text-center mt-4 p-4 bg-red-900/20 border border-red-500/30 rounded-lg max-w-md mx-auto">
           <p className="text-red-400 font-semibold">🐉 Sei-ron Dragon Notice:</p>
           <p className="text-sm text-red-300 mt-2">
-            Your browser cannot commune with Sei-ron's mystical voice powers.
+            {detailMessage}
           </p>
           <p className="text-xs text-gray-400 mt-2">
-            Please use Chrome, Edge, or Safari to unlock the portfolio dragon's wisdom.
+            {helpMessage}
           </p>
         </div>
       </div>
