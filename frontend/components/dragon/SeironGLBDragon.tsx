@@ -49,40 +49,23 @@ function DragonMesh({
 }) {
   const meshRef = useRef<THREE.Group>(null)
   
-  // Model fallback hierarchy
-  const fallbackModels = [
-    modelPath,
-    '/models/seiron_animated.gltf',
-    '/models/seiron.glb'
-  ]
-  
-  // Try to load model with fallback
+  // Try to load model with fallback - use the model path directly
   let scene: THREE.Group
   let animations: THREE.AnimationClip[]
-  let actualModelPath = modelPath
   
-  // Find the first working model
-  for (const fallbackPath of fallbackModels) {
-    try {
-      console.log(`🔄 Attempting to load GLTF model from ${fallbackPath}...`)
-      const gltf = useGLTF(fallbackPath)
-      scene = gltf.scene
-      animations = gltf.animations || []
-      actualModelPath = fallbackPath
-      console.log('✅ GLTF model loaded successfully:', scene)
-      console.log('🎭 Available animations:', animations.map(clip => clip.name))
-      break
-    } catch (error) {
-      console.warn(`❌ Failed to load GLTF model from ${fallbackPath}:`, error)
-      if (fallbackPath === fallbackModels[fallbackModels.length - 1]) {
-        // Last fallback failed
-        console.error('❌ All model fallbacks failed')
-        if (onError) {
-          onError(new Error(`All model fallbacks failed. Last error: ${error}`))
-        }
-        throw error
-      }
+  try {
+    console.log(`🔄 Loading GLTF model from ${modelPath}...`)
+    const gltf = useGLTF(modelPath)
+    scene = gltf.scene
+    animations = gltf.animations || []
+    console.log('✅ GLTF model loaded successfully:', scene)
+    console.log('🎭 Available animations:', animations.map(clip => clip.name))
+  } catch (error) {
+    console.error('❌ Failed to load GLTF model:', error)
+    if (onError) {
+      onError(error as Error)
     }
+    throw error
   }
   
   // Size configurations
