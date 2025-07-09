@@ -275,11 +275,19 @@ export function DragonHead3DOptimized({
     )
   }
 
-  // Full quality for high-end devices - TEMPORARILY USE TEST COMPONENT
-  console.log('🐉 DragonHead3DOptimized: Rendering FULL mode with test component')
+  // Full quality for high-end devices
+  console.log('🐉 DragonHead3DOptimized: Rendering FULL mode')
   return (
     <div className={`absolute inset-0 ${className}`}>
-      <MinimalThreeTest className="absolute inset-0" />
+      <Suspense fallback={<SimpleDragonFallback className={className} />}>
+        <FullDragonScene 
+          className={className}
+          intensity={intensity}
+          enableEyeTracking={enableEyeTracking}
+          lightningActive={lightningActive}
+          onLoad={onLoad}
+        />
+      </Suspense>
     </div>
   )
 }

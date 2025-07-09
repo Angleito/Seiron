@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useEffect, useState, Suspense } from 'react'
+import React, { useRef, useEffect, useState, Suspense, ErrorInfo } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { useGLTF, PerspectiveCamera } from '@react-three/drei'
 import * as THREE from 'three'
@@ -16,17 +16,20 @@ interface SeironGLBDragonProps {
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'gigantic'
   className?: string
   enableAnimations?: boolean
+  onError?: (error: Error) => void
 }
 
 // Dragon mesh component that handles the GLB model
 function DragonMesh({ 
   voiceState,
   size = 'gigantic',
-  enableAnimations = true
+  enableAnimations = true,
+  onError
 }: {
   voiceState?: VoiceAnimationState
   size: 'sm' | 'md' | 'lg' | 'xl' | 'gigantic'
   enableAnimations: boolean
+  onError?: (error: Error) => void
 }) {
   const meshRef = useRef<THREE.Group>(null)
   
@@ -42,6 +45,9 @@ function DragonMesh({
     console.log('🎭 Available animations:', animations.map(clip => clip.name))
   } catch (error) {
     console.error('❌ Failed to load GLTF model:', error)
+    if (onError) {
+      onError(error as Error)
+    }
     throw error
   }
   
@@ -211,11 +217,13 @@ function LoadingDragon() {
 function DragonScene({ 
   voiceState, 
   size,
-  enableAnimations 
+  enableAnimations,
+  onError
 }: {
   voiceState?: VoiceAnimationState
   size: 'sm' | 'md' | 'lg' | 'xl' | 'gigantic'
   enableAnimations: boolean
+  onError?: (error: Error) => void
 }) {
   return (
     <Suspense fallback={<LoadingDragon />}>
@@ -224,6 +232,7 @@ function DragonScene({
         voiceState={voiceState}
         size={size}
         enableAnimations={enableAnimations}
+        onError={onError}
       />
       <fog attach="fog" args={['#000000', 10, 50]} />
     </Suspense>
@@ -235,7 +244,8 @@ export const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
   voiceState,
   size = 'gigantic',
   className = '',
-  enableAnimations = true
+  enableAnimations = true,
+  onError
 }) => {
   const [isLoaded, setIsLoaded] = useState(false)
   const [hasError, setHasError] = useState(false)
@@ -244,12 +254,18 @@ export const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
   console.log('🐉 SeironGLBDragon rendering with props:', { size, enableAnimations, voiceState })
 
   useEffect(() => {
+    let mounted = true
     console.log('⏰ Starting dragon load timer...')
     const timer = setTimeout(() => {
-      console.log('✅ Dragon load timer complete')
-      setIsLoaded(true)
+      if (mounted) {
+        console.log('✅ Dragon load timer complete')
+        setIsLoaded(true)
+      }
     }, 100)
-    return () => clearTimeout(timer)
+    return () => {
+      mounted = false
+      clearTimeout(timer)
+    }
   }, [])
 
   // Error handler
@@ -257,6 +273,11 @@ export const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
     console.error('❌ Dragon error:', error)
     setHasError(true)
     setErrorMessage(error.message)
+    
+    // Propagate error to parent
+    if (onError) {
+      onError(error)
+    }
   }
 
   if (hasError) {
@@ -306,6 +327,7 @@ export const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
             voiceState={voiceState}
             size={size}
             enableAnimations={enableAnimations}
+            onError={handleError}
           />
         )}
       </Canvas>
@@ -313,7 +335,50 @@ export const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
   )
 }
 
-// Preload the GLTF model
-useGLTF.preload('/models/seiron_animated.gltf')
+// Error boundary class component to catch useGLTF errors
+class GLTFErrorBoundary extends React.Component<
+  { children: React.ReactNode; onError: (error: Error) => void },
+  { hasError: boolean; error?: Error }
+> {
+  constructor(props: any) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('GLTFErrorBoundary caught error:', error, errorInfo)
+    this.props.onError(error)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return null // Let parent handle the error display
+    }
+    return this.props.children
+  }
+}
+
+// Wrapped component that includes error boundary
+export const SeironGLBDragonWithErrorBoundary: React.FC<SeironGLBDragonProps> = (props) => {
+  return (
+    <GLTFErrorBoundary onError={props.onError || (() => {})}>
+      <SeironGLBDragon {...props} />
+    </GLTFErrorBoundary>
+  )
+}
+
+// Preload the GLTF model only once
+if (typeof window !== 'undefined') {
+  try {
+    useGLTF.preload('/models/seiron_animated.gltf')
+  } catch (e) {
+    console.warn('Failed to preload GLTF model:', e)
+  }
+}
 
 export default SeironGLBDragon
+export { SeironGLBDragon, SeironGLBDragonWithErrorBoundary }

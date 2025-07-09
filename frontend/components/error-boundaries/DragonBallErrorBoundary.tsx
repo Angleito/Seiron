@@ -1,6 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react'
 import { logger } from '@lib/logger'
-import { DragonRenderer } from '@components/dragon/DragonRenderer'
 
 interface Props {
   children: ReactNode
@@ -179,20 +178,10 @@ export class DragonBallErrorBoundary extends Component<Props, State> {
               <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 animate-pulse" />
             </div>
 
-            {/* Dragon animation for higher level errors */}
+            {/* Dragon emoji animation for higher level errors */}
             {enableDragonAnimation && (level === 'page' || level === 'app') && (
-              <div className="absolute top-0 right-0 w-32 h-32 opacity-30">
-                <DragonRenderer 
-                  size="sm"
-                  voiceState={{
-                    isListening: false,
-                    isSpeaking: false,
-                    isProcessing: false,
-                    isIdle: false,
-                    volume: 0,
-                    emotion: 'angry'
-                  }}
-                />
+              <div className="absolute top-0 right-0 w-32 h-32 opacity-30 flex items-center justify-center">
+                <div className="text-6xl animate-pulse">🐲</div>
               </div>
             )}
 

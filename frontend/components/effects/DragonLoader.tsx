@@ -88,11 +88,11 @@ function DragonPlaceholder({
 // Error boundary for dragon loading failures
 class DragonErrorBoundary extends React.Component<
   { children: React.ReactNode; onError?: (error: Error) => void },
-  { hasError: boolean; error?: Error }
+  { hasError: boolean; error?: Error; errorCount: number }
 > {
   constructor(props: any) {
     super(props)
-    this.state = { hasError: false }
+    this.state = { hasError: false, errorCount: 0 }
   }
 
   static getDerivedStateFromError(error: Error) {
@@ -100,7 +100,9 @@ class DragonErrorBoundary extends React.Component<
   }
 
   override componentDidCatch(error: Error) {
-    if (this.props.onError) {
+    // Prevent multiple error callbacks
+    if (this.state.errorCount === 0 && this.props.onError) {
+      this.setState(prev => ({ errorCount: prev.errorCount + 1 }))
       this.props.onError(error)
     }
   }
@@ -124,6 +126,7 @@ export function DragonLoader({
   const [loadingState, setLoadingState] = useState<LoadingState>('idle')
   const [error, setError] = useState<Error | null>(null)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const errorHandledRef = useRef(false)
   
   // Use performance monitor hook
   const performanceMonitor = usePerformanceMonitor({
@@ -146,6 +149,7 @@ export function DragonLoader({
       timeoutRef.current = null
     }
     setLoadingState('loaded')
+    errorHandledRef.current = false // Reset error flag on successful load
     
     // End loading timer and log performance
     const loadTime = performanceMonitor.endTimer('dragon-loading')
@@ -156,14 +160,24 @@ export function DragonLoader({
 
   // Handle load error
   const handleError = useCallback((error: Error) => {
+    // Prevent multiple error handling
+    if (errorHandledRef.current) {
+      console.log('🐉 DragonLoader: Error already handled, skipping...')
+      return
+    }
+    
+    errorHandledRef.current = true
     console.error('🐉 DragonLoader: ERROR occurred during loading:', error)
     console.error('🐉 DragonLoader: Error stack:', error.stack)
+    
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
       timeoutRef.current = null
     }
+    
     setError(error)
     setLoadingState('error')
+    
     if (onLoadError) {
       onLoadError(error)
     }
@@ -182,12 +196,7 @@ export function DragonLoader({
         preloadLink.crossOrigin = 'anonymous'
         document.head.appendChild(preloadLink)
 
-        // Preload textures if any
-        const texturePreload = document.createElement('link')
-        texturePreload.rel = 'preload'
-        texturePreload.as = 'image'
-        texturePreload.href = '/textures/dragon-texture.jpg' // Adjust path as needed
-        document.head.appendChild(texturePreload)
+        // Note: Textures are loaded as part of the GLTF model, no need for separate preload
       })
 
       return () => {
