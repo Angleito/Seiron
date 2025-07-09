@@ -26,8 +26,8 @@ export const VoiceEnabledChatContainer = React.memo(function VoiceEnabledChatCon
   
   // ElevenLabs configuration - now using backend proxy - memoized
   const elevenLabsConfig: ElevenLabsConfig = useMemo(() => ({
-    apiKey: process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY || '',
-    voiceId: process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID || '',
+    apiKey: '', // API key is now handled server-side for security
+    voiceId: process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID || 'EXAVITQu4vr4xnSDxMaL', // Default Seiron dragon voice
     modelId: 'eleven_monolingual_v1',
     voiceSettings: {
       stability: 0.5,
