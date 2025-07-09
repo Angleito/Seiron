@@ -5,11 +5,14 @@ import { webglDiagnostics } from './webglDiagnostics';
 export interface WebGLRecoveryConfig {
   maxRecoveryAttempts?: number;
   recoveryDelayMs?: number;
+  maxRecoveryDelay?: number;
   fallbackEnabled?: boolean;
+  exponentialBackoff?: boolean;
   onContextLost?: () => void;
   onContextRestored?: () => void;
   onRecoveryFailed?: () => void;
   onFallback?: () => void;
+  onRecoveryAttempt?: (attempt: number) => void;
 }
 
 export interface WebGLDiagnostics {
@@ -20,6 +23,17 @@ export interface WebGLDiagnostics {
   lastContextLoss?: Date;
   lastSuccessfulRecovery?: Date;
   currentState: 'active' | 'lost' | 'recovering' | 'failed';
+  recoveryHistory: RecoveryAttempt[];
+  totalRecoveryTime: number;
+  averageRecoveryTime: number;
+}
+
+interface RecoveryAttempt {
+  timestamp: Date;
+  attempt: number;
+  success: boolean;
+  timeTaken: number;
+  error?: string;
 }
 
 export class WebGLRecoveryManager extends EventEmitter {
@@ -28,22 +42,31 @@ export class WebGLRecoveryManager extends EventEmitter {
   private renderer: THREE.WebGLRenderer | null = null;
   private recoveryAttempts = 0;
   private isRecovering = false;
+  private recoveryTimer: NodeJS.Timeout | null = null;
+  private recoveryStartTime: number | null = null;
+  private contextLossExtension: WEBGL_lose_context | null = null;
   private diagnostics: WebGLDiagnostics = {
     contextLossCount: 0,
     recoveryAttempts: 0,
     successfulRecoveries: 0,
     failedRecoveries: 0,
-    currentState: 'active'
+    currentState: 'active',
+    recoveryHistory: [],
+    totalRecoveryTime: 0,
+    averageRecoveryTime: 0
   };
   
   private config: Required<WebGLRecoveryConfig> = {
     maxRecoveryAttempts: 3,
     recoveryDelayMs: 1000,
+    maxRecoveryDelay: 8000,
     fallbackEnabled: true,
+    exponentialBackoff: true,
     onContextLost: () => {},
     onContextRestored: () => {},
     onRecoveryFailed: () => {},
-    onFallback: () => {}
+    onFallback: () => {},
+    onRecoveryAttempt: () => {}
   };
 
   constructor(config?: WebGLRecoveryConfig) {
@@ -72,6 +95,13 @@ export class WebGLRecoveryManager extends EventEmitter {
       return;
     }
 
+    // Get the lose context extension for recovery
+    this.contextLossExtension = this.gl.getExtension('WEBGL_lose_context');
+    
+    if (!this.contextLossExtension) {
+      console.warn('[WebGLRecovery] WEBGL_lose_context extension not available');
+    }
+
     // Setup event listeners
     this.setupEventListeners();
     
@@ -97,9 +127,13 @@ export class WebGLRecoveryManager extends EventEmitter {
   private handleContextLost = (event: Event): void => {
     event.preventDefault(); // Prevent default behavior
     
+    // Cancel any ongoing recovery
+    this.cancelRecovery();
+    
     this.diagnostics.contextLossCount++;
     this.diagnostics.lastContextLoss = new Date();
     this.diagnostics.currentState = 'lost';
+    this.recoveryAttempts = 0; // Reset recovery attempts for new context loss
     
     console.warn('[WebGLRecovery] WebGL context lost', {
       lossCount: this.diagnostics.contextLossCount,
@@ -108,31 +142,42 @@ export class WebGLRecoveryManager extends EventEmitter {
     
     // Record error in diagnostics
     webglDiagnostics.recordError(`WebGL context lost (count: ${this.diagnostics.contextLossCount})`);
+    webglDiagnostics.recordContextLoss();
     
     this.emit('contextLost');
     this.config.onContextLost();
     
     // Attempt recovery
-    if (this.recoveryAttempts < this.config.maxRecoveryAttempts) {
-      this.attemptRecovery();
-    } else {
-      this.handleRecoveryFailed();
-    }
+    this.attemptRecovery();
   };
 
   /**
    * Handle WebGL context restored event
    */
   private handleContextRestored = (): void => {
+    const recoveryTime = this.recoveryStartTime ? Date.now() - this.recoveryStartTime : 0;
+    
     this.diagnostics.successfulRecoveries++;
     this.diagnostics.lastSuccessfulRecovery = new Date();
     this.diagnostics.currentState = 'active';
-    this.isRecovering = false;
-    this.recoveryAttempts = 0;
+    this.diagnostics.totalRecoveryTime += recoveryTime;
+    this.diagnostics.averageRecoveryTime = this.diagnostics.totalRecoveryTime / this.diagnostics.successfulRecoveries;
+    
+    // Record successful recovery attempt
+    this.diagnostics.recoveryHistory.push({
+      timestamp: new Date(),
+      attempt: this.recoveryAttempts,
+      success: true,
+      timeTaken: recoveryTime
+    });
+    
+    // Cancel recovery timer
+    this.cancelRecovery();
     
     console.log('[WebGLRecovery] WebGL context restored', {
       recoveries: this.diagnostics.successfulRecoveries,
-      timestamp: this.diagnostics.lastSuccessfulRecovery
+      timestamp: this.diagnostics.lastSuccessfulRecovery,
+      timeTaken: recoveryTime
     });
     
     this.emit('contextRestored');
@@ -150,22 +195,124 @@ export class WebGLRecoveryManager extends EventEmitter {
   private attemptRecovery(): void {
     if (this.isRecovering) return;
     
+    if (this.recoveryAttempts >= this.config.maxRecoveryAttempts) {
+      this.handleRecoveryFailed();
+      return;
+    }
+    
     this.isRecovering = true;
     this.recoveryAttempts++;
     this.diagnostics.recoveryAttempts++;
     this.diagnostics.currentState = 'recovering';
+    this.recoveryStartTime = Date.now();
     
     console.log(`[WebGLRecovery] Attempting recovery (attempt ${this.recoveryAttempts}/${this.config.maxRecoveryAttempts})`);
     
-    setTimeout(() => {
-      if (this.gl && this.gl.isContextLost()) {
-        // Force context restoration
-        const loseContext = this.gl.getExtension('WEBGL_lose_context');
-        if (loseContext) {
-          loseContext.restoreContext();
-        }
+    // Calculate delay with exponential backoff
+    const delay = this.calculateRecoveryDelay();
+    
+    // Notify about recovery attempt
+    this.config.onRecoveryAttempt(this.recoveryAttempts);
+    
+    this.recoveryTimer = setTimeout(() => {
+      this.performRecovery();
+    }, delay);
+  }
+
+  /**
+   * Calculate recovery delay with exponential backoff
+   */
+  private calculateRecoveryDelay(): number {
+    if (!this.config.exponentialBackoff) {
+      return this.config.recoveryDelayMs;
+    }
+    
+    const baseDelay = this.config.recoveryDelayMs;
+    const exponentialDelay = baseDelay * Math.pow(2, this.recoveryAttempts - 1);
+    
+    return Math.min(exponentialDelay, this.config.maxRecoveryDelay);
+  }
+
+  /**
+   * Perform the actual recovery attempt
+   */
+  private performRecovery(): void {
+    if (!this.gl || !this.contextLossExtension) {
+      console.error('[WebGLRecovery] Cannot perform recovery: missing context or extension');
+      this.recordFailedRecovery('Missing context or extension');
+      this.scheduleNextRecovery();
+      return;
+    }
+    
+    try {
+      // Check if context is still lost
+      if (this.gl.isContextLost()) {
+        console.log('[WebGLRecovery] Forcing context restoration');
+        this.contextLossExtension.restoreContext();
+        
+        // Give some time for context to be restored
+        setTimeout(() => {
+          if (this.gl && this.gl.isContextLost()) {
+            console.warn('[WebGLRecovery] Context restoration did not complete');
+            this.recordFailedRecovery('Context restoration incomplete');
+            this.scheduleNextRecovery();
+          }
+        }, 100);
+      } else {
+        console.log('[WebGLRecovery] Context is already restored');
+        this.handleContextRestored();
       }
-    }, this.config.recoveryDelayMs);
+    } catch (error) {
+      console.error('[WebGLRecovery] Recovery attempt failed:', error);
+      this.recordFailedRecovery(error instanceof Error ? error.message : 'Unknown error');
+      this.scheduleNextRecovery();
+    }
+  }
+
+  /**
+   * Record a failed recovery attempt
+   */
+  private recordFailedRecovery(error: string): void {
+    const recoveryTime = this.recoveryStartTime ? Date.now() - this.recoveryStartTime : 0;
+    
+    this.diagnostics.recoveryHistory.push({
+      timestamp: new Date(),
+      attempt: this.recoveryAttempts,
+      success: false,
+      timeTaken: recoveryTime,
+      error
+    });
+    
+    webglDiagnostics.recordError(`Recovery attempt ${this.recoveryAttempts} failed: ${error}`);
+  }
+
+  /**
+   * Schedule the next recovery attempt
+   */
+  private scheduleNextRecovery(): void {
+    this.isRecovering = false;
+    
+    if (this.recoveryAttempts < this.config.maxRecoveryAttempts) {
+      // Schedule next recovery attempt
+      setTimeout(() => {
+        this.attemptRecovery();
+      }, 500); // Short delay between attempts
+    } else {
+      this.handleRecoveryFailed();
+    }
+  }
+
+  /**
+   * Cancel ongoing recovery
+   */
+  private cancelRecovery(): void {
+    if (this.recoveryTimer) {
+      clearTimeout(this.recoveryTimer);
+      this.recoveryTimer = null;
+    }
+    
+    this.isRecovering = false;
+    this.recoveryStartTime = null;
   }
 
   /**
@@ -174,6 +321,9 @@ export class WebGLRecoveryManager extends EventEmitter {
   private handleRecoveryFailed(): void {
     this.diagnostics.failedRecoveries++;
     this.diagnostics.currentState = 'failed';
+    
+    // Cancel any ongoing recovery
+    this.cancelRecovery();
     
     console.error('[WebGLRecovery] Recovery failed after maximum attempts', {
       attempts: this.recoveryAttempts,
@@ -186,9 +336,95 @@ export class WebGLRecoveryManager extends EventEmitter {
     this.emit('recoveryFailed');
     this.config.onRecoveryFailed();
     
+    // Clean up resources
+    this.cleanupFailedContext();
+    
     // Trigger fallback if enabled
     if (this.config.fallbackEnabled) {
       this.triggerFallback();
+    }
+  }
+
+  /**
+   * Clean up failed context and resources
+   */
+  private cleanupFailedContext(): void {
+    try {
+      if (this.renderer) {
+        console.log('[WebGLRecovery] Disposing failed renderer');
+        
+        // Force garbage collection of renderer resources
+        this.renderer.dispose();
+        
+        // Clear render targets
+        this.renderer.setRenderTarget(null);
+        
+        // Clear any cached data
+        this.renderer.info.memory.geometries = 0;
+        this.renderer.info.memory.textures = 0;
+        this.renderer.info.render.calls = 0;
+        this.renderer.info.render.triangles = 0;
+        
+        this.renderer = null;
+      }
+      
+      // Clear GL reference
+      this.gl = null;
+      this.contextLossExtension = null;
+      
+      // Force garbage collection if available
+      this.forceGarbageCollection();
+      
+      console.log('[WebGLRecovery] Cleaned up failed context resources');
+    } catch (error) {
+      console.error('[WebGLRecovery] Error during cleanup:', error);
+    }
+  }
+
+  /**
+   * Force garbage collection if possible
+   */
+  private forceGarbageCollection(): void {
+    try {
+      // Try to force garbage collection
+      if (typeof window !== 'undefined' && 'gc' in window) {
+        (window as any).gc();
+        console.log('[WebGLRecovery] Forced garbage collection');
+      }
+      
+      // Clear any cached Three.js objects
+      if (typeof THREE !== 'undefined') {
+        // Clear material cache
+        if (THREE.MaterialLoader && THREE.MaterialLoader.prototype.materialCache) {
+          THREE.MaterialLoader.prototype.materialCache = {};
+        }
+        
+        // Clear geometry cache
+        if (THREE.BufferGeometryUtils) {
+          // Clear any cached geometries
+        }
+      }
+      
+      // Request memory cleanup
+      if (typeof window !== 'undefined' && window.performance && window.performance.memory) {
+        const memoryBefore = window.performance.memory.usedJSHeapSize;
+        
+        // Force a minor GC by creating and destroying objects
+        const cleanup = [];
+        for (let i = 0; i < 1000; i++) {
+          cleanup.push(new Float32Array(100));
+        }
+        cleanup.length = 0;
+        
+        setTimeout(() => {
+          if (window.performance.memory) {
+            const memoryAfter = window.performance.memory.usedJSHeapSize;
+            console.log(`[WebGLRecovery] Memory cleanup: ${memoryBefore} -> ${memoryAfter} bytes`);
+          }
+        }, 100);
+      }
+    } catch (error) {
+      console.warn('[WebGLRecovery] Could not force garbage collection:', error);
     }
   }
 
@@ -209,31 +445,33 @@ export class WebGLRecoveryManager extends EventEmitter {
     if (!this.renderer || !this.canvas) return;
     
     try {
-      // Reset renderer state
-      this.renderer.dispose();
+      // Get current renderer size
+      const size = this.renderer.getSize(new THREE.Vector2());
+      const pixelRatio = this.renderer.getPixelRatio();
       
-      // Recreate renderer with same configuration
-      const params = {
-        canvas: this.canvas,
-        antialias: true,
-        alpha: true,
-        powerPreference: 'high-performance',
-        failIfMajorPerformanceCaveat: false
-      };
+      console.log('[WebGLRecovery] Reinitializing renderer with size:', size, 'pixelRatio:', pixelRatio);
       
-      // Update renderer reference
-      this.renderer.setSize(this.canvas.width, this.canvas.height);
-      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      // Force renderer to reinitialize its context
+      this.renderer.forceContextRestore();
+      
+      // Update renderer reference to new context
+      this.renderer.setSize(size.width, size.height);
+      this.renderer.setPixelRatio(pixelRatio);
+      
+      // Reset render state
+      this.renderer.resetState();
       
       console.log('[WebGLRecovery] Renderer reinitialized successfully');
       
       // Record successful recovery
       webglDiagnostics.recordError('WebGL context successfully restored');
+      webglDiagnostics.recordContextRecovery(recoveryTime);
       
     } catch (error) {
       console.error('[WebGLRecovery] Failed to reinitialize renderer:', error);
       webglDiagnostics.recordError(`Failed to reinitialize renderer: ${error}`);
-      this.handleRecoveryFailed();
+      this.recordFailedRecovery(`Renderer reinitialize failed: ${error}`);
+      this.scheduleNextRecovery();
     }
   }
 
@@ -253,7 +491,10 @@ export class WebGLRecoveryManager extends EventEmitter {
       recoveryAttempts: 0,
       successfulRecoveries: 0,
       failedRecoveries: 0,
-      currentState: 'active'
+      currentState: 'active',
+      recoveryHistory: [],
+      totalRecoveryTime: 0,
+      averageRecoveryTime: 0
     };
   }
 
@@ -280,14 +521,21 @@ export class WebGLRecoveryManager extends EventEmitter {
    * Cleanup and remove event listeners
    */
   public dispose(): void {
+    // Cancel any ongoing recovery
+    this.cancelRecovery();
+    
     if (this.canvas) {
       this.canvas.removeEventListener('webglcontextlost', this.handleContextLost);
       this.canvas.removeEventListener('webglcontextrestored', this.handleContextRestored);
     }
     
+    // Clean up resources
+    this.cleanupFailedContext();
+    
     this.canvas = null;
     this.gl = null;
-    this.renderer = null;
+    this.contextLossExtension = null;
+    this.recoveryAttempts = 0;
     this.removeAllListeners();
     
     console.log('[WebGLRecovery] Disposed WebGL recovery manager');
@@ -304,9 +552,14 @@ export function useWebGLRecovery(config?: WebGLRecoveryConfig) {
     recoveryAttempts: 0,
     successfulRecoveries: 0,
     failedRecoveries: 0,
-    currentState: 'active'
+    currentState: 'active',
+    recoveryHistory: [],
+    totalRecoveryTime: 0,
+    averageRecoveryTime: 0
   });
   const [shouldFallback, setShouldFallback] = React.useState(false);
+  const [isRecovering, setIsRecovering] = React.useState(false);
+  const [currentRecoveryAttempt, setCurrentRecoveryAttempt] = React.useState(0);
 
   React.useEffect(() => {
     const manager = new WebGLRecoveryManager({
@@ -314,19 +567,31 @@ export function useWebGLRecovery(config?: WebGLRecoveryConfig) {
       onContextLost: () => {
         config?.onContextLost?.();
         setDiagnostics(manager.getDiagnostics());
+        setIsRecovering(true);
       },
       onContextRestored: () => {
         config?.onContextRestored?.();
         setDiagnostics(manager.getDiagnostics());
         setShouldFallback(false);
+        setIsRecovering(false);
+        setCurrentRecoveryAttempt(0);
       },
       onRecoveryFailed: () => {
         config?.onRecoveryFailed?.();
         setDiagnostics(manager.getDiagnostics());
+        setIsRecovering(false);
+        setCurrentRecoveryAttempt(0);
       },
       onFallback: () => {
         config?.onFallback?.();
         setShouldFallback(true);
+        setIsRecovering(false);
+        setCurrentRecoveryAttempt(0);
+      },
+      onRecoveryAttempt: (attempt: number) => {
+        config?.onRecoveryAttempt?.(attempt);
+        setCurrentRecoveryAttempt(attempt);
+        setDiagnostics(manager.getDiagnostics());
       }
     });
 
@@ -355,16 +620,31 @@ export function useWebGLRecovery(config?: WebGLRecoveryConfig) {
       recoveryAttempts: 0,
       successfulRecoveries: 0,
       failedRecoveries: 0,
-      currentState: 'active'
+      currentState: 'active',
+      recoveryHistory: [],
+      totalRecoveryTime: 0,
+      averageRecoveryTime: 0
     });
+    setShouldFallback(false);
+    setIsRecovering(false);
+    setCurrentRecoveryAttempt(0);
+  }, []);
+
+  const forceRecovery = React.useCallback(() => {
+    if (managerRef.current) {
+      managerRef.current.simulateContextLoss();
+    }
   }, []);
 
   return {
     initializeRecovery,
     diagnostics,
     shouldFallback,
+    isRecovering,
+    currentRecoveryAttempt,
     simulateContextLoss,
     resetDiagnostics,
+    forceRecovery,
     isWebGLAvailable: () => managerRef.current?.isWebGLAvailable() ?? false
   };
 }

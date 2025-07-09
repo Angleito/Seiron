@@ -11,6 +11,7 @@ import { WalletConnectProvider } from './components/wallet/WalletConnectProvider
 import { privyConfig } from './config/privy'
 import { wagmiConfig } from './config/wagmi'
 import { walletConnectManager, preventDoubleInitialization } from './utils/walletConnectManager'
+import { initializeEnvironmentValidation } from './utils/envValidation'
 import './styles/globals.css'
 
 // Debug logging for app initialization
@@ -19,6 +20,9 @@ console.log('Environment:', import.meta.env.MODE)
 console.log('Base URL:', import.meta.env.BASE_URL)
 console.log('Dev mode:', import.meta.env.DEV)
 console.log('Prod mode:', import.meta.env.PROD)
+
+// Initialize environment validation
+initializeEnvironmentValidation()
 
 // Prevent WalletConnect double initialization warnings in development
 preventDoubleInitialization()

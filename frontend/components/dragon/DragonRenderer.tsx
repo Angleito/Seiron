@@ -100,7 +100,7 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
   fallbackType = '2d',
   enableProgressiveLoading = false,
   lowQualityModel = '/models/seiron.glb',
-  highQualityModel = '/models/seiron_animated.gltf',
+  highQualityModel = '/models/seiron_animated_optimized.gltf',
   enablePerformanceMonitor = false,
   performanceMonitorPosition = 'top-left',
   onError,
@@ -142,15 +142,30 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
     
     // Check availability of all models
     const checkModels = async () => {
-      const modelsToCheck = [lowQualityModel, highQualityModel, '/models/seiron_animated_lod_high.gltf']
+      const modelsToCheck = [
+        lowQualityModel, 
+        highQualityModel, 
+        '/models/seiron_animated_lod_high.gltf',
+        '/models/seiron_optimized.glb'
+      ]
       const availability: Record<string, boolean> = {}
       
       for (const model of modelsToCheck) {
         try {
           const response = await fetch(model, { method: 'HEAD' })
           availability[model] = response.ok
+          
+          // Additional check for file size to detect corrupted files
+          if (response.ok) {
+            const contentLength = response.headers.get('content-length')
+            if (contentLength && parseInt(contentLength) < 1000) {
+              availability[model] = false
+              logger.warn(`Model ${model} appears to be corrupted (size: ${contentLength} bytes)`)
+            }
+          }
         } catch (error) {
           availability[model] = false
+          logger.warn(`Model availability check failed for ${model}:`, error)
         }
       }
       
@@ -211,7 +226,8 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
     }
     lastErrorTimeRef.current = now
     
-    logger.error(`Dragon ${currentType} error:`, error)
+    const errorMessage = errorRecoveryUtils.getErrorMessage(error)
+    logger.error(`Dragon ${currentType} error:`, errorMessage)
     errorCountRef.current++
     
     // Record error for monitoring
@@ -219,6 +235,14 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
     
     if (onError) {
       onError(error, currentType)
+    }
+    
+    // Check if this is a model-related error and should trigger immediate fallback
+    if (errorRecoveryUtils.isModelError(error)) {
+      logger.warn(`Model error detected for ${currentType}, triggering immediate fallback`)
+      setHasError(true)
+      // Skip recovery attempts for model errors
+      return
     }
 
     // Try error recovery first if enabled
@@ -399,18 +423,31 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
             return targetModel
           }
           
-          // LOD based on size with availability checking
+          // LOD based on size with availability checking and safe fallbacks
+          const safeModels = [
+            '/models/seiron_optimized.glb',
+            '/models/seiron.glb',
+            '/models/seiron_animated_optimized.gltf',
+            '/models/seiron_animated_lod_high.gltf'
+          ]
+          
           switch (size) {
             case 'sm':
             case 'md':
-              return modelAvailability[lowQualityModel] !== false ? lowQualityModel : highQualityModel
+              // Prefer optimized models for smaller sizes
+              return safeModels.find(model => modelAvailability[model] !== false) || '/models/seiron_optimized.glb'
             case 'lg':
               const lodModel = '/models/seiron_animated_lod_high.gltf'
-              return modelAvailability[lodModel] !== false ? lodModel : highQualityModel
+              if (modelAvailability[lodModel] !== false) return lodModel
+              return safeModels.find(model => modelAvailability[model] !== false) || '/models/seiron_optimized.glb'
             case 'xl':
             case 'gigantic':
             default:
-              return modelAvailability[highQualityModel] !== false ? highQualityModel : lowQualityModel
+              // Try optimized animated first, then fallback to safe models
+              if (modelAvailability['/models/seiron_animated_optimized.gltf'] !== false) {
+                return '/models/seiron_animated_optimized.gltf'
+              }
+              return safeModels.find(model => modelAvailability[model] !== false) || '/models/seiron_optimized.glb'
           }
         }
         

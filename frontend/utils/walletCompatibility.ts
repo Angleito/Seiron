@@ -65,7 +65,8 @@ const WALLET_CHAIN_COMPATIBILITY: Record<number, {
     issues: {
       coinbase: [
         'Coinbase Smart Wallet does not support Sei Network (chain ID 1329)',
-        'Use MetaMask or WalletConnect instead'
+        'This wallet is not compatible with custom chains like Sei Network',
+        'Use MetaMask or WalletConnect instead for full compatibility'
       ],
       embedded: [
         'Embedded wallets may have limited support for Sei Network',
@@ -323,9 +324,12 @@ export const getPrivyWalletListForChain = (chainId: number): string[] => {
   const unsupportedWallets = getUnsupportedWalletsForChain(chainId)
   const baseWallets = ['metamask', 'walletconnect', 'injected']
   
+  // Explicitly exclude all variants of Coinbase wallet
+  const excludedWallets = ['coinbase_smart_wallet', 'coinbase_wallet', 'coinbase']
+  
   return baseWallets.filter(wallet => {
     const walletType = wallet as WalletType
-    return !unsupportedWallets.includes(walletType)
+    return !unsupportedWallets.includes(walletType) && !excludedWallets.includes(wallet)
   })
 }
 

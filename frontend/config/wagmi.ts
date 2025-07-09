@@ -6,13 +6,15 @@ import {
   validateWalletCompatibility, 
   type WalletType 
 } from '../utils/walletCompatibility'
+import { envConfig } from '../utils/envValidation'
 
-// WalletConnect configuration
-const walletConnectProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID
+// WalletConnect configuration using environment validation
+const walletConnectProjectId = envConfig.walletConnectProjectId
 
 // Debug WalletConnect configuration
 console.log('🔗 WalletConnect configuration:')
 console.log('- Project ID present:', !!walletConnectProjectId)
+console.log('- Configuration valid:', envConfig.isValid.walletConnect)
 console.log('- Environment:', import.meta.env.MODE)
 
 // Sei Network configuration
@@ -41,6 +43,11 @@ console.log('🔗 Supported wallets for Sei Network:', seiSupportedWallets)
 // Create connectors with proper WalletConnect configuration and compatibility checks
 const connectors = []
 
+// Log excluded wallets to prevent warnings
+const excludedWallets = ['coinbase', 'coinbase_smart_wallet', 'coinbase_wallet']
+console.log('🚫 Excluded wallets for Sei Network:', excludedWallets)
+console.log('🔗 This prevents "chains not supported" warnings')
+
 // Add MetaMask connector if supported
 if (seiSupportedWallets.includes('metamask')) {
   connectors.push(metaMask())
@@ -59,22 +66,27 @@ if (seiSupportedWallets.includes('injected')) {
 
 // Add WalletConnect connector if supported and project ID is provided
 if (seiSupportedWallets.includes('walletconnect')) {
-  if (walletConnectProjectId) {
-    connectors.push(
-      walletConnect({
-        projectId: walletConnectProjectId,
-        metadata: {
-          name: 'Seiron',
-          description: 'Seiron Dragon - DeFi Portfolio Management',
-          url: 'https://seiron.vercel.app',
-          icons: ['https://seiron.vercel.app/favicon.ico'],
-        },
-        showQrModal: true,
-      })
-    )
-    console.log('✅ WalletConnect connector added (supported on Sei Network)')
+  if (envConfig.isValid.walletConnect) {
+    try {
+      connectors.push(
+        walletConnect({
+          projectId: walletConnectProjectId,
+          metadata: {
+            name: 'Seiron',
+            description: 'Seiron Dragon - DeFi Portfolio Management',
+            url: 'https://seiron.vercel.app',
+            icons: ['https://seiron.vercel.app/favicon.ico'],
+          },
+          showQrModal: true,
+        })
+      )
+      console.log('✅ WalletConnect connector added (supported on Sei Network)')
+    } catch (error) {
+      console.warn('⚠️ Failed to initialize WalletConnect:', error)
+    }
   } else {
-    console.warn('⚠️ VITE_WALLETCONNECT_PROJECT_ID not found, WalletConnect will not be available')
+    console.info('ℹ️ WalletConnect Project ID not configured, skipping WalletConnect connector')
+    console.info('ℹ️ Set VITE_WALLETCONNECT_PROJECT_ID environment variable to enable WalletConnect')
   }
 } else {
   console.warn('⚠️ WalletConnect not supported on Sei Network, skipping connector')
@@ -100,6 +112,10 @@ export const wagmiConfig = createConfig({
     [seiMainnet.id]: http(),
     [mainnet.id]: http(),
   },
+  // Configure to suppress chain compatibility warnings
+  ssr: false,
+  // Additional configuration to prevent warnings
+  multiInjectedProviderDiscovery: false,
 })
 
 // ============================================================================

@@ -2,6 +2,8 @@ import React, { Component, ErrorInfo, ReactNode } from 'react'
 import { AlertTriangle, Monitor, RefreshCw, Zap } from 'lucide-react'
 import { logger } from '@lib/logger'
 import { DragonBallErrorBoundary } from './DragonBallErrorBoundary'
+import { webglDiagnostics } from '../../utils/webglDiagnostics'
+import { webGLRecoveryManager } from '../../utils/webglRecovery'
 
 interface WebGLErrorBoundaryProps {
   children: ReactNode
@@ -11,6 +13,9 @@ interface WebGLErrorBoundaryProps {
   maxRetries?: number
   enableContextLossRecovery?: boolean
   fallbackComponent?: React.ComponentType<any>
+  onRecoverySuccess?: () => void
+  onRecoveryFailure?: () => void
+  onFallbackRequested?: () => void
 }
 
 interface WebGLErrorBoundaryState {
@@ -23,6 +28,8 @@ interface WebGLErrorBoundaryState {
   webglSupported: boolean
   hardwareAccelerated: boolean
   lastErrorTime: number
+  recoveryAttempts: number
+  diagnostics: ReturnType<typeof webglDiagnostics.getContextLossStats> | null
 }
 
 // WebGL capability detection
@@ -97,7 +104,9 @@ export class WebGLErrorBoundary extends Component<WebGLErrorBoundaryProps, WebGL
       contextLost: false,
       webglSupported: capabilities.supported,
       hardwareAccelerated: capabilities.hardwareAccelerated,
-      lastErrorTime: 0
+      lastErrorTime: 0,
+      recoveryAttempts: 0,
+      diagnostics: null
     }
   }
 
@@ -152,6 +161,12 @@ export class WebGLErrorBoundary extends Component<WebGLErrorBoundaryProps, WebGL
     if (this.props.enableContextLossRecovery && typeof window !== 'undefined') {
       this.setupContextLossListeners()
     }
+    
+    // Set up WebGL recovery manager listeners
+    this.setupRecoveryListeners()
+    
+    // Update diagnostics
+    this.updateDiagnostics()
   }
 
   override componentWillUnmount() {
@@ -182,6 +197,51 @@ export class WebGLErrorBoundary extends Component<WebGLErrorBoundaryProps, WebGL
     })
   }
 
+  private setupRecoveryListeners = () => {
+    // Listen to recovery manager events
+    webGLRecoveryManager.on('contextLost', () => {
+      this.setState({ contextLost: true, isRecovering: true })
+      this.updateDiagnostics()
+    })
+    
+    webGLRecoveryManager.on('contextRestored', () => {
+      this.setState({ 
+        contextLost: false, 
+        isRecovering: false,
+        hasError: false,
+        error: null,
+        errorInfo: null
+      })
+      this.updateDiagnostics()
+      
+      if (this.props.onRecoverySuccess) {
+        this.props.onRecoverySuccess()
+      }
+    })
+    
+    webGLRecoveryManager.on('recoveryFailed', () => {
+      this.setState({ isRecovering: false })
+      this.updateDiagnostics()
+      
+      if (this.props.onRecoveryFailure) {
+        this.props.onRecoveryFailure()
+      }
+    })
+    
+    webGLRecoveryManager.on('fallback', () => {
+      this.handleFallbackMode()
+    })
+  }
+  
+  private updateDiagnostics = () => {
+    try {
+      const diagnostics = webglDiagnostics.getContextLossStats()
+      this.setState({ diagnostics })
+    } catch (error) {
+      console.warn('Failed to update WebGL diagnostics:', error)
+    }
+  }
+
   private cleanup = () => {
     if (this.recoveryTimer) {
       clearTimeout(this.recoveryTimer)
@@ -195,6 +255,9 @@ export class WebGLErrorBoundary extends Component<WebGLErrorBoundaryProps, WebGL
         canvas.removeEventListener('webglcontextrestored', this.contextRestoredListener!)
       })
     }
+    
+    // Remove recovery manager listeners
+    webGLRecoveryManager.removeAllListeners()
   }
 
   private scheduleRecovery = (errorType: WebGLErrorType) => {
@@ -262,15 +325,25 @@ export class WebGLErrorBoundary extends Component<WebGLErrorBoundaryProps, WebGL
       errorInfo: null,
       isRecovering: false
     })
+    
+    // Notify success callback
+    if (this.props.onRecoverySuccess) {
+      this.props.onRecoverySuccess()
+    }
   }
 
   private handleFallbackMode = () => {
     // Force fallback to 2D mode
     window.dispatchEvent(new CustomEvent('webgl-fallback-requested'))
+    
+    // Notify fallback callback
+    if (this.props.onFallbackRequested) {
+      this.props.onFallbackRequested()
+    }
   }
 
   private renderErrorUI = () => {
-    const { error, contextLost, webglSupported, hardwareAccelerated, retryCount, isRecovering } = this.state
+    const { error, contextLost, webglSupported, hardwareAccelerated, retryCount, isRecovering, diagnostics } = this.state
     const { maxRetries = 3 } = this.props
 
     if (isRecovering) {
@@ -280,6 +353,12 @@ export class WebGLErrorBoundary extends Component<WebGLErrorBoundaryProps, WebGL
             <div className="animate-spin text-4xl mb-4">⚡</div>
             <h3 className="text-xl font-bold text-blue-300 mb-2">Restoring Dragon Power...</h3>
             <p className="text-gray-400">WebGL context is being restored</p>
+            {diagnostics && (
+              <div className="mt-4 text-sm text-gray-500">
+                <p>Recovery Rate: {(diagnostics.recoveryRate * 100).toFixed(1)}%</p>
+                <p>Avg Recovery Time: {diagnostics.averageRecoveryTime.toFixed(0)}ms</p>
+              </div>
+            )}
           </div>
         </div>
       )
@@ -414,6 +493,12 @@ export class WebGLErrorBoundary extends Component<WebGLErrorBoundaryProps, WebGL
           <p className="text-xs text-gray-500 text-center mt-4">
             Error Type: {errorType} | Retry: {retryCount}/{maxRetries}
           </p>
+          
+          {diagnostics && diagnostics.totalLosses > 0 && (
+            <div className="mt-2 text-xs text-gray-600 text-center">
+              <p>Context Losses: {diagnostics.totalLosses} | Recovery Rate: {(diagnostics.recoveryRate * 100).toFixed(1)}%</p>
+            </div>
+          )}
         </div>
       </div>
     )

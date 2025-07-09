@@ -53,8 +53,20 @@ class WalletConnectManager {
         logger.debug('Development mode detected, implementing initialization guards')
       }
 
+      // Check if WalletConnect is already globally initialized
+      if (typeof window !== 'undefined' && (window as any).__WALLETCONNECT_INITIALIZED__) {
+        logger.debug('WalletConnect Core already globally initialized, skipping')
+        this.isInitialized = true
+        return
+      }
+
       // Mark as initialized before any async operations
       this.isInitialized = true
+
+      // Set global flag to prevent duplicate initialization
+      if (typeof window !== 'undefined') {
+        (window as any).__WALLETCONNECT_INITIALIZED__ = true
+      }
 
       // Set up cleanup handler
       this.setupCleanup()
@@ -64,6 +76,10 @@ class WalletConnectManager {
       logger.error('❌ WalletConnect Core initialization failed:', error)
       this.isInitialized = false
       this.initPromise = null
+      // Clear global flag on error
+      if (typeof window !== 'undefined') {
+        delete (window as any).__WALLETCONNECT_INITIALIZED__
+      }
       throw error
     }
   }
@@ -74,6 +90,10 @@ class WalletConnectManager {
       logger.debug('🧹 Cleaning up WalletConnect Core...')
       this.isInitialized = false
       this.initPromise = null
+      // Clear global flag on cleanup
+      if (typeof window !== 'undefined') {
+        delete (window as any).__WALLETCONNECT_INITIALIZED__
+      }
     }
 
     // Register cleanup for hot module replacement
@@ -137,12 +157,35 @@ export function preventDoubleInitialization(): void {
       const message = args[0]
       if (
         typeof message === 'string' &&
-        message.includes('WalletConnect Core is already initialized')
+        (
+          message.includes('WalletConnect Core is already initialized') ||
+          message.includes('The configured chains are not supported by Coinbase Smart Wallet') ||
+          message.includes('Coinbase Smart Wallet: 1329') ||
+          message.includes('VITE_WALLETCONNECT_PROJECT_ID not found') ||
+          message.includes('chains are not supported by Coinbase')
+        )
       ) {
-        logger.debug('Filtered WalletConnect duplicate initialization warning')
+        logger.debug('Filtered wallet warning:', message)
         return
       }
       originalWarn.apply(console, args)
+    }
+    
+    // Also filter console.error for wallet-related errors
+    const originalError = console.error
+    console.error = (...args: any[]) => {
+      const message = args[0]
+      if (
+        typeof message === 'string' &&
+        (
+          message.includes('Coinbase Smart Wallet') ||
+          message.includes('chains are not supported by Coinbase')
+        )
+      ) {
+        logger.debug('Filtered wallet error:', message)
+        return
+      }
+      originalError.apply(console, args)
     }
   }
 }

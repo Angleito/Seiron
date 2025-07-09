@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { walletConnectManager } from '../../utils/walletConnectManager'
+import { walletErrorHandler } from '../../utils/walletErrorHandler'
 import { logger } from '@lib/logger'
 
 interface WalletConnectContextType {
@@ -41,8 +42,12 @@ export function WalletConnectProvider({ children }: WalletConnectProviderProps) 
       logger.debug('WalletConnect Provider initialization complete')
     } catch (err) {
       const error = err instanceof Error ? err : new Error('WalletConnect initialization failed')
+      const walletError = walletErrorHandler.handleError(error, {
+        operation: 'walletconnect-initialization',
+        component: 'WalletConnectProvider'
+      })
       setError(error)
-      logger.error('WalletConnect Provider initialization failed:', error)
+      logger.error('WalletConnect Provider initialization failed:', walletError)
     } finally {
       setIsInitializing(false)
     }

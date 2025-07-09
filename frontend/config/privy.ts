@@ -4,6 +4,7 @@ import {
   getPrivyLoginMethodsForChain, 
   shouldDisableEmbeddedWalletsForChain 
 } from '../utils/walletCompatibility'
+import { envConfig } from '../utils/envValidation'
 
 // Sei Network chain configuration
 export const seiMainnet = defineChain({
@@ -29,9 +30,9 @@ export const seiMainnet = defineChain({
   },
 })
 
-// Privy configuration
-const appId = import.meta.env.VITE_PRIVY_APP_ID || '';
-const clientId = import.meta.env.VITE_PRIVY_CLIENT_ID || '';
+// Privy configuration using environment validation
+const appId = envConfig.privyAppId
+const clientId = envConfig.privyClientId
 
 // Debug logging with safe fallbacks
 console.log('🔐 Privy Configuration Status:');
@@ -39,10 +40,11 @@ console.log('- App ID present:', !!appId);
 console.log('- App ID length:', appId?.length || 0);
 console.log('- Environment:', import.meta.env.MODE);
 console.log('- Client ID present:', !!clientId);
+console.log('- Configuration valid:', envConfig.isValid.privy);
 
 // Warn if missing in production
-if (import.meta.env.PROD && !appId) {
-  console.warn('⚠️ Missing VITE_PRIVY_APP_ID in production environment');
+if (import.meta.env.PROD && !envConfig.isValid.privy) {
+  console.warn('⚠️ Privy not properly configured in production environment');
 }
 
 // Get compatible wallets and login methods for Sei Network
@@ -55,6 +57,7 @@ console.log('🔗 Wallet Compatibility for Sei Network:')
 console.log('- Supported wallets:', supportedWallets)
 console.log('- Supported login methods:', supportedLoginMethods)
 console.log('- Embedded wallets disabled:', shouldDisableEmbedded)
+console.log('- Coinbase Smart Wallet excluded:', !supportedWallets.includes('coinbase_smart_wallet'))
 
 // Ensure config is always defined with proper structure
 const defaultConfig = {
@@ -66,9 +69,13 @@ const defaultConfig = {
   },
   // Use compatible login methods (excludes email if embedded wallets are disabled)
   loginMethods: supportedLoginMethods as ('email' | 'wallet' | 'google' | 'discord' | 'twitter')[],
-  // Wallet configuration - only include supported wallets
+  // Wallet configuration - only include supported wallets (explicitly exclude Coinbase Smart Wallet)
   wallets: {
-    walletList: supportedWallets,
+    walletList: supportedWallets.filter(wallet => 
+      wallet !== 'coinbase_smart_wallet' && 
+      wallet !== 'coinbase_wallet' && 
+      wallet !== 'coinbase'
+    ),
     showWalletLoginFirst: true,
   },
   // Embedded wallet configuration - disable if not supported

@@ -6,6 +6,7 @@ import { useGLTF, PerspectiveCamera } from '@react-three/drei'
 import * as THREE from 'three'
 import { VoiceAnimationState } from './DragonRenderer'
 import { useWebGLRecovery } from '../../utils/webglRecovery'
+import { WebGLErrorBoundary } from '../error-boundaries/WebGLErrorBoundary'
 
 // Debug logging for dragon initialization
 console.log('🐉 SeironGLBDragon component loading...')
@@ -40,7 +41,7 @@ function DragonMesh({
   voiceState,
   size = 'gigantic',
   enableAnimations = true,
-  modelPath = '/models/seiron_animated.gltf',
+  modelPath = '/models/seiron_animated_optimized.gltf',
   onError
 }: {
   voiceState?: VoiceAnimationState
@@ -58,16 +59,44 @@ function DragonMesh({
   try {
     console.log(`🔄 Loading GLTF model from ${modelPath}...`)
     const gltf = useGLTF(modelPath)
+    
+    // Validate the loaded model
+    if (!gltf || !gltf.scene) {
+      throw new Error(`Invalid GLTF model: ${modelPath}`)
+    }
+    
     scene = gltf.scene
     animations = gltf.animations || []
     console.log('✅ GLTF model loaded successfully:', scene)
     console.log('🎭 Available animations:', animations.map(clip => clip.name))
   } catch (error) {
     console.error('❌ Failed to load GLTF model:', error)
-    if (onError) {
-      onError(error as Error)
+    
+    // Check if this is the corrupted model and try fallback
+    if (modelPath.includes('seiron_animated.gltf')) {
+      console.log('🔄 Attempting to load fallback model...')
+      try {
+        const fallbackGltf = useGLTF('/models/seiron_optimized.glb')
+        if (fallbackGltf && fallbackGltf.scene) {
+          scene = fallbackGltf.scene
+          animations = fallbackGltf.animations || []
+          console.log('✅ Fallback model loaded successfully')
+        } else {
+          throw new Error('Fallback model also failed to load')
+        }
+      } catch (fallbackError) {
+        console.error('❌ Fallback model also failed:', fallbackError)
+        if (onError) {
+          onError(fallbackError as Error)
+        }
+        throw fallbackError
+      }
+    } else {
+      if (onError) {
+        onError(error as Error)
+      }
+      throw error
     }
-    throw error
   }
   
   // Size configurations
@@ -302,7 +331,7 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
   size = 'gigantic',
   className = '',
   enableAnimations = true,
-  modelPath = '/models/seiron_animated.gltf',
+  modelPath = '/models/seiron_animated_optimized.gltf',
   isProgressiveLoading = false,
   isLoadingHighQuality = false,
   onError,
@@ -319,13 +348,19 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
     initializeRecovery,
     diagnostics,
     shouldFallback,
+    isRecovering,
+    currentRecoveryAttempt,
     resetDiagnostics
   } = useWebGLRecovery({
     maxRecoveryAttempts: 3,
     recoveryDelayMs: 1000,
+    maxRecoveryDelay: 8000,
     fallbackEnabled: true,
+    exponentialBackoff: true,
     onContextLost: () => {
       console.warn('🔴 WebGL context lost in SeironGLBDragon')
+      setHasError(false) // Clear previous errors during recovery
+      setErrorMessage('')
     },
     onContextRestored: () => {
       console.log('🟢 WebGL context restored in SeironGLBDragon')
@@ -336,13 +371,16 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
     onRecoveryFailed: () => {
       console.error('❌ WebGL recovery failed in SeironGLBDragon')
       setHasError(true)
-      setErrorMessage('WebGL recovery failed')
+      setErrorMessage('WebGL recovery failed after multiple attempts')
     },
     onFallback: () => {
       console.log('⚠️ WebGL fallback triggered in SeironGLBDragon')
       if (onFallback) {
         onFallback()
       }
+    },
+    onRecoveryAttempt: (attempt: number) => {
+      console.log(`🔄 WebGL recovery attempt ${attempt} in SeironGLBDragon`)
     }
   })
 
@@ -385,8 +423,25 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
       return
     }
     
+    // Check if this is a model loading error
+    const isModelError = error.message.includes('Invalid typed array length') ||
+                        error.message.includes('Failed to load') ||
+                        error.message.includes('GLTF') ||
+                        error.message.includes('GLB')
+    
+    if (isModelError) {
+      console.warn('🔴 Model loading error detected, triggering fallback')
+      setErrorMessage('Model loading failed, using fallback')
+      
+      // Trigger fallback immediately for model errors
+      if (onFallback) {
+        onFallback()
+      }
+      return
+    }
+    
     setHasError(true)
-    setErrorMessage(error.message)
+    setErrorMessage(error.message || 'Unknown error')
     
     // Propagate error to parent
     if (onError) {
@@ -394,6 +449,27 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
     }
   }
 
+  // Show recovery state
+  if (isRecovering) {
+    console.log('🔄 Dragon is recovering from WebGL context loss')
+    return (
+      <div className={`flex items-center justify-center ${className}`}>
+        <div className="text-yellow-400 font-mono text-center">
+          <div className="text-4xl mb-2 animate-pulse">⚡</div>
+          <div>Dragon power restoring...</div>
+          <div className="text-xs text-blue-400 mt-2">
+            Recovery attempt {currentRecoveryAttempt}/3
+          </div>
+          {diagnostics.contextLossCount > 0 && (
+            <div className="text-xs text-gray-400 mt-1">
+              Context losses: {diagnostics.contextLossCount}
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+  
   // Check if fallback should be triggered
   if (shouldFallback || hasError) {
     console.log('💥 Dragon error state or fallback triggered, showing fallback')
@@ -436,12 +512,19 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
           alpha: true,
           powerPreference: 'high-performance',
           preserveDrawingBuffer: true, // Helps with context recovery
-          failIfMajorPerformanceCaveat: false
+          failIfMajorPerformanceCaveat: false,
+          stencil: false, // Reduce memory usage
+          depth: true,
+          logarithmicDepthBuffer: false // Improve compatibility
         }}
         shadows
         onCreated={(state) => {
           console.log('🎮 Three.js Canvas created:', state)
           rendererRef.current = state.gl
+          
+          // Configure renderer for better recovery
+          state.gl.debug.checkShaderErrors = false
+          state.gl.capabilities.logarithmicDepthBuffer = false
           
           // Initialize WebGL recovery with the canvas and renderer
           if (canvasRef.current) {
@@ -503,11 +586,37 @@ const SeironGLBDragonWithErrorBoundary: React.FC<SeironGLBDragonProps> = (props)
   )
 }
 
+// Component wrapped with WebGL Error Boundary
+const SeironGLBDragonWithWebGLErrorBoundary: React.FC<SeironGLBDragonProps> = (props) => {
+  return (
+    <WebGLErrorBoundary 
+      enableAutoRecovery={true}
+      enableContextLossRecovery={true}
+      maxRetries={3}
+      onRecoverySuccess={() => {
+        console.log('🟢 WebGL recovery successful for SeironGLBDragon')
+      }}
+      onRecoveryFailure={() => {
+        console.error('❌ WebGL recovery failed for SeironGLBDragon')
+      }}
+      onFallbackRequested={() => {
+        console.log('⚠️ WebGL fallback requested for SeironGLBDragon')
+        if (props.onFallback) {
+          props.onFallback()
+        }
+      }}
+    >
+      <SeironGLBDragonWithErrorBoundary {...props} />
+    </WebGLErrorBoundary>
+  )
+}
+
 // Preload the optimized GLTF models only once
 if (typeof window !== 'undefined') {
   try {
-    // Preload the working high-quality model
-    useGLTF.preload('/models/seiron_animated.gltf')
+    // Preload the working optimized models first
+    useGLTF.preload('/models/seiron_optimized.glb')
+    useGLTF.preload('/models/seiron_animated_optimized.gltf')
     // Preload the working low-quality model for progressive loading
     useGLTF.preload('/models/seiron.glb')
     // Preload the LOD models if they exist
@@ -518,4 +627,4 @@ if (typeof window !== 'undefined') {
 }
 
 export default SeironGLBDragon
-export { SeironGLBDragon, SeironGLBDragonWithErrorBoundary }
+export { SeironGLBDragon, SeironGLBDragonWithErrorBoundary, SeironGLBDragonWithWebGLErrorBoundary }

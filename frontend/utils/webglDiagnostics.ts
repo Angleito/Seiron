@@ -40,6 +40,11 @@ export class WebGLDiagnostics {
   private startTime = Date.now();
   private performanceMetrics: number[] = [];
   private memoryMetrics: number[] = [];
+  private contextLossHistory: Array<{
+    timestamp: Date;
+    recovered: boolean;
+    timeTaken?: number;
+  }> = [];
 
   private constructor() {}
 
@@ -170,6 +175,61 @@ export class WebGLDiagnostics {
   }
 
   /**
+   * Record a context loss event
+   */
+  public recordContextLoss(): void {
+    this.contextLossHistory.push({
+      timestamp: new Date(),
+      recovered: false
+    });
+  }
+
+  /**
+   * Record a successful context recovery
+   */
+  public recordContextRecovery(timeTaken: number): void {
+    const lastLoss = this.contextLossHistory[this.contextLossHistory.length - 1];
+    if (lastLoss && !lastLoss.recovered) {
+      lastLoss.recovered = true;
+      lastLoss.timeTaken = timeTaken;
+    }
+  }
+
+  /**
+   * Get context loss statistics
+   */
+  public getContextLossStats(): {
+    totalLosses: number;
+    recoveredLosses: number;
+    recoveryRate: number;
+    averageRecoveryTime: number;
+    recentLosses: Array<{timestamp: Date; recovered: boolean; timeTaken?: number}>;
+  } {
+    const totalLosses = this.contextLossHistory.length;
+    const recoveredLosses = this.contextLossHistory.filter(loss => loss.recovered).length;
+    const recoveryRate = totalLosses > 0 ? recoveredLosses / totalLosses : 0;
+    
+    const recoveryTimes = this.contextLossHistory
+      .filter(loss => loss.recovered && loss.timeTaken)
+      .map(loss => loss.timeTaken!);
+    
+    const averageRecoveryTime = recoveryTimes.length > 0 
+      ? recoveryTimes.reduce((sum, time) => sum + time, 0) / recoveryTimes.length
+      : 0;
+    
+    // Get last 10 losses
+    const recentLosses = this.contextLossHistory.slice(-10);
+    
+    return {
+      totalLosses,
+      recoveredLosses,
+      recoveryRate,
+      averageRecoveryTime,
+      recentLosses
+    };
+  }
+
+  /**
    * Reset all metrics
    */
   public reset(): void {
@@ -178,6 +238,7 @@ export class WebGLDiagnostics {
     this.startTime = Date.now();
     this.performanceMetrics = [];
     this.memoryMetrics = [];
+    this.contextLossHistory = [];
   }
 
   /**
@@ -230,6 +291,7 @@ export class WebGLDiagnostics {
       const diagnosticInfo = this.getDiagnosticInfo(renderer);
       const healthMetrics = this.getHealthMetrics(renderer);
       const capabilities = this.testCapabilities();
+      const contextStats = this.getContextLossStats();
 
       const report = `
 WebGL Diagnostic Report
@@ -244,6 +306,17 @@ Memory Usage: ${healthMetrics.memoryUsage.toFixed(2)} MB
 Error Count: ${healthMetrics.errorCount}
 Last Error: ${healthMetrics.lastError || 'None'}
 Uptime: ${(healthMetrics.uptime / 1000).toFixed(2)}s
+
+=== CONTEXT RECOVERY STATS ===
+Total Context Losses: ${contextStats.totalLosses}
+Recovered Losses: ${contextStats.recoveredLosses}
+Recovery Rate: ${(contextStats.recoveryRate * 100).toFixed(2)}%
+Average Recovery Time: ${contextStats.averageRecoveryTime.toFixed(2)}ms
+
+=== RECENT CONTEXT LOSSES ===
+${contextStats.recentLosses.length > 0 ? contextStats.recentLosses.map(loss => 
+  `${loss.timestamp.toISOString()}: ${loss.recovered ? '✅' : '❌'} ${loss.timeTaken ? `(${loss.timeTaken}ms)` : ''}`
+).join('\n') : 'No recent context losses'}
 
 === DIAGNOSTIC INFO ===
 Renderer: ${diagnosticInfo.renderer}

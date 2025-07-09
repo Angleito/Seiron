@@ -438,6 +438,8 @@ export const errorRecoveryUtils = {
 
   // Check if error is recoverable
   isRecoverable: (error: Error): boolean => {
+    if (!error || !error.message) return false
+    
     const message = error.message.toLowerCase()
     const unrecoverableKeywords = [
       'not supported',
@@ -445,10 +447,42 @@ export const errorRecoveryUtils = {
       'user rejected',
       'user denied',
       'aborted',
-      'cancelled'
+      'cancelled',
+      'invalid typed array length',
+      'corrupted',
+      'malformed'
     ]
     
     return !unrecoverableKeywords.some(keyword => message.includes(keyword))
+  },
+
+  // Safe error message extraction
+  getErrorMessage: (error: any): string => {
+    if (!error) return 'Unknown error'
+    if (typeof error === 'string') return error
+    if (error.message) return error.message
+    if (error.toString) return error.toString()
+    return 'Unknown error'
+  },
+
+  // Check if error is model-related
+  isModelError: (error: Error): boolean => {
+    if (!error || !error.message) return false
+    
+    const message = error.message.toLowerCase()
+    const modelErrorKeywords = [
+      'invalid typed array length',
+      'failed to load',
+      'gltf',
+      'glb',
+      'model',
+      'texture',
+      'material',
+      'geometry',
+      'buffer'
+    ]
+    
+    return modelErrorKeywords.some(keyword => message.includes(keyword))
   },
 
   // Delay utility
