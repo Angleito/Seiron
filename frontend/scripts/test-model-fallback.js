@@ -53,8 +53,8 @@ async function testModelAvailability() {
   
   // Scenario 2: Optimized models missing (current production issue)
   console.log('\n2. Optimized models missing (current production issue):');
-  console.log('   → Should fallback from seiron_animated_optimized.gltf to seiron_animated.gltf');
-  console.log('   → Should fallback from seiron_optimized.glb to seiron.glb');
+  console.log('   → Should fallback from seiron_animated.gltf to seiron_animated.gltf');
+  console.log('   → Should fallback from seiron.glb to seiron.glb');
   console.log('   → Should maintain all functionality with working models');
   
   // Scenario 3: All 3D models missing
@@ -67,8 +67,8 @@ async function testModelAvailability() {
   console.log('   ✅ seiron.glb - Working in production');
   console.log('   ✅ seiron_animated.gltf - Working in production');
   console.log('   ✅ seiron_animated_lod_high.gltf - Working in production');
-  console.log('   ⚠️  seiron_optimized.glb - May fail in production');
-  console.log('   ⚠️  seiron_animated_optimized.gltf - May fail in production');
+  console.log('   ⚠️  seiron.glb - May fail in production');
+  console.log('   ⚠️  seiron_animated.gltf - May fail in production');
   
   console.log('\n💡 Recommendations:');
   console.log('   1. Use seiron_animated.gltf as primary model');
@@ -86,8 +86,8 @@ async function testRuntimeModelChecking() {
     '/models/seiron.glb',
     '/models/seiron_animated.gltf',
     '/models/seiron_animated_lod_high.gltf',
-    '/models/seiron_optimized.glb',
-    '/models/seiron_animated_optimized.gltf'
+    '/models/seiron.glb',
+    '/models/seiron_animated.gltf'
   ];
   
   for (const model of models) {

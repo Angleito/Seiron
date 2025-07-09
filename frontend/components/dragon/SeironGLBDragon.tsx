@@ -76,7 +76,7 @@ function DragonMesh({
     if (modelPath.includes('seiron_animated.gltf')) {
       console.log('🔄 Attempting to load fallback model...')
       try {
-        const fallbackGltf = useGLTF('/models/seiron_optimized.glb')
+        const fallbackGltf = useGLTF('/models/seiron.glb')
         if (fallbackGltf && fallbackGltf.scene) {
           scene = fallbackGltf.scene
           animations = fallbackGltf.animations || []
@@ -621,8 +621,8 @@ if (typeof window !== 'undefined') {
     useGLTF.preload('/models/seiron_animated_lod_high.gltf')
     // Try to preload optimized versions (may fail in production)
     try {
-      useGLTF.preload('/models/seiron_optimized.glb')
-      useGLTF.preload('/models/seiron_animated_optimized.gltf')
+      useGLTF.preload('/models/seiron.glb')
+      useGLTF.preload('/models/seiron_animated.gltf')
     } catch (e) {
       console.warn('Optimized models not available, using standard models')
     }

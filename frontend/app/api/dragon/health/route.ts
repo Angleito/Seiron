@@ -10,8 +10,8 @@ export async function GET(request: NextRequest) {
     
     // Check critical dragon model files
     const criticalModels = [
-      'seiron_animated_optimized.gltf',
-      'seiron_optimized.glb',
+      'seiron_animated.gltf',
+      'seiron.glb',
       'seiron_animated_lod_high.gltf',
       'seiron_animated.bin'
     ];

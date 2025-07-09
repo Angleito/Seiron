@@ -146,7 +146,7 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
         lowQualityModel, 
         highQualityModel, 
         '/models/seiron_animated_lod_high.gltf',
-        '/models/seiron_optimized.glb'
+        '/models/seiron.glb'
       ]
       const availability: Record<string, boolean> = {}
       
@@ -429,8 +429,8 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
             '/models/seiron_animated.gltf', // Primary working animated model
             '/models/seiron.glb', // Working fallback model
             '/models/seiron_animated_lod_high.gltf', // Working LOD model
-            '/models/seiron_optimized.glb', // May not work in production
-            '/models/seiron_animated_optimized.gltf' // May not work in production
+            '/models/seiron.glb', // May not work in production
+            '/models/seiron_animated.gltf' // May not work in production
           ]
           
           switch (size) {

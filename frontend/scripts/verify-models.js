@@ -16,8 +16,8 @@ const REQUIRED_MODELS = [
 
 // Optional models that enhance the experience but aren't required
 const OPTIONAL_MODELS = [
-  'seiron_optimized.glb',              // May have deployment issues
-  'seiron_animated_optimized.gltf',    // May have deployment issues
+  'seiron.glb',              // May have deployment issues
+  'seiron_animated.gltf',    // May have deployment issues
   'seiron_animated_lod_high.gltf',     // High-quality LOD model
   'dragon_head.glb',                   // Dragon head model
   'dragon_head_optimized.glb'          // Optimized dragon head

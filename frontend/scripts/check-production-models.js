@@ -23,8 +23,8 @@ const MODELS_TO_CHECK = [
   { path: '/models/seiron_animated_lod_high.gltf', critical: false },
   
   // Optimized models (may have issues)
-  { path: '/models/seiron_optimized.glb', critical: false },
-  { path: '/models/seiron_animated_optimized.gltf', critical: false },
+  { path: '/models/seiron.glb', critical: false },
+  { path: '/models/seiron_animated.gltf', critical: false },
   
   // Textures
   { path: '/models/textures/Material.002_baseColor.png', critical: true },
