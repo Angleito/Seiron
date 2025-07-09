@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const queryString = searchParams.toString();
     
-    const headersList = headers();
+    const headersList = await headers();
     const authHeader = headersList.get('authorization');
     const userIdHeader = headersList.get('x-user-id');
     
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    const headersList = headers();
+    const headersList = await headers();
     const authHeader = headersList.get('authorization');
     const userIdHeader = headersList.get('x-user-id');
     

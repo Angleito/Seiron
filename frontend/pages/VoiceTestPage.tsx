@@ -4,7 +4,7 @@ import VoiceConfigDebugger from '../components/voice/VoiceConfigDebugger'
 import { useSpeechRecognition } from '../hooks/voice/useSpeechRecognition'
 import { useElevenLabsTTS } from '../hooks/voice/useElevenLabsTTS'
 import { logger } from '../lib/logger'
-import { voiceLogger } from '../lib/voice-logger'
+// Note: voiceLogger removed - using console methods for logging
 
 const VoiceTestPage: React.FC = () => {
   const [showDebugger, setShowDebugger] = useState(true)
@@ -133,7 +133,7 @@ const VoiceTestPage: React.FC = () => {
   }
 
   const exportLogs = () => {
-    const sessionInfo = voiceLogger.getSessionInfo()
+    const sessionInfo = { component: 'VoiceTestPage', timestamp: new Date().toISOString() }
     const logData = {
       sessionInfo,
       testResults,
@@ -188,10 +188,10 @@ const VoiceTestPage: React.FC = () => {
 
   useEffect(() => {
     logger.info('🧪 Voice Test Page mounted')
-    voiceLogger.startSession({ component: 'VoiceTestPage' })
+    console.log('🧪 Voice Test Page session started')
 
     return () => {
-      voiceLogger.endSession({ component: 'VoiceTestPage' })
+      console.log('🧪 Voice Test Page session ended')
     }
   }, [])
 

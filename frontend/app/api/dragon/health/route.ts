@@ -63,8 +63,7 @@ export async function GET(request: NextRequest) {
         directory: '/models/textures',
         exists: true,
         count: imageFiles.length,
-        status: imageFiles.length > 0 ? 'healthy' : 'empty',
-        files: imageFiles.slice(0, 10) // Show first 10 files
+        status: imageFiles.length > 0 ? 'healthy' : 'empty'
       };
     } catch (error) {
       // texturesHealth already set to unhealthy

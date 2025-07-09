@@ -2,7 +2,7 @@
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { logger } from '../../lib/logger';
-import { voiceLogger } from '../../lib/voice-logger';
+// Note: voiceLogger removed - using console methods for logging
 
 interface VoiceErrorBoundaryState {
   hasError: boolean;
@@ -57,7 +57,7 @@ export class VoiceErrorBoundaryWithRetry extends Component<VoiceErrorBoundaryPro
     };
   }
   
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     const { onError, enableAutoRetry = true, maxRetries = 3, retryDelay = 2000 } = this.props;
     
     this.setState({
@@ -65,7 +65,7 @@ export class VoiceErrorBoundaryWithRetry extends Component<VoiceErrorBoundaryPro
     });
     
     // Log the error
-    voiceLogger.error('🔊 Voice component error caught', {
+    console.error('🔊 Voice component error caught', {
       errorId: this.state.errorId,
       errorName: error.name,
       errorMessage: error.message,
@@ -83,7 +83,7 @@ export class VoiceErrorBoundaryWithRetry extends Component<VoiceErrorBoundaryPro
     }
   }
   
-  componentWillUnmount() {
+  override componentWillUnmount() {
     if (this.retryTimeout) {
       clearTimeout(this.retryTimeout);
     }
@@ -104,14 +104,14 @@ export class VoiceErrorBoundaryWithRetry extends Component<VoiceErrorBoundaryPro
     const { onRetry, maxRetries = 3, onMaxRetriesReached } = this.props;
     const newRetryCount = this.state.retryCount + 1;
     
-    voiceLogger.info('🔄 Voice component retry attempt', {
+    console.log('🔄 Voice component retry attempt', {
       errorId: this.state.errorId,
       retryCount: newRetryCount,
       maxRetries
     });
     
     if (newRetryCount >= maxRetries) {
-      voiceLogger.error('🚫 Voice component max retries reached', {
+      console.error('🚫 Voice component max retries reached', {
         errorId: this.state.errorId,
         finalRetryCount: newRetryCount,
         maxRetries
@@ -140,7 +140,7 @@ export class VoiceErrorBoundaryWithRetry extends Component<VoiceErrorBoundaryPro
   };
   
   private handleManualRetry = (): void => {
-    voiceLogger.info('👆 Manual retry triggered', {
+    console.log('👆 Manual retry triggered', {
       errorId: this.state.errorId,
       retryCount: this.state.retryCount
     });
@@ -260,7 +260,7 @@ export class VoiceErrorBoundaryWithRetry extends Component<VoiceErrorBoundaryPro
     );
   }
   
-  render(): ReactNode {
+  override render(): ReactNode {
     if (this.state.hasError) {
       return this.renderErrorUI();
     }
@@ -289,7 +289,7 @@ export function useRetryLogic({
   
   const retry = React.useCallback(async (operation: () => Promise<any>, error?: Error): Promise<any> => {
     if (retryCount >= maxRetries) {
-      voiceLogger.error('🚫 Max retries reached for operation', { retryCount, maxRetries });
+      console.error('🚫 Max retries reached for operation', { retryCount, maxRetries });
       onMaxRetriesReached?.(error || lastError || new Error('Unknown error'));
       return Promise.reject(error || lastError || new Error('Max retries reached'));
     }
@@ -301,7 +301,7 @@ export function useRetryLogic({
       // Wait for retry delay
       await new Promise(resolve => setTimeout(resolve, retryDelay));
       
-      voiceLogger.debug('🔄 Retrying operation', { retryCount: retryCount + 1, maxRetries });
+      console.log('🔄 Retrying operation', { retryCount: retryCount + 1, maxRetries });
       
       const result = await operation();
       
@@ -318,7 +318,7 @@ export function useRetryLogic({
       setRetryCount(newRetryCount);
       setIsRetrying(false);
       
-      voiceLogger.warn('🔄 Retry failed', { 
+      console.warn('🔄 Retry failed', { 
         retryCount: newRetryCount, 
         maxRetries, 
         error: retryError instanceof Error ? retryError.message : retryError 

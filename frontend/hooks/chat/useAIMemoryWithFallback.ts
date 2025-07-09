@@ -225,7 +225,7 @@ export function useAIMemoryWithFallback({
 
     if (backendAvailable) {
       // Try to load from backend
-      return pipe(
+      const backendResult = await pipe(
         TE.tryCatch(
           async () => {
             const params = new URLSearchParams({ userId });
@@ -277,61 +277,26 @@ export function useAIMemoryWithFallback({
         }),
         TE.mapLeft((error) => {
           logger.warn('Backend memory load failed, falling back to localStorage:', error);
-          
-          // Fallback to localStorage
-          if (fallbackToLocalStorage) {
-            const localEntries = loadFromLocalStorage();
-            setState({
-              entries: localEntries,
-              isLoading: false,
-              error: null,
-              lastSync: new Date(),
-              isUsingFallback: true,
-              backendAvailable: false
-            });
-            
-            onFallbackActivated?.('Backend unavailable, using localStorage');
-            return localEntries;
-          } else {
-            setState(prev => ({ 
-              ...prev, 
-              isLoading: false, 
-              error,
-              backendAvailable: false
-            }));
-            onSyncError?.(error);
-            return [];
-          }
+          return error;
         })
       )();
-    } else {
-      // Backend not available, use localStorage immediately
-      if (fallbackToLocalStorage) {
-        const localEntries = loadFromLocalStorage();
-        setState({
-          entries: localEntries,
-          isLoading: false,
-          error: null,
-          lastSync: new Date(),
-          isUsingFallback: true,
-          backendAvailable: false
-        });
-        
-        onFallbackActivated?.('Backend unavailable, using localStorage');
-        return localEntries;
+
+      if (E.isRight(backendResult)) {
+        return backendResult.right;
       } else {
-        const error = new Error('Backend unavailable and fallback disabled');
-        setState(prev => ({ 
-          ...prev, 
-          isLoading: false, 
-          error,
-          backendAvailable: false
-        }));
-        onSyncError?.(error);
-        return [];
+        // Fall back to localStorage
+        logger.info('Falling back to localStorage due to backend error');
+        onFallbackActivated?.('Backend load failed');
+        return loadFromLocalStorage();
       }
+    } else {
+      // Backend not available, use localStorage
+      logger.info('Backend not available, using localStorage');
+      onFallbackActivated?.('Backend not available');
+      return loadFromLocalStorage();
     }
-  }, [userId, sessionId, cacheEnabled, fallbackToLocalStorage, onSyncError, onFallbackActivated, checkBackendAvailability, loadFromLocalStorage]);
+  }, [userId, sessionId, cacheEnabled, fallbackToLocalStorage, onSyncError, onFallbackActivated, checkBackendAvailability]);
+
 
   // Save memory with fallback
   const saveMemory = useCallback(async (
@@ -351,7 +316,7 @@ export function useAIMemoryWithFallback({
 
     if (state.backendAvailable && !state.isUsingFallback) {
       // Try backend first
-      return pipe(
+      const result = await pipe(
         TE.tryCatch(
           async () => {
             const response = await fetch(MEMORY_API.save, {
@@ -394,31 +359,36 @@ export function useAIMemoryWithFallback({
         }),
         TE.mapLeft((error) => {
           logger.warn('Backend save failed, falling back to localStorage:', error);
-          
-          // Fallback to localStorage
-          if (fallbackToLocalStorage) {
-            const success = saveToLocalStorage(key, entry);
-            if (success) {
-              const newEntry: AIMemoryEntry = {
-                id: `local_${key}`,
-                ...entry,
-                createdAt: new Date(),
-                updatedAt: new Date()
-              };
-              
-              setState(prev => ({
-                ...prev,
-                entries: [...prev.entries.filter(e => e.key !== key), newEntry],
-                isUsingFallback: true
-              }));
-              
-              return E.right(newEntry);
-            }
-          }
-          
-          return E.left(error);
+          return error;
         })
       )();
+
+      if (E.isRight(result)) {
+        return result;
+      } else {
+        // Fallback to localStorage
+        if (fallbackToLocalStorage) {
+          const success = saveToLocalStorage(key, entry);
+          if (success) {
+            const newEntry: AIMemoryEntry = {
+              id: `local_${key}`,
+              ...entry,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            };
+            
+            setState(prev => ({
+              ...prev,
+              entries: [...prev.entries.filter(e => e.key !== key), newEntry],
+              isUsingFallback: true
+            }));
+            
+            return E.right(newEntry);
+          }
+        }
+        
+        return E.left(result.left);
+      }
     } else {
       // Use localStorage directly
       if (fallbackToLocalStorage) {
@@ -448,7 +418,7 @@ export function useAIMemoryWithFallback({
   const deleteMemory = useCallback(async (key: string): Promise<E.Either<Error, boolean>> => {
     if (state.backendAvailable && !state.isUsingFallback) {
       // Try backend first
-      return pipe(
+      const result = await pipe(
         TE.tryCatch(
           async () => {
             const response = await fetch(`${MEMORY_API.delete}?id=${key}&userId=${userId}`, {
@@ -482,24 +452,29 @@ export function useAIMemoryWithFallback({
         }),
         TE.mapLeft((error) => {
           logger.warn('Backend delete failed, falling back to localStorage:', error);
-          
-          // Fallback to localStorage
-          if (fallbackToLocalStorage) {
-            const success = deleteFromLocalStorage(key);
-            if (success) {
-              setState(prev => ({
-                ...prev,
-                entries: prev.entries.filter(e => e.key !== key),
-                isUsingFallback: true
-              }));
-              
-              return E.right(true);
-            }
-          }
-          
-          return E.left(error);
+          return error;
         })
       )();
+
+      if (E.isRight(result)) {
+        return result;
+      } else {
+        // Fallback to localStorage
+        if (fallbackToLocalStorage) {
+          const success = deleteFromLocalStorage(key);
+          if (success) {
+            setState(prev => ({
+              ...prev,
+              entries: prev.entries.filter(e => e.key !== key),
+              isUsingFallback: true
+            }));
+            
+            return E.right(true);
+          }
+        }
+        
+        return E.left(result.left);
+      }
     } else {
       // Use localStorage directly
       if (fallbackToLocalStorage) {
@@ -530,6 +505,8 @@ export function useAIMemoryWithFallback({
       syncTimeoutRef.current = interval;
       return () => clearInterval(interval);
     }
+    // Return undefined explicitly for the else case
+    return undefined;
   }, [autoSync, syncInterval, loadMemories]);
 
   // Cleanup effect
@@ -608,6 +585,3 @@ export function useAIMemoryWithFallback({
     backendAvailable: state.backendAvailable
   };
 }
-
-// Export types
-export type { AIMemoryState, UseAIMemoryOptions };

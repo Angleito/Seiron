@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import { ttsManager, type ElevenLabsConfig } from '../lib/tts-singleton';
-import { voiceLogger } from '../lib/voice-logger';
+// Note: voiceLogger removed - using console methods for logging
 
 // Voice Animation State Interface
 export interface VoiceAnimationState {
@@ -53,7 +53,7 @@ interface VoiceStateContextType {
   reset: () => void;
   // TTS Integration
   speak: (text: string, options?: { priority?: 'low' | 'medium' | 'high' }) => void;
-  stopSpeaking: () => void;
+  stopTTSSpeaking: () => void;
   isTTSSpeaking: () => boolean;
   initializeTTS: (config: ElevenLabsConfig) => Promise<void>;
 }
@@ -189,32 +189,32 @@ export const VoiceStateProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   
   // Helper functions
   const startListening = useCallback(() => {
-    voiceLogger.debug('🎤 Voice state: Starting listening');
+    console.log('🎤 Voice state: Starting listening');
     dispatch({ type: 'START_LISTENING' });
   }, []);
   
   const stopListening = useCallback(() => {
-    voiceLogger.debug('🎤 Voice state: Stopping listening');
+    console.log('🎤 Voice state: Stopping listening');
     dispatch({ type: 'STOP_LISTENING' });
   }, []);
   
   const startSpeaking = useCallback(() => {
-    voiceLogger.debug('🔊 Voice state: Starting speaking');
+    console.log('🔊 Voice state: Starting speaking');
     dispatch({ type: 'START_SPEAKING' });
   }, []);
   
   const stopSpeaking = useCallback(() => {
-    voiceLogger.debug('🔊 Voice state: Stopping speaking');
+    console.log('🔊 Voice state: Stopping speaking');
     dispatch({ type: 'STOP_SPEAKING' });
   }, []);
   
   const startProcessing = useCallback(() => {
-    voiceLogger.debug('⚙️ Voice state: Starting processing');
+    console.log('⚙️ Voice state: Starting processing');
     dispatch({ type: 'START_PROCESSING' });
   }, []);
   
   const stopProcessing = useCallback(() => {
-    voiceLogger.debug('⚙️ Voice state: Stopping processing');
+    console.log('⚙️ Voice state: Stopping processing');
     dispatch({ type: 'STOP_PROCESSING' });
   }, []);
   
@@ -236,24 +236,24 @@ export const VoiceStateProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   
   const setError = useCallback((error: Error | null) => {
     if (error) {
-      voiceLogger.error('❌ Voice state error:', error);
+      console.error('❌ Voice state error:', error);
     }
     dispatch({ type: 'SET_ERROR', payload: error });
   }, []);
   
   const setIdle = useCallback(() => {
-    voiceLogger.debug('💤 Voice state: Setting idle');
+    console.log('💤 Voice state: Setting idle');
     dispatch({ type: 'SET_IDLE' });
   }, []);
   
   const reset = useCallback(() => {
-    voiceLogger.debug('🔄 Voice state: Resetting');
+    console.log('🔄 Voice state: Resetting');
     dispatch({ type: 'RESET' });
   }, []);
   
   // TTS Integration
   const speak = useCallback((text: string, options: { priority?: 'low' | 'medium' | 'high' } = {}) => {
-    voiceLogger.debug('🔊 Voice state: TTS speak request', {
+    console.log('🔊 Voice state: TTS speak request', {
       text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
       priority: options.priority
     });
@@ -264,7 +264,7 @@ export const VoiceStateProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (success) {
           stopSpeaking();
         } else {
-          setError(error || new Error('TTS failed'));
+          setError(error ? (error as unknown as Error) : new Error('TTS failed'));
         }
       }
     });
@@ -273,7 +273,7 @@ export const VoiceStateProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, [startSpeaking, stopSpeaking, setError]);
   
   const stopTTSSpeaking = useCallback(() => {
-    voiceLogger.debug('🔊 Voice state: TTS stop request');
+    console.log('🔊 Voice state: TTS stop request');
     ttsManager.stop();
     stopSpeaking();
   }, [stopSpeaking]);
@@ -284,11 +284,11 @@ export const VoiceStateProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   
   const initializeTTS = useCallback(async (config: ElevenLabsConfig) => {
     try {
-      voiceLogger.debug('🔊 Voice state: Initializing TTS', config);
+      console.log('🔊 Voice state: Initializing TTS', config);
       await ttsManager.initialize(config);
-      voiceLogger.info('🔊 Voice state: TTS initialized successfully');
+      console.log('🔊 Voice state: TTS initialized successfully');
     } catch (error) {
-      voiceLogger.error('🔊 Voice state: TTS initialization failed', error);
+      console.error('🔊 Voice state: TTS initialization failed', error);
       setError(error as Error);
       throw error;
     }
@@ -297,7 +297,7 @@ export const VoiceStateProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Auto-cleanup effect
   useEffect(() => {
     return () => {
-      voiceLogger.debug('🧹 Voice state: Cleaning up');
+      console.log('🧹 Voice state: Cleaning up');
       ttsManager.stop();
     };
   }, []);
@@ -305,7 +305,7 @@ export const VoiceStateProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Log state changes in development
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      voiceLogger.debug('📊 Voice state changed:', {
+      console.log('📊 Voice state changed:', {
         isListening: state.isListening,
         isSpeaking: state.isSpeaking,
         isProcessing: state.isProcessing,
@@ -336,7 +336,7 @@ export const VoiceStateProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setIdle,
     reset,
     speak,
-    stopSpeaking: stopTTSSpeaking,
+    stopTTSSpeaking,
     isTTSSpeaking,
     initializeTTS
   };

@@ -1,5 +1,5 @@
 import { logger } from './logger';
-import { voiceLogger } from './voice-logger';
+// Note: voiceLogger removed - using console methods for logging
 
 interface ModelLoadingRequest {
   id: string;
@@ -53,7 +53,7 @@ class ModelLoadingManager {
     // Start cache cleanup interval
     this.startCacheCleanup();
     
-    voiceLogger.info('🎮 Model Loading Manager initialized');
+    console.log('🎮 Model Loading Manager initialized');
   }
   
   /**
@@ -97,7 +97,7 @@ class ModelLoadingManager {
         cached.lastUsed = Date.now();
         this.state.cache.set(modelPath, cached);
         
-        voiceLogger.debug('🎮 Model loaded from cache', { modelPath });
+        console.log('🎮 Model loaded from cache', { modelPath });
         onSuccess?.(cached.model);
         return cached.model;
       }
@@ -133,7 +133,7 @@ class ModelLoadingManager {
         this.addToQueue(request);
       }
       
-      voiceLogger.debug('🎮 Model load request queued', {
+      console.log('🎮 Model load request queued', {
         requestId,
         modelPath,
         priority,
@@ -187,7 +187,7 @@ class ModelLoadingManager {
     const startTime = performance.now();
     
     try {
-      voiceLogger.debug('🎮 Processing model load request', {
+      console.log('🎮 Processing model load request', {
         requestId: request.id,
         modelPath: request.modelPath,
         priority: request.priority,
@@ -217,7 +217,7 @@ class ModelLoadingManager {
       // Clear active requests for this model
       this.state.activeRequests.delete(request.modelPath);
       
-      voiceLogger.info('🎮 Model loaded successfully', {
+      console.log('🎮 Model loaded successfully', {
         requestId: request.id,
         modelPath: request.modelPath,
         loadTime: Math.round(loadTime),
@@ -226,7 +226,7 @@ class ModelLoadingManager {
       });
       
     } catch (error) {
-      voiceLogger.error('🎮 Model load failed', {
+      console.error('🎮 Model load failed', {
         requestId: request.id,
         modelPath: request.modelPath,
         error: error instanceof Error ? error.message : error
@@ -293,7 +293,7 @@ class ModelLoadingManager {
     
     this.state.cache.set(modelPath, cacheEntry);
     
-    voiceLogger.debug('🎮 Model cached', {
+    console.log('🎮 Model cached', {
       modelPath,
       size: Math.round(size / 1024) + 'KB',
       loadTime: Math.round(loadTime),
@@ -317,7 +317,7 @@ class ModelLoadingManager {
         this.state.cache.delete(path);
         freedSpace += entry.size;
         
-        voiceLogger.debug('🎮 Removed cached model', {
+        console.log('🎮 Removed cached model', {
           modelPath: path,
           size: Math.round(entry.size / 1024) + 'KB',
           freedSpace: Math.round(freedSpace / 1024) + 'KB'
@@ -377,7 +377,7 @@ class ModelLoadingManager {
     }
     
     if (entriesRemoved.length > 0) {
-      voiceLogger.debug('🎮 Cache cleanup completed', {
+      console.log('🎮 Cache cleanup completed', {
         removedCount: entriesRemoved.length,
         remainingCount: this.state.cache.size
       });
@@ -388,16 +388,16 @@ class ModelLoadingManager {
    * Preload models
    */
   public preloadModels(modelPaths: string[], priority: 'low' | 'medium' | 'high' = 'low'): void {
-    voiceLogger.debug('🎮 Preloading models', { paths: modelPaths, priority });
+    console.log('🎮 Preloading models', { paths: modelPaths, priority });
     
     modelPaths.forEach(path => {
       this.loadModel(path, {
         priority,
         onSuccess: () => {
-          voiceLogger.debug('🎮 Model preloaded', { path });
+          console.log('🎮 Model preloaded', { path });
         },
         onError: (error) => {
-          voiceLogger.warn('🎮 Model preload failed', { path, error: error.message });
+          console.warn('🎮 Model preload failed', { path, error: error.message });
         }
       });
     });
@@ -408,7 +408,7 @@ class ModelLoadingManager {
    */
   public clearCache(): void {
     this.state.cache.clear();
-    voiceLogger.info('🎮 Model cache cleared');
+    console.log('🎮 Model cache cleared');
   }
   
   /**
@@ -466,7 +466,7 @@ class ModelLoadingManager {
     this.state.activeRequests.clear();
     this.state.loadQueue = [];
     
-    voiceLogger.info('🎮 Model Loading Manager disposed');
+    console.log('🎮 Model Loading Manager disposed');
   }
 }
 

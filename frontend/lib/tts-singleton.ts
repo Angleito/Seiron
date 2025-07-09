@@ -3,7 +3,7 @@ import * as TE from 'fp-ts/TaskEither';
 import * as O from 'fp-ts/Option';
 import { pipe } from 'fp-ts/function';
 import { logger } from './logger';
-import { voiceLogger, logTTS, logEnvironment, logPerformance } from './voice-logger';
+// Note: voiceLogger removed - using console methods for logging
 
 // Add webkitAudioContext to Window interface
 declare global {
@@ -76,7 +76,7 @@ class TTSManager {
       error: null
     };
     
-    voiceLogger.info('🔊 TTS Manager singleton created');
+    console.log('🔊 TTS Manager singleton created');
   }
   
   /**
@@ -94,11 +94,11 @@ class TTSManager {
    */
   public async initialize(config: ElevenLabsConfig): Promise<void> {
     if (this.state.isInitialized) {
-      voiceLogger.debug('🔊 TTS Manager already initialized');
+      console.log('🔊 TTS Manager already initialized');
       return;
     }
     
-    voiceLogger.info('🔊 Initializing TTS Manager', {
+    console.log('🔊 Initializing TTS Manager', {
       voiceId: config.voiceId,
       modelId: config.modelId,
       useSecureEndpoint: config.useSecureEndpoint
@@ -122,7 +122,7 @@ class TTSManager {
       this.state.isInitialized = true;
       this.state.error = null;
       
-      voiceLogger.info('🔊 TTS Manager initialized successfully', {
+      console.log('🔊 TTS Manager initialized successfully', {
         audioContextState: this.audioContext.state,
         sampleRate: this.audioContext.sampleRate
       });
@@ -141,7 +141,7 @@ class TTSManager {
       this.state.error = ttsError;
       this.state.isInitialized = false;
       
-      voiceLogger.error('🔊 TTS Manager initialization failed', { error: ttsError });
+      console.error('🔊 TTS Manager initialization failed', { error: ttsError });
       throw ttsError;
     }
   }
@@ -183,7 +183,7 @@ class TTSManager {
       this.state.queue.push(request);
     }
     
-    voiceLogger.debug('🔊 TTS request queued', {
+    console.log('🔊 TTS request queued', {
       requestId,
       text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
       priority: request.priority,
@@ -202,7 +202,7 @@ class TTSManager {
    * Stop current playback and clear queue
    */
   public stop(): void {
-    voiceLogger.debug('🔊 Stopping TTS Manager');
+    console.log('🔊 Stopping TTS Manager');
     
     // Stop current audio
     if (this.currentSource) {
@@ -222,7 +222,7 @@ class TTSManager {
       this.processingTimeout = null;
     }
     
-    voiceLogger.debug('🔊 TTS Manager stopped');
+    console.log('🔊 TTS Manager stopped');
   }
   
   /**
@@ -256,7 +256,7 @@ class TTSManager {
       try {
         await this.processRequest(request);
       } catch (error) {
-        voiceLogger.error('🔊 TTS request processing failed', {
+        console.error('🔊 TTS request processing failed', {
           requestId: request.id,
           error
         });
@@ -282,7 +282,7 @@ class TTSManager {
   private async processRequest(request: TTSRequest): Promise<void> {
     const startTime = performance.now();
     
-    voiceLogger.debug('🔊 Processing TTS request', {
+    console.log('🔊 Processing TTS request', {
       requestId: request.id,
       text: request.text.substring(0, 50) + (request.text.length > 50 ? '...' : ''),
       voiceId: request.voiceId
@@ -303,7 +303,7 @@ class TTSManager {
         
         // Limit cache size
         if (this.state.cache.size > 20) {
-          const firstKey = this.state.cache.keys().next().value;
+          const firstKey = this.state.cache.keys().next().value as string;
           this.state.cache.delete(firstKey);
         }
       }
@@ -316,7 +316,7 @@ class TTSManager {
       request.onProgress?.(1.0);
       
       const duration = performance.now() - startTime;
-      voiceLogger.info('🔊 TTS request completed', {
+      console.log('🔊 TTS request completed', {
         requestId: request.id,
         duration: Math.round(duration),
         fromCache: this.state.cache.has(cacheKey)
@@ -428,7 +428,7 @@ class TTSManager {
       originalError
     };
     
-    voiceLogger.error('🔊 TTS Error', {
+    console.error('🔊 TTS Error', {
       type,
       message,
       statusCode,
@@ -452,7 +452,7 @@ class TTSManager {
     this.state.cache.clear();
     this.state.isInitialized = false;
     
-    voiceLogger.info('🔊 TTS Manager disposed');
+    console.log('🔊 TTS Manager disposed');
   }
 }
 
