@@ -138,7 +138,7 @@ export function usePerformanceMonitor(options: UsePerformanceMonitorOptions = {}
     animationFrameRef.current = requestAnimationFrame(measureFrame)
   }, [isMonitoring, targetFPS])
 
-  // Calculate performance metrics
+  // Calculate performance metrics with batched state updates
   const calculateMetrics = useCallback(() => {
     const frameCount = frameCountRef.current
     const droppedFrames = droppedFramesRef.current
@@ -172,15 +172,22 @@ export function usePerformanceMonitor(options: UsePerformanceMonitorOptions = {}
       timestamp: Date.now()
     }
     
-    setMetrics(newMetrics)
-    
-    // Check performance thresholds
+    // Batch state updates to reduce re-renders
     const performanceGood = checkPerformance(newMetrics, warningThreshold)
-    setIsPerformanceGood(performanceGood)
-    
-    // Calculate overall performance score
     const score = calculatePerformanceScore(newMetrics, targetFPS)
-    setPerformanceScore(score)
+    
+    // Only update state if values have changed significantly
+    setMetrics(prev => {
+      if (Math.abs(prev.fps - newMetrics.fps) > 1 ||
+          Math.abs(prev.frameTime - newMetrics.frameTime) > 2 ||
+          prev.droppedFrames !== newMetrics.droppedFrames) {
+        return newMetrics
+      }
+      return prev
+    })
+    
+    setIsPerformanceGood(prev => prev !== performanceGood ? performanceGood : prev)
+    setPerformanceScore(prev => Math.abs(prev - score) > 5 ? score : prev)
     
     // Trigger warning if needed
     if (!performanceGood && onPerformanceWarning) {

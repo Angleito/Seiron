@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 
 interface PerformanceMetrics {
   fps: number
@@ -333,25 +333,43 @@ export function useLazyStormEffects() {
   }
 }
 
-// Performance monitor component for debugging
-export function StormPerformanceMonitor() {
+// Performance monitor component for debugging - Memoized to prevent re-renders
+export const StormPerformanceMonitor = React.memo(function StormPerformanceMonitor() {
+  // Use throttled performance hook to reduce re-renders
+  const [throttledMetrics, setThrottledMetrics] = useState<PerformanceMetrics | null>(null)
+  const [throttledConfig, setThrottledConfig] = useState<StormPerformanceConfig | null>(null)
   const { metrics, config } = useStormPerformance()
+  const lastUpdateRef = useRef(Date.now())
 
-  if (process.env.NODE_ENV !== 'development') {
+  // Only update display every 2 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now()
+      if (now - lastUpdateRef.current >= 2000) {
+        setThrottledMetrics(metrics)
+        setThrottledConfig(config)
+        lastUpdateRef.current = now
+      }
+    }, 500)
+
+    return () => clearInterval(interval)
+  }, [metrics, config])
+
+  if (process.env.NODE_ENV !== 'development' || !throttledMetrics || !throttledConfig) {
     return null
   }
 
   return (
     <div className="fixed top-4 right-4 bg-black/80 text-white p-4 rounded-lg text-xs font-mono z-50">
-      <div>FPS: {metrics.fps.toFixed(1)}</div>
-      <div>Memory: {(metrics.memoryUsage / (1024 * 1024)).toFixed(1)}MB</div>
-      <div>Device: {metrics.deviceType}</div>
-      <div>Quality: {config.animationQuality}</div>
-      <div>Particles: {config.particleCount}</div>
-      <div>Clouds: {config.cloudLayers}</div>
-      <div className={metrics.isLowPerformance ? 'text-red-400' : 'text-green-400'}>
-        {metrics.isLowPerformance ? 'LOW PERF' : 'GOOD PERF'}
+      <div>FPS: {throttledMetrics.fps.toFixed(1)}</div>
+      <div>Memory: {(throttledMetrics.memoryUsage / (1024 * 1024)).toFixed(1)}MB</div>
+      <div>Device: {throttledMetrics.deviceType}</div>
+      <div>Quality: {throttledConfig.animationQuality}</div>
+      <div>Particles: {throttledConfig.particleCount}</div>
+      <div>Clouds: {throttledConfig.cloudLayers}</div>
+      <div className={throttledMetrics.isLowPerformance ? 'text-red-400' : 'text-green-400'}>
+        {throttledMetrics.isLowPerformance ? 'LOW PERF' : 'GOOD PERF'}
       </div>
     </div>
   )
-}
+})

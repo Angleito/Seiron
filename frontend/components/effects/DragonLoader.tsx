@@ -183,31 +183,8 @@ export function DragonLoader({
     }
   }, [onLoadError])
 
-  // Preload dragon model resources
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-      // Preload during idle time
-      const idleCallbackId = window.requestIdleCallback(() => {
-        // Add preload hints for 3D assets
-        const preloadLink = document.createElement('link')
-        preloadLink.rel = 'preload'
-        preloadLink.as = 'fetch'
-        preloadLink.href = '/models/dragon_head.obj' // Correct path to OBJ file
-        preloadLink.crossOrigin = 'anonymous'
-        document.head.appendChild(preloadLink)
-
-        // Note: Textures are loaded as part of the GLTF model, no need for separate preload
-      })
-
-      return () => {
-        if ('cancelIdleCallback' in window) {
-          window.cancelIdleCallback(idleCallbackId)
-        }
-      }
-    }
-    // Return undefined for browsers without requestIdleCallback
-    return undefined
-  }, [])
+  // Note: Preloading removed as the dragon model is loaded dynamically by Three.js
+  // and the OBJ file is not actually used by DragonHead3D component
 
   // Delay loading to prioritize critical content
   useEffect(() => {

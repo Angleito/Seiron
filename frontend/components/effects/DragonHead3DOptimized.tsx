@@ -14,12 +14,12 @@
  * - Fixed device pixel ratio to 1 for consistent performance
  */
 
-import React, { useRef, useEffect, useState, useMemo, Suspense, lazy } from 'react'
+import React, { useRef, useEffect, useState, useMemo, Suspense, lazy, useCallback } from 'react'
 import { Canvas, useFrame, useLoader } from '@react-three/fiber'
 import { OBJLoader } from 'three-stdlib'
 import * as THREE from 'three'
 import { useMouseTracking } from '@/hooks/useMouseTracking'
-import { useStormPerformance } from '@/hooks/useStormPerformance'
+import { useThrottledPerformance } from '@/hooks/useThrottledPerformance'
 import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor'
 
 interface DragonHead3DOptimizedProps {
@@ -40,7 +40,7 @@ const FullDragonScene = lazy(() => import('./DragonHead3D').then(module => ({
 })))
 
 // Simple fallback dragon for low-end devices
-function SimpleDragonFallback({ className }: { className?: string }) {
+const SimpleDragonFallback = React.memo(function SimpleDragonFallback({ className }: { className?: string }) {
   return (
     <div className={`absolute inset-0 flex items-center justify-center ${className}`}>
       <div className="relative w-48 h-48">
@@ -52,10 +52,10 @@ function SimpleDragonFallback({ className }: { className?: string }) {
       </div>
     </div>
   )
-}
+})
 
 // Lightweight dragon mesh for medium performance devices
-function LightweightDragonMesh({ 
+const LightweightDragonMesh = React.memo(function LightweightDragonMesh({ 
   enableEyeTracking = false, 
   lightningActive = false 
 }: { 
@@ -137,10 +137,10 @@ function LightweightDragonMesh({
       <mesh position={[-0.3, 0.2, 0.8]} geometry={geometries.eyeGeo} material={materials.eyeMaterial} />
     </mesh>
   )
-}
+})
 
-// Main optimized component
-export function DragonHead3DOptimized({ 
+// Main optimized component - Memoized to prevent re-renders
+export const DragonHead3DOptimized = React.memo(function DragonHead3DOptimized({ 
   className = "",
   intensity = 0.8,
   enableEyeTracking = true,
@@ -153,25 +153,32 @@ export function DragonHead3DOptimized({
   })
 
   const [renderMode, setRenderMode] = useState<'loading' | 'fallback' | 'lightweight' | 'full'>('loading')
-  const { config, metrics, isMobile, isTablet } = useStormPerformance()
+  const { config, metrics, isMobile, isTablet } = useThrottledPerformance({
+    updateInterval: 5000, // Only update every 5 seconds
+    enableAutoQualityAdjustment: true
+  })
   
   console.log('🐉 DragonHead3DOptimized: Performance config:', { config, metrics, isMobile, isTablet })
   
+  // Memoize performance warning callback to prevent re-creating on every render
+  const handlePerformanceWarning = useCallback((metrics: any) => {
+    console.warn('Dragon3D performance warning:', metrics)
+    // Auto-downgrade quality if performance is poor
+    if (metrics.fps < 20 && renderMode === 'full') {
+      console.log('🐉 Auto-downgrading to lightweight mode due to poor performance')
+      setRenderMode('lightweight')
+    } else if (metrics.fps < 15 && renderMode === 'lightweight') {
+      console.log('🐉 Auto-downgrading to fallback mode due to very poor performance')
+      setRenderMode('fallback')
+    }
+  }, [renderMode])
+
   // Performance monitoring
   const performanceMonitor = usePerformanceMonitor({
     componentName: 'DragonHead3D',
     enabled: true,
-    onPerformanceWarning: (metrics) => {
-      console.warn('Dragon3D performance warning:', metrics)
-      // Auto-downgrade quality if performance is poor
-      if (metrics.fps < 20 && renderMode === 'full') {
-        console.log('🐉 Auto-downgrading to lightweight mode due to poor performance')
-        setRenderMode('lightweight')
-      } else if (metrics.fps < 15 && renderMode === 'lightweight') {
-        console.log('🐉 Auto-downgrading to fallback mode due to very poor performance')
-        setRenderMode('fallback')
-      }
-    }
+    sampleRate: 2000, // Sample every 2 seconds instead of default 1 second
+    onPerformanceWarning: handlePerformanceWarning
   })
   
   useEffect(() => {
@@ -180,13 +187,23 @@ export function DragonHead3DOptimized({
     
     // Determine render mode based on device and performance
     const determineRenderMode = () => {
-      // Force full 3D mode for debugging - remove device detection temporarily
-      console.log('🐉 DragonHead3DOptimized: Forcing full 3D mode for debugging')
-      setRenderMode('full')
+      // Device-based selection for optimal performance
+      let selectedMode: 'full' | 'lightweight' | 'fallback'
+      
+      if (forceQuality) {
+        selectedMode = forceQuality
+      } else if (isMobile || isTablet) {
+        selectedMode = config.animationQuality === 'high' ? 'lightweight' : 'fallback'
+      } else {
+        selectedMode = config.animationQuality === 'low' ? 'lightweight' : 'full'
+      }
+      
+      console.log(`🐉 DragonHead3DOptimized: Selected render mode: ${selectedMode} (mobile: ${isMobile}, tablet: ${isTablet}, quality: ${config.animationQuality})`)
+      setRenderMode(selectedMode)
       
       // End timer and log
       const determinationTime = performanceMonitor.endTimer('render-mode-determination')
-      console.log(`🐉 Render mode determined in ${determinationTime.toFixed(0)}ms - set to: full`)
+      console.log(`🐉 Render mode determined in ${determinationTime.toFixed(0)}ms - set to: ${selectedMode}`)
     }
 
     // Small delay to prevent flash
@@ -207,7 +224,7 @@ export function DragonHead3DOptimized({
     if (process.env.NODE_ENV === 'development') {
       const interval = setInterval(() => {
         performanceMonitor.logMetrics()
-      }, 5000) // Log every 5 seconds
+      }, 10000) // Log every 10 seconds (reduced frequency)
       
       return () => clearInterval(interval)
     }
@@ -290,7 +307,7 @@ export function DragonHead3DOptimized({
       </Suspense>
     </div>
   )
-}
+})
 
 export default DragonHead3DOptimized
 
