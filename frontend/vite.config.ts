@@ -5,6 +5,7 @@ import path from 'path'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  publicDir: 'public',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './'),
@@ -25,6 +26,18 @@ export default defineConfig({
   build: {
     target: 'esnext',
     sourcemap: false,
+    assetsDir: 'assets',
+    rollupOptions: {
+      output: {
+        assetFileNames: (assetInfo) => {
+          // Keep models in their original directory structure
+          if (assetInfo.name && (assetInfo.name.endsWith('.glb') || assetInfo.name.endsWith('.gltf') || assetInfo.name.endsWith('.bin'))) {
+            return 'models/[name][extname]'
+          }
+          return 'assets/[name]-[hash][extname]'
+        }
+      }
+    }
   },
   define: {
     global: 'globalThis',
