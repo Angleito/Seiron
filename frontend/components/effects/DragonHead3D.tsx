@@ -11,6 +11,7 @@ interface DragonHead3DProps {
   intensity?: number
   enableEyeTracking?: boolean
   lightningActive?: boolean
+  onLoad?: () => void
 }
 
 // Eye tracking component that handles the dragon head mesh
@@ -218,7 +219,8 @@ export function DragonHead3D({
   className = "",
   intensity = 0.8,
   enableEyeTracking = true,
-  lightningActive = false
+  lightningActive = false,
+  onLoad
 }: DragonHead3DProps) {
   const [isLoaded, setIsLoaded] = useState(false)
   const [hasError, setHasError] = useState(false)
@@ -231,7 +233,12 @@ export function DragonHead3D({
 
   // Loading state management
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoaded(true), 100)
+    const timer = setTimeout(() => {
+      setIsLoaded(true)
+      if (onLoad) {
+        onLoad()
+      }
+    }, 100)
     return () => clearTimeout(timer)
   }, [])
 

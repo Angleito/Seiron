@@ -240,7 +240,7 @@ function DragonScene({
 }
 
 // Main GLB Dragon component
-export const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
+const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
   voiceState,
   size = 'gigantic',
   className = '',
@@ -349,12 +349,12 @@ class GLTFErrorBoundary extends React.Component<
     return { hasError: true, error }
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('GLTFErrorBoundary caught error:', error, errorInfo)
     this.props.onError(error)
   }
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       return null // Let parent handle the error display
     }
@@ -363,7 +363,7 @@ class GLTFErrorBoundary extends React.Component<
 }
 
 // Wrapped component that includes error boundary
-export const SeironGLBDragonWithErrorBoundary: React.FC<SeironGLBDragonProps> = (props) => {
+const SeironGLBDragonWithErrorBoundary: React.FC<SeironGLBDragonProps> = (props) => {
   return (
     <GLTFErrorBoundary onError={props.onError || (() => {})}>
       <SeironGLBDragon {...props} />
