@@ -14,3 +14,6 @@ export * from './safeAccess';
 
 // Bundle Analysis
 export * from './bundle-analyzer';
+
+// Wallet Compatibility
+export * from './walletCompatibility';

@@ -4,6 +4,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { SeironGLBDragonWithErrorBoundary } from './SeironGLBDragon'
 import { DragonPerformanceMonitor } from './DragonPerformanceMonitor'
 import { DragonMemoryManager } from '../../utils/dragonMemoryManager'
+import { WebGLErrorBoundary, DragonWebGLErrorBoundary } from '../error-boundaries/WebGLErrorBoundary'
+import { errorRecoveryUtils } from '../../utils/errorRecovery'
+import { logger } from '@lib/logger'
 
 export interface VoiceAnimationState {
   isListening: boolean
@@ -30,6 +33,8 @@ export interface DragonRendererProps {
   onError?: (error: Error, type: string) => void
   onFallback?: (fromType: string, toType: string) => void
   onProgressiveLoadComplete?: () => void
+  enableErrorRecovery?: boolean
+  maxErrorRetries?: number
 }
 
 // ASCII Dragon Component
@@ -100,21 +105,40 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
   performanceMonitorPosition = 'top-left',
   onError,
   onFallback,
-  onProgressiveLoadComplete
+  onProgressiveLoadComplete,
+  enableErrorRecovery = true,
+  maxErrorRetries = 3
 }) => {
   const [currentType, setCurrentType] = useState(dragonType)
   const [hasError, setHasError] = useState(false)
   const [isLoadingHighQuality, setIsLoadingHighQuality] = useState(false)
   const [useHighQuality, setUseHighQuality] = useState(!enableProgressiveLoading)
   const [modelAvailability, setModelAvailability] = useState<Record<string, boolean>>({})
+  const [isRecovering, setIsRecovering] = useState(false)
+  const [fallbackHistory, setFallbackHistory] = useState<Array<{ from: string; to: string; reason: string }>>([])
   const errorCountRef = useRef(0)
   const mountedRef = useRef(true)
   const lastErrorTimeRef = useRef(0)
   const memoryManager = useRef(DragonMemoryManager.getInstance())
+  const fallbackSystem = useRef(errorRecoveryUtils.dragonFallback)
+  const errorMonitor = useRef(errorRecoveryUtils.monitor)
 
   // Check model availability on mount
   useEffect(() => {
     mountedRef.current = true
+    
+    // Reset fallback system
+    fallbackSystem.current.reset()
+    
+    // Check if we should use optimal dragon type based on capabilities
+    if (enableErrorRecovery) {
+      const optimalType = fallbackSystem.current.getOptimalDragonType()
+      
+      if (optimalType !== dragonType) {
+        logger.info(`Using optimal dragon type: ${optimalType} instead of ${dragonType}`)
+        setCurrentType(optimalType)
+      }
+    }
     
     // Check availability of all models
     const checkModels = async () => {
@@ -132,7 +156,7 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
       
       if (mountedRef.current) {
         setModelAvailability(availability)
-        console.log('Model availability check:', availability)
+        logger.info('Model availability check:', availability)
       }
     }
     
@@ -151,7 +175,7 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
         memoryManager.current.cleanupUnusedModels(activeModels)
       }
     }
-  }, [enableProgressiveLoading, lowQualityModel, highQualityModel])
+  }, [enableProgressiveLoading, lowQualityModel, highQualityModel, dragonType, enableErrorRecovery])
 
   // Progressive loading effect
   useEffect(() => {
@@ -176,37 +200,86 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
     return () => {}
   }, [enableProgressiveLoading, currentType, useHighQuality, isLoadingHighQuality, onProgressiveLoadComplete])
 
-  const handleError = useCallback((error: Error) => {
+  const handleError = useCallback(async (error: Error) => {
     if (!mountedRef.current) return
     
     // Debounce rapid errors
     const now = Date.now()
     if (now - lastErrorTimeRef.current < 1000) {
-      console.log(`Dragon ${currentType} error debounced`)
+      logger.debug(`Dragon ${currentType} error debounced`)
       return
     }
     lastErrorTimeRef.current = now
     
-    console.error(`Dragon ${currentType} error:`, error)
+    logger.error(`Dragon ${currentType} error:`, error)
     errorCountRef.current++
-    setHasError(true)
+    
+    // Record error for monitoring
+    errorMonitor.current.recordError(error, `DragonRenderer:${currentType}`, false)
     
     if (onError) {
       onError(error, currentType)
     }
 
-    // Fallback logic
-    if (enableFallback && errorCountRef.current <= 2) {
+    // Try error recovery first if enabled
+    if (enableErrorRecovery && errorCountRef.current <= maxErrorRetries) {
+      if (errorRecoveryUtils.isRecoverable(error)) {
+        setIsRecovering(true)
+        
+        try {
+          // Attempt recovery based on error type
+          if (currentType === 'glb') {
+            // Try to force garbage collection
+            errorRecoveryUtils.forceGC()
+            
+            // Wait a bit before retrying
+            await errorRecoveryUtils.delay(1000)
+            
+            // Reset error state for retry
+            if (mountedRef.current) {
+              setHasError(false)
+              setIsRecovering(false)
+              errorMonitor.current.recordError(error, `DragonRenderer:${currentType}`, true)
+              return
+            }
+          }
+        } catch (recoveryError) {
+          logger.error('Error recovery failed:', recoveryError)
+        }
+        
+        setIsRecovering(false)
+      }
+    }
+    
+    setHasError(true)
+
+    // Fallback logic with enhanced tracking
+    if (enableFallback && errorCountRef.current <= maxErrorRetries) {
       let nextType: '2d' | 'ascii' | null = null
+      let fallbackReason = error.message
       
       if (currentType === 'glb') {
         nextType = fallbackType || '2d'
+        fallbackReason = 'WebGL/3D rendering failed'
       } else if (currentType === '2d') {
         nextType = 'ascii'
+        fallbackReason = '2D rendering failed'
       }
       
       if (nextType) {
-        console.log(`Falling back from ${currentType} to ${nextType}`)
+        logger.info(`Falling back from ${currentType} to ${nextType}`, { reason: fallbackReason })
+        
+        // Record fallback
+        fallbackSystem.current.recordFallbackReason(currentType, nextType, fallbackReason)
+        
+        const newFallbackEntry = {
+          from: currentType,
+          to: nextType,
+          reason: fallbackReason
+        }
+        
+        setFallbackHistory(prev => [...prev, newFallbackEntry])
+        
         if (onFallback) {
           onFallback(currentType, nextType)
         }
@@ -216,25 +289,75 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
           if (mountedRef.current) {
             setCurrentType(nextType as '2d' | 'ascii')
             setHasError(false)
+            errorCountRef.current = 0 // Reset error count for new type
           }
         }, 500)
       }
     }
-  }, [currentType, enableFallback, fallbackType, onError, onFallback])
+  }, [currentType, enableFallback, fallbackType, onError, onFallback, enableErrorRecovery, maxErrorRetries])
 
   // Reset error state when type changes
   useEffect(() => {
     setHasError(false)
+    setIsRecovering(false)
+    errorCountRef.current = 0
   }, [currentType])
+  
+  // Listen for WebGL fallback events
+  useEffect(() => {
+    const handleWebGLFallback = () => {
+      if (currentType === 'glb') {
+        logger.info('WebGL fallback requested by error boundary')
+        const nextType = fallbackType || '2d'
+        
+        fallbackSystem.current.recordFallbackReason(currentType, nextType, 'WebGL context lost')
+        
+        setFallbackHistory(prev => [...prev, {
+          from: currentType,
+          to: nextType,
+          reason: 'WebGL context lost'
+        }])
+        
+        if (onFallback) {
+          onFallback(currentType, nextType)
+        }
+        
+        setCurrentType(nextType)
+      }
+    }
+    
+    window.addEventListener('webgl-fallback-requested', handleWebGLFallback)
+    
+    return () => {
+      window.removeEventListener('webgl-fallback-requested', handleWebGLFallback)
+    }
+  }, [currentType, fallbackType, onFallback])
 
   // Render based on current type
   const renderDragon = () => {
+    if (isRecovering) {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <div className="text-yellow-400 text-center">
+            <div className="animate-spin text-4xl mb-2">⚡</div>
+            <div>Dragon is recovering...</div>
+            <div className="text-sm text-gray-500 mt-1">Restoring power</div>
+          </div>
+        </div>
+      )
+    }
+    
     if (hasError && !enableFallback) {
       return (
         <div className="flex items-center justify-center h-full">
           <div className="text-red-400 text-center">
             <div className="text-4xl mb-2">⚠️</div>
             <div>Dragon failed to load</div>
+            {fallbackHistory.length > 0 && (
+              <div className="text-xs text-gray-500 mt-2">
+                Fallback attempts: {fallbackHistory.length}
+              </div>
+            )}
           </div>
         </div>
       )
@@ -269,7 +392,7 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
             if (modelAvailability[targetModel] === false) {
               const fallback = targetModel === highQualityModel ? lowQualityModel : highQualityModel
               if (modelAvailability[fallback] !== false) {
-                console.log(`Using fallback model ${fallback} due to unavailable ${targetModel}`)
+                logger.info(`Using fallback model ${fallback} due to unavailable ${targetModel}`)
                 return fallback
               }
             }
@@ -294,16 +417,18 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
         const modelPath = getLODModel()
         
         return (
-          <SeironGLBDragonWithErrorBoundary
-            voiceState={voiceState}
-            size={size}
-            enableAnimations={enableAnimations}
-            className="w-full h-full"
-            modelPath={modelPath}
-            isProgressiveLoading={enableProgressiveLoading}
-            isLoadingHighQuality={isLoadingHighQuality}
-            onError={handleError}
-          />
+          <DragonWebGLErrorBoundary>
+            <SeironGLBDragonWithErrorBoundary
+              voiceState={voiceState}
+              size={size}
+              enableAnimations={enableAnimations}
+              className="w-full h-full"
+              modelPath={modelPath}
+              isProgressiveLoading={enableProgressiveLoading}
+              isLoadingHighQuality={isLoadingHighQuality}
+              onError={handleError}
+            />
+          </DragonWebGLErrorBoundary>
         )
     }
   }
@@ -319,8 +444,27 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
         enabled={enablePerformanceMonitor}
         position={performanceMonitorPosition}
       />
+      
+      {/* Error Recovery Status */}
+      {process.env.NODE_ENV === 'development' && fallbackHistory.length > 0 && (
+        <div className="absolute bottom-0 left-0 p-2 bg-black/50 text-xs text-white rounded-tr">
+          <div className="font-semibold mb-1">Dragon Fallback History:</div>
+          {fallbackHistory.map((entry, index) => (
+            <div key={index} className="text-gray-300">
+              {entry.from} → {entry.to}: {entry.reason}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
+
+// Enhanced DragonRenderer with error recovery
+export const EnhancedDragonRenderer = (props: DragonRendererProps) => (
+  <DragonWebGLErrorBoundary>
+    <DragonRenderer {...props} />
+  </DragonWebGLErrorBoundary>
+)
 
 export default DragonRenderer

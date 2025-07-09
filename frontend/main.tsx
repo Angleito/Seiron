@@ -7,8 +7,10 @@ import { WagmiProvider } from 'wagmi'
 import { router } from './router'
 import HomePage3D from './src/pages/HomePage3D'
 import { RootErrorBoundary } from './components/error-boundaries/RootErrorBoundary'
+import { WalletConnectProvider } from './components/wallet/WalletConnectProvider'
 import { privyConfig } from './config/privy'
 import { wagmiConfig } from './config/wagmi'
+import { walletConnectManager, preventDoubleInitialization } from './utils/walletConnectManager'
 import './styles/globals.css'
 
 // Debug logging for app initialization
@@ -17,6 +19,9 @@ console.log('Environment:', import.meta.env.MODE)
 console.log('Base URL:', import.meta.env.BASE_URL)
 console.log('Dev mode:', import.meta.env.DEV)
 console.log('Prod mode:', import.meta.env.PROD)
+
+// Prevent WalletConnect double initialization warnings in development
+preventDoubleInitialization()
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,15 +36,35 @@ const queryClient = new QueryClient({
   },
 })
 
+// Global app state for cleanup
+let appRoot: ReactDOM.Root | null = null
+let isMounted = false
+
 // Enhanced rendering logic with router and provider support
-function renderApp() {
+async function renderApp() {
   const rootElement = document.getElementById('root')
   if (!rootElement) {
     throw new Error('Root element not found')
   }
 
+  // Prevent double mounting in development
+  if (isMounted) {
+    console.log('⚠️ App already mounted, skipping render')
+    return
+  }
+
+  // Initialize WalletConnect Core before rendering
+  try {
+    await walletConnectManager.initialize()
+  } catch (error) {
+    console.error('❌ WalletConnect initialization failed:', error)
+    // Continue with rendering even if WalletConnect fails
+  }
+
   console.log('🏗️ Creating React root...')
   const root = ReactDOM.createRoot(rootElement)
+  appRoot = root
+  isMounted = true
   
   // Check if we have authentication configuration
   const hasPrivyConfig = !!privyConfig.appId
@@ -56,15 +81,17 @@ function renderApp() {
     root.render(
       <React.StrictMode>
         <RootErrorBoundary>
-          <PrivyProvider 
-            appId={privyConfig.appId} 
-            config={privyConfig.config}>
-            <QueryClientProvider client={queryClient}>
-              <WagmiProvider config={wagmiConfig}>
-                <RouterProvider router={router} />
-              </WagmiProvider>
-            </QueryClientProvider>
-          </PrivyProvider>
+          <WalletConnectProvider>
+            <PrivyProvider 
+              appId={privyConfig.appId} 
+              config={privyConfig.config}>
+              <QueryClientProvider client={queryClient}>
+                <WagmiProvider config={wagmiConfig}>
+                  <RouterProvider router={router} />
+                </WagmiProvider>
+              </QueryClientProvider>
+            </PrivyProvider>
+          </WalletConnectProvider>
         </RootErrorBoundary>
       </React.StrictMode>
     )
@@ -81,17 +108,96 @@ function renderApp() {
       </React.StrictMode>
     )
   }
+
+  // Set up cleanup for development hot reload
+  if (import.meta.hot) {
+    import.meta.hot.dispose(() => {
+      console.log('🧹 Hot reload cleanup...')
+      cleanup()
+    })
+  }
   
   console.log('✅ App render complete')
 }
 
+// Cleanup function for development
+function cleanup() {
+  if (appRoot) {
+    console.log('🧹 Unmounting React app...')
+    appRoot.unmount()
+    appRoot = null
+  }
+  isMounted = false
+  walletConnectManager.reset()
+}
+
+// Handle page unload cleanup
+window.addEventListener('beforeunload', cleanup)
+
 // Main execution with comprehensive error handling
 try {
-  renderApp()
+  renderApp().catch(error => {
+    console.error('❌ Async app initialization failed:', error)
+    // Fall back to synchronous render without WalletConnect
+    renderAppSync()
+  })
 } catch (error) {
   console.error('❌ Failed to render app:', error)
-  
-  // Ultimate fallback: render a simple error message directly
+  renderAppSync()
+}
+
+// Synchronous fallback render function
+function renderAppSync() {
+  try {
+    console.log('🔄 Attempting synchronous render...')
+    const rootElement = document.getElementById('root')
+    if (!rootElement) {
+      throw new Error('Root element not found')
+    }
+
+    // Simple fallback without WalletConnect initialization
+    const root = ReactDOM.createRoot(rootElement)
+    const hasPrivyConfig = !!privyConfig.appId
+    
+    if (hasPrivyConfig) {
+      root.render(
+        <React.StrictMode>
+          <RootErrorBoundary>
+            <WalletConnectProvider>
+              <PrivyProvider 
+                appId={privyConfig.appId} 
+                config={privyConfig.config}>
+                <QueryClientProvider client={queryClient}>
+                  <WagmiProvider config={wagmiConfig}>
+                    <RouterProvider router={router} />
+                  </WagmiProvider>
+                </QueryClientProvider>
+              </PrivyProvider>
+            </WalletConnectProvider>
+          </RootErrorBoundary>
+        </React.StrictMode>
+      )
+    } else {
+      root.render(
+        <React.StrictMode>
+          <RootErrorBoundary>
+            <QueryClientProvider client={queryClient}>
+              <RouterProvider router={router} />
+            </QueryClientProvider>
+          </RootErrorBoundary>
+        </React.StrictMode>
+      )
+    }
+    
+    console.log('✅ Synchronous render complete')
+  } catch (syncError) {
+    console.error('❌ Synchronous render also failed:', syncError)
+    renderUltimateFallback()
+  }
+}
+
+// Ultimate fallback with static HTML
+function renderUltimateFallback(error?: Error) {
   const rootElement = document.getElementById('root')
   if (rootElement) {
     rootElement.innerHTML = `

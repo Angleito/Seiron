@@ -1,4 +1,9 @@
 import { defineChain } from 'viem'
+import { 
+  getPrivyWalletListForChain, 
+  getPrivyLoginMethodsForChain, 
+  shouldDisableEmbeddedWalletsForChain 
+} from '../utils/walletCompatibility'
 
 // Sei Network chain configuration
 export const seiMainnet = defineChain({
@@ -40,6 +45,17 @@ if (import.meta.env.PROD && !appId) {
   console.warn('⚠️ Missing VITE_PRIVY_APP_ID in production environment');
 }
 
+// Get compatible wallets and login methods for Sei Network
+const seiChainId = seiMainnet.id
+const supportedWallets = getPrivyWalletListForChain(seiChainId)
+const supportedLoginMethods = getPrivyLoginMethodsForChain(seiChainId)
+const shouldDisableEmbedded = shouldDisableEmbeddedWalletsForChain(seiChainId)
+
+console.log('🔗 Wallet Compatibility for Sei Network:')
+console.log('- Supported wallets:', supportedWallets)
+console.log('- Supported login methods:', supportedLoginMethods)
+console.log('- Embedded wallets disabled:', shouldDisableEmbedded)
+
 // Ensure config is always defined with proper structure
 const defaultConfig = {
   appearance: {
@@ -48,15 +64,19 @@ const defaultConfig = {
     logo: undefined, // No logo needed
     showWalletLoginFirst: true,
   },
-  loginMethods: [
-    'email',
-    'wallet',
-    'google',
-    'discord',
-    'twitter',
-  ] as ('email' | 'wallet' | 'google' | 'discord' | 'twitter')[],
-  // Embedded wallet configuration
-  embeddedWallets: {
+  // Use compatible login methods (excludes email if embedded wallets are disabled)
+  loginMethods: supportedLoginMethods as ('email' | 'wallet' | 'google' | 'discord' | 'twitter')[],
+  // Wallet configuration - only include supported wallets
+  wallets: {
+    walletList: supportedWallets,
+    showWalletLoginFirst: true,
+  },
+  // Embedded wallet configuration - disable if not supported
+  embeddedWallets: shouldDisableEmbedded ? {
+    createOnLogin: 'off' as const,
+    requireUserPasswordOnCreate: false,
+    noPromptOnSignature: true,
+  } : {
     createOnLogin: 'users-without-wallets' as const,
     requireUserPasswordOnCreate: true,
     noPromptOnSignature: false,

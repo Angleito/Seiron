@@ -5,6 +5,7 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { useGLTF, PerspectiveCamera } from '@react-three/drei'
 import * as THREE from 'three'
 import { VoiceAnimationState } from './DragonRenderer'
+import { useWebGLRecovery } from '../../utils/webglRecovery'
 
 // Debug logging for dragon initialization
 console.log('🐉 SeironGLBDragon component loading...')
@@ -20,6 +21,7 @@ interface SeironGLBDragonProps {
   isProgressiveLoading?: boolean
   isLoadingHighQuality?: boolean
   onError?: (error: Error) => void
+  onFallback?: () => void
 }
 
 // Model availability checker
@@ -303,11 +305,46 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
   modelPath = '/models/seiron_animated.gltf',
   isProgressiveLoading = false,
   isLoadingHighQuality = false,
-  onError
+  onError,
+  onFallback
 }) => {
   const [isLoaded, setIsLoaded] = useState(false)
   const [hasError, setHasError] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string>('')
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
+
+  // WebGL recovery hook
+  const {
+    initializeRecovery,
+    diagnostics,
+    shouldFallback,
+    resetDiagnostics
+  } = useWebGLRecovery({
+    maxRecoveryAttempts: 3,
+    recoveryDelayMs: 1000,
+    fallbackEnabled: true,
+    onContextLost: () => {
+      console.warn('🔴 WebGL context lost in SeironGLBDragon')
+    },
+    onContextRestored: () => {
+      console.log('🟢 WebGL context restored in SeironGLBDragon')
+      // Reset any error states
+      setHasError(false)
+      setErrorMessage('')
+    },
+    onRecoveryFailed: () => {
+      console.error('❌ WebGL recovery failed in SeironGLBDragon')
+      setHasError(true)
+      setErrorMessage('WebGL recovery failed')
+    },
+    onFallback: () => {
+      console.log('⚠️ WebGL fallback triggered in SeironGLBDragon')
+      if (onFallback) {
+        onFallback()
+      }
+    }
+  })
 
   console.log('🐉 SeironGLBDragon rendering with props:', { size, enableAnimations, voiceState })
 
@@ -326,9 +363,28 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
     }
   }, [])
 
+  // Initialize WebGL recovery when Canvas is ready
+  useEffect(() => {
+    if (canvasRef.current && rendererRef.current) {
+      initializeRecovery(canvasRef.current, rendererRef.current)
+    }
+  }, [canvasRef.current, rendererRef.current, initializeRecovery])
+
   // Error handler
   const handleError = (error: Error) => {
     console.error('❌ Dragon error:', error)
+    
+    // Check if error is WebGL-related
+    const isWebGLError = error.message.includes('WebGL') || 
+                        error.message.includes('context') ||
+                        error.message.includes('CONTEXT_LOST')
+    
+    if (isWebGLError) {
+      console.warn('🔴 WebGL-related error detected, WebGL recovery will handle this')
+      // Let WebGL recovery handle this error
+      return
+    }
+    
     setHasError(true)
     setErrorMessage(error.message)
     
@@ -338,14 +394,22 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
     }
   }
 
-  if (hasError) {
-    console.log('💥 Dragon error state, showing fallback')
+  // Check if fallback should be triggered
+  if (shouldFallback || hasError) {
+    console.log('💥 Dragon error state or fallback triggered, showing fallback')
     return (
       <div className={`flex items-center justify-center ${className}`}>
         <div className="text-yellow-400 font-mono text-center">
           <div className="text-4xl mb-2">⚡</div>
           <div>Dragon power loading...</div>
-          <div className="text-xs text-red-400 mt-2">{errorMessage}</div>
+          <div className="text-xs text-red-400 mt-2">
+            {shouldFallback ? 'WebGL fallback active' : errorMessage}
+          </div>
+          {diagnostics.contextLossCount > 0 && (
+            <div className="text-xs text-blue-400 mt-1">
+              Context losses: {diagnostics.contextLossCount}
+            </div>
+          )}
         </div>
       </div>
     )
@@ -356,6 +420,7 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
   return (
     <div className={`w-full h-full ${className}`}>
       <Canvas
+        ref={canvasRef}
         camera={{ 
           position: [0, 2, 12], 
           fov: 45,
@@ -369,11 +434,19 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
         gl={{ 
           antialias: true, 
           alpha: true,
-          powerPreference: 'high-performance'
+          powerPreference: 'high-performance',
+          preserveDrawingBuffer: true, // Helps with context recovery
+          failIfMajorPerformanceCaveat: false
         }}
         shadows
         onCreated={(state) => {
           console.log('🎮 Three.js Canvas created:', state)
+          rendererRef.current = state.gl
+          
+          // Initialize WebGL recovery with the canvas and renderer
+          if (canvasRef.current) {
+            initializeRecovery(canvasRef.current, state.gl)
+          }
         }}
         onError={(error) => {
           console.error('🎮 Three.js Canvas error:', error)

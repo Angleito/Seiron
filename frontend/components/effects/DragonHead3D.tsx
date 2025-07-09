@@ -5,6 +5,7 @@ import { Canvas, useFrame, useLoader } from '@react-three/fiber'
 import { OBJLoader } from 'three-stdlib'
 import * as THREE from 'three'
 import { useMouseTracking } from '@/hooks/useMouseTracking'
+import { useWebGLRecovery } from '../../utils/webglRecovery'
 
 interface DragonHead3DProps {
   className?: string
@@ -12,6 +13,8 @@ interface DragonHead3DProps {
   enableEyeTracking?: boolean
   lightningActive?: boolean
   onLoad?: () => void
+  onError?: (error: Error) => void
+  onFallback?: () => void
 }
 
 // Eye tracking component that handles the dragon head mesh
@@ -220,15 +223,66 @@ export function DragonHead3D({
   intensity = 0.8,
   enableEyeTracking = true,
   lightningActive = false,
-  onLoad
+  onLoad,
+  onError,
+  onFallback
 }: DragonHead3DProps) {
   const [isLoaded, setIsLoaded] = useState(false)
   const [hasError, setHasError] = useState(false)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
+
+  // WebGL recovery hook
+  const {
+    initializeRecovery,
+    diagnostics,
+    shouldFallback,
+    resetDiagnostics
+  } = useWebGLRecovery({
+    maxRecoveryAttempts: 3,
+    recoveryDelayMs: 1000,
+    fallbackEnabled: true,
+    onContextLost: () => {
+      console.warn('🔴 WebGL context lost in DragonHead3D')
+    },
+    onContextRestored: () => {
+      console.log('🟢 WebGL context restored in DragonHead3D')
+      // Reset any error states
+      setHasError(false)
+    },
+    onRecoveryFailed: () => {
+      console.error('❌ WebGL recovery failed in DragonHead3D')
+      setHasError(true)
+    },
+    onFallback: () => {
+      console.log('⚠️ WebGL fallback triggered in DragonHead3D')
+      if (onFallback) {
+        onFallback()
+      }
+    }
+  })
 
   // Error handling
   const handleError = (error: Error) => {
     console.error('Dragon head loading error:', error)
+    
+    // Check if error is WebGL-related
+    const isWebGLError = error.message.includes('WebGL') || 
+                        error.message.includes('context') ||
+                        error.message.includes('CONTEXT_LOST')
+    
+    if (isWebGLError) {
+      console.warn('🔴 WebGL-related error detected in DragonHead3D, WebGL recovery will handle this')
+      // Let WebGL recovery handle this error
+      return
+    }
+    
     setHasError(true)
+    
+    // Propagate error to parent
+    if (onError) {
+      onError(error)
+    }
   }
 
   // Loading state management
@@ -242,13 +296,21 @@ export function DragonHead3D({
     return () => clearTimeout(timer)
   }, [])
 
-  if (hasError) {
+  // Initialize WebGL recovery when Canvas is ready
+  useEffect(() => {
+    if (canvasRef.current && rendererRef.current) {
+      initializeRecovery(canvasRef.current, rendererRef.current)
+    }
+  }, [canvasRef.current, rendererRef.current, initializeRecovery])
+
+  if (hasError || shouldFallback) {
     return null // Fail silently to not break the page
   }
 
   return (
     <div className={`absolute inset-0 ${className}`}>
       <Canvas
+        ref={canvasRef}
         camera={{ 
           position: [0, 1, 8], 
           fov: 45,
@@ -262,10 +324,22 @@ export function DragonHead3D({
         gl={{ 
           antialias: true, 
           alpha: true,
-          powerPreference: 'high-performance'
+          powerPreference: 'high-performance',
+          preserveDrawingBuffer: true, // Helps with context recovery
+          failIfMajorPerformanceCaveat: false
         }}
-        onCreated={() => {
+        onCreated={(state) => {
           // Canvas successfully created
+          rendererRef.current = state.gl
+          
+          // Initialize WebGL recovery with the canvas and renderer
+          if (canvasRef.current) {
+            initializeRecovery(canvasRef.current, state.gl)
+          }
+        }}
+        onError={(error) => {
+          console.error('🎮 DragonHead3D Canvas error:', error)
+          handleError(new Error('Canvas creation failed'))
         }}
       >
         {isLoaded && (

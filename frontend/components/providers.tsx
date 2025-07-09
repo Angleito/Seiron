@@ -5,10 +5,16 @@ import { PrivyProvider } from '@privy-io/react-auth'
 import { WagmiProvider, createConfig } from '@privy-io/wagmi'
 import { http } from 'viem'
 import { privyConfig, seiMainnet } from '@config/privy'
+import { wagmiConfig } from '@config/wagmi'
 // Removed dragon interaction provider after component cleanup
 import { WalletProvider } from '../contexts/WalletContext'
 import { RootErrorBoundary } from '@components/error-boundaries'
 import { logger } from '@lib/logger'
+import { 
+  validateWalletCompatibility, 
+  getCompatibilityErrorMessage,
+  type WalletType
+} from '@utils/walletCompatibility'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,13 +27,18 @@ const queryClient = new QueryClient({
   },
 })
 
-// Create wagmi config for Privy
-const wagmiConfig = createConfig({
-  chains: [seiMainnet],
-  transports: {
-    [seiMainnet.id]: http(),
-  },
-})
+// Use the enhanced wagmi config with wallet compatibility checks
+// (imported from @config/wagmi)
+
+// Enhanced error boundary for wallet compatibility issues
+function WalletCompatibilityErrorBoundary({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  // This could be enhanced to catch wallet compatibility errors
+  return <RootErrorBoundary>{children}</RootErrorBoundary>
+}
 
 export function Providers({
   children,
@@ -81,7 +92,7 @@ export function Providers({
   };
 
   return (
-    <RootErrorBoundary>
+    <WalletCompatibilityErrorBoundary>
       <PrivyProvider
         appId={privyConfig.appId}
         config={safePrivyConfig}
@@ -94,6 +105,36 @@ export function Providers({
           </WagmiProvider>
         </QueryClientProvider>
       </PrivyProvider>
-    </RootErrorBoundary>
+    </WalletCompatibilityErrorBoundary>
   )
+}
+
+// ============================================================================
+// Wallet Compatibility Validation Hook
+// ============================================================================
+
+/**
+ * Hook to validate wallet compatibility in React components
+ * This can be used by wallet components to check compatibility
+ */
+export const useWalletCompatibility = () => {
+  const validateWallet = (walletType: WalletType, chainId: number = seiMainnet.id) => {
+    const isCompatible = validateWalletCompatibility(walletType, chainId)
+    const errorMessage = getCompatibilityErrorMessage(walletType, chainId)
+    
+    if (!isCompatible && errorMessage) {
+      logger.warn(`Wallet compatibility issue: ${errorMessage}`, {
+        walletType,
+        chainId,
+        errorMessage,
+      })
+    }
+    
+    return {
+      isCompatible,
+      errorMessage,
+    }
+  }
+
+  return { validateWallet }
 }

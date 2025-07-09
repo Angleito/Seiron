@@ -1,28 +1,68 @@
 'use client'
 
 import { usePrivy, useWallets } from '@privy-io/react-auth'
-import { Wallet, Power, LogOut } from 'lucide-react'
+import { Wallet, Power, LogOut, AlertTriangle } from 'lucide-react'
 import { useState } from 'react'
 import { logger } from '@lib/logger'
+import { 
+  detectWalletType, 
+  getCompatibilityErrorMessage,
+  type WalletType
+} from '@utils/walletCompatibility'
+import { seiMainnet } from '@config/privy'
+import { DragonWalletErrorBoundary } from '../error-boundaries/WalletErrorBoundary'
+import { errorRecoveryUtils } from '@utils/errorRecovery'
 
 export function WalletConnectButton() {
   const { ready, authenticated, login, logout, user } = usePrivy()
   const { wallets } = useWallets()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [isConnecting, setIsConnecting] = useState(false)
+  const [lastError, setLastError] = useState<Error | null>(null)
 
   // Get the first connected wallet
   const activeWallet = wallets.find(wallet => wallet.connectorType !== 'embedded') || wallets[0]
   const address = activeWallet?.address
+  
+  // Validate wallet compatibility with Sei Network
+  const walletType = activeWallet ? detectWalletType(
+    activeWallet.connectorType,
+    activeWallet.walletClientType,
+    activeWallet.meta?.name
+  ) : null
+  
+  const compatibilityError = walletType ? getCompatibilityErrorMessage(walletType, seiMainnet.id) : null
+  const error = compatibilityError ? new Error(compatibilityError) : null
 
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`
   }
 
   const handleConnect = async () => {
+    setIsConnecting(true)
+    setLastError(null)
+    
     try {
-      await login()
+      if (!ready) {
+        logger.warn('Privy not ready, cannot connect')
+        return
+      }
+      
+      await errorRecoveryUtils.wallet.attemptReconnection(async () => {
+        login()
+      }, {
+        maxRetries: 2,
+        onRetry: (attempt, error) => {
+          logger.info(`Wallet connection retry ${attempt}:`, error.message)
+        }
+      })
     } catch (error) {
-      logger.error('Failed to connect wallet:', error)
+      const walletError = error as Error
+      logger.error('Failed to connect wallet:', walletError)
+      setLastError(walletError)
+      errorRecoveryUtils.monitor.recordError(walletError, 'WalletConnect', false)
+    } finally {
+      setIsConnecting(false)
     }
   }
 
@@ -31,18 +71,33 @@ export function WalletConnectButton() {
       await logout()
       setIsDropdownOpen(false)
     } catch (error) {
-      logger.error('Failed to disconnect wallet:', error)
+      const walletError = error as Error
+      logger.error('Failed to disconnect wallet:', walletError)
+      errorRecoveryUtils.monitor.recordError(walletError, 'WalletDisconnect', false)
     }
   }
 
-  if (!ready) {
+  if (!ready || !ready) {
     return (
       <button 
         disabled
         className="flex items-center space-x-2 px-4 py-2 bg-gray-800 text-gray-400 rounded-lg cursor-not-allowed"
       >
         <Wallet className="w-5 h-5" />
-        <span>Loading...</span>
+        <span>{!ready ? 'Initializing...' : 'Loading...'}</span>
+      </button>
+    )
+  }
+
+  if (error) {
+    return (
+      <button 
+        disabled
+        className="flex items-center space-x-2 px-4 py-2 bg-red-800 text-red-400 rounded-lg cursor-not-allowed"
+        title={error.message}
+      >
+        <Wallet className="w-5 h-5" />
+        <span>Connection Error</span>
       </button>
     )
   }
@@ -94,6 +149,18 @@ export function WalletConnectButton() {
               <div className="text-sm text-gray-400 mb-1">Network</div>
               <div className="text-white">Sei Network</div>
             </div>
+            
+            {compatibilityError && (
+              <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                <div className="flex items-start space-x-2">
+                  <AlertTriangle className="w-4 h-4 text-yellow-400 mt-0.5" />
+                  <div>
+                    <div className="text-sm font-medium text-yellow-400">Compatibility Warning</div>
+                    <div className="text-xs text-yellow-300 mt-1">{compatibilityError}</div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="p-4 border-t border-gray-800">
@@ -108,5 +175,14 @@ export function WalletConnectButton() {
         </div>
       )}
     </div>
+  )
+}
+
+// Enhanced version with error boundary
+export function WalletConnectButtonWithErrorBoundary() {
+  return (
+    <DragonWalletErrorBoundary>
+      <WalletConnectButton />
+    </DragonWalletErrorBoundary>
   )
 }
