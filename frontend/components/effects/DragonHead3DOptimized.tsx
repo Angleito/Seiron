@@ -190,8 +190,10 @@ export const DragonHead3DOptimized = React.memo(function DragonHead3DOptimized({
       // Device-based selection for optimal performance
       let selectedMode: 'full' | 'lightweight' | 'fallback'
       
-      if (forceQuality) {
-        selectedMode = forceQuality
+      if (forceQuality && forceQuality !== 'auto') {
+        // Map quality settings to render modes
+        selectedMode = forceQuality === 'high' ? 'full' : 
+                      forceQuality === 'medium' ? 'lightweight' : 'fallback'
       } else if (isMobile || isTablet) {
         selectedMode = config.animationQuality === 'high' ? 'lightweight' : 'fallback'
       } else {
