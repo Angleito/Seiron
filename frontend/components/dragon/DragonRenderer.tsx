@@ -100,7 +100,7 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
   fallbackType = '2d',
   enableProgressiveLoading = false,
   lowQualityModel = '/models/seiron.glb',
-  highQualityModel = '/models/seiron_animated.gltf', // Using non-optimized version that works in production
+  highQualityModel = '/models/seiron.glb', // Using the primary working model
   enablePerformanceMonitor = false,
   performanceMonitorPosition = 'top-left',
   onError,
@@ -426,27 +426,22 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
           // LOD based on size with availability checking and safe fallbacks
           // Prioritize models that are confirmed to work in production
           const safeModels = [
-            '/models/seiron_animated.gltf', // Primary working animated model
-            '/models/seiron.glb', // Working fallback model
-            '/models/seiron_animated_lod_high.gltf', // Working LOD model
-            '/models/seiron.glb', // May not work in production
-            '/models/seiron_animated.gltf' // May not work in production
+            '/models/seiron.glb' // Primary working model - use this for everything
           ]
           
           switch (size) {
             case 'sm':
             case 'md':
-              // For smaller sizes, prefer simpler models
-              return safeModels.find(model => modelAvailability[model] !== false) || '/models/seiron.glb'
+              // For all sizes, use the primary working model
+              return '/models/seiron.glb'
             case 'lg':
-              const lodModel = '/models/seiron_animated_lod_high.gltf'
-              if (modelAvailability[lodModel] !== false) return lodModel
-              return safeModels.find(model => modelAvailability[model] !== false) || '/models/seiron_animated.gltf'
+              // Use the primary working model
+              return '/models/seiron.glb'
             case 'xl':
             case 'gigantic':
             default:
-              // For larger sizes, use the best available model
-              return safeModels.find(model => modelAvailability[model] !== false) || '/models/seiron_animated.gltf'
+              // Use the primary working model
+              return '/models/seiron.glb'
           }
         }
         

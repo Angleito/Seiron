@@ -114,7 +114,7 @@ export const EnhancedHeroSection: React.FC<EnhancedHeroSectionProps> = ({
           enableAnimations={enableAnimations}
           enableProgressiveLoading={true}
           lowQualityModel="/models/seiron.glb"
-          highQualityModel="/models/seiron_animated.gltf"
+          highQualityModel="/models/seiron.glb"
           className="w-full h-full"
         />
       </div>

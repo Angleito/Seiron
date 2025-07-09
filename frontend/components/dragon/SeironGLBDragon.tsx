@@ -41,7 +41,7 @@ function DragonMesh({
   voiceState,
   size = 'gigantic',
   enableAnimations = true,
-  modelPath = '/models/seiron_animated.gltf', // Using non-optimized version that works in production
+  modelPath = '/models/seiron.glb', // Using the primary working model
   onError
 }: {
   voiceState?: VoiceAnimationState
@@ -72,9 +72,12 @@ function DragonMesh({
   } catch (error) {
     console.error('❌ Failed to load GLTF model:', error)
     
-    // Check if this is the corrupted model and try fallback
-    if (modelPath.includes('seiron_animated.gltf')) {
-      console.log('🔄 Attempting to load fallback model...')
+    // Check if this is a known problematic model and try fallback
+    const problematicModels = ['seiron_animated.gltf', 'seiron_animated_lod_high.gltf']
+    const isProblematicModel = problematicModels.some(model => modelPath.includes(model))
+    
+    if (isProblematicModel) {
+      console.log('🔄 Attempting to load fallback model due to known issues...')
       try {
         const fallbackGltf = useGLTF('/models/seiron.glb')
         if (fallbackGltf && fallbackGltf.scene) {
@@ -331,7 +334,7 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
   size = 'gigantic',
   className = '',
   enableAnimations = true,
-  modelPath = '/models/seiron_animated.gltf', // Using non-optimized version that works in production
+  modelPath = '/models/seiron.glb', // Using the primary working model
   isProgressiveLoading = false,
   isLoadingHighQuality = false,
   onError,
@@ -614,18 +617,9 @@ const SeironGLBDragonWithWebGLErrorBoundary: React.FC<SeironGLBDragonProps> = (p
 // Preload the optimized GLTF models only once
 if (typeof window !== 'undefined') {
   try {
-    // Preload the working models first
-    useGLTF.preload('/models/seiron_animated.gltf') // Preload working model
-    useGLTF.preload('/models/seiron.glb') // Preload fallback model
-    // Preload the LOD models if they exist
-    useGLTF.preload('/models/seiron_animated_lod_high.gltf')
-    // Try to preload optimized versions (may fail in production)
-    try {
-      useGLTF.preload('/models/seiron.glb')
-      useGLTF.preload('/models/seiron_animated.gltf')
-    } catch (e) {
-      console.warn('Optimized models not available, using standard models')
-    }
+    // Preload only the working models
+    useGLTF.preload('/models/seiron.glb') // Primary working model
+    console.log('✅ Preloaded primary model: /models/seiron.glb')
   } catch (e) {
     console.warn('Failed to preload GLTF models:', e)
   }
