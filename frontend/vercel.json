@@ -1,22 +1,7 @@
 {
   "version": 2,
+  "framework": "nextjs",
   "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "installCommand": "npm install",
-  "framework": "vite",
-  "functions": {
-    "api/**/*.ts": {
-      "runtime": "@vercel/node@3.0.0",
-      "maxDuration": 30
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/((?!api|assets|images|models|fonts|favicon.ico|seiron.png|test.html|debug-config.html).*)",
-      "destination": "/index.html"
-    }
-  ],
-  "trailingSlash": false,
   "headers": [
     {
       "source": "/api/(.*)",
@@ -31,7 +16,7 @@
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization, X-Requested-With"
+          "value": "Content-Type, Authorization, X-Requested-With, X-User-Id"
         }
       ]
     },
@@ -53,7 +38,7 @@
       "headers": [
         {
           "key": "Content-Type",
-          "value": "application/octet-stream"
+          "value": "model/gltf-binary"
         },
         {
           "key": "Cache-Control",
@@ -66,7 +51,7 @@
       "headers": [
         {
           "key": "Content-Type",
-          "value": "application/json"
+          "value": "model/gltf+json"
         },
         {
           "key": "Cache-Control",
