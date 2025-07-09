@@ -34,16 +34,15 @@ export default function PerformanceDemoPage() {
           </div>
           
           <div className="flex items-center gap-4">
-            <label>Quality Mode:</label>
+            <label>Dragon Type:</label>
             <select
-              value={forceQuality}
-              onChange={(e) => setForceQuality(e.target.value as any)}
+              value={dragonType}
+              onChange={(e) => setDragonType(e.target.value as any)}
               className="bg-gray-800 px-4 py-2 rounded"
             >
-              <option value="auto">Auto</option>
-              <option value="low">Low (Fallback)</option>
-              <option value="medium">Medium (Lightweight)</option>
-              <option value="high">High (Full 3D)</option>
+              <option value="glb">GLB (3D Model)</option>
+              <option value="2d">2D (Sprite)</option>
+              <option value="ascii">ASCII (Text)</option>
             </select>
           </div>
           
@@ -100,8 +99,9 @@ export default function PerformanceDemoPage() {
         {/* Dragon Container */}
         <div className="relative h-[600px] bg-gray-800 rounded-lg overflow-hidden">
           <DragonRenderer
+            key={dragonType} // Force remount when type changes
             size="lg"
-            dragonType="glb"
+            dragonType={dragonType}
             enableFallback={true}
             fallbackType="2d"
             enableAnimations={true}

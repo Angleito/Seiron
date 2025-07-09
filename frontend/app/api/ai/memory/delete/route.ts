@@ -17,7 +17,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
     
-    const headersList = headers();
+    const headersList = await headers();
     const authHeader = headersList.get('authorization');
     const userIdHeader = headersList.get('x-user-id');
     
