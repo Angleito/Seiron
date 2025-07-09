@@ -80,6 +80,14 @@ export function useAIMemoryWithFallback({
   onSyncError,
   onFallbackActivated
 }: UseAIMemoryOptions) {
+  // Store callbacks in refs to prevent re-renders
+  const onSyncErrorRef = useRef(onSyncError);
+  const onFallbackActivatedRef = useRef(onFallbackActivated);
+  
+  useEffect(() => {
+    onSyncErrorRef.current = onSyncError;
+    onFallbackActivatedRef.current = onFallbackActivated;
+  }, [onSyncError, onFallbackActivated]);
   const [state, setState] = useState<AIMemoryState>({
     entries: [],
     isLoading: false,
@@ -134,7 +142,7 @@ export function useAIMemoryWithFallback({
       setState(prev => ({ ...prev, backendAvailable: false }));
       return false;
     }
-  }, [userId, state.backendAvailable]);
+  }, [userId]);
 
   // Load from localStorage (fallback)
   const loadFromLocalStorage = useCallback((): AIMemoryEntry[] => {
@@ -286,16 +294,16 @@ export function useAIMemoryWithFallback({
       } else {
         // Fall back to localStorage
         logger.info('Falling back to localStorage due to backend error');
-        onFallbackActivated?.('Backend load failed');
+        onFallbackActivatedRef.current?.('Backend load failed');
         return loadFromLocalStorage();
       }
     } else {
       // Backend not available, use localStorage
       logger.info('Backend not available, using localStorage');
-      onFallbackActivated?.('Backend not available');
+      onFallbackActivatedRef.current?.('Backend not available');
       return loadFromLocalStorage();
     }
-  }, [userId, sessionId, cacheEnabled, fallbackToLocalStorage, onSyncError, onFallbackActivated, checkBackendAvailability]);
+  }, [userId, sessionId, cacheEnabled, fallbackToLocalStorage, checkBackendAvailability, loadFromLocalStorage]);
 
 
   // Save memory with fallback
@@ -493,11 +501,17 @@ export function useAIMemoryWithFallback({
     }
   }, [userId, cacheEnabled, fallbackToLocalStorage, state.backendAvailable, state.isUsingFallback, deleteFromLocalStorage]);
 
-  // Auto-sync effect
+  // Initial load effect
   useEffect(() => {
     if (autoSync) {
       loadMemories();
-      
+    }
+  }, []); // Run only on mount
+
+  // Auto-sync interval effect
+  useEffect(() => {
+    if (autoSync && syncInterval > 0) {
+      // Set up interval for periodic sync
       const interval = setInterval(() => {
         loadMemories();
       }, syncInterval);
@@ -507,7 +521,7 @@ export function useAIMemoryWithFallback({
     }
     // Return undefined explicitly for the else case
     return undefined;
-  }, [autoSync, syncInterval, loadMemories]);
+  }, [autoSync, syncInterval]); // Dependencies don't include loadMemories to prevent infinite loop
 
   // Cleanup effect
   useEffect(() => {
