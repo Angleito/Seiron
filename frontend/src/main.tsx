@@ -51,34 +51,23 @@ try {
   
   console.log('🎨 Rendering app...')
   
-  // Quick fallback for dragon display - render simple homepage directly
-  if (import.meta.env.DEV) {
-    console.log('🐉 Using simple dragon fallback for quick display')
-    root.render(
-      <React.StrictMode>
-        <HomePage3D />
-        <Analytics />
-      </React.StrictMode>
-    )
-  } else {
-    // Full app for production
-    root.render(
-      <React.StrictMode>
-        <RootErrorBoundary>
-          <PrivyProvider 
-            appId={appId} 
-            config={safePrivyConfig}>
-            <QueryClientProvider client={queryClient}>
-              <WagmiProvider config={wagmiConfig}>
-                <RouterProvider router={router} />
-              </WagmiProvider>
-            </QueryClientProvider>
-          </PrivyProvider>
-        </RootErrorBoundary>
-        <Analytics />
-      </React.StrictMode>
-    )
-  }
+  // Render full app with router for all environments
+  root.render(
+    <React.StrictMode>
+      <RootErrorBoundary>
+        <PrivyProvider 
+          appId={appId} 
+          config={safePrivyConfig}>
+          <QueryClientProvider client={queryClient}>
+            <WagmiProvider config={wagmiConfig}>
+              <RouterProvider router={router} />
+            </WagmiProvider>
+          </QueryClientProvider>
+        </PrivyProvider>
+      </RootErrorBoundary>
+      <Analytics />
+    </React.StrictMode>
+  )
   
   console.log('✅ App render complete')
 } catch (error) {

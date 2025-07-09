@@ -112,6 +112,9 @@ export const EnhancedHeroSection: React.FC<EnhancedHeroSectionProps> = ({
         <DragonRenderer
           size="gigantic"
           enableAnimations={enableAnimations}
+          enableProgressiveLoading={true}
+          lowQualityModel="/models/seiron_optimized.glb"
+          highQualityModel="/models/seiron_animated_optimized.gltf"
           className="w-full h-full"
         />
       </div>

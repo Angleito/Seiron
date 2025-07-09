@@ -16,6 +16,9 @@ interface SeironGLBDragonProps {
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'gigantic'
   className?: string
   enableAnimations?: boolean
+  modelPath?: string
+  isProgressiveLoading?: boolean
+  isLoadingHighQuality?: boolean
   onError?: (error: Error) => void
 }
 
@@ -24,11 +27,13 @@ function DragonMesh({
   voiceState,
   size = 'gigantic',
   enableAnimations = true,
+  modelPath = '/models/seiron_animated_optimized.gltf',
   onError
 }: {
   voiceState?: VoiceAnimationState
   size: 'sm' | 'md' | 'lg' | 'xl' | 'gigantic'
   enableAnimations: boolean
+  modelPath?: string
   onError?: (error: Error) => void
 }) {
   const meshRef = useRef<THREE.Group>(null)
@@ -37,8 +42,8 @@ function DragonMesh({
   let scene: THREE.Group
   let animations: THREE.AnimationClip[]
   try {
-    console.log('🔄 Loading GLTF model from /models/seiron_animated.gltf...')
-    const gltf = useGLTF('/models/seiron_animated.gltf')
+    console.log(`🔄 Loading GLTF model from ${modelPath}...`)
+    const gltf = useGLTF(modelPath)
     scene = gltf.scene
     animations = gltf.animations || []
     console.log('✅ GLTF model loaded successfully:', scene)
@@ -113,17 +118,50 @@ function DragonMesh({
     return cloned
   }, [scene, currentConfig])
 
-  // Cleanup animation mixer on unmount
+  // Cleanup animation mixer and dispose of resources on unmount
   useEffect(() => {
     return () => {
       if (mixerRef.current) {
         mixerRef.current.stopAllAction()
         mixerRef.current.uncacheRoot(mixerRef.current.getRoot())
+        mixerRef.current = null
+      }
+      
+      // Dispose of the cloned scene and its resources
+      if (clonedScene) {
+        clonedScene.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            // Dispose of geometry
+            if (child.geometry) {
+              child.geometry.dispose()
+            }
+            
+            // Dispose of materials
+            if (child.material) {
+              if (Array.isArray(child.material)) {
+                child.material.forEach(material => {
+                  if (material.map) material.map.dispose()
+                  if (material.normalMap) material.normalMap.dispose()
+                  if (material.roughnessMap) material.roughnessMap.dispose()
+                  if (material.metalnessMap) material.metalnessMap.dispose()
+                  material.dispose()
+                })
+              } else {
+                if (child.material.map) child.material.map.dispose()
+                if (child.material.normalMap) child.material.normalMap.dispose()
+                if (child.material.roughnessMap) child.material.roughnessMap.dispose()
+                if (child.material.metalnessMap) child.material.metalnessMap.dispose()
+                child.material.dispose()
+              }
+            }
+          }
+        })
+        clonedScene.clear()
       }
     }
-  }, [])
+  }, [clonedScene])
 
-  // Animation loop
+  // Animation loop with performance optimization
   useFrame((state, delta) => {
     if (!meshRef.current || !enableAnimations) return
 
@@ -134,9 +172,11 @@ function DragonMesh({
       mixerRef.current.update(delta)
     }
 
-    // Simple breathing animation on top of the GLTF animation
-    const breatheScale = Math.sin(time * 0.8) * 0.02
-    meshRef.current.scale.setScalar(currentConfig.scale + breatheScale)
+    // Only update breathing animation every few frames to improve performance
+    if (Math.floor(time * 60) % 3 === 0) {
+      const breatheScale = Math.sin(time * 0.8) * 0.02
+      meshRef.current.scale.setScalar(currentConfig.scale + breatheScale)
+    }
   })
 
   return (
@@ -218,11 +258,13 @@ function DragonScene({
   voiceState, 
   size,
   enableAnimations,
+  modelPath,
   onError
 }: {
   voiceState?: VoiceAnimationState
   size: 'sm' | 'md' | 'lg' | 'xl' | 'gigantic'
   enableAnimations: boolean
+  modelPath?: string
   onError?: (error: Error) => void
 }) {
   return (
@@ -232,6 +274,7 @@ function DragonScene({
         voiceState={voiceState}
         size={size}
         enableAnimations={enableAnimations}
+        modelPath={modelPath}
         onError={onError}
       />
       <fog attach="fog" args={['#000000', 10, 50]} />
@@ -245,6 +288,9 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
   size = 'gigantic',
   className = '',
   enableAnimations = true,
+  modelPath = '/models/seiron_animated_optimized.gltf',
+  isProgressiveLoading = false,
+  isLoadingHighQuality = false,
   onError
 }) => {
   const [isLoaded, setIsLoaded] = useState(false)
@@ -327,6 +373,7 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
             voiceState={voiceState}
             size={size}
             enableAnimations={enableAnimations}
+            modelPath={modelPath}
             onError={handleError}
           />
         )}
@@ -371,12 +418,17 @@ const SeironGLBDragonWithErrorBoundary: React.FC<SeironGLBDragonProps> = (props)
   )
 }
 
-// Preload the GLTF model only once
+// Preload the optimized GLTF models only once
 if (typeof window !== 'undefined') {
   try {
-    useGLTF.preload('/models/seiron_animated.gltf')
+    // Preload the optimized high-quality model
+    useGLTF.preload('/models/seiron_animated_optimized.gltf')
+    // Preload the low-quality model for progressive loading
+    useGLTF.preload('/models/seiron_optimized.glb')
+    // Preload the LOD models if they exist
+    useGLTF.preload('/models/seiron_animated_lod_high.gltf')
   } catch (e) {
-    console.warn('Failed to preload GLTF model:', e)
+    console.warn('Failed to preload GLTF models:', e)
   }
 }
 

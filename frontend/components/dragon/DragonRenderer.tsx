@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { SeironGLBDragonWithErrorBoundary } from './SeironGLBDragon'
+import { DragonPerformanceMonitor } from './DragonPerformanceMonitor'
+import { DragonMemoryManager } from '../../utils/dragonMemoryManager'
 
 export interface VoiceAnimationState {
   isListening: boolean
@@ -20,8 +22,14 @@ export interface DragonRendererProps {
   dragonType?: 'glb' | '2d' | 'ascii'
   enableFallback?: boolean
   fallbackType?: '2d' | 'ascii'
+  enableProgressiveLoading?: boolean
+  lowQualityModel?: string
+  highQualityModel?: string
+  enablePerformanceMonitor?: boolean
+  performanceMonitorPosition?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
   onError?: (error: Error, type: string) => void
   onFallback?: (fromType: string, toType: string) => void
+  onProgressiveLoadComplete?: () => void
 }
 
 // ASCII Dragon Component
@@ -76,7 +84,7 @@ const Dragon2D: React.FC<{
   )
 }
 
-// Dragon renderer with fallback system
+// Dragon renderer with fallback system and progressive loading
 export const DragonRenderer: React.FC<DragonRendererProps> = ({
   size = 'md',
   voiceState,
@@ -85,21 +93,60 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
   dragonType = 'glb',
   enableFallback = true,
   fallbackType = '2d',
+  enableProgressiveLoading = false,
+  lowQualityModel = '/models/seiron_optimized.glb',
+  highQualityModel = '/models/seiron_animated_optimized.gltf',
+  enablePerformanceMonitor = false,
+  performanceMonitorPosition = 'top-left',
   onError,
-  onFallback
+  onFallback,
+  onProgressiveLoadComplete
 }) => {
   const [currentType, setCurrentType] = useState(dragonType)
   const [hasError, setHasError] = useState(false)
+  const [isLoadingHighQuality, setIsLoadingHighQuality] = useState(false)
+  const [useHighQuality, setUseHighQuality] = useState(!enableProgressiveLoading)
   const errorCountRef = useRef(0)
   const mountedRef = useRef(true)
   const lastErrorTimeRef = useRef(0)
+  const memoryManager = useRef(DragonMemoryManager.getInstance())
 
   useEffect(() => {
     mountedRef.current = true
     return () => {
       mountedRef.current = false
+      
+      // Clean up memory when component unmounts
+      if (memoryManager.current) {
+        const activeModels = enableProgressiveLoading 
+          ? [lowQualityModel, highQualityModel]
+          : [highQualityModel]
+        
+        // Clean up unused models periodically
+        memoryManager.current.cleanupUnusedModels(activeModels)
+      }
     }
-  }, [])
+  }, [enableProgressiveLoading, lowQualityModel, highQualityModel])
+
+  // Progressive loading effect
+  useEffect(() => {
+    if (enableProgressiveLoading && currentType === 'glb' && !useHighQuality && !isLoadingHighQuality) {
+      setIsLoadingHighQuality(true)
+      
+      // Simulate loading delay and then enable high quality
+      const timer = setTimeout(() => {
+        if (mountedRef.current) {
+          setUseHighQuality(true)
+          setIsLoadingHighQuality(false)
+          if (onProgressiveLoadComplete) {
+            onProgressiveLoadComplete()
+          }
+        }
+      }, 1000) // Give 1 second for low quality to render first
+      
+      return () => clearTimeout(timer)
+    }
+  }, [enableProgressiveLoading, currentType, useHighQuality, isLoadingHighQuality, onProgressiveLoadComplete])
 
   const handleError = useCallback((error: Error) => {
     if (!mountedRef.current) return
@@ -186,12 +233,37 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
       
       case 'glb':
       default:
+        // LOD selection based on size
+        const getLODModel = () => {
+          if (enableProgressiveLoading) {
+            return useHighQuality ? highQualityModel : lowQualityModel
+          }
+          
+          // LOD based on size
+          switch (size) {
+            case 'sm':
+            case 'md':
+              return lowQualityModel // Use low-quality for small sizes
+            case 'lg':
+              return '/models/seiron_animated_lod_high.gltf' // Use high-quality LOD if available
+            case 'xl':
+            case 'gigantic':
+            default:
+              return highQualityModel // Use full-quality for large sizes
+          }
+        }
+        
+        const modelPath = getLODModel()
+        
         return (
           <SeironGLBDragonWithErrorBoundary
             voiceState={voiceState}
             size={size}
             enableAnimations={enableAnimations}
             className="w-full h-full"
+            modelPath={modelPath}
+            isProgressiveLoading={enableProgressiveLoading}
+            isLoadingHighQuality={isLoadingHighQuality}
             onError={handleError}
           />
         )
@@ -203,6 +275,12 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
       <div key={currentType}>
         {renderDragon()}
       </div>
+      
+      {/* Performance Monitor */}
+      <DragonPerformanceMonitor
+        enabled={enablePerformanceMonitor}
+        position={performanceMonitorPosition}
+      />
     </div>
   )
 }
