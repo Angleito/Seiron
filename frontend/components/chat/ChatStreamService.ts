@@ -505,7 +505,7 @@ export class ChatStreamService {
         })
         
         try {
-          const apiEndpoint = `${import.meta.env.VITE_API_URL || ''}/api/chat/orchestrate`
+          const apiEndpoint = '/api/chat/orchestrate'
           const requestBody = {
             message: message.content,
             sessionId: this.config.sessionId,

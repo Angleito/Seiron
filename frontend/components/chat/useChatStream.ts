@@ -72,7 +72,7 @@ export function useChatStream(options: UseChatStreamOptions): UseChatStreamResul
   // Initialize chat service
   useEffect(() => {
     const service = new VercelChatService({
-      apiEndpoint: options.apiEndpoint || import.meta.env.VITE_API_URL || '',
+      apiEndpoint: options.apiEndpoint || '',
       sessionId: options.sessionId,
       maxRetries: options.maxRetries || 3,
       retryDelay: options.retryDelay || 1000,

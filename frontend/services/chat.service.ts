@@ -1,7 +1,7 @@
 import { createAuthenticatedFetch } from '../lib/auth/authInterceptor'
 
-// API endpoint configuration - using backend API endpoints
-const API_BASE_URL = import.meta.env.VITE_API_URL || ''
+// API endpoint configuration - using relative paths for Vercel deployment
+const API_BASE_URL = ''
 
 // Create authenticated fetch instance
 const authFetch = createAuthenticatedFetch({
