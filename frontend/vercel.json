@@ -12,7 +12,11 @@
   },
   "rewrites": [
     {
-      "source": "/((?!api|assets|images|models|fonts|favicon.ico|seiron.png|test.html|debug-config.html|debug-models.html).*)",
+      "source": "/models/(.*)",
+      "destination": "/models/$1"
+    },
+    {
+      "source": "/((?!api|assets|images|models|fonts|favicon.ico|seiron.png|test.html|debug-config.html|debug-models.html|test-static.txt).*)",
       "destination": "/index.html"
     }
   ],
