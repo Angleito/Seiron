@@ -107,14 +107,17 @@ COPY --chown=backend:nodejs . .
 # Create logs directory
 RUN mkdir -p logs && chown -R backend:nodejs logs
 
+# Build the TypeScript code
+RUN npm run build || true
+
 # Switch to non-root user
 USER backend
 
 # Expose port
 EXPOSE 3001
 
-# Start in development mode
-CMD ["npm", "run", "dev"]
+# Start in development mode with nodemon for better dev experience
+CMD ["npx", "nodemon", "--watch", "src", "--ext", "ts", "--exec", "npx", "tsx", "src/server.ts"]
 
 # ============================================
 # Test stage - For running tests
