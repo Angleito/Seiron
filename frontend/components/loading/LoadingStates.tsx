@@ -142,13 +142,13 @@ export const ProgressiveLoader: React.FC<{
     
     const stage = stages[activeStage]
     const interval = setInterval(() => {
-      setStageProgress(prev => {
+      setStageProgress((prev: number) => {
         if (prev >= 100) {
           setActiveStage(current => current + 1)
-          setProgress(prev => prev + (100 / stages.length))
+          setProgress((prev: number) => prev + (100 / stages.length))
           return 0
         }
-        return prev + (100 / (stage.duration / 100))
+        return prev + (100 / (stage?.duration || 1000) / 100)
       })
     }, 100)
     
@@ -250,19 +250,19 @@ export const DeviceCapabilityLoader: React.FC<{
         // Simulate capability detection
         switch (i) {
           case 0:
-            setCapabilities(prev => ({ ...prev, device: 'desktop' }))
+            setCapabilities((prev: any) => ({ ...prev, device: 'desktop' }))
             break
           case 1:
-            setCapabilities(prev => ({ ...prev, webgl: true }))
+            setCapabilities((prev: any) => ({ ...prev, webgl: true }))
             break
           case 2:
-            setCapabilities(prev => ({ ...prev, online: navigator.onLine }))
+            setCapabilities((prev: any) => ({ ...prev, online: navigator.onLine }))
             break
           case 3:
-            setCapabilities(prev => ({ ...prev, audio: true }))
+            setCapabilities((prev: any) => ({ ...prev, audio: true }))
             break
           case 4:
-            setCapabilities(prev => ({ ...prev, performance: 'high' }))
+            setCapabilities((prev: any) => ({ ...prev, performance: 'high' }))
             break
         }
       }

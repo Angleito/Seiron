@@ -1,14 +1,15 @@
-import React, { useState, useEffect, useRef, Suspense, useCallback, useMemo } from 'react'
-import { Play, Pause, RotateCcw, AlertTriangle, CheckCircle, Zap, Eye, Palette, Mic, MicOff, Volume2, Monitor, Cpu, Battery } from 'lucide-react'
+import { useState, useEffect, useRef, Suspense, useCallback, useMemo } from 'react'
+import { RotateCcw, AlertTriangle, CheckCircle, Zap, Eye, Mic, MicOff, Volume2, Monitor, Cpu, Battery } from 'lucide-react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Environment, Loader } from '@react-three/drei'
+import * as THREE from 'three'
 import { SeironGLBDragon } from '../../components/dragon/SeironGLBDragon'
 import { VoiceAnimationState } from '../../components/dragon/DragonRenderer'
 import { usePerformanceMonitor } from '../../hooks/usePerformanceMonitor'
 import { DragonMemoryManager } from '../../utils/dragonMemoryManager'
 import { ProductionWebGLErrorBoundary } from '../../components/webgl/ProductionWebGLErrorBoundary'
 import { DeviceCompatibilityBoundary } from '../../components/error-boundaries/DeviceCompatibilityBoundary'
-import { WebGLPerformanceMonitor } from '../../components/webgl/WebGLPerformanceMonitor'
+import WebGLPerformanceMonitor from '../../components/webgl/WebGLPerformanceMonitor'
 
 interface WebGLCapabilities {
   webgl: boolean
@@ -107,22 +108,17 @@ export default function WebGL3DPage() {
   const [showControls, setShowControls] = useState(true)
   const [showPerformanceMonitor, setShowPerformanceMonitor] = useState(false)
   const [dragonSize, setDragonSize] = useState<'sm' | 'md' | 'lg' | 'xl' | 'gigantic'>('lg')
-  const [enableDebugMode, setEnableDebugMode] = useState(false)
-  
   // Refs
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const memoryManagerRef = useRef(DragonMemoryManager.getInstance())
   const performanceCheckIntervalRef = useRef<NodeJS.Timeout>()
-  const lastFrameTimeRef = useRef(0)
-  const frameCountRef = useRef(0)
-  const adaptiveQualityTimeoutRef = useRef<NodeJS.Timeout>()
   
   // Performance monitoring
   const performanceMonitor = usePerformanceMonitor({
     enabled: true,
     componentName: 'WebGL3DPage',
     sampleRate: 60,
-    onPerformanceWarning: useCallback((metrics) => {
+    onPerformanceWarning: useCallback((metrics: { fps: number; memoryUsage?: { usedJSHeapSize: number } }) => {
       if (performanceState.adaptiveQuality && Date.now() - performanceState.lastOptimization > 5000) {
         console.warn('Performance warning detected:', metrics)
         optimizeQualitySettings(metrics)
@@ -388,8 +384,7 @@ export default function WebGL3DPage() {
         // Pause animations and reduce quality
         console.log('Page hidden, pausing dragon animations')
         if (performanceState.autoOptimize) {
-          // Temporarily store current quality
-          const currentQuality = performanceState.quality
+          // Temporarily store current quality for later restoration
           setTimeout(() => {
             if (document.hidden) {
               // Still hidden after delay, reduce quality
@@ -538,7 +533,10 @@ export default function WebGL3DPage() {
       }
     }
     
-    setQualitySettings(qualityPresets[newQuality])
+    const newSettings = qualityPresets[newQuality]
+    if (newSettings) {
+      setQualitySettings(newSettings)
+    }
   }, [])
 
   const toggleAutoOptimize = useCallback(() => {
@@ -563,11 +561,10 @@ export default function WebGL3DPage() {
   const canvasProps = useMemo(() => ({
     shadows: memoizedQualitySettings.shadows,
     camera: { 
-      position: [0, 2, 5], 
+      position: [0, 2, 5] as [number, number, number], 
       fov: 50,
       near: 0.1,
-      far: 1000,
-      aspect: window.innerWidth / window.innerHeight
+      far: 1000
     },
     gl: {
       antialias: memoizedQualitySettings.antialiasing,
@@ -581,7 +578,7 @@ export default function WebGL3DPage() {
       depth: true,
       logarithmicDepthBuffer: false // Better compatibility
     },
-    frameloop: isVisible ? 'always' : 'never', // Pause rendering when not visible
+    frameloop: isVisible ? 'always' : 'never' as 'always' | 'never' | 'demand', // Pause rendering when not visible
     resize: { scroll: false, debounce: { scroll: 50, resize: 0 } },
     performance: {
       current: 1,
@@ -634,22 +631,8 @@ export default function WebGL3DPage() {
 
   return (
     <DeviceCompatibilityBoundary 
-      deviceCapabilities={deviceCapabilities}
-      fallbackComponent={() => (
-        <div className="min-h-screen bg-gradient-to-br from-amber-900 via-red-900 to-orange-900 flex items-center justify-center p-8">
-          <div className="bg-yellow-900/50 border border-yellow-500 rounded-lg p-8 max-w-md text-center text-white">
-            <AlertTriangle className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-4">Device Compatibility Issue</h2>
-            <p className="text-yellow-200 mb-4">Your device may not be optimal for 3D rendering.</p>
-            <button 
-              onClick={() => window.location.href = '/dragons/sprite-2d'}
-              className="px-4 py-2 bg-yellow-500 text-black rounded hover:bg-yellow-400 transition-colors"
-            >
-              Try 2D Dragons Instead
-            </button>
-          </div>
-        </div>
-      )}
+      onDeviceDetected={(caps) => console.log('Device detected:', caps)}
+      enableAutoOptimization={true}
     >
       <ProductionWebGLErrorBoundary>
         <div className="min-h-screen bg-gradient-to-br from-amber-900 via-red-900 to-orange-900 relative">
@@ -742,38 +725,45 @@ export default function WebGL3DPage() {
           <Canvas
             ref={canvasRef}
             {...canvasProps}
-            onCreated={({ gl, scene, camera }) => {
+            onCreated={({ gl, scene }) => {
+              // Set pixel ratio and size
               gl.setPixelRatio(canvasProps.gl.pixelRatio)
-              gl.setSize(window.innerWidth, window.innerHeight)
+              gl.setSize(window.innerWidth, window.innerHeight, false)
               
-              // Enable optimizations
-              gl.powerPreference = deviceCapabilities?.isMobile ? 'low-power' : 'high-performance'
-              gl.debug.checkShaderErrors = false
+              // Get WebGL context for low-level operations
+              const glContext = gl.getContext()
               
-              // Set up frustum culling
-              gl.enable(gl.CULL_FACE)
-              gl.cullFace(gl.BACK)
+              // Enable optimizations through WebGL context
+              if (glContext) {
+                // Set up frustum culling
+                glContext.enable(glContext.CULL_FACE)
+                glContext.cullFace(glContext.BACK)
+                
+                // Enable depth testing
+                glContext.enable(glContext.DEPTH_TEST)
+                glContext.depthFunc(glContext.LEQUAL)
+                
+                // Set clear color for better performance
+                glContext.clearColor(0, 0, 0, 0)
+                
+                // Configure extensions for better performance
+                glContext.getExtension('EXT_texture_filter_anisotropic')
+                glContext.getExtension('WEBGL_compressed_texture_s3tc')
+                glContext.getExtension('WEBGL_compressed_texture_pvrtc')
+                glContext.getExtension('WEBGL_compressed_texture_etc1')
+                
+                // Enable WebGL state caching for performance
+                glContext.enable(glContext.SCISSOR_TEST)
+                glContext.scissor(0, 0, glContext.canvas.width, glContext.canvas.height)
+              }
               
-              // Enable depth testing
-              gl.enable(gl.DEPTH_TEST)
-              gl.depthFunc(gl.LEQUAL)
-              
-              // Set clear color for better performance
-              gl.clearColor(0, 0, 0, 0)
-              
-              // Configure for better performance
-              gl.getExtension('EXT_texture_filter_anisotropic')
-              gl.getExtension('WEBGL_compressed_texture_s3tc')
-              gl.getExtension('WEBGL_compressed_texture_pvrtc')
-              gl.getExtension('WEBGL_compressed_texture_etc1')
-              
-              // Memory management optimizations
-              scene.autoUpdate = false
+              // Memory management optimizations on Three.js objects
+              // Note: Scene autoUpdate is managed by React Three Fiber
               scene.matrixAutoUpdate = false
               
-              // Enable WebGL state caching for performance
-              gl.enable(gl.SCISSOR_TEST)
-              gl.scissor(0, 0, gl.canvas.width, gl.canvas.height)
+              // Configure renderer-specific optimizations
+              gl.shadowMap.enabled = memoizedQualitySettings.shadows
+              gl.shadowMap.type = THREE.PCFSoftShadowMap
               
               console.log('Canvas created with quality:', performanceState.quality)
             }}
@@ -1093,11 +1083,9 @@ export default function WebGL3DPage() {
         
         {/* Performance Monitor Component */}
         <WebGLPerformanceMonitor 
-          show={showPerformanceMonitor}
-          performanceState={performanceState}
-          onQualityChange={handleQualityChange}
-          onToggleAutoOptimize={toggleAutoOptimize}
-          className="fixed bottom-20 right-4"
+          enabled={showPerformanceMonitor}
+          showNotifications={true}
+          allowManualQualityControl={true}
         />
       </div>
       </ProductionWebGLErrorBoundary>

@@ -383,7 +383,8 @@ Please describe what you were doing when this error occurred:
 
     if (hasError) {
       if (fallback && error && errorInfo) {
-        return fallback({ error, errorInfo, retry: this.handleRetry, errorId })
+        const FallbackComponent = fallback
+        return <FallbackComponent error={error} errorInfo={errorInfo} retry={this.handleRetry} errorId={errorId} />
       }
       return this.renderErrorFallback()
     }
