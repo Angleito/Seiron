@@ -101,7 +101,17 @@ export default function HomePage() {
   return (
     <SimpleErrorBoundary onError={(error) => console.error('HomePage error:', error)}>
       <div className="relative min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
-        {/* Basic Content First - No StormBackground for now */}
+        {/* Add simple ASCII dragon first */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-green-400 text-xs font-mono leading-none">
+            {`     /\\   /\\   
+    (  o.o  )  
+     > ^ <     
+ASCII DRAGON  `}
+          </div>
+        </div>
+        
+        {/* Basic Content */}
         <div className="relative z-50 min-h-screen flex items-center justify-center px-4">
           <div className="text-center">
             <h1 className="text-6xl font-black text-yellow-400 mb-8">
@@ -124,7 +134,7 @@ export default function HomePage() {
           <p>Debug Info:</p>
           <p>Loaded: {isLoaded ? 'Yes' : 'No'}</p>
           <p>Navigate Ready: Yes</p>
-          <p>StormBackground: Disabled</p>
+          <p>Dragon: ASCII (Simple)</p>
         </div>
       </div>
     </SimpleErrorBoundary>
