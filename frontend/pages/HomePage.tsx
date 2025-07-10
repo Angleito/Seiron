@@ -1,25 +1,74 @@
 import { useNavigate } from 'react-router-dom'
-import { StormBackground } from '../components/effects/StormBackground'
 import { useEffect, useState } from 'react'
-import { 
-  EnhancedHeroSection,
-  DragonBallFeatureCards,
-  FeatureShowcaseGrid,
-  ScrollProgressIndicator
-} from '../components/homepage'
-import '../styles/homepage-enhancements.css'
+import React from 'react'
+
+// Simple Error Boundary Component
+class SimpleErrorBoundary extends React.Component<
+  { children: React.ReactNode; onError?: (error: Error) => void },
+  { hasError: boolean; error?: Error }
+> {
+  constructor(props: { children: React.ReactNode; onError?: (error: Error) => void }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error: Error, errorInfo: any) {
+    console.error('React Error #310 caught:', error, errorInfo)
+    this.props.onError?.(error)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center">
+          <div className="text-center p-8">
+            <h1 className="text-3xl font-bold mb-4">React Error #310 Detected</h1>
+            <p className="text-red-400 mb-4">{this.state.error?.message || 'Unknown error'}</p>
+            <pre className="text-sm bg-black/50 p-4 rounded mb-4 overflow-auto max-w-2xl">
+              {this.state.error?.stack}
+            </pre>
+            <button 
+              onClick={() => this.setState({ hasError: false, error: undefined })}
+              className="px-6 py-3 bg-yellow-500 text-black rounded-lg font-bold hover:bg-yellow-600 mr-4"
+            >
+              Retry
+            </button>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-6 py-3 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
 
 export default function HomePage() {
   const [isLoaded, setIsLoaded] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Trigger loading animations
-    const timer = setTimeout(() => {
-      setIsLoaded(true)
-    }, 200)
+    try {
+      // Trigger loading animations
+      const timer = setTimeout(() => {
+        setIsLoaded(true)
+      }, 200)
 
-    return () => clearTimeout(timer)
+      return () => clearTimeout(timer)
+    } catch (err) {
+      console.error('HomePage mount error:', err)
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    }
   }, [])
 
   const handleNavigation = (path: string) => {
@@ -30,105 +79,53 @@ export default function HomePage() {
     }
   }
 
+  // Display error if any
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center">
+        <div className="text-center p-8">
+          <h1 className="text-3xl font-bold mb-4">Error Loading Home Page</h1>
+          <p className="text-red-400 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-6 py-3 bg-yellow-500 text-black rounded-lg font-bold hover:bg-yellow-600"
+          >
+            Reload Page
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="relative min-h-screen">
-      {/* Scroll Progress Indicator */}
-      <ScrollProgressIndicator />
-      
-      <StormBackground 
-        className="min-h-screen" 
-        intensity={0.8}
-        animated={true}
-      >
-        {/* Enhanced Hero Section */}
-        <section className="relative z-50 min-h-screen flex items-center justify-center px-4">
-          <EnhancedHeroSection 
-            onNavigate={handleNavigation}
-            showPowerLevel={true}
-            powerValue={42000}
-            enableAnimations={isLoaded}
-            size="lg"
-          />
-        </section>
-        
-        {/* Dragon Ball Feature Cards Section */}
-        <section className="relative z-40 py-20 px-4">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-black text-yellow-400 mb-4 storm-mystical-aura">
-                Saiyan Abilities
-              </h2>
-              <p className="text-xl text-yellow-400/80 font-light">
-                Master the art of DeFi with legendary powers
-              </p>
-            </div>
-            <DragonBallFeatureCards />
+    <SimpleErrorBoundary onError={(error) => console.error('HomePage error:', error)}>
+      <div className="relative min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
+        {/* Basic Content First - No StormBackground for now */}
+        <div className="relative z-50 min-h-screen flex items-center justify-center px-4">
+          <div className="text-center">
+            <h1 className="text-6xl font-black text-yellow-400 mb-8">
+              HOME PAGE LOADED
+            </h1>
+            <p className="text-2xl text-yellow-400/80 mb-8">
+              {isLoaded ? 'Page is ready!' : 'Loading...'}
+            </p>
+            <button
+              onClick={() => handleNavigation('/chat')}
+              className="px-12 py-6 bg-gradient-to-r from-yellow-500 to-yellow-600 text-red-950 font-black rounded-xl text-xl hover:scale-105 transform transition-all duration-300"
+            >
+              GO TO CHAT
+            </button>
           </div>
-        </section>
-        
-        {/* Feature Showcase Grid Section */}
-        <section className="relative z-40 py-20 px-4 bg-gradient-to-b from-transparent via-slate-900/50 to-transparent">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-black text-yellow-400 mb-4 storm-mystical-aura">
-                Unlock Your DeFi Potential
-              </h2>
-              <p className="text-xl text-yellow-400/80 font-light">
-                Transform into the ultimate portfolio warrior
-              </p>
-            </div>
-            <FeatureShowcaseGrid 
-              animated={isLoaded}
-              showPowerLevels={true}
-            />
-          </div>
-        </section>
-        
-        {/* Call to Action Section */}
-        <section className="relative z-40 py-20 px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="mb-12">
-              <h2 className="text-5xl font-black text-yellow-400 mb-6 storm-mystical-aura">
-                Ready to Power Up?
-              </h2>
-              <p className="text-2xl text-yellow-400/80 font-light mb-8">
-                Join the elite ranks of Saiyan traders and unlock your true potential
-              </p>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-              <button
-                onClick={() => handleNavigation('/chat')}
-                className="
-                kamehameha-button group relative overflow-hidden
-                px-12 py-6 bg-gradient-to-r from-yellow-500 to-yellow-600 
-                text-red-950 font-black rounded-xl text-xl
-                storm-hover-glow storm-hover-lightning
-                border-2 border-yellow-400
-                shadow-xl shadow-yellow-500/50
-                transform transition-all duration-300
-                hover:shadow-2xl hover:shadow-yellow-500/60
-                hover:border-yellow-300
-                hover:scale-105
-                active:scale-95
-                cursor-pointer
-                "
-              >
-                <span className="relative z-10 tracking-wide">
-                  START YOUR JOURNEY
-                </span>
-              </button>
-              
-              <div className="text-sm text-yellow-400/60">
-                No registration required • Connect any wallet
-              </div>
-            </div>
-          </div>
-        </section>
-        
-        {/* Atmospheric Enhancement */}
-        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-black/60 via-red-950/20 to-transparent pointer-events-none" />
-      </StormBackground>
-    </div>
+        </div>
+
+        {/* Debug Info */}
+        <div className="fixed bottom-4 left-4 text-white text-sm bg-black/50 p-4 rounded z-50">
+          <p>Debug Info:</p>
+          <p>Loaded: {isLoaded ? 'Yes' : 'No'}</p>
+          <p>Navigate Ready: Yes</p>
+          <p>StormBackground: Disabled</p>
+        </div>
+      </div>
+    </SimpleErrorBoundary>
   )
 }

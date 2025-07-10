@@ -93,6 +93,7 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
   // Simple device detection
   const [isMobile, setIsMobile] = useState(false)
   const [isTablet, setIsTablet] = useState(false)
+  const [dragonError, setDragonError] = useState(false)
   
   useEffect(() => {
     const checkDevice = () => {
@@ -182,34 +183,44 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
           transform: 'translate(-50%, -50%)',
           width: '600px',
           height: '600px',
-          // Debug styling
-          border: '3px solid blue',
-          backgroundColor: 'rgba(0, 0, 255, 0.1)',
+          // Debug styling - removed for production
+          // border: '3px solid blue',
+          // backgroundColor: 'rgba(0, 0, 255, 0.1)',
           zIndex: 20
         }}
       >
-        <DragonRenderer
-          className="w-full h-full"
-          size="lg"
-          dragonType="glb"
-          enableFallback={true}
-          fallbackType="2d"
-          enableAnimations={shouldAnimate}
-          voiceState={{
-            isListening: false,
-            isSpeaking: false,
-            isProcessing: false,
-            isIdle: true,
-            volume: normalizedIntensity,
-            emotion: 'calm'
-          }}
-          onError={(error, type) => {
-            console.error(`Dragon ${type} error in StormBackground:`, error)
-          }}
-          onFallback={(fromType, toType) => {
-            console.log(`Dragon fallback in StormBackground: ${fromType} → ${toType}`)
-          }}
-        />
+        {!dragonError ? (
+          <DragonRenderer
+            className="w-full h-full"
+            size="lg"
+            dragonType="ascii"
+            enableFallback={true}
+            fallbackType="ascii"
+            enableAnimations={shouldAnimate}
+            voiceState={{
+              isListening: false,
+              isSpeaking: false,
+              isProcessing: false,
+              isIdle: true,
+              volume: normalizedIntensity,
+              emotion: 'calm'
+            }}
+            onError={(error, type) => {
+              console.error(`Dragon ${type} error in StormBackground:`, error)
+              setDragonError(true)
+            }}
+            onFallback={(fromType, toType) => {
+              console.log(`Dragon fallback in StormBackground: ${fromType} → ${toType}`)
+            }}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-yellow-400">
+            <div className="text-center">
+              <div className="text-8xl mb-4">🐉</div>
+              <div className="text-2xl font-bold">Dragon Loading...</div>
+            </div>
+          </div>
+        )}
       </div>
       
       {/* Atmospheric enhancement overlay */}
