@@ -6,7 +6,9 @@ import { SeironGLBDragon } from '../../components/dragon/SeironGLBDragon'
 import { VoiceAnimationState } from '../../components/dragon/DragonRenderer'
 import { usePerformanceMonitor } from '../../hooks/usePerformanceMonitor'
 import { DragonMemoryManager } from '../../utils/dragonMemoryManager'
-import { PageErrorBoundary } from '../../components/error-boundaries/PageErrorBoundary'
+import { ProductionWebGLErrorBoundary } from '../../components/webgl/ProductionWebGLErrorBoundary'
+import { DeviceCompatibilityBoundary } from '../../components/error-boundaries/DeviceCompatibilityBoundary'
+import { WebGLPerformanceMonitor } from '../../components/webgl/WebGLPerformanceMonitor'
 
 interface WebGLCapabilities {
   webgl: boolean
@@ -631,8 +633,26 @@ export default function WebGL3DPage() {
   }
 
   return (
-    <PageErrorBoundary>
-      <div className="min-h-screen bg-gradient-to-br from-amber-900 via-red-900 to-orange-900 relative">
+    <DeviceCompatibilityBoundary 
+      deviceCapabilities={deviceCapabilities}
+      fallbackComponent={() => (
+        <div className="min-h-screen bg-gradient-to-br from-amber-900 via-red-900 to-orange-900 flex items-center justify-center p-8">
+          <div className="bg-yellow-900/50 border border-yellow-500 rounded-lg p-8 max-w-md text-center text-white">
+            <AlertTriangle className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-4">Device Compatibility Issue</h2>
+            <p className="text-yellow-200 mb-4">Your device may not be optimal for 3D rendering.</p>
+            <button 
+              onClick={() => window.location.href = '/dragons/sprite-2d'}
+              className="px-4 py-2 bg-yellow-500 text-black rounded hover:bg-yellow-400 transition-colors"
+            >
+              Try 2D Dragons Instead
+            </button>
+          </div>
+        </div>
+      )}
+    >
+      <ProductionWebGLErrorBoundary>
+        <div className="min-h-screen bg-gradient-to-br from-amber-900 via-red-900 to-orange-900 relative">
         {/* Header */}
         <div className="relative z-10 p-6">
           <div className="max-w-7xl mx-auto">
@@ -1070,7 +1090,17 @@ export default function WebGL3DPage() {
 
         {/* Loading indicator for the 3D scene */}
         <Loader />
+        
+        {/* Performance Monitor Component */}
+        <WebGLPerformanceMonitor 
+          show={showPerformanceMonitor}
+          performanceState={performanceState}
+          onQualityChange={handleQualityChange}
+          onToggleAutoOptimize={toggleAutoOptimize}
+          className="fixed bottom-20 right-4"
+        />
       </div>
-    </PageErrorBoundary>
+      </ProductionWebGLErrorBoundary>
+    </DeviceCompatibilityBoundary>
   )
 }
