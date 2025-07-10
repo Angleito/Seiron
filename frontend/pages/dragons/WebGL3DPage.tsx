@@ -634,7 +634,6 @@ export default function WebGL3DPage() {
       onDeviceDetected={(caps) => console.log('Device detected:', caps)}
       enableAutoOptimization={true}
     >
-      <ProductionWebGLErrorBoundary>
         <div className="min-h-screen bg-gradient-to-br from-amber-900 via-red-900 to-orange-900 relative">
         {/* Header */}
         <div className="relative z-10 p-6">
@@ -722,7 +721,24 @@ export default function WebGL3DPage() {
           visibility: isVisible ? 'visible' : 'hidden',
           pointerEvents: isVisible ? 'auto' : 'none'
         }}>
-          <Canvas
+          <ProductionWebGLErrorBoundary
+            fallbackComponent={() => (
+              <div className="flex items-center justify-center h-full bg-gradient-to-br from-amber-900 via-red-900 to-orange-900">
+                <div className="text-center text-white">
+                  <div className="text-6xl mb-4">🐉</div>
+                  <h2 className="text-2xl font-bold mb-4">3D Dragon Unavailable</h2>
+                  <p className="text-gray-300 mb-4">The 3D dragon renderer encountered an issue.</p>
+                  <button 
+                    onClick={() => window.location.href = '/dragons/sprite-2d'}
+                    className="px-6 py-3 bg-yellow-500 text-black rounded-lg hover:bg-yellow-400 transition-colors"
+                  >
+                    Try 2D Dragons Instead
+                  </button>
+                </div>
+              </div>
+            )}
+          >
+            <Canvas
             ref={canvasRef}
             {...canvasProps}
             onCreated={({ gl, scene }) => {
@@ -853,6 +869,7 @@ export default function WebGL3DPage() {
               )}
             </Suspense>
           </Canvas>
+          </ProductionWebGLErrorBoundary>
         </div>
 
         {/* Performance Monitor */}
@@ -1088,7 +1105,6 @@ export default function WebGL3DPage() {
           allowManualQualityControl={true}
         />
       </div>
-      </ProductionWebGLErrorBoundary>
     </DeviceCompatibilityBoundary>
   )
 }
