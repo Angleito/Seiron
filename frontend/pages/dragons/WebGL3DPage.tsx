@@ -91,7 +91,7 @@ export default function WebGL3DPage() {
       isSpeaking: false,
       isProcessing: !prev.isProcessing,
       isIdle: false,
-      emotion: 'contemplative'
+      emotion: 'focused'
     }))
   }
 
