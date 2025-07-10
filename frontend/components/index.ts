@@ -35,6 +35,12 @@ export { TransactionDetails } from './transactions/sections/TransactionDetails';
 // Transaction Types
 export type { TransactionPreviewData, TokenAmount, ProtocolInfo } from './transactions/TransactionPreview';
 
+// Navigation Components
+export { DragonDemoNavigation } from './navigation';
+
+// Layout Components
+export { DragonDemoLayout } from './layouts/DragonDemoLayout';
+
 // Shared UI Components
 export * from './ui';
 

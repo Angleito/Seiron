@@ -120,12 +120,54 @@ ASCII DRAGON`}
             <p className="text-2xl text-yellow-400/80 mb-8">
               {isLoaded ? 'Page is ready!' : 'Loading...'}
             </p>
-            <button
-              onClick={() => handleNavigation('/chat')}
-              className="px-12 py-6 bg-gradient-to-r from-yellow-500 to-yellow-600 text-red-950 font-black rounded-xl text-xl hover:scale-105 transform transition-all duration-300"
-            >
-              GO TO CHAT
-            </button>
+            <div className="flex flex-col gap-4">
+              <div className="space-y-4">
+                <button
+                  onClick={() => handleNavigation('/chat')}
+                  className="px-12 py-6 bg-gradient-to-r from-yellow-500 to-yellow-600 text-red-950 font-black rounded-xl text-xl hover:scale-105 transform transition-all duration-300 block"
+                >
+                  GO TO CHAT
+                </button>
+              
+              {/* Dragon Demo Navigation */}
+              <div className="pt-8">
+                <h2 className="text-2xl font-bold text-yellow-400 mb-4">🐉 Dragon Demonstrations</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+                  <button
+                    onClick={() => handleNavigation('/dragons/ascii-complex')}
+                    className="px-6 py-4 bg-gradient-to-r from-green-600 to-green-700 text-white font-bold rounded-lg hover:scale-105 transform transition-all duration-300 text-left"
+                  >
+                    <div className="text-lg font-bold">Complex ASCII Dragons</div>
+                    <div className="text-sm opacity-80">Various ASCII dragon styles with theming</div>
+                  </button>
+                  
+                  <button
+                    onClick={() => handleNavigation('/dragons/ascii-animated')}
+                    className="px-6 py-4 bg-gradient-to-r from-green-600 to-green-700 text-white font-bold rounded-lg hover:scale-105 transform transition-all duration-300 text-left"
+                  >
+                    <div className="text-lg font-bold">Animated ASCII Dragons</div>
+                    <div className="text-sm opacity-80">Frame-based animations with voice reactivity</div>
+                  </button>
+                  
+                  <button
+                    onClick={() => handleNavigation('/dragons/sprite-2d')}
+                    className="px-6 py-4 bg-gradient-to-r from-orange-600 to-orange-700 text-white font-bold rounded-lg hover:scale-105 transform transition-all duration-300 text-left"
+                  >
+                    <div className="text-lg font-bold">2D Sprite Dragons</div>
+                    <div className="text-sm opacity-80">CSS and Unicode sprite animations</div>
+                  </button>
+                  
+                  <button
+                    onClick={() => handleNavigation('/dragons/webgl-3d')}
+                    className="px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold rounded-lg hover:scale-105 transform transition-all duration-300 text-left"
+                  >
+                    <div className="text-lg font-bold">3D WebGL Dragons</div>
+                    <div className="text-sm opacity-80">Hardware-accelerated 3D rendering</div>
+                  </button>
+                </div>
+              </div>
+            </div>
+            </div>
           </div>
         </div>
 
@@ -135,6 +177,7 @@ ASCII DRAGON`}
           <p>Loaded: {isLoaded ? 'Yes' : 'No'}</p>
           <p>Navigate Ready: Yes</p>
           <p>Dragon: ASCII (Simple)</p>
+          <p>Dragon Demos: 4 Available</p>
         </div>
       </div>
     </SimpleErrorBoundary>

@@ -23,6 +23,12 @@ const ChatPage = lazy(() => import('./pages/chat'))
 const AboutPage = lazy(() => import('./pages/about'))
 const DragonDebugPage = lazy(() => import('./pages/dragon-debug'))
 
+// Dragon Demo Pages
+const AsciiComplexPage = lazy(() => import('./pages/dragons/AsciiComplexPage'))
+const AsciiAnimatedPage = lazy(() => import('./pages/dragons/AsciiAnimatedPage'))
+const Sprite2DPage = lazy(() => import('./pages/dragons/Sprite2DPage'))
+const WebGL3DPage = lazy(() => import('./pages/dragons/WebGL3DPage'))
+
 const PageLoader = ({ 
   children, 
   pageName, 
@@ -142,6 +148,38 @@ export const router = createBrowserRouter([
         element: (
           <PageLoader pageName="Dragon Debug">
             <DragonDebugPage />
+          </PageLoader>
+        ),
+      },
+      {
+        path: 'dragons/ascii-complex',
+        element: (
+          <PageLoader pageName="Complex ASCII Dragons">
+            <AsciiComplexPage />
+          </PageLoader>
+        ),
+      },
+      {
+        path: 'dragons/ascii-animated',
+        element: (
+          <PageLoader pageName="Animated ASCII Dragons">
+            <AsciiAnimatedPage />
+          </PageLoader>
+        ),
+      },
+      {
+        path: 'dragons/sprite-2d',
+        element: (
+          <PageLoader pageName="2D Sprite Dragons">
+            <Sprite2DPage />
+          </PageLoader>
+        ),
+      },
+      {
+        path: 'dragons/webgl-3d',
+        element: (
+          <PageLoader pageName="3D WebGL Dragons">
+            <WebGL3DPage />
           </PageLoader>
         ),
       },
