@@ -5,7 +5,11 @@ import { SeironGLBDragonWithWebGLErrorBoundary } from '../components/dragon/Seir
 export default function DragonDebugPage() {
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   
+  // Debug logging
+  console.log('🐉 DragonDebugPage rendering...')
+  
   useEffect(() => {
+    console.log('🐉 DragonDebugPage mounted')
     const updateSize = () => {
       const container = document.getElementById('dragon-container')
       if (container) {
@@ -22,7 +26,46 @@ export default function DragonDebugPage() {
   
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
-      <h1 className="text-3xl font-bold mb-8">Dragon Debug Page</h1>
+      {/* IMMEDIATE VISIBILITY TEST */}
+      <div 
+        style={{ 
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          height: '50px', 
+          backgroundColor: 'red', 
+          color: 'white', 
+          fontSize: '24px', 
+          fontWeight: 'bold',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}
+      >
+        🐉 DRAGON DEBUG TEST - THIS SHOULD BE VISIBLE 🐉
+      </div>
+      
+      {/* SIMPLE BACKGROUND TEST */}
+      <div 
+        style={{ 
+          position: 'fixed', 
+          top: '50px', 
+          left: 0, 
+          width: '200px', 
+          height: '200px', 
+          backgroundColor: 'yellow', 
+          border: '5px solid black',
+          zIndex: 9998
+        }}
+      >
+        <p style={{ color: 'black', padding: '10px', fontSize: '16px' }}>
+          BASIC HTML TEST
+        </p>
+      </div>
+      
+      <h1 className="text-3xl font-bold mb-8 mt-16">Dragon Debug Page</h1>
       
       {/* Container Info */}
       <div className="mb-4 p-4 bg-gray-800 rounded">

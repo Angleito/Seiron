@@ -26,6 +26,8 @@ export default defineConfig(({ command, mode }) => {
     server: {
       port: 3000,
       host: true,
+      // Handle SPA routing - always serve index.html for any route
+      middlewareMode: false,
     },
     build: {
       target: 'esnext',

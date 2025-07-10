@@ -20,6 +20,12 @@ console.log('Environment:', import.meta.env.MODE)
 console.log('Privy App ID available:', !!import.meta.env.VITE_PRIVY_APP_ID)
 console.log('Root element:', document.getElementById('root'))
 
+// Add immediate visual feedback
+const debugDiv = document.createElement('div')
+debugDiv.style.cssText = 'position: fixed; top: 50px; left: 0; width: 300px; padding: 10px; background: blue; color: white; z-index: 99999;'
+debugDiv.innerHTML = 'React Main.tsx loaded!'
+document.body.appendChild(debugDiv)
+
 // Extract Privy configuration
 const appId = privyConfig.appId || import.meta.env.VITE_PRIVY_APP_ID || ''
 const safePrivyConfig = privyConfig.config
@@ -50,6 +56,10 @@ try {
   const root = ReactDOM.createRoot(rootElement)
   
   console.log('🎨 Rendering app...')
+  
+  // Add debug info to root element
+  rootElement.style.border = '5px solid cyan'
+  rootElement.innerHTML = '<div style="background: white; color: black; padding: 20px;">React mounting...</div>'
   
   // Render full app with router for all environments
   root.render(
