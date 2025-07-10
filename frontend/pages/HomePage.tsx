@@ -16,12 +16,12 @@ class SimpleErrorBoundary extends React.Component<
     return { hasError: true, error }
   }
 
-  componentDidCatch(error: Error, errorInfo: any) {
+  override componentDidCatch(error: Error, errorInfo: any) {
     console.error('React Error #310 caught:', error, errorInfo)
     this.props.onError?.(error)
   }
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center">
@@ -68,10 +68,11 @@ export default function HomePage() {
     } catch (err) {
       console.error('HomePage mount error:', err)
       setError(err instanceof Error ? err.message : 'Unknown error')
+      return undefined
     }
   }, [])
 
-  const handleNavigation = (path: string) => {
+  const handleNavigation = (path: string): void => {
     try {
       navigate(path)
     } catch (error) {

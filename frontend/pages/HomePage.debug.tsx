@@ -26,6 +26,7 @@ export default function HomePage() {
       }
     } catch (err) {
       addDebugInfo(`HomePage useEffect error: ${err}`)
+      return undefined
     }
   }, [])
 
