@@ -45,6 +45,9 @@ try {
 
 export { privyConfig, wagmiConfig }
 
+// Dragon models configuration
+export * from './dragonModels'
+
 // Export type-safe getters
 export const getPrivyConfig = () => {
   if (!privyConfig) {

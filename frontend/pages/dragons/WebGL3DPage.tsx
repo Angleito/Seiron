@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, Suspense, useCallback, useMemo } from 'react'
-import { RotateCcw, AlertTriangle, CheckCircle, Zap, Eye, Mic, MicOff, Volume2, Monitor, Cpu, Battery } from 'lucide-react'
+import { RotateCcw, AlertTriangle, CheckCircle, Zap, Eye, Mic, MicOff, Volume2, Monitor, Cpu, Battery, Download, BarChart3, TrendingUp, Settings, Brain } from 'lucide-react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Environment, Loader } from '@react-three/drei'
 import * as THREE from 'three'
@@ -17,6 +17,14 @@ import {
   DragonSystemStatus,
   DragonLoadingAnimation 
 } from '../../components/loading/LoadingStates'
+
+// New performance tracking imports
+import useModelPerformanceTracking from '../../hooks/useModelPerformanceTracking'
+import ModelPerformanceComparison from '../../components/ModelPerformanceComparison'
+import PerformanceDashboard from '../../components/PerformanceDashboard'
+import PerformanceMetricsDisplay from '../../components/PerformanceMetricsDisplay'
+import { ModelRecommendationEngine } from '../../utils/ModelRecommendationEngine'
+import { DRAGON_MODELS, getModelConfig } from '../../config/dragonModels'
 
 interface WebGLCapabilities {
   webgl: boolean
@@ -45,6 +53,18 @@ interface DeviceCapabilities {
   cpuCores: number
 }
 
+interface DragonModel {
+  id: string
+  name: string
+  path: string
+  type: 'GLB' | 'GLTF'
+  description: string
+  estimatedSize: string
+  features: string[]
+  compatibility: 'high' | 'medium' | 'low'
+  recommended: boolean
+}
+
 interface QualitySettings {
   resolution: number
   antialiasing: boolean
@@ -66,6 +86,65 @@ interface PerformanceState {
   adaptiveQuality: boolean
   lastOptimization: number
 }
+
+// Legacy models mapping - now we use the comprehensive dragonModels config
+const LEGACY_DRAGON_MODELS: DragonModel[] = [
+  {
+    id: 'seiron_primary',
+    name: 'Seiron Primary',
+    path: '/models/seiron.glb',
+    type: 'GLB',
+    description: 'Main optimized dragon model with full features',
+    estimatedSize: '8.5 MB',
+    features: ['Animations', 'Textures', 'Optimized LOD'],
+    compatibility: 'high',
+    recommended: true
+  },
+  {
+    id: 'seiron_animated',
+    name: 'Seiron Animated',
+    path: '/models/seiron_animated.gltf',
+    type: 'GLTF',
+    description: 'High-quality animated dragon with advanced rigging',
+    estimatedSize: '12.3 MB',
+    features: ['Complex Animations', 'Morphing', 'Particle Effects'],
+    compatibility: 'medium',
+    recommended: false
+  },
+  {
+    id: 'seiron_hd',
+    name: 'Seiron HD',
+    path: '/models/seiron_animated_lod_high.gltf',
+    type: 'GLTF',
+    description: 'High-resolution model with detailed geometry',
+    estimatedSize: '15.7 MB',
+    features: ['High-poly', 'Detailed Textures', 'Advanced Materials'],
+    compatibility: 'low',
+    recommended: false
+  },
+  {
+    id: 'dragon_head',
+    name: 'Dragon Head',
+    path: '/models/dragon_head.glb',
+    type: 'GLB',
+    description: 'Focused head model for close-up views',
+    estimatedSize: '3.2 MB',
+    features: ['Detailed Head', 'Facial Animations', 'Compact Size'],
+    compatibility: 'high',
+    recommended: true
+  },
+  {
+    id: 'dragon_head_optimized',
+    name: 'Dragon Head Optimized',
+    path: '/models/dragon_head_optimized.glb',
+    type: 'GLB',
+    description: 'Optimized head model for mobile devices',
+    estimatedSize: '1.8 MB',
+    features: ['Mobile Optimized', 'Low-poly', 'Fast Loading'],
+    compatibility: 'high',
+    recommended: false
+  }
+]
 
 // Enhanced 3D WebGL Dragon Demo with Production Optimizations
 export default function WebGL3DPage() {
@@ -117,6 +196,37 @@ export default function WebGL3DPage() {
   const [showControls, setShowControls] = useState(true)
   const [showPerformanceMonitor, setShowPerformanceMonitor] = useState(false)
   const [dragonSize, setDragonSize] = useState<'sm' | 'md' | 'lg' | 'xl' | 'gigantic'>('lg')
+  
+  // Model selector state
+  const [selectedModel, setSelectedModel] = useState('/models/seiron.glb')
+  const [modelLoading, setModelLoading] = useState(false)
+  const [modelError, setModelError] = useState<string | null>(null)
+  
+  // Performance tracking state
+  const [showPerformanceDashboard, setShowPerformanceDashboard] = useState(false)
+  const [showModelComparison, setShowModelComparison] = useState(false)
+  const [showRecommendations, setShowRecommendations] = useState(false)
+  const [comparisonModelA, setComparisonModelA] = useState<string | null>(null)
+  const [comparisonModelB, setComparisonModelB] = useState<string | null>(null)
+  
+  // Initialize performance tracking hook
+  const performanceTracking = useModelPerformanceTracking({
+    enabled: true,
+    sampleRate: 2,
+    historySize: 300,
+    autoOptimization: performanceState.autoOptimize,
+    alertThresholds: {
+      lowFps: 30,
+      highMemory: performanceState.memoryLimit,
+      slowLoadTime: 5000,
+      highErrorRate: 0.1
+    },
+    modelList: Object.values(DRAGON_MODELS),
+    enablePredictiveAnalysis: true
+  })
+  
+  // Model recommendation engine
+  const recommendationEngine = useMemo(() => ModelRecommendationEngine.getInstance(), [])
   // Refs
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const memoryManagerRef = useRef(DragonMemoryManager.getInstance())
@@ -136,7 +246,7 @@ export default function WebGL3DPage() {
     window.location.href = '/dragons/sprite-2d'
   }, [])
   
-  // Performance monitoring
+  // Performance monitoring (legacy - now enhanced with new tracking)
   const performanceMonitor = usePerformanceMonitor({
     enabled: true,
     componentName: 'WebGL3DPage',
@@ -145,8 +255,11 @@ export default function WebGL3DPage() {
       if (performanceState.adaptiveQuality && Date.now() - performanceState.lastOptimization > 5000) {
         console.warn('Performance warning detected:', metrics)
         optimizeQualitySettings(metrics)
+        
+        // Record warning in new performance tracking system
+        performanceTracking.recordWarning()
       }
-    }, [performanceState]),
+    }, [performanceState, performanceTracking]),
     warningThreshold: { fps: 30 }
   })
 
@@ -170,7 +283,7 @@ export default function WebGL3DPage() {
     }
   }, [])
 
-  // Auto-optimization based on performance metrics
+  // Enhanced auto-optimization with new performance tracking
   const optimizeQualitySettings = useCallback((metrics: { fps: number; memoryUsage?: { usedJSHeapSize: number } }) => {
     const { fps, memoryUsage } = metrics
     const currentTime = Date.now()
@@ -237,6 +350,13 @@ export default function WebGL3DPage() {
       console.log(`Auto-optimizing quality: ${performanceState.quality} → ${newQuality} (FPS: ${fps})`)
       setPerformanceState(prev => ({ ...prev, quality: newQuality, lastOptimization: currentTime }))
       setQualitySettings(newSettings)
+      
+      // Update performance tracking with quality change
+      if (performanceTracking.currentMetrics) {
+        performanceTracking.currentMetrics.qualityLevel = newQuality
+        performanceTracking.currentMetrics.adaptiveQualityActive = true
+        performanceTracking.currentMetrics.qualityReductions += 1
+      }
     }
   }, [performanceState, qualitySettings])
 
@@ -308,9 +428,14 @@ export default function WebGL3DPage() {
         setLoading(false)
         setIsInitialized(true)
         
+        // Start performance tracking
+        const currentModelId = Object.values(DRAGON_MODELS).find(m => m.path === selectedModel)?.id || 'seiron-primary'
+        performanceTracking.startTracking(currentModelId, context)
+        
         console.log('WebGL capabilities initialized:', caps)
         console.log('Device capabilities:', deviceCaps)
         console.log('Initial quality:', initialQuality)
+        console.log('Performance tracking started for model:', currentModelId)
         
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown WebGL error')
@@ -577,6 +702,146 @@ export default function WebGL3DPage() {
     }
   }, [performanceState.quality, handleQualityChange])
 
+  // Enhanced model selector functions with performance tracking
+  const handleModelChange = useCallback((newModelPath: string) => {
+    const legacyModel = LEGACY_DRAGON_MODELS.find(m => m.path === newModelPath)
+    const modelConfig = Object.values(DRAGON_MODELS).find(m => m.path === newModelPath)
+    
+    if (!legacyModel) return
+    
+    setModelLoading(true)
+    setModelError(null)
+    setSelectedModel(newModelPath)
+    
+    // Start tracking new model
+    const modelId = modelConfig?.id || legacyModel.id
+    performanceTracking.stopTracking()
+    performanceTracking.startTracking(modelId)
+    performanceTracking.markModelLoadStart()
+    
+    console.log(`Switching to model: ${legacyModel.name} (${legacyModel.estimatedSize})`)
+    
+    // Auto-adjust quality based on model complexity
+    if (legacyModel.compatibility === 'low' && performanceState.quality === 'ultra') {
+      console.log('Auto-adjusting quality for complex model')
+      handleQualityChange('high')
+    } else if (legacyModel.compatibility === 'high' && deviceCapabilities?.isMobile && performanceState.quality === 'high') {
+      console.log('Auto-adjusting quality for mobile-optimized model')
+      handleQualityChange('medium')
+    }
+  }, [performanceState.quality, deviceCapabilities, handleQualityChange, performanceTracking])
+
+  const handleModelLoadStart = useCallback(() => {
+    setModelLoading(true)
+    setModelError(null)
+    performanceTracking.markModelLoadStart()
+  }, [performanceTracking])
+
+  const handleModelLoadComplete = useCallback(() => {
+    setModelLoading(false)
+    setModelError(null)
+    
+    // Mark load complete and record performance
+    const modelConfig = Object.values(DRAGON_MODELS).find(m => m.path === selectedModel)
+    performanceTracking.markModelLoadComplete(modelConfig)
+    
+    console.log('Model loaded successfully')
+  }, [performanceTracking, selectedModel])
+
+  const handleModelLoadError = useCallback((error: Error) => {
+    setModelLoading(false)
+    setModelError(error.message)
+    
+    // Record error in performance tracking
+    performanceTracking.recordError()
+    
+    console.error('Model loading error:', error)
+  }, [performanceTracking])
+
+  // Get current model info (legacy and new config)
+  const currentModel = useMemo(() => 
+    LEGACY_DRAGON_MODELS.find(m => m.path === selectedModel) || LEGACY_DRAGON_MODELS[0], 
+    [selectedModel]
+  )
+  
+  const currentModelConfig = useMemo(() => 
+    Object.values(DRAGON_MODELS).find(m => m.path === selectedModel), 
+    [selectedModel]
+  )
+
+  // Filter models based on device capabilities
+  const availableModels = useMemo(() => {
+    if (!deviceCapabilities) return LEGACY_DRAGON_MODELS
+    
+    return LEGACY_DRAGON_MODELS.filter(model => {
+      if (deviceCapabilities.isMobile) {
+        // Mobile devices: prefer high compatibility models
+        return model.compatibility === 'high' || model.compatibility === 'medium'
+      } else if (deviceCapabilities.isLowEnd) {
+        // Low-end devices: only high compatibility models
+        return model.compatibility === 'high'
+      }
+      // Desktop: all models available
+      return true
+    })
+  }, [deviceCapabilities])
+  
+  // Model performance comparison helper
+  const getModelComparisonData = useCallback((modelId: string) => {
+    const config = getModelConfig(modelId)
+    const metrics = performanceTracking.performanceHistory.filter(p => p.modelId === modelId).map(p => p.metrics)
+    const currentMetrics = performanceTracking.currentModelId === modelId ? performanceTracking.currentMetrics : undefined
+    
+    return config ? {
+      id: modelId,
+      name: config.displayName,
+      config,
+      metrics,
+      currentMetrics
+    } : null
+  }, [performanceTracking])
+  
+  // Handle AI-powered model recommendations
+  const handleGetRecommendations = useCallback(async () => {
+    if (!deviceCapabilities) return
+    
+    try {
+      const recommendations = await recommendationEngine.generateRecommendations(
+        performanceTracking.performanceHistory,
+        {
+          deviceProfile: {
+            cpuCores: deviceCapabilities.cpuCores,
+            totalMemoryGB: deviceCapabilities.memoryEstimate / (1024 * 1024 * 1024),
+            isDesktop: !deviceCapabilities.isMobile && !deviceCapabilities.isTablet,
+            isMobile: deviceCapabilities.isMobile,
+            isTablet: deviceCapabilities.isTablet,
+            isLowEnd: deviceCapabilities.isLowEnd,
+            webglSupport: deviceCapabilities.supportsWebGL2 ? 'webgl2' : 'webgl1',
+            maxTextureSize: deviceCapabilities.maxTextureSize,
+            gpuTier: deviceCapabilities.isLowEnd ? 'low' : deviceCapabilities.isMobile ? 'medium' : 'high',
+            hardwareAcceleration: true,
+            connectionSpeed: deviceCapabilities.connectionType === '4g' ? 'fast' : 'medium',
+            onBatteryPower: deviceCapabilities.hasBattery,
+            preferPerformance: !deviceCapabilities.isMobile,
+            preferQuality: !deviceCapabilities.isLowEnd,
+            preferBatteryLife: deviceCapabilities.isMobile,
+            prioritizeLoadTime: deviceCapabilities.connectionType === 'slow-2g'
+          }
+        }
+      )
+      
+      console.log('AI Model Recommendations:', recommendations)
+      
+      // Show recommendations UI
+      setShowRecommendations(true)
+      
+      return recommendations
+    } catch (error) {
+      console.error('Failed to get model recommendations:', error)
+      return null
+    }
+  }, [deviceCapabilities, performanceTracking, recommendationEngine])
+
   // Memoized quality settings for performance
   const memoizedQualitySettings = useMemo(() => qualitySettings, [qualitySettings])
   
@@ -688,6 +953,13 @@ export default function WebGL3DPage() {
     )
   }
 
+  // Cleanup performance tracking on unmount
+  useEffect(() => {
+    return () => {
+      performanceTracking.stopTracking()
+    }
+  }, [performanceTracking])
+  
   // Component is ready to render
   if (!isInitialized || !capabilities || !deviceCapabilities) {
     return null
@@ -719,6 +991,9 @@ export default function WebGL3DPage() {
                     <Cpu className="h-4 w-4" />
                     FPS: {performanceMonitor.metrics.fps}
                   </span>
+                  <span className="flex items-center gap-1">
+                    🐉 Model: {currentModel.name}
+                  </span>
                   {deviceCapabilities.isMobile && (
                     <span className="flex items-center gap-1">
                       <Battery className="h-4 w-4" />
@@ -735,10 +1010,52 @@ export default function WebGL3DPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {/* Quick Model Selector */}
+                <select
+                  value={selectedModel}
+                  onChange={(e) => handleModelChange(e.target.value)}
+                  className="p-2 bg-black/30 border border-yellow-500/30 rounded-lg text-yellow-400 text-sm hover:border-yellow-500/50 focus:border-yellow-500 focus:outline-none transition-colors"
+                  disabled={modelLoading}
+                  title="Quick Model Selection"
+                >
+                  {availableModels.map((model) => (
+                    <option key={model.id} value={model.path}>
+                      {model.name} {model.recommended ? '⭐' : ''}
+                    </option>
+                  ))}
+                </select>
+                
+                {/* AI Recommendations Button */}
+                <button
+                  onClick={handleGetRecommendations}
+                  className="p-2 bg-purple-500/20 border border-purple-500 rounded-lg text-purple-400 hover:bg-purple-500/30 transition-colors"
+                  title="AI Model Recommendations"
+                >
+                  <Brain className="h-5 w-5" />
+                </button>
+                
+                {/* Performance Dashboard Button */}
+                <button
+                  onClick={() => setShowPerformanceDashboard(!showPerformanceDashboard)}
+                  className="p-2 bg-green-500/20 border border-green-500 rounded-lg text-green-400 hover:bg-green-500/30 transition-colors"
+                  title="Performance Dashboard"
+                >
+                  <BarChart3 className="h-5 w-5" />
+                </button>
+                
+                {/* Model Comparison Button */}
+                <button
+                  onClick={() => setShowModelComparison(!showModelComparison)}
+                  className="p-2 bg-orange-500/20 border border-orange-500 rounded-lg text-orange-400 hover:bg-orange-500/30 transition-colors"
+                  title="Model Performance Comparison"
+                >
+                  <TrendingUp className="h-5 w-5" />
+                </button>
+                
                 <button
                   onClick={() => setShowPerformanceMonitor(!showPerformanceMonitor)}
                   className="p-2 bg-blue-500/20 border border-blue-500 rounded-lg text-blue-400 hover:bg-blue-500/30 transition-colors"
-                  title="Toggle Performance Monitor"
+                  title="Legacy Performance Monitor"
                 >
                   <Monitor className="h-5 w-5" />
                 </button>
@@ -945,10 +1262,10 @@ export default function WebGL3DPage() {
                     enableAnimations={memoizedQualitySettings.animations && isVisible}
                     visible={isVisible}
                     qualitySettings={memoizedQualitySettings}
-                    onError={handleDragonError}
-                    onLoad={() => console.log('Dragon loaded successfully')}
+                    onError={handleModelLoadError}
+                    onLoad={handleModelLoadComplete}
                     onProgress={(progress) => console.log('Dragon loading progress:', progress)}
-                    modelPath={'/models/seiron.glb'}
+                    modelPath={selectedModel}
                     isProgressiveLoading={true}
                     deviceCapabilities={deviceCapabilities}
                     performanceState={performanceState}
@@ -1013,6 +1330,12 @@ export default function WebGL3DPage() {
                 <span>Visible:</span>
                 <span className={isVisible ? 'text-green-400' : 'text-red-400'}>
                   {isVisible ? 'YES' : 'NO'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Model:</span>
+                <span className={modelLoading ? 'text-yellow-400' : 'text-green-400'}>
+                  {modelLoading ? 'LOADING' : 'READY'}
                 </span>
               </div>
             </div>
@@ -1087,6 +1410,110 @@ export default function WebGL3DPage() {
                 </span>
               </div>
             </div>
+
+              {/* Model Selection */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-yellow-400 mb-3">Dragon Model Selection</h3>
+                
+                {/* Model Selector Dropdown */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-yellow-400 mb-2">
+                    Select Dragon Model
+                  </label>
+                  <select
+                    value={selectedModel}
+                    onChange={(e) => handleModelChange(e.target.value)}
+                    className="w-full p-3 bg-black/30 border border-yellow-500/30 rounded-lg text-white hover:border-yellow-500/50 focus:border-yellow-500 focus:outline-none transition-colors"
+                    disabled={modelLoading}
+                  >
+                    {availableModels.map((model) => (
+                      <option key={model.id} value={model.path}>
+                        {model.name} ({model.estimatedSize}) {model.recommended ? '⭐' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Current Model Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-black/20 border border-yellow-500/20 rounded-lg p-4">
+                    <h4 className="text-yellow-400 font-medium mb-2 flex items-center gap-2">
+                      {currentModel.name}
+                      {currentModel.recommended && <span className="text-yellow-300">⭐</span>}
+                      {modelLoading && (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-400"></div>
+                      )}
+                    </h4>
+                    <p className="text-gray-300 text-sm mb-2">{currentModel.description}</p>
+                    <div className="text-xs text-gray-400">
+                      <div className="flex justify-between mb-1">
+                        <span>Type:</span>
+                        <span className="text-yellow-400">{currentModel.type}</span>
+                      </div>
+                      <div className="flex justify-between mb-1">
+                        <span>Size:</span>
+                        <span className="text-yellow-400">{currentModel.estimatedSize}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Compatibility:</span>
+                        <span className={`font-medium ${
+                          currentModel.compatibility === 'high' ? 'text-green-400' :
+                          currentModel.compatibility === 'medium' ? 'text-yellow-400' : 'text-red-400'
+                        }`}>
+                          {currentModel.compatibility.toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-black/20 border border-yellow-500/20 rounded-lg p-4">
+                    <h4 className="text-yellow-400 font-medium mb-2">Model Features</h4>
+                    <div className="space-y-1">
+                      {currentModel.features.map((feature, index) => (
+                        <div key={index} className="flex items-center gap-2 text-sm">
+                          <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                          <span className="text-gray-300">{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Model Status */}
+                    <div className="mt-3 pt-3 border-t border-yellow-500/20">
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-gray-400">Status:</span>
+                        {modelLoading ? (
+                          <span className="text-blue-400 flex items-center gap-1">
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-400"></div>
+                            Loading...
+                          </span>
+                        ) : modelError ? (
+                          <span className="text-red-400">Error: {modelError}</span>
+                        ) : (
+                          <span className="text-green-400">Ready</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Model Recommendations */}
+                {deviceCapabilities && (
+                  <div className="mt-3 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+                    <h5 className="text-blue-400 font-medium mb-2 text-sm">
+                      💡 Device Recommendations
+                    </h5>
+                    <div className="text-xs text-blue-200">
+                      {deviceCapabilities.isMobile ? (
+                        <p>Mobile device detected: Consider using "Dragon Head Optimized" for best performance.</p>
+                      ) : deviceCapabilities.isLowEnd ? (
+                        <p>Low-end device detected: High compatibility models are recommended.</p>
+                      ) : (
+                        <p>Desktop device detected: All models are available for testing.</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Performance Controls */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -1214,12 +1641,129 @@ export default function WebGL3DPage() {
           showDiagnostics={true}
         />
         
-        {/* Performance Monitor Component */}
+        {/* Legacy Performance Monitor Component */}
         <WebGLPerformanceMonitor 
           enabled={showPerformanceMonitor}
           showNotifications={true}
           allowManualQualityControl={true}
         />
+        
+        {/* New Performance Metrics Display */}
+        <PerformanceMetricsDisplay
+          currentMetrics={performanceTracking.currentMetrics}
+          alerts={performanceTracking.activeAlerts}
+          isTracking={performanceTracking.isTracking}
+          compact={false}
+          showAdvanced={true}
+          position="top-right"
+          onAcknowledgeAlert={performanceTracking.acknowledgeAlert}
+        />
+        
+        {/* Performance Dashboard Modal */}
+        {showPerformanceDashboard && (
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="w-full max-w-6xl max-h-[90vh] overflow-auto">
+              <div className="bg-gray-900 border border-yellow-500/30 rounded-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold text-yellow-400">Performance Analytics Dashboard</h2>
+                  <button
+                    onClick={() => setShowPerformanceDashboard(false)}
+                    className="p-2 bg-red-500/20 border border-red-500 rounded-lg text-red-400 hover:bg-red-500/30 transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <PerformanceDashboard
+                  currentMetrics={performanceTracking.currentMetrics}
+                  performanceHistory={performanceTracking.performanceHistory}
+                  activeAlerts={performanceTracking.activeAlerts}
+                  isTracking={performanceTracking.isTracking}
+                  currentModelId={performanceTracking.currentModelId}
+                  onExportData={performanceTracking.exportPerformanceData}
+                  onClearAlerts={performanceTracking.clearOldAlerts}
+                  onAcknowledgeAlert={performanceTracking.acknowledgeAlert}
+                  onRefreshData={() => console.log('Refresh data')}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Model Performance Comparison Modal */}
+        {showModelComparison && (
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="w-full max-w-6xl max-h-[90vh] overflow-auto">
+              <div className="bg-gray-900 border border-yellow-500/30 rounded-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold text-yellow-400">Model Performance Comparison</h2>
+                  <button
+                    onClick={() => setShowModelComparison(false)}
+                    className="p-2 bg-red-500/20 border border-red-500 rounded-lg text-red-400 hover:bg-red-500/30 transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+                
+                {/* Model Selection for Comparison */}
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium text-yellow-400 mb-2">Model A</label>
+                    <select
+                      value={comparisonModelA || ''}
+                      onChange={(e) => setComparisonModelA(e.target.value || null)}
+                      className="w-full p-2 bg-black/30 border border-yellow-500/30 rounded text-yellow-400"
+                    >
+                      <option value="">Select Model A</option>
+                      {Object.values(DRAGON_MODELS).map(model => (
+                        <option key={model.id} value={model.id}>{model.displayName}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-yellow-400 mb-2">Model B</label>
+                    <select
+                      value={comparisonModelB || ''}
+                      onChange={(e) => setComparisonModelB(e.target.value || null)}
+                      className="w-full p-2 bg-black/30 border border-yellow-500/30 rounded text-yellow-400"
+                    >
+                      <option value="">Select Model B</option>
+                      {Object.values(DRAGON_MODELS).map(model => (
+                        <option key={model.id} value={model.id}>{model.displayName}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                
+                {/* Comparison Component */}
+                {comparisonModelA && comparisonModelB && (
+                  <ModelPerformanceComparison
+                    modelA={getModelComparisonData(comparisonModelA)!}
+                    modelB={getModelComparisonData(comparisonModelB)!}
+                    comparison={performanceTracking.compareModels(comparisonModelA, comparisonModelB)}
+                    onModelSelect={(modelId) => {
+                      const modelConfig = getModelConfig(modelId)
+                      if (modelConfig) {
+                        handleModelChange(modelConfig.path)
+                        setShowModelComparison(false)
+                      }
+                    }}
+                    onRefreshComparison={() => console.log('Refresh comparison')}
+                    onExportData={() => {
+                      const data = performanceTracking.exportPerformanceData()
+                      const blob = new Blob([data], { type: 'application/json' })
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = `model-comparison-${Date.now()}.json`
+                      a.click()
+                      URL.revokeObjectURL(url)
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* WebGL Recovery Status Indicator */}
         {isWebGLRecovering && (

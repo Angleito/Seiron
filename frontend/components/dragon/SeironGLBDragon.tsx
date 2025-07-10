@@ -29,6 +29,36 @@ interface SeironGLBDragonProps {
   onFallback?: () => void
   onLoad?: () => void
   onProgress?: (progress: number) => void
+  // New callback props for dynamic model switching
+  onLoadStart?: (modelPath: string) => void
+  onLoadProgress?: (progress: number, modelPath: string) => void
+  onLoadComplete?: (modelPath: string) => void
+  onLoadError?: (error: Error, modelPath: string) => void
+  onModelSwitch?: (fromPath: string, toPath: string) => void
+  // Model switching configuration
+  fallbackModelPath?: string
+  enableModelPreloading?: boolean
+  supportedFormats?: ('glb' | 'gltf')[]
+  modelSpecificConfig?: ModelSpecificConfig
+}
+
+// Configuration for model-specific settings
+interface ModelSpecificConfig {
+  [modelPath: string]: {
+    scale?: number
+    position?: [number, number, number]
+    rotation?: [number, number, number]
+    animationName?: string
+    materialOverrides?: any
+    lodLevels?: number[]
+    quality?: 'low' | 'medium' | 'high'
+    optimizations?: {
+      shadows?: boolean
+      reflections?: boolean
+      antialiasing?: boolean
+      particles?: boolean
+    }
+  }
 }
 
 // Model availability checker
