@@ -26,7 +26,16 @@ const mockWebGLContext = {
 const mockRenderer = {
   dispose: jest.fn(),
   setSize: jest.fn(),
-  setPixelRatio: jest.fn()
+  setPixelRatio: jest.fn(),
+  setRenderTarget: jest.fn(),
+  forceContextRestore: jest.fn(),
+  resetState: jest.fn(),
+  getSize: jest.fn(() => ({ width: 800, height: 600 })),
+  getPixelRatio: jest.fn(() => 1),
+  info: {
+    memory: { geometries: 0, textures: 0 },
+    render: { calls: 0, triangles: 0 }
+  }
 } as any;
 
 // Mock webglDiagnostics
@@ -34,7 +43,9 @@ jest.mock('../webglDiagnostics', () => ({
   webglDiagnostics: {
     recordError: jest.fn(),
     recordPerformanceMetric: jest.fn(),
-    recordMemoryMetric: jest.fn()
+    recordMemoryMetric: jest.fn(),
+    recordContextLoss: jest.fn(),
+    recordContextRecovery: jest.fn()
   }
 }));
 
@@ -149,7 +160,7 @@ describe('WebGLRecoveryManager', () => {
   });
 
   describe('context restoration handling', () => {
-    it('should handle context restoration event', () => {
+    it('should handle context restoration event', async () => {
       recoveryManager.initializeRecovery(mockCanvas, mockRenderer);
       
       const contextRestoredHandler = mockCanvas.addEventListener.mock.calls
@@ -158,8 +169,9 @@ describe('WebGLRecoveryManager', () => {
       contextRestoredHandler();
       
       expect(mockConfig.onContextRestored).toHaveBeenCalled();
-      expect(mockRenderer.dispose).toHaveBeenCalled();
-      expect(mockRenderer.setSize).toHaveBeenCalledWith(mockCanvas.width, mockCanvas.height);
+      expect(mockRenderer.forceContextRestore).toHaveBeenCalled();
+      expect(mockRenderer.setSize).toHaveBeenCalled();
+      expect(mockRenderer.resetState).toHaveBeenCalled();
     });
   });
 
@@ -181,6 +193,69 @@ describe('WebGLRecoveryManager', () => {
       expect(mockConfig.onRecoveryFailed).toHaveBeenCalled();
       expect(mockConfig.onFallback).toHaveBeenCalled();
       expect(webglDiagnostics.recordError).toHaveBeenCalledWith(expect.stringContaining('recovery failed'));
+    });
+
+    it('should implement circuit breaker for rapid context losses', async () => {
+      recoveryManager.initializeRecovery(mockCanvas, mockRenderer);
+      
+      const contextLostHandler = mockCanvas.addEventListener.mock.calls
+        .find(call => call[0] === 'webglcontextlost')[1];
+      
+      const mockEvent = { preventDefault: jest.fn() };
+      
+      // Simulate rapid context losses
+      for (let i = 0; i < 4; i++) {
+        contextLostHandler(mockEvent);
+        // Small delay to simulate rapid but not instantaneous losses
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      
+      // Circuit breaker should be open now
+      const diagnostics = recoveryManager.getDiagnostics();
+      expect(diagnostics.currentState).toBe('failed');
+    });
+
+    it('should prevent recovery when circuit breaker is open', () => {
+      recoveryManager.initializeRecovery(mockCanvas, mockRenderer);
+      
+      // Manually open circuit breaker
+      (recoveryManager as any).circuitBreakerOpen = true;
+      
+      const contextLostHandler = mockCanvas.addEventListener.mock.calls
+        .find(call => call[0] === 'webglcontextlost')[1];
+      
+      const mockEvent = { preventDefault: jest.fn() };
+      
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      
+      contextLostHandler(mockEvent);
+      
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        '[WebGLRecovery] Circuit breaker is open, skipping recovery attempt'
+      );
+      
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('should rate limit recovery attempts', () => {
+      recoveryManager.initializeRecovery(mockCanvas, mockRenderer);
+      
+      const contextLostHandler = mockCanvas.addEventListener.mock.calls
+        .find(call => call[0] === 'webglcontextlost')[1];
+      
+      const mockEvent = { preventDefault: jest.fn() };
+      
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      
+      // Trigger rapid context losses
+      contextLostHandler(mockEvent);
+      contextLostHandler(mockEvent); // Should be rate limited
+      
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        '[WebGLRecovery] Rapid context loss detected, implementing backoff'
+      );
+      
+      consoleWarnSpy.mockRestore();
     });
   });
 

@@ -499,7 +499,7 @@ function DragonScene({
   )
 }
 
-// Main GLB Dragon component
+// Main GLB Dragon component that only renders Three.js objects (no Canvas wrapper)
 const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
   voiceState,
   size = 'gigantic',
@@ -512,6 +512,104 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
   onFallback
 }) => {
   const [isLoaded, setIsLoaded] = useState(false)
+  const [hasError, setHasError] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string>('')
+
+  console.log('🐉 SeironGLBDragon rendering with props:', { size, enableAnimations, voiceState })
+
+  useEffect(() => {
+    let mounted = true
+    console.log('⏰ Starting dragon load timer...')
+    const timer = setTimeout(() => {
+      if (mounted) {
+        console.log('✅ Dragon load timer complete')
+        setIsLoaded(true)
+      }
+    }, 100)
+    return () => {
+      mounted = false
+      clearTimeout(timer)
+    }
+  }, [])
+
+  // Error handler
+  const handleError = (error: Error) => {
+    console.error('❌ Dragon error:', error)
+    
+    // Check if this is a model loading error
+    const isModelError = error.message.includes('Invalid typed array length') ||
+                        error.message.includes('Failed to load') ||
+                        error.message.includes('GLTF') ||
+                        error.message.includes('GLB')
+    
+    if (isModelError) {
+      console.warn('🔴 Model loading error detected, triggering fallback')
+      setErrorMessage('Model loading failed, using fallback')
+      
+      // Trigger fallback immediately for model errors
+      if (onFallback) {
+        onFallback()
+      }
+      return
+    }
+    
+    setHasError(true)
+    setErrorMessage(error.message || 'Unknown error')
+    
+    // Propagate error to parent
+    if (onError) {
+      onError(error)
+    }
+  }
+
+  // For Three.js objects only - no HTML elements inside Canvas
+  if (hasError) {
+    console.log('💥 Dragon error state, returning null to let parent handle')
+    // Don't return HTML here - let the parent Canvas error boundary handle it
+    if (onError) {
+      onError(new Error(errorMessage))
+    }
+    return null
+  }
+
+  console.log('🎨 Rendering Dragon Three.js objects with isLoaded:', isLoaded)
+
+  // Return Three.js objects only - no HTML div wrappers
+  return (
+    <group>
+      {/* Debug mesh for development */}
+      {process.env.NODE_ENV === 'development' && (
+        <mesh position={[2, 2, 2]}>
+          <boxGeometry args={[0.5, 0.5, 0.5]} />
+          <meshBasicMaterial color="blue" wireframe />
+        </mesh>
+      )}
+      
+      {isLoaded && (
+        <DragonScene 
+          voiceState={voiceState}
+          size={size}
+          enableAnimations={enableAnimations}
+          modelPath={modelPath}
+          onError={handleError}
+        />
+      )}
+    </group>
+  )
+}
+
+// Component with Canvas wrapper for standalone usage
+const SeironGLBDragonWithCanvas: React.FC<SeironGLBDragonProps> = ({
+  voiceState,
+  size = 'gigantic',
+  className = '',
+  enableAnimations = true,
+  modelPath = '/models/seiron.glb',
+  isProgressiveLoading = false,
+  isLoadingHighQuality = false,
+  onError,
+  onFallback
+}) => {
   const [hasError, setHasError] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string>('')
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -574,23 +672,6 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
     }
   })
 
-  console.log('🐉 SeironGLBDragon rendering with props:', { size, enableAnimations, voiceState })
-
-  useEffect(() => {
-    let mounted = true
-    console.log('⏰ Starting dragon load timer...')
-    const timer = setTimeout(() => {
-      if (mounted) {
-        console.log('✅ Dragon load timer complete')
-        setIsLoaded(true)
-      }
-    }, 100)
-    return () => {
-      mounted = false
-      clearTimeout(timer)
-    }
-  }, [])
-
   // Initialize WebGL recovery when Canvas is ready
   useEffect(() => {
     if (canvasRef.current && rendererRef.current) {
@@ -610,23 +691,6 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
     if (isWebGLError) {
       console.warn('🔴 WebGL-related error detected, WebGL recovery will handle this')
       // Let WebGL recovery handle this error
-      return
-    }
-    
-    // Check if this is a model loading error
-    const isModelError = error.message.includes('Invalid typed array length') ||
-                        error.message.includes('Failed to load') ||
-                        error.message.includes('GLTF') ||
-                        error.message.includes('GLB')
-    
-    if (isModelError) {
-      console.warn('🔴 Model loading error detected, triggering fallback')
-      setErrorMessage('Model loading failed, using fallback')
-      
-      // Trigger fallback immediately for model errors
-      if (onFallback) {
-        onFallback()
-      }
       return
     }
     
@@ -681,48 +745,15 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
     )
   }
 
-  console.log('🎨 Rendering Canvas with isLoaded:', isLoaded)
-
-  // Add debug styling and logging
-  useEffect(() => {
-    console.log('🐉 Dragon container dimensions:', {
-      className,
-      containerElement: document.querySelector(`.${className?.split(' ')[0]}`),
-      parentElement: document.querySelector(`.${className?.split(' ')[0]}`)?.parentElement
-    })
-  }, [className])
-
   return (
     <div 
       className={`w-full h-full ${className}`}
       style={{
-        // Force explicit dimensions and add debug border
         minWidth: '200px',
         minHeight: '200px',
-        border: '2px solid red', // Debug border
-        backgroundColor: 'rgba(255, 0, 0, 0.1)', // Debug background
         position: 'relative'
       }}
-    >
-      {/* Debug info overlay */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        padding: '4px',
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        color: 'white',
-        fontSize: '10px',
-        zIndex: 1000,
-        pointerEvents: 'none'
-      }}>
-        <div>Dragon: {isLoaded ? 'Loaded' : 'Loading'}</div>
-        <div>Size: {size}</div>
-        <div>Model: {modelPath}</div>
-        <div>Error: {hasError ? errorMessage : 'None'}</div>
-        <div>Recovery: {isRecovering ? 'Yes' : 'No'}</div>
-      </div>
-      
+    >      
       <Canvas
         ref={canvasRef}
         camera={{ 
@@ -732,12 +763,10 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
           far: 100
         }}
         style={{ 
-          background: 'rgba(0, 255, 0, 0.2)', // Green debug background
-          pointerEvents: 'none',
           width: '100%',
           height: '100%',
-          display: 'block', // Ensure canvas is displayed
-          position: 'absolute', // Position absolutely within container
+          display: 'block',
+          position: 'absolute',
           top: 0,
           left: 0
         }}
@@ -745,23 +774,14 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
           antialias: getQualitySettings().antialias, 
           alpha: true,
           powerPreference: diagnostics.contextLossRisk === 'high' ? 'low-power' : 'high-performance',
-          preserveDrawingBuffer: true, // Helps with context recovery
+          preserveDrawingBuffer: true,
           failIfMajorPerformanceCaveat: false,
-          stencil: diagnostics.qualityLevel > 2, // Reduce memory usage on lower quality
+          stencil: diagnostics.qualityLevel > 2,
           depth: true,
-          logarithmicDepthBuffer: false // Improve compatibility
+          logarithmicDepthBuffer: false
         }}
         shadows={getQualitySettings().shadows}
         onCreated={(state) => {
-          console.log('🎮 Three.js Canvas created:', state)
-          console.log('📐 Canvas dimensions:', {
-            width: state.gl.domElement.width,
-            height: state.gl.domElement.height,
-            clientWidth: state.gl.domElement.clientWidth,
-            clientHeight: state.gl.domElement.clientHeight,
-            camera: state.camera.position,
-            viewport: state.viewport
-          })
           rendererRef.current = state.gl
           
           // Configure renderer for better recovery
@@ -778,21 +798,14 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
           handleError(new Error('Canvas creation failed'))
         }}
       >
-        {/* Always render a debug cube to test basic rendering */}
-        <mesh position={[0, 0, 0]}>
-          <boxGeometry args={[2, 2, 2]} />
-          <meshBasicMaterial color="yellow" wireframe />
-        </mesh>
-        
-        {isLoaded && (
-          <DragonScene 
-            voiceState={voiceState}
-            size={size}
-            enableAnimations={enableAnimations}
-            modelPath={modelPath}
-            onError={handleError}
-          />
-        )}
+        <SeironGLBDragon
+          voiceState={voiceState}
+          size={size}
+          enableAnimations={enableAnimations}
+          modelPath={modelPath}
+          onError={handleError}
+          onFallback={onFallback}
+        />
       </Canvas>
     </div>
   )
@@ -825,7 +838,7 @@ class GLTFErrorBoundary extends React.Component<
   }
 }
 
-// Wrapped component that includes error boundary
+// Wrapped component that includes error boundary (Three.js objects only)
 const SeironGLBDragonWithErrorBoundary: React.FC<SeironGLBDragonProps> = (props) => {
   return (
     <GLTFErrorBoundary onError={props.onError || (() => {})}>
@@ -834,7 +847,7 @@ const SeironGLBDragonWithErrorBoundary: React.FC<SeironGLBDragonProps> = (props)
   )
 }
 
-// Component wrapped with WebGL Error Boundary
+// Component wrapped with WebGL Error Boundary (standalone with Canvas)
 const SeironGLBDragonWithWebGLErrorBoundary: React.FC<SeironGLBDragonProps> = (props) => {
   return (
     <WebGLErrorBoundary 
@@ -854,7 +867,7 @@ const SeironGLBDragonWithWebGLErrorBoundary: React.FC<SeironGLBDragonProps> = (p
         }
       }}
     >
-      <SeironGLBDragonWithErrorBoundary {...props} />
+      <SeironGLBDragonWithCanvas {...props} />
     </WebGLErrorBoundary>
   )
 }
@@ -871,4 +884,9 @@ if (typeof window !== 'undefined') {
 }
 
 export default SeironGLBDragon
-export { SeironGLBDragon, SeironGLBDragonWithErrorBoundary, SeironGLBDragonWithWebGLErrorBoundary }
+export { 
+  SeironGLBDragon, 
+  SeironGLBDragonWithCanvas,
+  SeironGLBDragonWithErrorBoundary, 
+  SeironGLBDragonWithWebGLErrorBoundary 
+}

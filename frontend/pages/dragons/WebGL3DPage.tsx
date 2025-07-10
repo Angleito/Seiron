@@ -10,6 +10,13 @@ import { DragonMemoryManager } from '../../utils/dragonMemoryManager'
 import { ProductionWebGLErrorBoundary } from '../../components/webgl/ProductionWebGLErrorBoundary'
 import { DeviceCompatibilityBoundary } from '../../components/error-boundaries/DeviceCompatibilityBoundary'
 import WebGLPerformanceMonitor from '../../components/webgl/WebGLPerformanceMonitor'
+import { useWebGLRecovery } from '../../utils/webglRecovery'
+import { 
+  WebGLRecoveryLoader, 
+  CanvasSafeLoader, 
+  DragonSystemStatus,
+  DragonLoadingAnimation 
+} from '../../components/loading/LoadingStates'
 
 interface WebGLCapabilities {
   webgl: boolean
@@ -79,6 +86,8 @@ export default function WebGL3DPage() {
   const [loading, setLoading] = useState(true)
   const [isVisible, setIsVisible] = useState(true)
   const [isInitialized, setIsInitialized] = useState(false)
+  const [webglRecoveryStage, setWebglRecoveryStage] = useState('')
+  const [webglRecoveryProgress, setWebglRecoveryProgress] = useState(0)
   
   // Performance state
   const [performanceState, setPerformanceState] = useState<PerformanceState>({
@@ -112,6 +121,20 @@ export default function WebGL3DPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const memoryManagerRef = useRef(DragonMemoryManager.getInstance())
   const performanceCheckIntervalRef = useRef<NodeJS.Timeout>()
+  
+  // WebGL Recovery integration
+  const {
+    diagnostics: webglDiagnostics,
+    isRecovering: isWebGLRecovering,
+    forceRecovery: manualWebGLRecover,
+    shouldFallback
+  } = useWebGLRecovery()
+  
+  // Fallback request function
+  const requestWebGLFallback = useCallback(() => {
+    console.log('WebGL fallback requested, redirecting to 2D dragons')
+    window.location.href = '/dragons/sprite-2d'
+  }, [])
   
   // Performance monitoring
   const performanceMonitor = usePerformanceMonitor({
@@ -588,15 +611,56 @@ export default function WebGL3DPage() {
     }
   }), [memoizedQualitySettings, deviceCapabilities, isVisible])
 
+  // Enhanced recovery stage tracking
+  useEffect(() => {
+    if (isWebGLRecovering) {
+      const stages = [
+        'Detecting context loss...',
+        'Clearing GPU resources...',
+        'Reinitializing WebGL context...',
+        'Restoring dragon model...',
+        'Finalizing recovery...'
+      ]
+      
+      let currentStage = 0
+      const interval = setInterval(() => {
+        if (currentStage < stages.length) {
+          setWebglRecoveryStage(stages[currentStage] || '')
+          setWebglRecoveryProgress((currentStage + 1) * 20)
+          currentStage++
+        } else {
+          clearInterval(interval)
+        }
+      }, 1000)
+      
+      return () => clearInterval(interval)
+    } else {
+      setWebglRecoveryStage('')
+      setWebglRecoveryProgress(0)
+      return () => {} // Return empty cleanup function
+    }
+  }, [isWebGLRecovering])
+  
+  // Get current WebGL state for status display
+  const getWebGLState = (): 'loading' | 'active' | 'recovering' | 'failed' => {
+    if (loading) return 'loading'
+    if (isWebGLRecovering) return 'recovering'
+    if (webglDiagnostics?.currentState === 'failed') return 'failed'
+    return 'active'
+  }
+  
   // Early returns for loading and error states
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-amber-900 via-red-900 to-orange-900 flex items-center justify-center">
-        <div className="text-center text-white">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400 mx-auto mb-4"></div>
-          <p className="text-xl">Initializing Dragon Engine...</p>
-          <p className="text-sm text-yellow-200 mt-2">Optimizing for your device</p>
-        </div>
+        <DragonLoadingAnimation
+          message="Initializing Dragon Engine..."
+          showProgress={true}
+          progress={50}
+          isWebGLRecovering={false}
+          showWebGLStatus={true}
+          onRetryWebGL={() => window.location.reload()}
+        />
       </div>
     )
   }
@@ -661,6 +725,13 @@ export default function WebGL3DPage() {
                       Mobile
                     </span>
                   )}
+                  {/* WebGL Status */}
+                  <DragonSystemStatus
+                    webglState={getWebGLState()}
+                    performanceScore={webglDiagnostics?.performanceScore}
+                    contextLossRisk={webglDiagnostics?.contextLossRisk}
+                    compact={true}
+                  />
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -712,165 +783,199 @@ export default function WebGL3DPage() {
                   Connection: {deviceCapabilities.connectionType}
                 </div>
               </div>
+              
+              {/* WebGL Recovery Status */}
+              {webglDiagnostics && (
+                <div className="mt-4 pt-4 border-t border-yellow-500/20">
+                  <h4 className="text-md font-medium text-yellow-400 mb-2">WebGL Recovery System</h4>
+                  <DragonSystemStatus
+                    webglState={getWebGLState()}
+                    performanceScore={webglDiagnostics.performanceScore}
+                    contextLossRisk={webglDiagnostics.contextLossRisk}
+                    compact={false}
+                  />
+                  <div className="mt-2 grid grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <span className="text-gray-400">Context Losses:</span>
+                      <span className="ml-2 text-white font-mono">{webglDiagnostics.contextLossCount}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Recovery Rate:</span>
+                      <span className="ml-2 text-white font-mono">
+                        {webglDiagnostics.recoveryAttempts > 0 
+                          ? `${((webglDiagnostics.successfulRecoveries / webglDiagnostics.recoveryAttempts) * 100).toFixed(1)}%`
+                          : 'N/A'
+                        }
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* 3D Scene - Use conditional visibility instead of unmounting */}
-        <div className="absolute inset-0 z-0" style={{ 
-          visibility: isVisible ? 'visible' : 'hidden',
-          pointerEvents: isVisible ? 'auto' : 'none'
-        }}>
-          <ProductionWebGLErrorBoundary
-            fallbackComponent={() => (
-              <div className="flex items-center justify-center h-full bg-gradient-to-br from-amber-900 via-red-900 to-orange-900">
-                <div className="text-center text-white">
-                  <div className="text-6xl mb-4">🐉</div>
-                  <h2 className="text-2xl font-bold mb-4">3D Dragon Unavailable</h2>
-                  <p className="text-gray-300 mb-4">The 3D dragon renderer encountered an issue.</p>
-                  <button 
-                    onClick={() => window.location.href = '/dragons/sprite-2d'}
-                    className="px-6 py-3 bg-yellow-500 text-black rounded-lg hover:bg-yellow-400 transition-colors"
-                  >
-                    Try 2D Dragons Instead
-                  </button>
-                </div>
+        <ProductionWebGLErrorBoundary
+          fallbackComponent={() => (
+            <div className="absolute inset-0 z-0 flex items-center justify-center bg-gradient-to-br from-amber-900 via-red-900 to-orange-900">
+              <div className="text-center text-white">
+                <div className="text-6xl mb-4">🐉</div>
+                <h2 className="text-2xl font-bold mb-4">3D Dragon Unavailable</h2>
+                <p className="text-gray-300 mb-4">The 3D dragon renderer encountered an issue.</p>
+                <button 
+                  onClick={() => window.location.href = '/dragons/sprite-2d'}
+                  className="px-6 py-3 bg-yellow-500 text-black rounded-lg hover:bg-yellow-400 transition-colors"
+                >
+                  Try 2D Dragons Instead
+                </button>
               </div>
-            )}
-          >
+            </div>
+          )}
+        >
+          <div className="absolute inset-0 z-0" style={{ 
+            visibility: isVisible ? 'visible' : 'hidden',
+            pointerEvents: isVisible ? 'auto' : 'none'
+          }}>
             <Canvas
-            ref={canvasRef}
-            {...canvasProps}
-            onCreated={({ gl, scene }) => {
-              // Set pixel ratio and size
-              gl.setPixelRatio(canvasProps.gl.pixelRatio)
-              gl.setSize(window.innerWidth, window.innerHeight, false)
-              
-              // Get WebGL context for low-level operations
-              const glContext = gl.getContext()
-              
-              // Enable optimizations through WebGL context
-              if (glContext) {
-                // Set up frustum culling
-                glContext.enable(glContext.CULL_FACE)
-                glContext.cullFace(glContext.BACK)
+              ref={canvasRef}
+              {...canvasProps}
+              onCreated={({ gl, scene }) => {
+                // Set pixel ratio and size
+                gl.setPixelRatio(canvasProps.gl.pixelRatio)
+                gl.setSize(window.innerWidth, window.innerHeight, false)
                 
-                // Enable depth testing
-                glContext.enable(glContext.DEPTH_TEST)
-                glContext.depthFunc(glContext.LEQUAL)
+                // Get WebGL context for low-level operations
+                const glContext = gl.getContext()
                 
-                // Set clear color for better performance
-                glContext.clearColor(0, 0, 0, 0)
+                // Enable optimizations through WebGL context
+                if (glContext) {
+                  // Set up frustum culling
+                  glContext.enable(glContext.CULL_FACE)
+                  glContext.cullFace(glContext.BACK)
+                  
+                  // Enable depth testing
+                  glContext.enable(glContext.DEPTH_TEST)
+                  glContext.depthFunc(glContext.LEQUAL)
+                  
+                  // Set clear color for better performance
+                  glContext.clearColor(0, 0, 0, 0)
+                  
+                  // Configure extensions for better performance
+                  glContext.getExtension('EXT_texture_filter_anisotropic')
+                  glContext.getExtension('WEBGL_compressed_texture_s3tc')
+                  glContext.getExtension('WEBGL_compressed_texture_pvrtc')
+                  glContext.getExtension('WEBGL_compressed_texture_etc1')
+                  
+                  // Enable WebGL state caching for performance
+                  glContext.enable(glContext.SCISSOR_TEST)
+                  glContext.scissor(0, 0, glContext.canvas.width, glContext.canvas.height)
+                }
                 
-                // Configure extensions for better performance
-                glContext.getExtension('EXT_texture_filter_anisotropic')
-                glContext.getExtension('WEBGL_compressed_texture_s3tc')
-                glContext.getExtension('WEBGL_compressed_texture_pvrtc')
-                glContext.getExtension('WEBGL_compressed_texture_etc1')
+                // Memory management optimizations on Three.js objects
+                // Note: Scene autoUpdate is managed by React Three Fiber
+                scene.matrixAutoUpdate = false
                 
-                // Enable WebGL state caching for performance
-                glContext.enable(glContext.SCISSOR_TEST)
-                glContext.scissor(0, 0, glContext.canvas.width, glContext.canvas.height)
-              }
-              
-              // Memory management optimizations on Three.js objects
-              // Note: Scene autoUpdate is managed by React Three Fiber
-              scene.matrixAutoUpdate = false
-              
-              // Configure renderer-specific optimizations
-              gl.shadowMap.enabled = memoizedQualitySettings.shadows
-              gl.shadowMap.type = THREE.PCFSoftShadowMap
-              
-              console.log('Canvas created with quality:', performanceState.quality)
-            }}
-          >
-            <Suspense fallback={null}>
-              {/* Lighting based on quality settings */}
-              {memoizedQualitySettings.lighting !== 'basic' && (
-                <>
-                  <ambientLight intensity={0.3} color="#fbbf24" />
-                  <directionalLight
-                    position={[10, 10, 5]}
-                    intensity={voiceState.isSpeaking ? 1.5 : 1}
-                    color={voiceState.isSpeaking ? "#ff6b35" : voiceState.isListening ? "#3b82f6" : "#fbbf24"}
-                    castShadow={memoizedQualitySettings.shadows}
-                    shadow-mapSize-width={memoizedQualitySettings.shadowMapSize}
-                    shadow-mapSize-height={memoizedQualitySettings.shadowMapSize}
+                // Configure renderer-specific optimizations
+                gl.shadowMap.enabled = memoizedQualitySettings.shadows
+                gl.shadowMap.type = THREE.PCFSoftShadowMap
+                
+                console.log('Canvas created with quality:', performanceState.quality)
+              }}
+            >
+              <Suspense fallback={null}>
+                {/* Lighting based on quality settings */}
+                {memoizedQualitySettings.lighting !== 'basic' && (
+                  <>
+                    <ambientLight intensity={0.3} color="#fbbf24" />
+                    <directionalLight
+                      position={[10, 10, 5]}
+                      intensity={voiceState.isSpeaking ? 1.5 : 1}
+                      color={voiceState.isSpeaking ? "#ff6b35" : voiceState.isListening ? "#3b82f6" : "#fbbf24"}
+                      castShadow={memoizedQualitySettings.shadows}
+                      shadow-mapSize-width={memoizedQualitySettings.shadowMapSize}
+                      shadow-mapSize-height={memoizedQualitySettings.shadowMapSize}
+                    />
+                    {memoizedQualitySettings.lighting === 'full' && (
+                      <>
+                        <pointLight
+                          position={[0, 5, 0]}
+                          intensity={voiceState.volume * 2}
+                          color="#ff4500"
+                          distance={20}
+                        />
+                        <pointLight
+                          position={[-5, 2, 5]}
+                          intensity={0.5}
+                          color="#fbbf24"
+                          distance={15}
+                        />
+                      </>
+                    )}
+                  </>
+                )}
+                
+                {/* Basic lighting for low quality */}
+                {memoizedQualitySettings.lighting === 'basic' && (
+                  <>
+                    <ambientLight intensity={0.5} color="#fbbf24" />
+                    <directionalLight
+                      position={[10, 10, 5]}
+                      intensity={1}
+                      color="#fbbf24"
+                      castShadow={false}
+                    />
+                  </>
+                )}
+
+                {/* Environment */}
+                {memoizedQualitySettings.postProcessing && (
+                  <Environment preset="sunset" />
+                )}
+
+                {/* Dragon - Wrapped in Canvas-Safe Loading */}
+                <CanvasSafeLoader
+                  isLoading={loading && !isInitialized}
+                  message="Loading Dragon Model..."
+                  preventCanvasInterference={true}
+                >
+                  <SeironGLBDragon
+                    voiceState={voiceState}
+                    size={dragonSize}
+                    enableAnimations={memoizedQualitySettings.animations && isVisible}
+                    visible={isVisible}
+                    qualitySettings={memoizedQualitySettings}
+                    onError={handleDragonError}
+                    onLoad={() => console.log('Dragon loaded successfully')}
+                    onProgress={(progress) => console.log('Dragon loading progress:', progress)}
+                    modelPath={'/models/seiron.glb'}
+                    isProgressiveLoading={true}
+                    deviceCapabilities={deviceCapabilities}
+                    performanceState={performanceState}
                   />
-                  {memoizedQualitySettings.lighting === 'full' && (
-                    <>
-                      <pointLight
-                        position={[0, 5, 0]}
-                        intensity={voiceState.volume * 2}
-                        color="#ff4500"
-                        distance={20}
-                      />
-                      <pointLight
-                        position={[-5, 2, 5]}
-                        intensity={0.5}
-                        color="#fbbf24"
-                        distance={15}
-                      />
-                    </>
-                  )}
-                </>
-              )}
-              
-              {/* Basic lighting for low quality */}
-              {memoizedQualitySettings.lighting === 'basic' && (
-                <>
-                  <ambientLight intensity={0.5} color="#fbbf24" />
-                  <directionalLight
-                    position={[10, 10, 5]}
-                    intensity={1}
-                    color="#fbbf24"
-                    castShadow={false}
-                  />
-                </>
-              )}
+                </CanvasSafeLoader>
 
-              {/* Environment */}
-              {memoizedQualitySettings.postProcessing && (
-                <Environment preset="sunset" />
-              )}
-
-              {/* Dragon - Conditional rendering with visibility optimization */}
-              <SeironGLBDragon
-                voiceState={voiceState}
-                size={dragonSize}
-                enableAnimations={memoizedQualitySettings.animations && isVisible}
-                visible={isVisible}
-                qualitySettings={memoizedQualitySettings}
-                onError={handleDragonError}
-                onLoad={() => console.log('Dragon loaded successfully')}
-                onProgress={(progress) => console.log('Dragon loading progress:', progress)}
-                modelPath={'/models/seiron.glb'}
-                isProgressiveLoading={true}
-                deviceCapabilities={deviceCapabilities}
-                performanceState={performanceState}
-              />
-
-              {/* Camera Controls */}
-              <OrbitControls
-                enablePan={true}
-                enableZoom={true}
-                enableRotate={true}
-                minDistance={2}
-                maxDistance={10}
-                minPolarAngle={0}
-                maxPolarAngle={Math.PI}
-                enableDamping={true}
-                dampingFactor={0.1}
-              />
-              
-              {/* Fog for depth */}
-              {memoizedQualitySettings.fog && (
-                <fog attach="fog" args={['#000000', 10, 50]} />
-              )}
-            </Suspense>
-          </Canvas>
-          </ProductionWebGLErrorBoundary>
-        </div>
+                {/* Camera Controls */}
+                <OrbitControls
+                  enablePan={true}
+                  enableZoom={true}
+                  enableRotate={true}
+                  minDistance={2}
+                  maxDistance={10}
+                  minPolarAngle={0}
+                  maxPolarAngle={Math.PI}
+                  enableDamping={true}
+                  dampingFactor={0.1}
+                />
+                
+                {/* Fog for depth */}
+                {memoizedQualitySettings.fog && (
+                  <fog attach="fog" args={['#000000', 10, 50]} />
+                )}
+              </Suspense>
+            </Canvas>
+          </div>
+        </ProductionWebGLErrorBoundary>
 
         {/* Performance Monitor */}
         {showPerformanceMonitor && (
@@ -1098,12 +1203,34 @@ export default function WebGL3DPage() {
         {/* Loading indicator for the 3D scene */}
         <Loader />
         
+        {/* WebGL Recovery Overlay */}
+        <WebGLRecoveryLoader
+          isRecovering={isWebGLRecovering}
+          recoveryStage={webglRecoveryStage}
+          progress={webglRecoveryProgress}
+          onManualRetry={manualWebGLRecover}
+          onFallback={requestWebGLFallback}
+          showDiagnostics={true}
+        />
+        
         {/* Performance Monitor Component */}
         <WebGLPerformanceMonitor 
           enabled={showPerformanceMonitor}
           showNotifications={true}
           allowManualQualityControl={true}
         />
+        
+        {/* WebGL Recovery Status Indicator */}
+        {isWebGLRecovering && (
+          <div className="fixed top-4 left-4 z-50">
+            <DragonSystemStatus
+              webglState="recovering"
+              performanceScore={webglDiagnostics?.performanceScore}
+              contextLossRisk={webglDiagnostics?.contextLossRisk}
+              compact={true}
+            />
+          </div>
+        )}
       </div>
     </DeviceCompatibilityBoundary>
   )

@@ -81,6 +81,10 @@ export class WebGLRecoveryManager extends EventEmitter {
   private isRecovering = false;
   private recoveryTimer: NodeJS.Timeout | null = null;
   private recoveryStartTime: number | null = null;
+  private consecutiveFailures = 0;
+  private lastRecoveryAttempt = 0;
+  private circuitBreakerOpen = false;
+  private circuitBreakerTimeout: NodeJS.Timeout | null = null;
   private contextLossExtension: WEBGL_lose_context | null = null;
   private performanceMonitor: NodeJS.Timeout | null = null;
   private memoryMonitor: NodeJS.Timeout | null = null;
@@ -204,6 +208,24 @@ export class WebGLRecoveryManager extends EventEmitter {
   private handleContextLost = (event: Event): void => {
     event.preventDefault(); // Prevent default behavior
     
+    // Check if circuit breaker is open
+    if (this.circuitBreakerOpen) {
+      console.warn('[WebGLRecovery] Circuit breaker is open, skipping recovery attempt');
+      this.handleRecoveryFailed();
+      return;
+    }
+    
+    // Prevent rapid context loss events
+    const now = Date.now();
+    if (now - this.lastRecoveryAttempt < 1000) {
+      console.warn('[WebGLRecovery] Rapid context loss detected, implementing backoff');
+      this.consecutiveFailures++;
+      if (this.consecutiveFailures >= 3) {
+        this.openCircuitBreaker();
+        return;
+      }
+    }
+    
     // Cancel any ongoing recovery
     this.cancelRecovery();
     
@@ -211,10 +233,12 @@ export class WebGLRecoveryManager extends EventEmitter {
     this.diagnostics.lastContextLoss = new Date();
     this.diagnostics.currentState = 'lost';
     this.recoveryAttempts = 0; // Reset recovery attempts for new context loss
+    this.lastRecoveryAttempt = now;
     
     console.warn('[WebGLRecovery] WebGL context lost', {
       lossCount: this.diagnostics.contextLossCount,
-      timestamp: this.diagnostics.lastContextLoss
+      timestamp: this.diagnostics.lastContextLoss,
+      consecutiveFailures: this.consecutiveFailures
     });
     
     // Record error in diagnostics
@@ -224,7 +248,7 @@ export class WebGLRecoveryManager extends EventEmitter {
     this.emit('contextLost');
     this.config.onContextLost();
     
-    // Attempt recovery
+    // Attempt recovery with circuit breaker protection
     this.attemptRecovery();
   };
 
@@ -232,7 +256,17 @@ export class WebGLRecoveryManager extends EventEmitter {
    * Handle WebGL context restored event
    */
   private handleContextRestored = (): void => {
+    // Verify context is actually restored before proceeding
+    if (this.gl && this.gl.isContextLost()) {
+      console.warn('[WebGLRecovery] Context restored event fired but context is still lost');
+      return;
+    }
+    
     const recoveryTime = this.recoveryStartTime ? Date.now() - this.recoveryStartTime : 0;
+    
+    // Reset circuit breaker on successful recovery
+    this.closeCircuitBreaker();
+    this.consecutiveFailures = 0;
     
     this.diagnostics.successfulRecoveries++;
     this.diagnostics.lastSuccessfulRecovery = new Date();
@@ -254,7 +288,8 @@ export class WebGLRecoveryManager extends EventEmitter {
     console.log('[WebGLRecovery] WebGL context restored', {
       recoveries: this.diagnostics.successfulRecoveries,
       timestamp: this.diagnostics.lastSuccessfulRecovery,
-      timeTaken: recoveryTime
+      timeTaken: recoveryTime,
+      consecutiveFailures: this.consecutiveFailures
     });
     
     this.emit('contextRestored');
@@ -270,9 +305,23 @@ export class WebGLRecoveryManager extends EventEmitter {
    * Attempt to recover WebGL context
    */
   private attemptRecovery(): void {
-    if (this.isRecovering) return;
+    if (this.isRecovering) {
+      console.warn('[WebGLRecovery] Recovery already in progress, skipping');
+      return;
+    }
+    
+    if (this.circuitBreakerOpen) {
+      console.warn('[WebGLRecovery] Circuit breaker is open, recovery blocked');
+      this.handleRecoveryFailed();
+      return;
+    }
     
     if (this.recoveryAttempts >= this.config.maxRecoveryAttempts) {
+      console.warn(`[WebGLRecovery] Maximum recovery attempts (${this.config.maxRecoveryAttempts}) reached`);
+      this.consecutiveFailures++;
+      if (this.consecutiveFailures >= 5) {
+        this.openCircuitBreaker();
+      }
       this.handleRecoveryFailed();
       return;
     }
@@ -283,9 +332,9 @@ export class WebGLRecoveryManager extends EventEmitter {
     this.diagnostics.currentState = 'recovering';
     this.recoveryStartTime = Date.now();
     
-    console.log(`[WebGLRecovery] Attempting recovery (attempt ${this.recoveryAttempts}/${this.config.maxRecoveryAttempts})`);
+    console.log(`[WebGLRecovery] Attempting recovery (attempt ${this.recoveryAttempts}/${this.config.maxRecoveryAttempts}, consecutive failures: ${this.consecutiveFailures})`);
     
-    // Calculate delay with exponential backoff
+    // Calculate delay with exponential backoff and consecutive failure penalty
     const delay = this.calculateRecoveryDelay();
     
     // Notify about recovery attempt
@@ -297,7 +346,7 @@ export class WebGLRecoveryManager extends EventEmitter {
   }
 
   /**
-   * Calculate recovery delay with exponential backoff
+   * Calculate recovery delay with exponential backoff and consecutive failure penalty
    */
   private calculateRecoveryDelay(): number {
     if (!this.config.exponentialBackoff) {
@@ -305,7 +354,12 @@ export class WebGLRecoveryManager extends EventEmitter {
     }
     
     const baseDelay = this.config.recoveryDelayMs;
-    const exponentialDelay = baseDelay * Math.pow(2, this.recoveryAttempts - 1);
+    let exponentialDelay = baseDelay * Math.pow(2, this.recoveryAttempts - 1);
+    
+    // Add penalty for consecutive failures
+    if (this.consecutiveFailures > 0) {
+      exponentialDelay *= (1 + this.consecutiveFailures * 0.5);
+    }
     
     return Math.min(exponentialDelay, this.config.maxRecoveryDelay);
   }
@@ -322,19 +376,38 @@ export class WebGLRecoveryManager extends EventEmitter {
     }
     
     try {
-      // Check if context is still lost
+      // Double-check context state before attempting restoration
       if (this.gl.isContextLost()) {
         console.log('[WebGLRecovery] Forcing context restoration');
+        
+        // Clear any existing WebGL state that might interfere
+        this.clearWebGLState();
+        
+        // Attempt context restoration
         this.contextLossExtension.restoreContext();
         
-        // Give some time for context to be restored
-        setTimeout(() => {
-          if (this.gl && this.gl.isContextLost()) {
-            console.warn('[WebGLRecovery] Context restoration did not complete');
-            this.recordFailedRecovery('Context restoration incomplete');
+        // Give more time for context to be restored and verify multiple times
+        let verificationAttempts = 0;
+        const maxVerificationAttempts = 10;
+        
+        const verifyRestoration = () => {
+          verificationAttempts++;
+          
+          if (this.gl && !this.gl.isContextLost()) {
+            console.log(`[WebGLRecovery] Context restoration verified after ${verificationAttempts} attempts`);
+            this.handleContextRestored();
+          } else if (verificationAttempts < maxVerificationAttempts) {
+            // Continue verification
+            setTimeout(verifyRestoration, 50);
+          } else {
+            console.warn('[WebGLRecovery] Context restoration verification failed after maximum attempts');
+            this.recordFailedRecovery('Context restoration verification timeout');
             this.scheduleNextRecovery();
           }
-        }, 100);
+        };
+        
+        // Start verification after initial delay
+        setTimeout(verifyRestoration, 100);
       } else {
         console.log('[WebGLRecovery] Context is already restored');
         this.handleContextRestored();
@@ -459,6 +532,32 @@ export class WebGLRecoveryManager extends EventEmitter {
   }
 
   /**
+   * Clear WebGL state before recovery attempt
+   */
+  private clearWebGLState(): void {
+    if (!this.gl) return;
+    
+    try {
+      // Clear any pending operations
+      this.gl.flush();
+      this.gl.finish();
+      
+      // Reset WebGL state to default
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+      this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, null);
+      this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+      this.gl.bindTexture(this.gl.TEXTURE_CUBE_MAP, null);
+      this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+      this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, null);
+      this.gl.useProgram(null);
+      
+      console.log('[WebGLRecovery] Cleared WebGL state');
+    } catch (error) {
+      console.warn('[WebGLRecovery] Error clearing WebGL state:', error);
+    }
+  }
+  
+  /**
    * Force garbage collection if possible
    */
   private forceGarbageCollection(): void {
@@ -481,12 +580,14 @@ export class WebGLRecoveryManager extends EventEmitter {
         const memory = (window.performance as any).memory;
         const memoryBefore = memory.usedJSHeapSize;
         
-        // Force a minor GC by creating and destroying objects
-        const cleanup = [];
-        for (let i = 0; i < 1000; i++) {
-          cleanup.push(new Float32Array(100));
+        // Force a minor GC by creating and destroying objects (but only if memory is high)
+        if (memoryBefore > 100 * 1024 * 1024) { // Only if using more than 100MB
+          const cleanup = [];
+          for (let i = 0; i < 100; i++) { // Reduced from 1000 to prevent memory spikes
+            cleanup.push(new Float32Array(10));
+          }
+          cleanup.length = 0;
         }
-        cleanup.length = 0;
         
         setTimeout(() => {
           if ((window.performance as any).memory) {
@@ -673,6 +774,8 @@ export class WebGLRecoveryManager extends EventEmitter {
     if (typeof performance !== 'undefined' && 'memory' in performance) {
       const memory = (performance as any).memory;
       const usedMemoryMB = memory.usedJSHeapSize / 1024 / 1024;
+      const totalMemoryMB = memory.totalJSHeapSize / 1024 / 1024;
+      const limitMemoryMB = memory.jsHeapSizeLimit / 1024 / 1024;
       
       this.memoryHistory.push(usedMemoryMB);
       
@@ -684,9 +787,26 @@ export class WebGLRecoveryManager extends EventEmitter {
       const avgMemory = this.memoryHistory.reduce((sum, val) => sum + val, 0) / this.memoryHistory.length;
       this.diagnostics.memoryUsage = avgMemory;
 
-      // Check if memory usage is above threshold
-      if (avgMemory > this.config.memoryThreshold && this.qualitySettings.level > 0) {
-        this.reduceQuality('memory');
+      // Calculate memory pressure (percentage of limit being used)
+      const memoryPressure = usedMemoryMB / limitMemoryMB;
+      
+      // More aggressive memory monitoring to prevent context loss
+      if (memoryPressure > 0.8) { // Over 80% of memory limit
+        console.warn(`[WebGLRecovery] High memory pressure detected: ${memoryPressure.toFixed(2)}`);
+        this.addUserNotification(`High memory usage: ${usedMemoryMB.toFixed(0)}MB / ${limitMemoryMB.toFixed(0)}MB`, 'warning');
+        
+        // Emergency quality reduction
+        if (this.qualitySettings.level > 1) {
+          this.reduceQuality('memory');
+        }
+        
+        // Force memory cleanup
+        this.forceGarbageCollection();
+      } else if (memoryPressure > 0.6) { // Over 60% of memory limit
+        // Normal quality reduction
+        if (avgMemory > this.config.memoryThreshold && this.qualitySettings.level > 0) {
+          this.reduceQuality('memory');
+        }
       }
 
       // Record memory metric
@@ -912,11 +1032,85 @@ export class WebGLRecoveryManager extends EventEmitter {
   }
 
   /**
+   * Open circuit breaker to prevent further recovery attempts
+   */
+  private openCircuitBreaker(): void {
+    this.circuitBreakerOpen = true;
+    this.diagnostics.currentState = 'failed';
+    
+    console.warn('[WebGLRecovery] Circuit breaker opened - recovery attempts blocked for 30 seconds');
+    this.addUserNotification('WebGL recovery temporarily disabled due to repeated failures', 'error');
+    
+    // Auto-close circuit breaker after 30 seconds
+    this.circuitBreakerTimeout = setTimeout(() => {
+      this.closeCircuitBreaker();
+    }, 30000);
+  }
+  
+  /**
+   * Close circuit breaker to allow recovery attempts
+   */
+  private closeCircuitBreaker(): void {
+    if (this.circuitBreakerTimeout) {
+      clearTimeout(this.circuitBreakerTimeout);
+      this.circuitBreakerTimeout = null;
+    }
+    
+    if (this.circuitBreakerOpen) {
+      this.circuitBreakerOpen = false;
+      console.log('[WebGLRecovery] Circuit breaker closed - recovery attempts re-enabled');
+      this.addUserNotification('WebGL recovery re-enabled', 'info');
+    }
+  }
+  
+  /**
+   * Reset recovery state for new context loss
+   */
+  private resetRecoveryState(): void {
+    this.recoveryAttempts = 0;
+    this.isRecovering = false;
+    this.recoveryStartTime = null;
+    
+    if (this.recoveryTimer) {
+      clearTimeout(this.recoveryTimer);
+      this.recoveryTimer = null;
+    }
+  }
+  
+  /**
+   * Check if recovery should be allowed
+   */
+  private shouldAllowRecovery(): boolean {
+    if (this.circuitBreakerOpen) {
+      return false;
+    }
+    
+    if (this.isRecovering) {
+      return false;
+    }
+    
+    if (this.recoveryAttempts >= this.config.maxRecoveryAttempts) {
+      return false;
+    }
+    
+    // Rate limiting: don't allow recovery attempts more than once per second
+    const now = Date.now();
+    if (now - this.lastRecoveryAttempt < 1000) {
+      return false;
+    }
+    
+    return true;
+  }
+
+  /**
    * Cleanup and remove event listeners
    */
   public dispose(): void {
     // Cancel any ongoing recovery
     this.cancelRecovery();
+    
+    // Close circuit breaker
+    this.closeCircuitBreaker();
     
     // Stop monitoring
     this.stopPreventiveMonitoring();
@@ -933,6 +1127,7 @@ export class WebGLRecoveryManager extends EventEmitter {
     this.gl = null;
     this.contextLossExtension = null;
     this.recoveryAttempts = 0;
+    this.consecutiveFailures = 0;
     this.removeAllListeners();
     
     console.log('[WebGLRecovery] Disposed WebGL recovery manager');
@@ -1088,7 +1283,7 @@ export function useWebGLRecovery(config?: WebGLRecoveryConfig) {
   };
 }
 
+import React from 'react';
+
 // Export singleton instance for global usage
 export const webGLRecoveryManager = new WebGLRecoveryManager();
-
-import React from 'react';

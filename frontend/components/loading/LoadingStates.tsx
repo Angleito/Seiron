@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { AlertCircle, RefreshCw, Wifi, WifiOff, Monitor, Smartphone, Tablet, Eye, EyeOff, VolumeX, Volume2 } from 'lucide-react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { AlertCircle, RefreshCw, Wifi, WifiOff, Monitor, Smartphone, Tablet, Eye, EyeOff, VolumeX, Volume2, Zap, Activity, Settings } from 'lucide-react'
+import { useWebGLRecovery } from '../../utils/webglRecovery'
 
 // Enhanced loading spinner with better visual feedback
 export const EnhancedLoadingSpinner: React.FC<{
@@ -49,25 +50,48 @@ export const EnhancedLoadingSpinner: React.FC<{
   )
 }
 
-// Dragon-themed loading animation
+// Enhanced Dragon-themed loading animation with WebGL integration
 export const DragonLoadingAnimation: React.FC<{
   message?: string
   showProgress?: boolean
   progress?: number
-}> = ({ message = 'Dragon is awakening...', showProgress = false, progress = 0 }) => {
+  isWebGLRecovering?: boolean
+  recoveryStage?: string
+  onRetryWebGL?: () => void
+  showWebGLStatus?: boolean
+}> = ({ 
+  message = 'Dragon is awakening...', 
+  showProgress = false, 
+  progress = 0,
+  isWebGLRecovering = false,
+  recoveryStage = '',
+  onRetryWebGL,
+  showWebGLStatus = false
+}) => {
   const [animationPhase, setAnimationPhase] = useState(0)
   const [dragonEyes, setDragonEyes] = useState(false)
+  const { diagnostics } = useWebGLRecovery()
+  
+  // Adjust animation based on WebGL state
+  const isWebGLActive = diagnostics?.currentState === 'active'
+  const webglRisk = diagnostics?.contextLossRisk || 'low'
   
   useEffect(() => {
+    // Adjust animation speed based on WebGL recovery state
+    const speed = isWebGLRecovering ? 200 : 500
+    
     const interval = setInterval(() => {
       setAnimationPhase(phase => (phase + 1) % 4)
       setDragonEyes(Math.random() > 0.7)
-    }, 500)
+    }, speed)
     
     return () => clearInterval(interval)
-  }, [])
+  }, [isWebGLRecovering])
   
-  const dragonFrames = [
+  // Dynamic dragon frames based on WebGL state
+  const dragonFrames = isWebGLRecovering ? [
+    '⚡🐉', '🔄🐉⚡', '✨🐉🔄', '🐉✨'
+  ] : [
     '🐉', '🔥🐉', '🔥🐉🔥', '✨🐉✨'
   ]
   
@@ -91,18 +115,54 @@ export const DragonLoadingAnimation: React.FC<{
       
       <div className="text-center">
         <h3 className="text-xl font-bold text-orange-400 mb-2 animate-pulse">
-          {message}
+          {isWebGLRecovering ? `WebGL Recovery: ${recoveryStage}` : message}
         </h3>
+        
+        {/* WebGL Status Indicator */}
+        {showWebGLStatus && (
+          <div className="mb-4 p-3 bg-black/30 rounded-lg border border-gray-600">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <Activity className={`h-4 w-4 ${
+                isWebGLActive ? 'text-green-400' : isWebGLRecovering ? 'text-yellow-400 animate-spin' : 'text-red-400'
+              }`} />
+              <span className="text-sm text-gray-300">
+                WebGL: {isWebGLActive ? 'Active' : isWebGLRecovering ? 'Recovering' : 'Unavailable'}
+              </span>
+            </div>
+            {webglRisk !== 'low' && (
+              <div className="flex items-center justify-center gap-1 text-xs">
+                <AlertCircle className={`h-3 w-3 ${
+                  webglRisk === 'high' ? 'text-red-400' : 'text-yellow-400'
+                }`} />
+                <span className={webglRisk === 'high' ? 'text-red-300' : 'text-yellow-300'}>
+                  Context Loss Risk: {webglRisk.toUpperCase()}
+                </span>
+              </div>
+            )}
+            {onRetryWebGL && !isWebGLActive && (
+              <button
+                onClick={onRetryWebGL}
+                className="mt-2 px-3 py-1 bg-blue-500/20 border border-blue-500 rounded text-xs text-blue-400 hover:bg-blue-500/30 transition-colors"
+              >
+                Retry WebGL
+              </button>
+            )}
+          </div>
+        )}
         
         {showProgress && (
           <div className="w-64 mt-4">
             <div className="flex justify-between text-sm text-gray-400 mb-2">
-              <span>Power Level</span>
+              <span>{isWebGLRecovering ? 'Recovery Progress' : 'Power Level'}</span>
               <span>{progress}%</span>
             </div>
             <div className="w-full bg-gray-700 rounded-full h-2">
               <div 
-                className="bg-gradient-to-r from-orange-500 to-red-500 h-2 rounded-full transition-all duration-300"
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  isWebGLRecovering 
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-500' 
+                    : 'bg-gradient-to-r from-orange-500 to-red-500'
+                }`}
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -397,11 +457,247 @@ export const AccessibleLoader: React.FC<{
   )
 }
 
+// WebGL Recovery Loading Component
+export const WebGLRecoveryLoader: React.FC<{
+  isRecovering: boolean
+  recoveryStage: string
+  progress: number
+  onManualRetry?: () => void
+  onFallback?: () => void
+  showDiagnostics?: boolean
+}> = ({ 
+  isRecovering, 
+  recoveryStage, 
+  progress, 
+  onManualRetry, 
+  onFallback,
+  showDiagnostics = true
+}) => {
+  const { diagnostics } = useWebGLRecovery()
+  const [showDetails, setShowDetails] = useState(false)
+  
+  if (!isRecovering) return null
+  
+  return (
+    <div 
+      className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center"
+      style={{ 
+        // Ensure it doesn't interfere with Canvas
+        pointerEvents: 'auto',
+        isolation: 'isolate'
+      }}
+    >
+      <div className="max-w-md w-full mx-4 bg-gray-900/95 border border-blue-500/30 rounded-lg p-6 shadow-2xl">
+        <div className="text-center">
+          {/* Recovery Icon */}
+          <div className="bg-blue-500/20 p-4 rounded-full w-20 h-20 mx-auto mb-4">
+            <RefreshCw className="h-12 w-12 text-blue-400 animate-spin" />
+          </div>
+          
+          <h2 className="text-2xl font-bold text-blue-100 mb-2">
+            WebGL Recovery
+          </h2>
+          
+          <p className="text-blue-200 mb-4">
+            {recoveryStage || 'Restoring 3D rendering capabilities...'}
+          </p>
+          
+          {/* Progress Bar */}
+          <div className="w-full bg-gray-700 rounded-full h-2 mb-4">
+            <div 
+              className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          
+          <div className="text-sm text-gray-400 mb-4">
+            Recovery Progress: {progress}%
+          </div>
+          
+          {/* Diagnostics Toggle */}
+          {showDiagnostics && (
+            <button
+              onClick={() => setShowDetails(!showDetails)}
+              className="flex items-center gap-2 mx-auto mb-4 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              <Settings className="h-4 w-4" />
+              {showDetails ? 'Hide Details' : 'Show Details'}
+            </button>
+          )}
+          
+          {/* Detailed Diagnostics */}
+          {showDetails && diagnostics && (
+            <div className="bg-black/30 border border-gray-600 rounded-lg p-4 mb-4 text-left">
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Context State:</span>
+                  <span className="text-white font-mono">{diagnostics.currentState}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Quality Level:</span>
+                  <span className="text-white font-mono">{diagnostics.qualityLevel}/4</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Loss Risk:</span>
+                  <span className={`font-mono ${
+                    diagnostics.contextLossRisk === 'high' ? 'text-red-400' :
+                    diagnostics.contextLossRisk === 'medium' ? 'text-yellow-400' :
+                    'text-green-400'
+                  }`}>
+                    {diagnostics.contextLossRisk.toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Memory Usage:</span>
+                  <span className="text-white font-mono">{diagnostics.memoryUsage.toFixed(1)} MB</span>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Action Buttons */}
+          <div className="flex flex-col gap-2">
+            {onManualRetry && (
+              <button
+                onClick={onManualRetry}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Manual Retry
+              </button>
+            )}
+            {onFallback && (
+              <button
+                onClick={onFallback}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Switch to 2D Fallback
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Canvas-Safe Loading Overlay
+export const CanvasSafeLoader: React.FC<{
+  isLoading: boolean
+  message?: string
+  children?: React.ReactNode
+  preventCanvasInterference?: boolean
+}> = ({ 
+  isLoading, 
+  message = 'Loading...', 
+  children,
+  preventCanvasInterference = true
+}) => {
+  if (!isLoading) return <>{children}</>
+  
+  return (
+    <div className="relative">
+      {children}
+      <div 
+        className="absolute inset-0 z-40 bg-black/60 backdrop-blur-sm flex items-center justify-center"
+        style={{
+          // Prevent interference with WebGL Canvas
+          isolation: preventCanvasInterference ? 'isolate' : 'auto',
+          pointerEvents: 'auto',
+          // Ensure proper stacking context
+          transform: 'translateZ(0)'
+        }}
+      >
+        <div className="text-center text-white">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+          <p className="text-lg font-medium">{message}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Dragon System Status Indicator
+export const DragonSystemStatus: React.FC<{
+  webglState: 'loading' | 'active' | 'recovering' | 'failed'
+  performanceScore?: number
+  contextLossRisk?: 'low' | 'medium' | 'high'
+  compact?: boolean
+}> = ({ 
+  webglState, 
+  performanceScore = 0, 
+  contextLossRisk = 'low',
+  compact = false
+}) => {
+  const getStateIcon = () => {
+    switch (webglState) {
+      case 'loading':
+        return <RefreshCw className="h-4 w-4 animate-spin text-blue-400" />
+      case 'active':
+        return <Zap className="h-4 w-4 text-green-400" />
+      case 'recovering':
+        return <Activity className="h-4 w-4 animate-pulse text-yellow-400" />
+      case 'failed':
+        return <AlertCircle className="h-4 w-4 text-red-400" />
+    }
+  }
+  
+  const getStateColor = () => {
+    switch (webglState) {
+      case 'loading':
+        return 'border-blue-500/30 bg-blue-900/20'
+      case 'active':
+        return 'border-green-500/30 bg-green-900/20'
+      case 'recovering':
+        return 'border-yellow-500/30 bg-yellow-900/20'
+      case 'failed':
+        return 'border-red-500/30 bg-red-900/20'
+    }
+  }
+  
+  if (compact) {
+    return (
+      <div className={`inline-flex items-center gap-2 px-2 py-1 rounded border ${getStateColor()}`}>
+        {getStateIcon()}
+        <span className="text-xs font-medium capitalize">{webglState}</span>
+      </div>
+    )
+  }
+  
+  return (
+    <div className={`p-3 rounded-lg border ${getStateColor()}`}>
+      <div className="flex items-center gap-2 mb-2">
+        {getStateIcon()}
+        <span className="font-medium capitalize">{webglState} State</span>
+      </div>
+      
+      {performanceScore > 0 && (
+        <div className="text-sm text-gray-300 mb-1">
+          Performance: {performanceScore.toFixed(1)}%
+        </div>
+      )}
+      
+      {contextLossRisk !== 'low' && (
+        <div className="flex items-center gap-1 text-sm">
+          <AlertCircle className={`h-3 w-3 ${
+            contextLossRisk === 'high' ? 'text-red-400' : 'text-yellow-400'
+          }`} />
+          <span className={contextLossRisk === 'high' ? 'text-red-300' : 'text-yellow-300'}>
+            Risk: {contextLossRisk.toUpperCase()}
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default {
   EnhancedLoadingSpinner,
   DragonLoadingAnimation,
   ProgressiveLoader,
   DeviceCapabilityLoader,
   OfflineIndicator,
-  AccessibleLoader
+  AccessibleLoader,
+  WebGLRecoveryLoader,
+  CanvasSafeLoader,
+  DragonSystemStatus
 }

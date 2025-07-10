@@ -117,36 +117,65 @@ export class ProductionWebGLErrorBoundary extends Component<
 
   private setupRecoveryListeners = () => {
     webGLRecoveryManager.on('contextLost', () => {
-      this.setState({ contextLost: true, isRecovering: true })
+      console.log('[ProductionWebGLErrorBoundary] Context lost event received')
+      this.setState({ 
+        contextLost: true, 
+        isRecovering: true,
+        hasError: true  // Mark as error but don't clear previous error info yet
+      })
       this.updateDiagnostics()
     })
     
     webGLRecoveryManager.on('contextRestored', () => {
-      this.setState({ 
-        contextLost: false, 
-        isRecovering: false,
-        hasError: false,
-        error: null,
-        errorInfo: null,
-        retryCount: 0
-      })
-      this.updateDiagnostics()
+      console.log('[ProductionWebGLErrorBoundary] Context restored event received')
       
-      if (this.props.onRecoverySuccess) {
-        this.props.onRecoverySuccess()
-      }
+      // Verify context is actually restored before clearing error state
+      setTimeout(() => {
+        const diagnostics = webGLRecoveryManager.getDiagnostics()
+        if (diagnostics.currentState === 'active') {
+          console.log('[ProductionWebGLErrorBoundary] Context restoration verified, clearing error state')
+          this.setState({ 
+            contextLost: false, 
+            isRecovering: false,
+            hasError: false,
+            error: null,
+            errorInfo: null,
+            retryCount: 0
+          })
+          
+          if (this.props.onRecoverySuccess) {
+            this.props.onRecoverySuccess()
+          }
+        } else {
+          console.warn('[ProductionWebGLErrorBoundary] Context restoration event fired but state not active:', diagnostics.currentState)
+        }
+      }, 500) // Give time for context to stabilize
+      
+      this.updateDiagnostics()
     })
     
     webGLRecoveryManager.on('recoveryFailed', () => {
-      this.setState({ isRecovering: false })
+      console.log('[ProductionWebGLErrorBoundary] Recovery failed event received')
+      this.setState({ 
+        isRecovering: false,
+        recoveryStrategy: 'fallback'  // Switch to fallback strategy
+      })
       this.updateDiagnostics()
       
       if (this.props.onRecoveryFailure) {
         this.props.onRecoveryFailure()
       }
+      
+      // After a short delay, trigger fallback if still in error state
+      setTimeout(() => {
+        if (this.state.hasError && !this.state.isRecovering) {
+          this.handleFallbackMode()
+        }
+      }, 1000)
     })
     
     webGLRecoveryManager.on('fallback', () => {
+      console.log('[ProductionWebGLErrorBoundary] Fallback event received')
       this.handleFallbackMode()
     })
 
@@ -178,8 +207,12 @@ export class ProductionWebGLErrorBoundary extends Component<
       this.diagnosticsUpdateInterval = null
     }
     
-    // Remove recovery manager listeners
-    webGLRecoveryManager.removeAllListeners()
+    // Remove only our specific listeners, not all listeners
+    webGLRecoveryManager.removeAllListeners('contextLost')
+    webGLRecoveryManager.removeAllListeners('contextRestored') 
+    webGLRecoveryManager.removeAllListeners('recoveryFailed')
+    webGLRecoveryManager.removeAllListeners('fallback')
+    webGLRecoveryManager.removeAllListeners('qualityChanged')
   }
 
   private scheduleRecovery = (strategy: 'standard' | 'aggressive' | 'fallback') => {
@@ -201,6 +234,14 @@ export class ProductionWebGLErrorBoundary extends Component<
       return
     }
 
+    // Check if recovery should be attempted
+    const diagnostics = webGLRecoveryManager.getDiagnostics()
+    if (diagnostics.currentState === 'failed') {
+      console.warn('[ProductionWebGLErrorBoundary] Recovery manager is in failed state, triggering fallback')
+      this.handleFallbackMode()
+      return
+    }
+
     // Aggressive recovery: reduce quality before attempting
     if (strategy === 'aggressive' && this.props.enableQualityReduction) {
       const currentQuality = this.state.qualityLevel
@@ -211,22 +252,27 @@ export class ProductionWebGLErrorBoundary extends Component<
       }
     }
 
-    // Force garbage collection if possible
+    // Conservative memory cleanup to avoid causing more context loss
     if (typeof window !== 'undefined' && 'gc' in window) {
       try {
-        ;(window as any).gc()
+        // Only force GC if we have significant memory usage
+        if ((performance as any).memory?.usedJSHeapSize > 100 * 1024 * 1024) {
+          ;(window as any).gc()
+        }
       } catch (e) {
         // Ignore if GC is not available
       }
     }
 
-    // Reset error state
+    // Don't immediately reset error state - wait for actual recovery
+    // Only mark as recovering
     this.setState({
-      hasError: false,
-      error: null,
-      errorInfo: null,
-      isRecovering: false
+      isRecovering: true,
+      recoveryStrategy: strategy
     })
+    
+    // Let the recovery manager handle the actual recovery
+    // The error state will be cleared when 'contextRestored' event is received
   }
 
   private handleFallbackMode = () => {
@@ -242,16 +288,46 @@ export class ProductionWebGLErrorBoundary extends Component<
   }
 
   private handleManualRetry = () => {
-    this.setState({
-      hasError: false,
-      error: null,
-      errorInfo: null,
-      isRecovering: false,
-      retryCount: 0
-    })
+    console.log('[ProductionWebGLErrorBoundary] Manual retry requested')
     
-    if (this.props.onRecoverySuccess) {
-      this.props.onRecoverySuccess()
+    // Check if WebGL recovery manager allows retry
+    const diagnostics = webGLRecoveryManager.getDiagnostics()
+    
+    if (diagnostics.currentState === 'failed') {
+      console.log('[ProductionWebGLErrorBoundary] Recovery manager in failed state, attempting manual reset')
+      
+      // Reset recovery manager diagnostics to allow retry
+      webGLRecoveryManager.resetDiagnostics()
+      
+      // Force a small delay before retry
+      setTimeout(() => {
+        this.setState({
+          hasError: false,
+          error: null,
+          errorInfo: null,
+          isRecovering: false,
+          retryCount: 0,
+          contextLost: false
+        })
+        
+        if (this.props.onRecoverySuccess) {
+          this.props.onRecoverySuccess()
+        }
+      }, 1000)
+    } else {
+      // Normal retry
+      this.setState({
+        hasError: false,
+        error: null,
+        errorInfo: null,
+        isRecovering: false,
+        retryCount: 0,
+        contextLost: false
+      })
+      
+      if (this.props.onRecoverySuccess) {
+        this.props.onRecoverySuccess()
+      }
     }
   }
 
