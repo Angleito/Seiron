@@ -21,8 +21,14 @@ interface SeironGLBDragonProps {
   modelPath?: string
   isProgressiveLoading?: boolean
   isLoadingHighQuality?: boolean
+  visible?: boolean
+  qualitySettings?: any
+  deviceCapabilities?: any
+  performanceState?: any
   onError?: (error: Error) => void
   onFallback?: () => void
+  onLoad?: () => void
+  onProgress?: (progress: number) => void
 }
 
 // Model availability checker
@@ -173,6 +179,8 @@ function DragonMesh({
   // Cleanup animation mixer and dispose of resources on unmount
   useEffect(() => {
     return () => {
+      console.log('🧹 Cleaning up dragon mesh resources')
+      
       if (mixerRef.current) {
         mixerRef.current.stopAllAction()
         mixerRef.current.uncacheRoot(mixerRef.current.getRoot())
@@ -192,23 +200,34 @@ function DragonMesh({
             if (child.material) {
               if (Array.isArray(child.material)) {
                 child.material.forEach(material => {
-                  if (material.map) material.map.dispose()
-                  if (material.normalMap) material.normalMap.dispose()
-                  if (material.roughnessMap) material.roughnessMap.dispose()
-                  if (material.metalnessMap) material.metalnessMap.dispose()
+                  // Dispose of all texture maps
+                  const textureProperties = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 'bumpMap', 'displacementMap', 'aoMap', 'lightMap', 'alphaMap']
+                  textureProperties.forEach(prop => {
+                    if (material[prop]) {
+                      material[prop].dispose()
+                    }
+                  })
                   material.dispose()
                 })
               } else {
-                if (child.material.map) child.material.map.dispose()
-                if (child.material.normalMap) child.material.normalMap.dispose()
-                if (child.material.roughnessMap) child.material.roughnessMap.dispose()
-                if (child.material.metalnessMap) child.material.metalnessMap.dispose()
+                // Dispose of all texture maps
+                const textureProperties = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 'bumpMap', 'displacementMap', 'aoMap', 'lightMap', 'alphaMap']
+                textureProperties.forEach(prop => {
+                  if (child.material[prop]) {
+                    child.material[prop].dispose()
+                  }
+                })
                 child.material.dispose()
               }
             }
           }
         })
         clonedScene.clear()
+      }
+      
+      // Force garbage collection if available
+      if (typeof window !== 'undefined' && window.gc) {
+        window.gc()
       }
     }
   }, [clonedScene])
@@ -225,9 +244,22 @@ function DragonMesh({
     }
 
     // Only update breathing animation every few frames to improve performance
-    if (Math.floor(time * 60) % 3 === 0) {
+    // Further reduce frequency on mobile devices
+    const frameSkip = typeof window !== 'undefined' && /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? 6 : 3
+    if (Math.floor(time * 60) % frameSkip === 0) {
       const breatheScale = Math.sin(time * 0.8) * 0.02
       meshRef.current.scale.setScalar(currentConfig.scale + breatheScale)
+    }
+    
+    // Adaptive LOD based on distance to camera
+    if (meshRef.current && state.camera) {
+      const distance = meshRef.current.position.distanceTo(state.camera.position)
+      const lodLevel = distance > 15 ? 0.5 : distance > 10 ? 0.75 : 1
+      
+      // Apply LOD scaling only if it's significantly different
+      if (Math.abs(meshRef.current.scale.x - currentConfig.scale * lodLevel) > 0.1) {
+        meshRef.current.scale.setScalar(currentConfig.scale * lodLevel)
+      }
     }
   })
 
@@ -245,20 +277,24 @@ function DragonMesh({
 
   return (
     <group ref={meshRef}>
-      {/* Add a debug sphere at dragon position */}
-      <mesh position={[0, 0, 0]}>
-        <sphereGeometry args={[1, 16, 16]} />
-        <meshBasicMaterial color="red" wireframe />
-      </mesh>
+      {/* Debug sphere only in development mode */}
+      {process.env.NODE_ENV === 'development' && (
+        <mesh position={[0, 0, 0]}>
+          <sphereGeometry args={[1, 16, 16]} />
+          <meshBasicMaterial color="red" wireframe />
+        </mesh>
+      )}
       
       <primitive 
         object={clonedScene} 
         onUpdate={(self: THREE.Object3D) => {
-          console.log('🐲 Primitive updated:', {
-            visible: self.visible,
-            position: self.position,
-            worldPosition: self.getWorldPosition(new THREE.Vector3())
-          })
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🐲 Primitive updated:', {
+              visible: self.visible,
+              position: self.position,
+              worldPosition: self.getWorldPosition(new THREE.Vector3())
+            })
+          }
         }}
       />
     </group>
@@ -318,17 +354,107 @@ function DragonLighting({ voiceState }: { voiceState?: VoiceAnimationState }) {
   )
 }
 
-// Loading fallback component
+// Loading fallback component - Three.js objects only
 function LoadingDragon() {
   console.log('🔄 LoadingDragon component rendering...')
+  const meshRef = useRef<THREE.Group>(null)
+  const textRef = useRef<THREE.Mesh>(null)
+  
+  // Animated loading indicator using Three.js objects
+  useFrame((state) => {
+    const time = state.clock.elapsedTime
+    
+    if (meshRef.current) {
+      // Rotate the entire loading group
+      meshRef.current.rotation.y = time * 0.5
+      
+      // Pulsing scale animation
+      const pulse = Math.sin(time * 3) * 0.2 + 1
+      meshRef.current.scale.setScalar(pulse)
+    }
+  })
+  
   return (
-    <div className="flex items-center justify-center h-full">
-      <div className="text-yellow-400 font-mono text-center">
-        <div className="animate-pulse text-6xl mb-4">🐉</div>
-        <div>Loading Seiron...</div>
-        <div className="text-sm text-yellow-600 mt-2">Initializing 3D dragon...</div>
-      </div>
-    </div>
+    <group ref={meshRef} position={[0, 0, 0]}>
+      {/* Central loading sphere with pulsing animation */}
+      <mesh position={[0, 0, 0]}>
+        <sphereGeometry args={[1, 16, 16]} />
+        <meshStandardMaterial 
+          color="#fbbf24" 
+          emissive="#f59e0b" 
+          emissiveIntensity={0.3}
+          roughness={0.4}
+          metalness={0.6}
+        />
+      </mesh>
+      
+      {/* Orbiting particles to simulate dragon energy */}
+      {[...Array(8)].map((_, i) => {
+        const angle = (i / 8) * Math.PI * 2
+        const radius = 3
+        return (
+          <mesh 
+            key={i} 
+            position={[
+              Math.cos(angle) * radius,
+              Math.sin(angle * 0.5) * 0.5,
+              Math.sin(angle) * radius
+            ]}
+          >
+            <sphereGeometry args={[0.2, 8, 8]} />
+            <meshStandardMaterial 
+              color="#fbbf24" 
+              emissive="#f59e0b" 
+              emissiveIntensity={0.5}
+            />
+          </mesh>
+        )
+      })}
+      
+      {/* Dragon-like geometric shape */}
+      <mesh position={[0, 2, 0]} rotation={[0, 0, Math.PI / 6]}>
+        <coneGeometry args={[1, 2, 6]} />
+        <meshStandardMaterial 
+          color="#fbbf24" 
+          emissive="#f59e0b" 
+          emissiveIntensity={0.4}
+          roughness={0.3}
+          metalness={0.7}
+        />
+      </mesh>
+      
+      {/* Wing-like shapes */}
+      <mesh position={[-1.5, 1, 0]} rotation={[0, 0, Math.PI / 4]}>
+        <boxGeometry args={[2, 0.2, 0.5]} />
+        <meshStandardMaterial 
+          color="#f59e0b" 
+          emissive="#f59e0b" 
+          emissiveIntensity={0.3}
+          transparent
+          opacity={0.8}
+        />
+      </mesh>
+      
+      <mesh position={[1.5, 1, 0]} rotation={[0, 0, -Math.PI / 4]}>
+        <boxGeometry args={[2, 0.2, 0.5]} />
+        <meshStandardMaterial 
+          color="#f59e0b" 
+          emissive="#f59e0b" 
+          emissiveIntensity={0.3}
+          transparent
+          opacity={0.8}
+        />
+      </mesh>
+      
+      {/* Ambient lighting for the loading indicator */}
+      <ambientLight intensity={0.4} color="#fbbf24" />
+      <pointLight 
+        position={[0, 5, 5]} 
+        intensity={1} 
+        color="#fbbf24" 
+        distance={15}
+      />
+    </group>
   )
 }
 
@@ -391,20 +517,27 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
 
-  // WebGL recovery hook
+  // WebGL recovery hook with enhanced features
   const {
     initializeRecovery,
     diagnostics,
     shouldFallback,
     isRecovering,
     currentRecoveryAttempt,
-    resetDiagnostics
+    resetDiagnostics,
+    getQualitySettings,
+    setQualityLevel
   } = useWebGLRecovery({
     maxRecoveryAttempts: 3,
     recoveryDelayMs: 1000,
     maxRecoveryDelay: 8000,
     fallbackEnabled: true,
     exponentialBackoff: true,
+    enablePreventiveMeasures: true,
+    performanceThreshold: 20, // Lower threshold for dragons
+    memoryThreshold: 800,
+    enableQualityReduction: true,
+    enableUserNotifications: true,
     onContextLost: () => {
       console.warn('🔴 WebGL context lost in SeironGLBDragon')
       setHasError(false) // Clear previous errors during recovery
@@ -429,6 +562,15 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
     },
     onRecoveryAttempt: (attempt: number) => {
       console.log(`🔄 WebGL recovery attempt ${attempt} in SeironGLBDragon`)
+    },
+    onPreventiveMeasure: (measure: string) => {
+      console.log(`🛡️ Preventive measure taken: ${measure}`)
+    },
+    onQualityReduced: (level: number) => {
+      console.log(`📉 Quality reduced to level ${level}`)
+    },
+    onUserNotification: (message: string, type: 'info' | 'warning' | 'error') => {
+      console.log(`🔔 User notification: [${type}] ${message}`)
     }
   })
 
@@ -600,16 +742,16 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
           left: 0
         }}
         gl={{ 
-          antialias: true, 
+          antialias: getQualitySettings().antialias, 
           alpha: true,
-          powerPreference: 'high-performance',
+          powerPreference: diagnostics.contextLossRisk === 'high' ? 'low-power' : 'high-performance',
           preserveDrawingBuffer: true, // Helps with context recovery
           failIfMajorPerformanceCaveat: false,
-          stencil: false, // Reduce memory usage
+          stencil: diagnostics.qualityLevel > 2, // Reduce memory usage on lower quality
           depth: true,
           logarithmicDepthBuffer: false // Improve compatibility
         }}
-        shadows
+        shadows={getQualitySettings().shadows}
         onCreated={(state) => {
           console.log('🎮 Three.js Canvas created:', state)
           console.log('📐 Canvas dimensions:', {

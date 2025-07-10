@@ -8,11 +8,19 @@ export interface WebGLRecoveryConfig {
   maxRecoveryDelay?: number;
   fallbackEnabled?: boolean;
   exponentialBackoff?: boolean;
+  enablePreventiveMeasures?: boolean;
+  performanceThreshold?: number;
+  memoryThreshold?: number;
+  enableQualityReduction?: boolean;
+  enableUserNotifications?: boolean;
   onContextLost?: () => void;
   onContextRestored?: () => void;
   onRecoveryFailed?: () => void;
   onFallback?: () => void;
   onRecoveryAttempt?: (attempt: number) => void;
+  onPreventiveMeasure?: (measure: string) => void;
+  onQualityReduced?: (level: number) => void;
+  onUserNotification?: (message: string, type: 'info' | 'warning' | 'error') => void;
 }
 
 export interface WebGLDiagnostics {
@@ -22,10 +30,17 @@ export interface WebGLDiagnostics {
   failedRecoveries: number;
   lastContextLoss?: Date;
   lastSuccessfulRecovery?: Date;
-  currentState: 'active' | 'lost' | 'recovering' | 'failed';
+  currentState: 'active' | 'lost' | 'recovering' | 'failed' | 'degraded';
   recoveryHistory: RecoveryAttempt[];
   totalRecoveryTime: number;
   averageRecoveryTime: number;
+  performanceScore: number;
+  memoryUsage: number;
+  qualityLevel: number;
+  preventiveMeasuresCount: number;
+  contextLossPredictions: number;
+  contextLossRisk: 'low' | 'medium' | 'high';
+  userNotifications: UserNotification[];
 }
 
 interface RecoveryAttempt {
@@ -34,6 +49,28 @@ interface RecoveryAttempt {
   success: boolean;
   timeTaken: number;
   error?: string;
+  strategy?: 'standard' | 'aggressive' | 'conservative';
+  qualityLevelBefore?: number;
+  qualityLevelAfter?: number;
+}
+
+interface UserNotification {
+  id: string;
+  timestamp: Date;
+  message: string;
+  type: 'info' | 'warning' | 'error';
+  dismissed: boolean;
+  source: 'recovery' | 'prevention' | 'quality';
+}
+
+interface QualitySettings {
+  level: number; // 0-4 (0 = minimal, 4 = maximum)
+  antialias: boolean;
+  shadows: boolean;
+  postProcessing: boolean;
+  particleCount: number;
+  textureQuality: number;
+  renderScale: number;
 }
 
 export class WebGLRecoveryManager extends EventEmitter {
@@ -45,6 +82,21 @@ export class WebGLRecoveryManager extends EventEmitter {
   private recoveryTimer: NodeJS.Timeout | null = null;
   private recoveryStartTime: number | null = null;
   private contextLossExtension: WEBGL_lose_context | null = null;
+  private performanceMonitor: NodeJS.Timeout | null = null;
+  private memoryMonitor: NodeJS.Timeout | null = null;
+  private qualitySettings: QualitySettings = {
+    level: 4,
+    antialias: true,
+    shadows: true,
+    postProcessing: true,
+    particleCount: 100,
+    textureQuality: 1.0,
+    renderScale: 1.0
+  };
+  private contextLossWarningShown = false;
+  private lastPerformanceCheck = 0;
+  private performanceHistory: number[] = [];
+  private memoryHistory: number[] = [];
   private diagnostics: WebGLDiagnostics = {
     contextLossCount: 0,
     recoveryAttempts: 0,
@@ -53,7 +105,14 @@ export class WebGLRecoveryManager extends EventEmitter {
     currentState: 'active',
     recoveryHistory: [],
     totalRecoveryTime: 0,
-    averageRecoveryTime: 0
+    averageRecoveryTime: 0,
+    performanceScore: 100,
+    memoryUsage: 0,
+    qualityLevel: 4,
+    preventiveMeasuresCount: 0,
+    contextLossPredictions: 0,
+    contextLossRisk: 'low',
+    userNotifications: []
   };
   
   private config: Required<WebGLRecoveryConfig> = {
@@ -62,11 +121,19 @@ export class WebGLRecoveryManager extends EventEmitter {
     maxRecoveryDelay: 8000,
     fallbackEnabled: true,
     exponentialBackoff: true,
+    enablePreventiveMeasures: true,
+    performanceThreshold: 30,
+    memoryThreshold: 500,
+    enableQualityReduction: true,
+    enableUserNotifications: true,
     onContextLost: () => {},
     onContextRestored: () => {},
     onRecoveryFailed: () => {},
     onFallback: () => {},
-    onRecoveryAttempt: () => {}
+    onRecoveryAttempt: () => {},
+    onPreventiveMeasure: () => {},
+    onQualityReduced: () => {},
+    onUserNotification: () => {}
   };
 
   constructor(config?: WebGLRecoveryConfig) {
@@ -92,6 +159,7 @@ export class WebGLRecoveryManager extends EventEmitter {
     if (!this.gl) {
       console.error('[WebGLRecovery] Failed to get WebGL context');
       this.diagnostics.currentState = 'failed';
+      this.addUserNotification('WebGL not available on this device', 'error');
       return;
     }
 
@@ -105,7 +173,16 @@ export class WebGLRecoveryManager extends EventEmitter {
     // Setup event listeners
     this.setupEventListeners();
     
+    // Start preventive monitoring if enabled
+    if (this.config.enablePreventiveMeasures) {
+      this.startPreventiveMonitoring();
+    }
+    
+    // Initialize quality settings based on device capabilities
+    this.initializeQualitySettings();
+    
     console.log('[WebGLRecovery] Initialized WebGL recovery management');
+    this.addUserNotification('3D Dragon system ready', 'info');
   }
 
   /**
@@ -514,11 +591,328 @@ export class WebGLRecoveryManager extends EventEmitter {
   }
 
   /**
+   * Start preventive monitoring for performance and memory
+   */
+  private startPreventiveMonitoring(): void {
+    // Performance monitoring
+    this.performanceMonitor = setInterval(() => {
+      this.checkPerformance();
+    }, 5000); // Check every 5 seconds
+
+    // Memory monitoring
+    this.memoryMonitor = setInterval(() => {
+      this.checkMemoryUsage();
+    }, 10000); // Check every 10 seconds
+
+    console.log('[WebGLRecovery] Started preventive monitoring');
+  }
+
+  /**
+   * Stop preventive monitoring
+   */
+  private stopPreventiveMonitoring(): void {
+    if (this.performanceMonitor) {
+      clearInterval(this.performanceMonitor);
+      this.performanceMonitor = null;
+    }
+
+    if (this.memoryMonitor) {
+      clearInterval(this.memoryMonitor);
+      this.memoryMonitor = null;
+    }
+
+    console.log('[WebGLRecovery] Stopped preventive monitoring');
+  }
+
+  /**
+   * Check performance and take preventive measures if needed
+   */
+  private checkPerformance(): void {
+    if (!this.renderer) return;
+
+    const now = performance.now();
+    const frameTime = now - this.lastPerformanceCheck;
+    this.lastPerformanceCheck = now;
+
+    if (frameTime > 0) {
+      const fps = 1000 / frameTime;
+      this.performanceHistory.push(fps);
+      
+      // Keep only last 30 readings
+      if (this.performanceHistory.length > 30) {
+        this.performanceHistory.shift();
+      }
+
+      const avgFPS = this.performanceHistory.reduce((sum, val) => sum + val, 0) / this.performanceHistory.length;
+      this.diagnostics.performanceScore = Math.min(100, (avgFPS / 60) * 100);
+
+      // Check if performance is below threshold
+      if (avgFPS < this.config.performanceThreshold && this.qualitySettings.level > 0) {
+        this.reduceQuality('performance');
+      }
+    }
+
+    // Record performance metric
+    webglDiagnostics.recordPerformanceMetric(frameTime);
+    
+    // Run risk prediction
+    this.predictContextLossRisk();
+  }
+
+  /**
+   * Check memory usage and take preventive measures if needed
+   */
+  private checkMemoryUsage(): void {
+    if (typeof performance !== 'undefined' && 'memory' in performance) {
+      const memory = (performance as any).memory;
+      const usedMemoryMB = memory.usedJSHeapSize / 1024 / 1024;
+      
+      this.memoryHistory.push(usedMemoryMB);
+      
+      // Keep only last 20 readings
+      if (this.memoryHistory.length > 20) {
+        this.memoryHistory.shift();
+      }
+
+      const avgMemory = this.memoryHistory.reduce((sum, val) => sum + val, 0) / this.memoryHistory.length;
+      this.diagnostics.memoryUsage = avgMemory;
+
+      // Check if memory usage is above threshold
+      if (avgMemory > this.config.memoryThreshold && this.qualitySettings.level > 0) {
+        this.reduceQuality('memory');
+      }
+
+      // Record memory metric
+      webglDiagnostics.recordMemoryMetric(usedMemoryMB);
+    }
+  }
+
+  /**
+   * Reduce quality to prevent context loss
+   */
+  private reduceQuality(reason: 'performance' | 'memory' | 'recovery'): void {
+    if (!this.config.enableQualityReduction || this.qualitySettings.level <= 0) return;
+
+    const oldLevel = this.qualitySettings.level;
+    this.qualitySettings.level = Math.max(0, this.qualitySettings.level - 1);
+
+    // Apply quality reduction
+    switch (this.qualitySettings.level) {
+      case 3:
+        this.qualitySettings.particleCount = Math.floor(this.qualitySettings.particleCount * 0.8);
+        break;
+      case 2:
+        this.qualitySettings.antialias = false;
+        this.qualitySettings.particleCount = Math.floor(this.qualitySettings.particleCount * 0.6);
+        break;
+      case 1:
+        this.qualitySettings.shadows = false;
+        this.qualitySettings.textureQuality = 0.5;
+        this.qualitySettings.particleCount = Math.floor(this.qualitySettings.particleCount * 0.4);
+        break;
+      case 0:
+        this.qualitySettings.postProcessing = false;
+        this.qualitySettings.renderScale = 0.5;
+        this.qualitySettings.particleCount = Math.floor(this.qualitySettings.particleCount * 0.2);
+        break;
+    }
+
+    this.diagnostics.qualityLevel = this.qualitySettings.level;
+    this.diagnostics.preventiveMeasuresCount++;
+
+    const message = `Quality reduced to level ${this.qualitySettings.level} due to ${reason} concerns`;
+    console.log(`[WebGLRecovery] ${message}`);
+    
+    this.addUserNotification(message, 'warning');
+    this.config.onQualityReduced(this.qualitySettings.level);
+    this.config.onPreventiveMeasure(`Quality reduction: ${reason}`);
+    
+    // Update renderer settings if possible
+    this.applyQualitySettings();
+  }
+
+  /**
+   * Apply quality settings to renderer
+   */
+  private applyQualitySettings(): void {
+    if (!this.renderer) return;
+
+    try {
+      // Apply render scale
+      const size = this.renderer.getSize(new THREE.Vector2());
+      const newSize = size.clone().multiplyScalar(this.qualitySettings.renderScale);
+      this.renderer.setSize(newSize.x, newSize.y);
+
+      // Emit quality changed event for components to react to
+      this.emit('qualityChanged', {
+        antialias: this.qualitySettings.antialias,
+        shadows: this.qualitySettings.shadows,
+        postProcessing: this.qualitySettings.postProcessing,
+        level: this.qualitySettings.level
+      });
+
+      console.log('[WebGLRecovery] Applied quality settings:', this.qualitySettings);
+    } catch (error) {
+      console.error('[WebGLRecovery] Failed to apply quality settings:', error);
+    }
+  }
+
+  /**
+   * Initialize quality settings based on device capabilities
+   */
+  private initializeQualitySettings(): void {
+    if (!this.gl) return;
+
+    // Check device capabilities
+    const debugInfo = this.gl.getExtension('WEBGL_debug_renderer_info');
+    const renderer = debugInfo ? this.gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : '';
+    const vendor = debugInfo ? this.gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : '';
+
+    // Detect mobile/low-end devices
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isLowEnd = renderer.includes('SwiftShader') || renderer.includes('Software') || vendor.includes('Google Inc.');
+
+    if (isMobile || isLowEnd) {
+      this.qualitySettings.level = 2;
+      this.qualitySettings.antialias = false;
+      this.qualitySettings.particleCount = 50;
+      this.qualitySettings.textureQuality = 0.75;
+      
+      this.addUserNotification('Optimized settings for mobile device', 'info');
+    }
+
+    // Check available memory
+    if (typeof performance !== 'undefined' && 'memory' in performance) {
+      const memory = (performance as any).memory;
+      const totalMemoryMB = memory.jsHeapSizeLimit / 1024 / 1024;
+      
+      if (totalMemoryMB < 1000) { // Less than 1GB
+        this.qualitySettings.level = Math.min(this.qualitySettings.level, 1);
+        this.qualitySettings.renderScale = 0.75;
+        this.addUserNotification('Reduced quality due to memory constraints', 'info');
+      }
+    }
+
+    this.diagnostics.qualityLevel = this.qualitySettings.level;
+    console.log('[WebGLRecovery] Initialized quality settings:', this.qualitySettings);
+  }
+
+  /**
+   * Predict context loss risk based on current metrics
+   */
+  private predictContextLossRisk(): void {
+    let riskScore = 0;
+
+    // Performance risk
+    if (this.diagnostics.performanceScore < 30) riskScore += 3;
+    else if (this.diagnostics.performanceScore < 60) riskScore += 2;
+    else if (this.diagnostics.performanceScore < 80) riskScore += 1;
+
+    // Memory risk
+    if (this.diagnostics.memoryUsage > 800) riskScore += 3;
+    else if (this.diagnostics.memoryUsage > 500) riskScore += 2;
+    else if (this.diagnostics.memoryUsage > 300) riskScore += 1;
+
+    // History risk
+    if (this.diagnostics.contextLossCount > 3) riskScore += 2;
+    else if (this.diagnostics.contextLossCount > 1) riskScore += 1;
+
+    // Determine risk level
+    if (riskScore >= 6) {
+      this.diagnostics.contextLossRisk = 'high';
+    } else if (riskScore >= 3) {
+      this.diagnostics.contextLossRisk = 'medium';
+    } else {
+      this.diagnostics.contextLossRisk = 'low';
+    }
+
+    // Take preventive action for high risk
+    if (this.diagnostics.contextLossRisk === 'high' && !this.contextLossWarningShown) {
+      this.contextLossWarningShown = true;
+      this.diagnostics.contextLossPredictions++;
+      
+      if (this.qualitySettings.level > 1) {
+        this.reduceQuality('recovery');
+      }
+      
+      this.addUserNotification('High context loss risk detected - reducing quality', 'warning');
+      this.config.onPreventiveMeasure('Context loss risk mitigation');
+    }
+  }
+
+  /**
+   * Add user notification
+   */
+  private addUserNotification(message: string, type: 'info' | 'warning' | 'error'): void {
+    if (!this.config.enableUserNotifications) return;
+
+    const notification: UserNotification = {
+      id: Date.now().toString(),
+      timestamp: new Date(),
+      message,
+      type,
+      dismissed: false,
+      source: 'recovery'
+    };
+
+    this.diagnostics.userNotifications.push(notification);
+    
+    // Keep only last 50 notifications
+    if (this.diagnostics.userNotifications.length > 50) {
+      this.diagnostics.userNotifications.shift();
+    }
+
+    this.config.onUserNotification(message, type);
+  }
+
+  /**
+   * Get current quality settings
+   */
+  public getQualitySettings(): QualitySettings {
+    return { ...this.qualitySettings };
+  }
+
+  /**
+   * Manually set quality level
+   */
+  public setQualityLevel(level: number): void {
+    if (level < 0 || level > 4) {
+      throw new Error('Quality level must be between 0 and 4');
+    }
+
+    this.qualitySettings.level = level;
+    this.diagnostics.qualityLevel = level;
+    this.applyQualitySettings();
+    
+    this.addUserNotification(`Quality manually set to level ${level}`, 'info');
+  }
+
+  /**
+   * Dismiss user notification
+   */
+  public dismissNotification(id: string): void {
+    const notification = this.diagnostics.userNotifications.find(n => n.id === id);
+    if (notification) {
+      notification.dismissed = true;
+    }
+  }
+
+  /**
+   * Clear all notifications
+   */
+  public clearNotifications(): void {
+    this.diagnostics.userNotifications = [];
+  }
+
+  /**
    * Cleanup and remove event listeners
    */
   public dispose(): void {
     // Cancel any ongoing recovery
     this.cancelRecovery();
+    
+    // Stop monitoring
+    this.stopPreventiveMonitoring();
     
     if (this.canvas) {
       this.canvas.removeEventListener('webglcontextlost', this.handleContextLost);
@@ -551,7 +945,14 @@ export function useWebGLRecovery(config?: WebGLRecoveryConfig) {
     currentState: 'active',
     recoveryHistory: [],
     totalRecoveryTime: 0,
-    averageRecoveryTime: 0
+    averageRecoveryTime: 0,
+    performanceScore: 100,
+    memoryUsage: 0,
+    qualityLevel: 4,
+    preventiveMeasuresCount: 0,
+    contextLossPredictions: 0,
+    contextLossRisk: 'low',
+    userNotifications: []
   });
   const [shouldFallback, setShouldFallback] = React.useState(false);
   const [isRecovering, setIsRecovering] = React.useState(false);
@@ -619,7 +1020,14 @@ export function useWebGLRecovery(config?: WebGLRecoveryConfig) {
       currentState: 'active',
       recoveryHistory: [],
       totalRecoveryTime: 0,
-      averageRecoveryTime: 0
+      averageRecoveryTime: 0,
+      performanceScore: 100,
+      memoryUsage: 0,
+      qualityLevel: 4,
+      preventiveMeasuresCount: 0,
+      contextLossPredictions: 0,
+      contextLossRisk: 'low',
+      userNotifications: []
     });
     setShouldFallback(false);
     setIsRecovering(false);
@@ -632,6 +1040,30 @@ export function useWebGLRecovery(config?: WebGLRecoveryConfig) {
     }
   }, []);
 
+  const getQualitySettings = React.useCallback(() => {
+    return managerRef.current?.getQualitySettings() || {
+      level: 4,
+      antialias: true,
+      shadows: true,
+      postProcessing: true,
+      particleCount: 100,
+      textureQuality: 1.0,
+      renderScale: 1.0
+    };
+  }, []);
+
+  const setQualityLevel = React.useCallback((level: number) => {
+    managerRef.current?.setQualityLevel(level);
+  }, []);
+
+  const dismissNotification = React.useCallback((id: string) => {
+    managerRef.current?.dismissNotification(id);
+  }, []);
+
+  const clearNotifications = React.useCallback(() => {
+    managerRef.current?.clearNotifications();
+  }, []);
+
   return {
     initializeRecovery,
     diagnostics,
@@ -641,7 +1073,11 @@ export function useWebGLRecovery(config?: WebGLRecoveryConfig) {
     simulateContextLoss,
     resetDiagnostics,
     forceRecovery,
-    isWebGLAvailable: () => managerRef.current?.isWebGLAvailable() ?? false
+    isWebGLAvailable: () => managerRef.current?.isWebGLAvailable() ?? false,
+    getQualitySettings,
+    setQualityLevel,
+    dismissNotification,
+    clearNotifications
   };
 }
 
