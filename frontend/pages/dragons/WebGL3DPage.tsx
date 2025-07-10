@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, Suspense, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useRef, Suspense, useCallback, useMemo } from 'react'
 import { RotateCcw, AlertTriangle, CheckCircle, Zap, Eye, Mic, MicOff, Volume2, Monitor, Cpu, Battery } from 'lucide-react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Environment, Loader } from '@react-three/drei'

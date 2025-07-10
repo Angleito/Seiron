@@ -567,7 +567,14 @@ export class WebGLRecoveryManager extends EventEmitter {
       currentState: 'active',
       recoveryHistory: [],
       totalRecoveryTime: 0,
-      averageRecoveryTime: 0
+      averageRecoveryTime: 0,
+      performanceScore: 100,
+      memoryUsage: 0,
+      qualityLevel: 4,
+      preventiveMeasuresCount: 0,
+      contextLossPredictions: 0,
+      contextLossRisk: 'low',
+      userNotifications: []
     };
   }
 
