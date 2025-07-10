@@ -102,13 +102,13 @@ export default function HomePage() {
     <SimpleErrorBoundary onError={(error) => console.error('HomePage error:', error)}>
       <div className="relative min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
         {/* Add simple ASCII dragon first */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-green-400 text-xs font-mono leading-none">
-            {`     /\\   /\\   
+        <div className="absolute top-20 left-20">
+          <pre className="text-green-400 text-sm font-mono leading-tight">
+{`     /\\   /\\   
     (  o.o  )  
      > ^ <     
-ASCII DRAGON  `}
-          </div>
+ASCII DRAGON`}
+          </pre>
         </div>
         
         {/* Basic Content */}
