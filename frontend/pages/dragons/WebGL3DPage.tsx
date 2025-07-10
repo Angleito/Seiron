@@ -584,7 +584,7 @@ export default function WebGL3DPage() {
   const canvasProps = useMemo(() => ({
     shadows: memoizedQualitySettings.shadows,
     camera: { 
-      position: [0, 2, 5] as [number, number, number], 
+      position: [0, 0, 6] as [number, number, number], 
       fov: 50,
       near: 0.1,
       far: 1000
@@ -960,12 +960,13 @@ export default function WebGL3DPage() {
                   enablePan={true}
                   enableZoom={true}
                   enableRotate={true}
-                  minDistance={2}
-                  maxDistance={10}
+                  minDistance={3}
+                  maxDistance={15}
                   minPolarAngle={0}
                   maxPolarAngle={Math.PI}
                   enableDamping={true}
                   dampingFactor={0.1}
+                  target={[0, 0, 0]}
                 />
                 
                 {/* Fog for depth */}

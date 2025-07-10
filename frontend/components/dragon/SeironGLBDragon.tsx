@@ -114,13 +114,13 @@ function DragonMesh({
     }
   }
   
-  // Size configurations
+  // Size configurations - centered the dragon properly
   const sizeConfig = {
-    sm: { scale: 1, position: [0, -2, 0] },
-    md: { scale: 2, position: [0, -3, 0] },
-    lg: { scale: 3, position: [0, -4, 0] },
-    xl: { scale: 4, position: [0, -5, 0] },
-    gigantic: { scale: 8, position: [0, -8, 2] }
+    sm: { scale: 0.8, position: [0, 0, 0] },
+    md: { scale: 1.2, position: [0, 0, 0] },
+    lg: { scale: 1.8, position: [0, 0, 0] },
+    xl: { scale: 2.5, position: [0, 0, 0] },
+    gigantic: { scale: 3.5, position: [0, 0, 0] }
   }
 
   const currentConfig = sizeConfig[size]
@@ -133,9 +133,17 @@ function DragonMesh({
   const clonedScene = React.useMemo(() => {
     const cloned = scene.clone()
     
-    // Set initial scale and position
+    // Calculate bounding box to center the model properly
+    const box = new THREE.Box3().setFromObject(cloned)
+    const center = box.getCenter(new THREE.Vector3())
+    const size = box.getSize(new THREE.Vector3())
+    
+    // Center the model at origin
+    cloned.position.sub(center)
+    
+    // Apply size configuration
     cloned.scale.setScalar(currentConfig.scale)
-    cloned.position.set(...currentConfig.position as [number, number, number])
+    cloned.position.add(new THREE.Vector3(...currentConfig.position as [number, number, number]))
     
     // Face forward toward the user
     cloned.rotation.set(0, 0, 0)
