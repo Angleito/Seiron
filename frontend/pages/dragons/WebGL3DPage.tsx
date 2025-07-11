@@ -797,7 +797,7 @@ export default function WebGL3DPage() {
       name: config.displayName,
       config,
       metrics,
-      currentMetrics
+      currentMetrics: currentMetrics || undefined
     } : null
   }, [performanceTracking])
   
@@ -992,7 +992,7 @@ export default function WebGL3DPage() {
                     FPS: {performanceMonitor.metrics.fps}
                   </span>
                   <span className="flex items-center gap-1">
-                    🐉 Model: {currentModel.name}
+                    🐉 Model: {currentModel?.name || 'Unknown'}
                   </span>
                   {deviceCapabilities.isMobile && (
                     <span className="flex items-center gap-1">
@@ -1438,29 +1438,29 @@ export default function WebGL3DPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-black/20 border border-yellow-500/20 rounded-lg p-4">
                     <h4 className="text-yellow-400 font-medium mb-2 flex items-center gap-2">
-                      {currentModel.name}
-                      {currentModel.recommended && <span className="text-yellow-300">⭐</span>}
+                      {currentModel?.name || 'Unknown Model'}
+                      {currentModel?.recommended && <span className="text-yellow-300">⭐</span>}
                       {modelLoading && (
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-400"></div>
                       )}
                     </h4>
-                    <p className="text-gray-300 text-sm mb-2">{currentModel.description}</p>
+                    <p className="text-gray-300 text-sm mb-2">{currentModel?.description || 'No description available'}</p>
                     <div className="text-xs text-gray-400">
                       <div className="flex justify-between mb-1">
                         <span>Type:</span>
-                        <span className="text-yellow-400">{currentModel.type}</span>
+                        <span className="text-yellow-400">{currentModel?.type || 'Unknown'}</span>
                       </div>
                       <div className="flex justify-between mb-1">
                         <span>Size:</span>
-                        <span className="text-yellow-400">{currentModel.estimatedSize}</span>
+                        <span className="text-yellow-400">{currentModel?.estimatedSize || 'Unknown'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Compatibility:</span>
                         <span className={`font-medium ${
-                          currentModel.compatibility === 'high' ? 'text-green-400' :
-                          currentModel.compatibility === 'medium' ? 'text-yellow-400' : 'text-red-400'
+                          currentModel?.compatibility === 'high' ? 'text-green-400' :
+                          currentModel?.compatibility === 'medium' ? 'text-yellow-400' : 'text-red-400'
                         }`}>
-                          {currentModel.compatibility.toUpperCase()}
+                          {currentModel?.compatibility?.toUpperCase() || 'UNKNOWN'}
                         </span>
                       </div>
                     </div>
@@ -1469,12 +1469,14 @@ export default function WebGL3DPage() {
                   <div className="bg-black/20 border border-yellow-500/20 rounded-lg p-4">
                     <h4 className="text-yellow-400 font-medium mb-2">Model Features</h4>
                     <div className="space-y-1">
-                      {currentModel.features.map((feature, index) => (
+                      {currentModel?.features?.map((feature, index) => (
                         <div key={index} className="flex items-center gap-2 text-sm">
                           <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
                           <span className="text-gray-300">{feature}</span>
                         </div>
-                      ))}
+                      )) || (
+                        <div className="text-sm text-gray-400">No features available</div>
+                      )}
                     </div>
                     
                     {/* Model Status */}
@@ -1739,7 +1741,7 @@ export default function WebGL3DPage() {
                   <ModelPerformanceComparison
                     modelA={getModelComparisonData(comparisonModelA)!}
                     modelB={getModelComparisonData(comparisonModelB)!}
-                    comparison={performanceTracking.compareModels(comparisonModelA, comparisonModelB)}
+                    comparison={performanceTracking.compareModels(comparisonModelA, comparisonModelB) || undefined}
                     onModelSelect={(modelId) => {
                       const modelConfig = getModelConfig(modelId)
                       if (modelConfig) {

@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState } from 'react'
-import { DragonRenderer, VoiceAnimationState } from '@/components/dragon/DragonRenderer'
+import { useState } from 'react'
+import { DragonRenderer } from '@/components/dragon/DragonRenderer'
 import { usePerformanceMonitor, PerformanceOverlay } from '@/hooks/usePerformanceMonitor'
 
 export default function PerformanceDemoPage() {

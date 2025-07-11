@@ -12,7 +12,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { DragonRenderer, VoiceAnimationState } from './DragonRenderer'
 import { 
   useDragonModelConfiguration,
-  EnhancedDragonRendererProps,
+  EnhancedDragonRendererProps as BaseEnhancedDragonRendererProps,
   SmartModelSelector,
   ModelPerformanceOptimizer
 } from '@utils/dragonModelUtils'
@@ -25,7 +25,7 @@ import {
 import { logger } from '@lib/logger'
 
 // Extended props combining old and new systems
-export interface EnhancedDragonRendererProps extends EnhancedDragonRendererProps {
+export interface EnhancedDragonRendererProps extends BaseEnhancedDragonRendererProps {
   // Legacy props for backward compatibility
   modelPath?: string
   lowQualityModel?: string
@@ -43,6 +43,14 @@ export interface EnhancedDragonRendererProps extends EnhancedDragonRendererProps
   // Debug and monitoring
   enableDebugInfo?: boolean
   onDebugInfo?: (info: any) => void
+  
+  // Additional props for compatibility
+  onError?: (error: Error, type: string) => void
+  performanceMonitorPosition?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
+  onFallback?: (fromType: string, toType: string) => void
+  onProgressiveLoadComplete?: () => void
+  enableErrorRecovery?: boolean
+  maxErrorRetries?: number
 }
 
 // Performance target configurations
@@ -67,24 +75,56 @@ const PERFORMANCE_TARGETS = {
   }
 }
 
-export const EnhancedDragonRenderer: React.FC<EnhancedDragonRendererProps> = ({
-  // Legacy props
-  modelPath,
-  lowQualityModel,
-  highQualityModel,
-  enableProgressiveLoading = false,
-  
-  // Enhanced props
-  enableSmartSelection = true,
-  enableAutoOptimization = true,
-  enableAdaptiveQuality = true,
-  performanceTarget = 'balanced',
-  enableDebugInfo = false,
-  onDebugInfo,
-  
-  // Other props
-  ...props
-}) => {
+export const EnhancedDragonRenderer: React.FC<EnhancedDragonRendererProps> = (allProps) => {
+  // Extract enhanced props with defaults
+  const {
+    // Legacy props
+    modelPath,
+    lowQualityModel,
+    highQualityModel,
+    enableProgressiveLoading = false,
+    
+    // Enhanced props
+    enableSmartSelection = true,
+    enableAutoOptimization = true,
+    enableAdaptiveQuality = true,
+    performanceTarget = 'balanced',
+    enableDebugInfo = false,
+    onDebugInfo,
+    
+    // Other enhanced props we need to filter out
+    preferredQuality,
+    useCase,
+    modelId,
+    enablePreloading,
+    preloadStrategy,
+    enablePerformanceOptimization,
+    performanceThreshold,
+    onPerformanceChange,
+    onModelSelected,
+    onModelLoaded,
+    onModelError,
+    onFallbackTriggered,
+    onError,
+    
+    // DragonRenderer props that we need to pass through
+    size,
+    voiceState,
+    enableAnimations,
+    className,
+    dragonType,
+    enableFallback,
+    fallbackType,
+    enablePerformanceMonitor,
+    performanceMonitorPosition,
+    onFallback,
+    onProgressiveLoadComplete,
+    enableErrorRecovery,
+    maxErrorRetries,
+    
+    // Any remaining props
+    ...restProps
+  } = allProps
   // State management
   const [currentModelPath, setCurrentModelPath] = useState<string | null>(null)
   const [currentQuality, setCurrentQuality] = useState<any>(null)
@@ -112,27 +152,27 @@ export const EnhancedDragonRenderer: React.FC<EnhancedDragonRendererProps> = ({
     performanceMetrics: configMetrics,
     fallbackChain
   } = useDragonModelConfiguration({
-    ...props,
+    ...allProps,
     enableSmartSelection,
     enablePerformanceOptimization: enableAutoOptimization,
     enablePreloading: true,
-    preferredQuality: props.preferredQuality || PERFORMANCE_TARGETS[performanceTarget].preferredQuality,
+    preferredQuality: preferredQuality || PERFORMANCE_TARGETS[performanceTarget].preferredQuality,
     onModelSelected: (model) => {
       setCurrentModelPath(model.path)
-      if (props.onModelSelected) {
-        props.onModelSelected(model)
+      if (onModelSelected) {
+        onModelSelected(model)
       }
     },
     onModelError: (error, model) => {
       logger.error('Enhanced Dragon Renderer model error:', error)
-      if (props.onModelError) {
-        props.onModelError(error, model)
+      if (onModelError) {
+        onModelError(error, model)
       }
     },
     onFallbackTriggered: (fromModel, toModel) => {
       logger.info(`Dragon model fallback: ${fromModel.displayName} → ${toModel.displayName}`)
-      if (props.onFallbackTriggered) {
-        props.onFallbackTriggered(fromModel, toModel)
+      if (onFallbackTriggered) {
+        onFallbackTriggered(fromModel, toModel)
       }
     }
   })
@@ -264,20 +304,23 @@ export const EnhancedDragonRenderer: React.FC<EnhancedDragonRendererProps> = ({
     : modelPath || currentModelPath
   
   // Enhanced error handling
-  const handleError = useCallback((error: Error) => {
+  const handleError = useCallback((error: Error, type: string) => {
     logger.error('Enhanced Dragon Renderer error:', error)
     
     // If using smart selection, try fallback
     if (enableSmartSelection && selectedModel && fallbackChain.length > 1) {
       const nextModel = fallbackChain[1]
-      setCurrentModelPath(nextModel.path)
-      logger.info(`Error recovery: switching to fallback model ${nextModel.displayName}`)
+      if (nextModel) {
+        setCurrentModelPath(nextModel.path)
+        logger.info(`Error recovery: switching to fallback model ${nextModel.displayName}`)
+      }
     }
     
-    if (props.onError) {
-      props.onError(error, selectedModel?.type || 'unknown')
+    // Call error handler if available
+    if (onError) {
+      onError(error, type)
     }
-  }, [enableSmartSelection, selectedModel, fallbackChain, props.onError])
+  }, [enableSmartSelection, selectedModel, fallbackChain, onError])
   
   // Loading state
   if (isLoading && enableSmartSelection) {
@@ -308,13 +351,24 @@ export const EnhancedDragonRenderer: React.FC<EnhancedDragonRendererProps> = ({
     <div className="relative w-full h-full">
       {/* Main Dragon Renderer */}
       <DragonRenderer
-        {...props}
-        modelPath={finalModelPath}
+        size={size}
+        voiceState={voiceState}
+        enableAnimations={enableAnimations}
+        className={className}
+        dragonType={dragonType}
+        enableFallback={enableFallback}
+        fallbackType={fallbackType}
+        performanceMonitorPosition={performanceMonitorPosition}
+        onFallback={onFallback}
+        onProgressiveLoadComplete={onProgressiveLoadComplete}
+        enableErrorRecovery={enableErrorRecovery}
+        maxErrorRetries={maxErrorRetries}
+        modelPath={finalModelPath || undefined}
         lowQualityModel={lowQualityModel}
         highQualityModel={highQualityModel}
         enableProgressiveLoading={enableProgressiveLoading}
         onError={handleError}
-        enablePerformanceMonitor={props.enablePerformanceMonitor || enableDebugInfo}
+        enablePerformanceMonitor={enableDebugInfo || enablePerformanceMonitor}
       />
       
       {/* Performance Overlay */}

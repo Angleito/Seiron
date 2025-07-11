@@ -134,8 +134,11 @@ export const AdvancedModelSelection: React.FC = () => {
         
         // Get optimal quality settings for the first available model
         if (filteredModels.length > 0) {
-          const settings = getOptimalQualitySettings(filteredModels[0], capabilities)
-          setQualitySettings(settings)
+          const firstModel = filteredModels[0]
+          if (firstModel) {
+            const settings = getOptimalQualitySettings(firstModel, capabilities)
+            setQualitySettings(settings)
+          }
         }
       } catch (error) {
         logger.error('Failed to update models:', error)
@@ -271,7 +274,7 @@ export const ModelPreloadingExample: React.FC = () => {
   const preloadModelSet = async () => {
     try {
       const modelIds = ['seiron-primary', 'dragon-head-optimized', 'dragon-2d-sprite']
-      await preloadModelSet(modelIds)
+      await preloadModelSet()
       
       // Update all statuses
       const newStatus: Record<string, 'loaded'> = {}
@@ -337,7 +340,7 @@ export const ModelPreloadingExample: React.FC = () => {
                   {status === 'loading' ? 'Loading...' : 'Preload'}
                 </button>
                 <div className={`w-3 h-3 rounded-full ${getStatusColor(status)}`}></div>
-                <span className="text-sm">{model.displayName}</span>
+                <span className="text-sm">{model?.displayName || 'Unknown Model'}</span>
               </div>
             )
           })}
@@ -474,7 +477,7 @@ export const DragonModelConfigurationShowcase: React.FC = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow">
-        {React.createElement(tabs[activeTab].component)}
+        {React.createElement(tabs[activeTab]?.component || (() => <div>Component not found</div>))}
       </div>
     </div>
   )

@@ -4,7 +4,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { Button } from '../../ui/forms/Button'
 import { LoadingSpinner } from '../../ui/feedback/LoadingSpinner'
 import { Badge } from '../../ui/display/Badge'
-import { ChatMessage } from '../../../services/chat-persistence.service'
+// import { ChatMessage } from '../../../services/chat-persistence.service'
 
 interface MessagePaginationProps {
   // Pagination data
@@ -326,7 +326,7 @@ export function useMessagePagination(options: UseMessagePaginationOptions = {}):
   const {
     initialPage = 1,
     messagesPerPage = 20,
-    enableInfiniteScroll = false
+    // enableInfiniteScroll = false
   } = options
 
   const [currentPage, setCurrentPage] = useState(initialPage)

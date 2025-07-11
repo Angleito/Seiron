@@ -614,6 +614,10 @@ export function useModelPerformanceTracking(config: Partial<ModelPerformanceTrac
     
     // Simple recommendation based on device type and performance history
     let recommendedModel = finalConfig.modelList[0]
+    if (!recommendedModel) {
+      return null
+    }
+    
     let confidence = 0.5
     const reasons: string[] = []
     
@@ -623,18 +627,24 @@ export function useModelPerformanceTracking(config: Partial<ModelPerformanceTrac
         m.compatibility.mobile.supported && m.compatibility.mobile.performance !== 'poor'
       )
       if (mobileOptimized.length > 0) {
-        recommendedModel = mobileOptimized[0]
-        confidence = 0.8
-        reasons.push('Optimized for mobile devices')
+        const mobileModel = mobileOptimized[0]
+        if (mobileModel) {
+          recommendedModel = mobileModel
+          confidence = 0.8
+          reasons.push('Optimized for mobile devices')
+        }
       }
     } else if (deviceCapabilities?.isLowEnd) {
       const lightweightModels = finalConfig.modelList.filter(m => 
         m.performance.memoryUsageMB < 50 && m.performance.batteryImpact === 'low'
       )
       if (lightweightModels.length > 0) {
-        recommendedModel = lightweightModels[0]
-        confidence = 0.9
-        reasons.push('Lightweight for low-end devices')
+        const lightweightModel = lightweightModels[0]
+        if (lightweightModel) {
+          recommendedModel = lightweightModel
+          confidence = 0.9
+          reasons.push('Lightweight for low-end devices')
+        }
       }
     }
     
@@ -724,7 +734,7 @@ export function useModelPerformanceTracking(config: Partial<ModelPerformanceTrac
         exportTime: new Date().toISOString(),
         totalDataPoints: performanceHistory.length,
         trackingDuration: performanceHistory.length > 0 
-          ? performanceHistory[performanceHistory.length - 1].timestamp - performanceHistory[0].timestamp 
+          ? (performanceHistory[performanceHistory.length - 1]?.timestamp || 0) - (performanceHistory[0]?.timestamp || 0)
           : 0,
         modelsTracked: [...new Set(performanceHistory.map(p => p.modelId))],
         deviceInfo: getDeviceInfo()

@@ -3,7 +3,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 
 // GET /api/dragon/health - Health check for dragon 3D models and resources
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const publicDir = path.join(process.cwd(), 'public');
     const modelsDir = path.join(publicDir, 'models');

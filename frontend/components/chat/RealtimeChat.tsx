@@ -1,17 +1,17 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { logger } from '@/lib/logger'
 import { useRealtimeChat } from '@/hooks/realtime'
 import { ChatMessage, PresenceState, TypingIndicator, CryptoPrice } from '@/types/realtime'
 import { StreamMessage } from './ChatStreamService'
 import { AgentType } from '@/types/agent'
 import { ChatInput } from './parts/ChatInput'
-import { ChatMessage as ChatMessageComponent } from './parts/ChatMessage'
+// import { ChatMessage as ChatMessageComponent } from './parts/ChatMessage'
 import { TypingIndicator as TypingIndicatorComponent } from './parts/TypingIndicator'
 import { MessagesArea } from './sections/MessagesArea'
 import { RealtimeConnectionStatus } from './parts/RealtimeConnectionStatus'
 import { RealtimePresenceIndicator } from './parts/RealtimePresenceIndicator'
 import { RealtimePriceDisplay } from './parts/RealtimePriceDisplay'
-import { ChatStatusBar } from './parts/ChatStatusBar'
+// import { ChatStatusBar } from './parts/ChatStatusBar'
 
 // Convert realtime ChatMessage to StreamMessage
 function realtimeChatMessageToStreamMessage(msg: ChatMessage): StreamMessage {
@@ -59,8 +59,8 @@ export function RealtimeChat({
 }: RealtimeChatProps) {
   const [inputValue, setInputValue] = useState('')
   const [isTyping, setIsTyping] = useState(false)
-  const [showPrices, setShowPrices] = useState(enablePrices)
-  const [showPresence, setShowPresence] = useState(enablePresence)
+  const [showPrices] = useState(enablePrices)
+  const [showPresence] = useState(enablePresence)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)

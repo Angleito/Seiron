@@ -133,12 +133,12 @@ export class ModelRecommendationEngine {
     
     if (webgl2) {
       webglSupport = 'webgl2'
-      maxTextureSize = webgl2.getParameter(webgl2.MAX_TEXTURE_SIZE)
+      maxTextureSize = (webgl2 as WebGL2RenderingContext).getParameter((webgl2 as WebGL2RenderingContext).MAX_TEXTURE_SIZE)
       
       // GPU tier detection based on renderer
       const debugInfo = webgl2.getExtension('WEBGL_debug_renderer_info')
       if (debugInfo) {
-        const renderer = webgl2.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL).toLowerCase()
+        const renderer = (webgl2 as WebGL2RenderingContext).getParameter(debugInfo.UNMASKED_RENDERER_WEBGL).toLowerCase()
         if (renderer.includes('nvidia') || renderer.includes('amd') || renderer.includes('radeon')) {
           gpuTier = renderer.includes('gtx') || renderer.includes('rtx') || renderer.includes('rx') ? 'high' : 'medium'
         } else if (renderer.includes('intel')) {
@@ -147,7 +147,7 @@ export class ModelRecommendationEngine {
       }
     } else if (webgl1) {
       webglSupport = 'webgl1'
-      maxTextureSize = webgl1.getParameter(webgl1.MAX_TEXTURE_SIZE)
+      maxTextureSize = (webgl1 as WebGLRenderingContext).getParameter((webgl1 as WebGLRenderingContext).MAX_TEXTURE_SIZE)
       gpuTier = 'low'
     }
     
@@ -533,7 +533,19 @@ export class ModelRecommendationEngine {
     
     // Get top recommendation
     const primaryScore = modelScores[0]
+    if (!primaryScore) {
+      // Fallback to ASCII dragon if no models available
+      const asciiModel = DRAGON_MODELS['dragon-ascii']
+      if (!asciiModel) {
+        throw new Error('No dragon models available')
+      }
+      return this.generateFallbackRecommendation(asciiModel)
+    }
+    
     const primaryModel = DRAGON_MODELS[primaryScore.modelId]
+    if (!primaryModel) {
+      throw new Error(`Primary model ${primaryScore.modelId} not found`)
+    }
     
     // Calculate confidence based on score distribution
     const secondBestScore = modelScores[1]?.totalScore || 0
@@ -567,6 +579,9 @@ export class ModelRecommendationEngine {
     // Generate alternatives
     const alternatives = modelScores.slice(1, 4).map(score => {
       const model = DRAGON_MODELS[score.modelId]
+      if (!model) {
+        throw new Error(`Alternative model ${score.modelId} not found`)
+      }
       const scoreDiff = primaryScore.totalScore - score.totalScore
       let reason = 'Alternative option'
       const tradeoffs: string[] = []
@@ -712,7 +727,17 @@ export class ModelRecommendationEngine {
       this.calculateModelScoring(model, customProfile, [])
     ).sort((a, b) => b.totalScore - a.totalScore)
     
-    return DRAGON_MODELS[scores[0].modelId]
+    const topScoreModelId = scores[0]?.modelId
+    if (!topScoreModelId) {
+      throw new Error('No models available for quick recommendation')
+    }
+    
+    const selectedModel = DRAGON_MODELS[topScoreModelId]
+    if (!selectedModel) {
+      throw new Error(`Selected model ${topScoreModelId} not found`)
+    }
+    
+    return selectedModel
   }
   
   /**
@@ -738,6 +763,46 @@ export class ModelRecommendationEngine {
   clearCache() {
     this.deviceProfileCache = null
     this.userPreferencesCache = null
+  }
+  
+  /**
+   * Generate a fallback recommendation when no models are available
+   */
+  private generateFallbackRecommendation(fallbackModel: DragonModelConfig): RecommendationResult {
+    return {
+      primary: {
+        model: fallbackModel,
+        score: {
+          modelId: fallbackModel.id,
+          totalScore: 50,
+          subscores: {
+            compatibility: 25,
+            performance: 15,
+            resources: 10,
+            userPreferences: 0,
+            historicalData: 0
+          },
+          penalties: [],
+          bonuses: []
+        },
+        confidence: 0.9,
+        reasons: ['Ultimate fallback model - maximum compatibility'],
+        estimatedPerformance: {
+          expectedFPS: 60,
+          memoryUsageMB: 1,
+          loadTimeSeconds: 0.1,
+          batteryImpactLevel: 'low'
+        }
+      },
+      alternatives: [],
+      fallbackChain: [fallbackModel],
+      reasoning: {
+        deviceAnalysis: ['No compatible models found'],
+        performanceExpectations: ['Minimal resource usage'],
+        recommendations: ['Using ASCII fallback for maximum compatibility'],
+        warnings: ['Limited visual features available']
+      }
+    }
   }
 }
 

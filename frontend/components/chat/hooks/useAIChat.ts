@@ -1,13 +1,13 @@
 import { useChat, type UseChatOptions, type Message } from 'ai/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import * as TE from 'fp-ts/TaskEither'
-import * as E from 'fp-ts/Either'
+// import * as E from 'fp-ts/Either'
 import * as O from 'fp-ts/Option'
 import { pipe } from 'fp-ts/function'
 import { BehaviorSubject, Subject, Subscription } from 'rxjs'
-import { map, distinctUntilChanged, takeUntil, debounceTime } from 'rxjs/operators'
-import { openai } from '@ai-sdk/openai'
-import { StreamMessage, TypingIndicator } from '@lib/vercel-chat-service'
+import { distinctUntilChanged, takeUntil, debounceTime } from 'rxjs/operators'
+// import { openai } from '@ai-sdk/openai'
+// import { StreamMessage, TypingIndicator } from '@lib/vercel-chat-service'
 import { safeDebug, safeInfo, safeWarn, safeError } from '@lib/logger'
 import { AgentType, UserIntentType } from '@/types/agent'
 
@@ -239,7 +239,7 @@ export function useAIChat(options: UseAIChatOptions): UseAIChatResult {
   }, [vercelIsLoading])
 
   // Calculate average response time
-  const calculateAverageResponseTime = useCallback((currentMetrics: typeof metrics) => {
+  const calculateAverageResponseTime = useCallback((_currentMetrics: typeof metrics) => {
     if (responseTimes.current.length === 0) return 0
     const sum = responseTimes.current.reduce((a, b) => a + b, 0)
     return Math.round(sum / responseTimes.current.length)

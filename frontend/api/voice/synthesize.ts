@@ -8,7 +8,7 @@ const requestCounts = new Map<string, { count: number; resetTime: number }>()
 // Input validation constants
 const MAX_TEXT_LENGTH = 1000
 const MIN_TEXT_LENGTH = 1
-const ALLOWED_CONTENT_TYPES = ['text/plain', 'text/html']
+// const ALLOWED_CONTENT_TYPES = ['text/plain', 'text/html']
 
 // ElevenLabs API constants
 const ELEVENLABS_API_URL = 'https://api.elevenlabs.io/v1/text-to-speech'
@@ -45,7 +45,7 @@ interface SuccessResponse {
   }
 }
 
-type ApiResponse = ErrorResponse | SuccessResponse
+// type ApiResponse = ErrorResponse | SuccessResponse
 
 // Rate limiting helper
 function checkRateLimit(clientId: string): boolean {

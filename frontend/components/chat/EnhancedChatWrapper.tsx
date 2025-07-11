@@ -142,7 +142,7 @@ export const EnhancedChatWrapper = React.memo(function EnhancedChatWrapper({
 }: EnhancedChatWrapperProps) {
   const { isOnline, connectionQuality } = useConnectionStatus()
   const [isInitializing, setIsInitializing] = useState(true)
-  const [hasInitError, setHasInitError] = useState(false)
+  const [, setHasInitError] = useState(false)
 
   const errorHandler = useEnhancedErrorHandler({
     maxRetries: 3,

@@ -438,6 +438,9 @@ export class PerformanceStorageManager {
     const modelStats = new Map<string, {count: number; totalScore: number}>()
     
     data.forEach(point => {
+      if (!point.modelId) {
+        return // Skip points without modelId
+      }
       const existing = modelStats.get(point.modelId) || {count: 0, totalScore: 0}
       existing.count++
       existing.totalScore += point.metrics.performanceScore
@@ -458,14 +461,17 @@ export class PerformanceStorageManager {
     const dailyStats = new Map<string, {fps: number[]; memory: number[]; scores: number[]}>()
     
     data.forEach(point => {
-      const date = new Date(point.timestamp).toISOString().split('T')[0]
-      const existing = dailyStats.get(date) || {fps: [], memory: [], scores: []}
+      const dateStr = new Date(point.timestamp).toISOString().split('T')[0]
+      if (!dateStr) {
+        return // Skip if date extraction fails
+      }
+      const existing = dailyStats.get(dateStr) || {fps: [], memory: [], scores: []}
       
       existing.fps.push(point.metrics.fps)
       existing.memory.push(point.metrics.memoryUsage.jsHeapUsed / 1024 / 1024)
       existing.scores.push(point.metrics.performanceScore)
       
-      dailyStats.set(date, existing)
+      dailyStats.set(dateStr, existing)
     })
     
     return Array.from(dailyStats.entries()).map(([date, stats]) => ({

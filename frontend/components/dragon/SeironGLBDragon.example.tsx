@@ -29,7 +29,7 @@ const DragonModelSwitchingExample: React.FC = () => {
   ]
 
   // Model-specific configuration
-  const modelSpecificConfig = {
+  const modelSpecificConfig: { [key: string]: any } = {
     '/models/seiron_low.glb': {
       scale: 2.0,
       position: [0, -1, 0] as [number, number, number],

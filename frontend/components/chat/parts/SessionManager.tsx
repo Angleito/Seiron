@@ -32,7 +32,7 @@ export const SessionManager = React.memo(function SessionManager({
   const [viewMode, setViewMode] = useState<'active' | 'archived'>('active')
 
   const {
-    sessions,
+    // sessions,
     stats,
     pagination,
     isLoading,
@@ -54,7 +54,7 @@ export const SessionManager = React.memo(function SessionManager({
     clearError,
     goToNextPage,
     goToPreviousPage,
-    currentParams
+    // currentParams
   } = useChatSessions({
     userId,
     autoLoad: true,

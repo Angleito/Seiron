@@ -26,6 +26,7 @@ export interface DragonRendererProps {
   enableFallback?: boolean
   fallbackType?: '2d' | 'ascii'
   enableProgressiveLoading?: boolean
+  modelPath?: string
   lowQualityModel?: string
   highQualityModel?: string
   enablePerformanceMonitor?: boolean
@@ -99,6 +100,7 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
   enableFallback = true,
   fallbackType = '2d',
   enableProgressiveLoading = false,
+  modelPath,
   lowQualityModel = '/models/seiron.glb',
   highQualityModel = '/models/seiron.glb', // Using the primary working model
   enablePerformanceMonitor = false,

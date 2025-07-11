@@ -121,11 +121,17 @@ const AlertBanner: React.FC<AlertBannerProps> = ({ alerts, onAcknowledge, compac
       
       return () => clearInterval(interval)
     }
+    return undefined // Explicitly return undefined when no cleanup needed
   }, [unacknowledgedAlerts.length])
   
   if (unacknowledgedAlerts.length === 0) return null
   
   const currentAlert = unacknowledgedAlerts[currentAlertIndex]
+  
+  // Early return if no current alert
+  if (!currentAlert) {
+    return null
+  }
   
   const alertColors = {
     info: 'border-blue-500/50 bg-blue-900/20 text-blue-100',

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react'
-import { Send, Loader2, Plus, Sparkles, Wifi, WifiOff, AlertCircle, Mic, MicOff, Volume2, VolumeX } from 'lucide-react'
+import { Send, Loader2, Sparkles, Wifi, WifiOff, AlertCircle, Mic, MicOff, Volume2, VolumeX } from 'lucide-react'
 import { cn } from '@lib/utils'
 import { SeironImage } from '@components/SeironImage'
 import { GameDialogueBox } from './GameDialogueBox'
@@ -38,7 +38,7 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
   const [voiceEnabled, setVoiceEnabled] = useState(false)
   const [isVoiceListening, setIsVoiceListening] = useState(false)
   const [ttsEnabled, setTTSEnabled] = useState(false)
-  const [interimTranscript, setInterimTranscript] = useState('')
+  const [interimTranscript] = useState('')
   
   // Generate or get session ID
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`)

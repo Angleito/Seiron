@@ -199,7 +199,7 @@ async function updateUserPreferences(userId: string, updates: any): Promise<E.Ei
     const currentResult = await getUserPreferences(userId)
     if (E.isLeft(currentResult)) {
       // If no preferences exist, start with defaults
-      const current = defaultPreferences
+      // const current = defaultPreferences
     }
     
     const current = E.isRight(currentResult) ? currentResult.right : defaultPreferences
@@ -208,7 +208,7 @@ async function updateUserPreferences(userId: string, updates: any): Promise<E.Ei
     const merged = deepMerge(current, updates)
     
     // Upsert to database
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('user_preferences')
       .upsert({
         user_id: userId,
@@ -471,7 +471,7 @@ export async function DELETE(req: NextRequest) {
 }
 
 // OPTIONS handler for CORS
-export async function OPTIONS(req: NextRequest) {
+export async function OPTIONS(_req: NextRequest) {
   return new NextResponse(null, {
     status: 200,
     headers: {

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { RealtimeChat } from '../RealtimeChat'
 import { ChatMessage, PresenceState, TypingIndicator, CryptoPrice } from '@/types/realtime'
 import { Button } from '@/components/ui/forms/Button'

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { MinimalChatInterface } from '@/components/chat/MinimalChatInterface'
 import { VoiceEnabledChat } from '@/components/chat/VoiceEnabledChat'
 import { useSearchParams } from 'react-router-dom'
@@ -7,7 +7,7 @@ import { usePrivy } from '@privy-io/react-auth'
 export default function ChatPage() {
   const [searchParams] = useSearchParams()
   const [interfaceType, setInterfaceType] = useState<'minimal' | 'voice'>('voice')
-  const { user } = usePrivy()
+  const { } = usePrivy()
 
   useEffect(() => {
     // Check URL params for interface type

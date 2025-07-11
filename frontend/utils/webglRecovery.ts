@@ -774,7 +774,7 @@ export class WebGLRecoveryManager extends EventEmitter {
     if (typeof performance !== 'undefined' && 'memory' in performance) {
       const memory = (performance as any).memory;
       const usedMemoryMB = memory.usedJSHeapSize / 1024 / 1024;
-      const totalMemoryMB = memory.totalJSHeapSize / 1024 / 1024;
+      // const totalMemoryMB = memory.totalJSHeapSize / 1024 / 1024;
       const limitMemoryMB = memory.jsHeapSizeLimit / 1024 / 1024;
       
       this.memoryHistory.push(usedMemoryMB);
@@ -820,7 +820,7 @@ export class WebGLRecoveryManager extends EventEmitter {
   private reduceQuality(reason: 'performance' | 'memory' | 'recovery'): void {
     if (!this.config.enableQualityReduction || this.qualitySettings.level <= 0) return;
 
-    const oldLevel = this.qualitySettings.level;
+    // const oldLevel = this.qualitySettings.level;
     this.qualitySettings.level = Math.max(0, this.qualitySettings.level - 1);
 
     // Apply quality reduction
@@ -1066,7 +1066,7 @@ export class WebGLRecoveryManager extends EventEmitter {
   /**
    * Reset recovery state for new context loss
    */
-  private resetRecoveryState(): void {
+  /* private resetRecoveryState(): void {
     this.recoveryAttempts = 0;
     this.isRecovering = false;
     this.recoveryStartTime = null;
@@ -1075,12 +1075,12 @@ export class WebGLRecoveryManager extends EventEmitter {
       clearTimeout(this.recoveryTimer);
       this.recoveryTimer = null;
     }
-  }
+  } */
   
   /**
    * Check if recovery should be allowed
    */
-  private shouldAllowRecovery(): boolean {
+  /* private shouldAllowRecovery(): boolean {
     if (this.circuitBreakerOpen) {
       return false;
     }
@@ -1100,7 +1100,7 @@ export class WebGLRecoveryManager extends EventEmitter {
     }
     
     return true;
-  }
+  } */
 
   /**
    * Cleanup and remove event listeners

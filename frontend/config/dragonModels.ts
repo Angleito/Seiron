@@ -1363,7 +1363,20 @@ export class DragonModelSelector {
     )
     
     // Return the best match
-    return sortedModels[0] || DRAGON_MODELS['dragon-ascii']
+    const bestModel = sortedModels[0]
+    if (bestModel) {
+      const selectedModel = DRAGON_MODELS[bestModel.id]
+      if (selectedModel) {
+        return selectedModel
+      }
+    }
+    
+    // Final fallback to ASCII dragon
+    const asciiModel = DRAGON_MODELS['dragon-ascii']
+    if (!asciiModel) {
+      throw new Error('ASCII dragon model not found - this should never happen')
+    }
+    return asciiModel
   }
   
   getCompatibleModels(capabilities: DeviceCapability): DragonModelConfig[] {
@@ -1477,7 +1490,10 @@ export class DragonModelSelector {
     
     // Ensure we have ASCII as ultimate fallback
     if (!chain.find(model => model.id === 'dragon-ascii')) {
-      chain.push(DRAGON_MODELS['dragon-ascii'])
+      const asciiModel = DRAGON_MODELS['dragon-ascii']
+      if (asciiModel) {
+        chain.push(asciiModel)
+      }
     }
     
     return chain
@@ -1507,7 +1523,10 @@ export class DragonModelSelector {
         .map(([quality, _]) => quality as keyof QualitySettings)
       
       if (availableQualities.length > 0) {
-        targetQuality = availableQualities[availableQualities.length - 1]
+        const lastQuality = availableQualities[availableQualities.length - 1]
+        if (lastQuality) {
+          targetQuality = lastQuality
+        }
       }
     }
     
@@ -1678,7 +1697,8 @@ export function getOptimalQualitySettings(
 export function createFallbackChain(primaryModelId: string): DragonModelConfig[] {
   const primaryModel = DRAGON_MODELS[primaryModelId]
   if (!primaryModel) {
-    return [DRAGON_MODELS['dragon-ascii']]
+    const asciiModel = DRAGON_MODELS['dragon-ascii']
+    return asciiModel ? [asciiModel] : []
   }
   
   const selector = DragonModelSelector.getInstance()

@@ -146,7 +146,7 @@ async function addMemoryNodes(userId: string, nodes: any[]): Promise<E.Either<Er
 }
 
 // Helper to add memory relations
-async function addMemoryRelations(userId: string, relations: any[]): Promise<E.Either<Error, any[]>> {
+async function addMemoryRelations(_userId: string, relations: any[]): Promise<E.Either<Error, any[]>> {
   try {
     const relationsWithMeta = relations.map(rel => ({
       ...rel,
@@ -395,7 +395,7 @@ export async function POST(req: NextRequest) {
       )
     }
     
-    const { nodes, relations, operation } = validationResult.data
+    const { nodes, relations } = validationResult.data
     
     const results = {
       addedNodes: [] as any[],
@@ -527,7 +527,7 @@ export async function DELETE(req: NextRequest) {
 }
 
 // OPTIONS handler for CORS
-export async function OPTIONS(req: NextRequest) {
+export async function OPTIONS(_req: NextRequest) {
   return new NextResponse(null, {
     status: 200,
     headers: {

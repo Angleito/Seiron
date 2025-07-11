@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { cn } from '@lib/utils'
-import { Copy, Check, Zap, Sparkles } from 'lucide-react'
+import { Zap, Sparkles } from 'lucide-react'
 import DOMPurify from 'dompurify'
 
 export interface AnimeMessageBubbleProps {
@@ -30,7 +30,7 @@ function renderMarkdown(content: string): { __html: string } {
 
   // Basic markdown transformations
   // Code blocks
-  html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+  html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (_match, lang, code) => {
     return `<pre class="anime-code-block" data-language="${lang || 'plaintext'}"><code>${DOMPurify.sanitize(code.trim())}</code></pre>`
   })
 
@@ -53,6 +53,7 @@ function renderMarkdown(content: string): { __html: string } {
 }
 
 // Copy button component for code blocks
+/*
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false)
 
@@ -80,6 +81,7 @@ function CopyButton({ text }: { text: string }) {
     </button>
   )
 }
+*/
 
 export function AnimeMessageBubble({
   message,

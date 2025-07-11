@@ -12,12 +12,12 @@ import { pipe } from 'fp-ts/function'
 import * as O from 'fp-ts/Option'
 import * as A from 'fp-ts/Array'
 import * as E from 'fp-ts/Either'
-import { ChatSession, ChatPersistenceError, ChatMessage as PersistenceMessage } from '../../services/chat-persistence.service'
+import { ChatPersistenceError, ChatMessage as PersistenceMessage } from '../../services/chat-persistence.service'
 import { EnhancedVoiceEnabledChatPresentation } from '../chat/EnhancedVoiceEnabledChatPresentation'
-import { ChatMessage, UnifiedChatMessage, getMessageTimestamp } from '../../types/components/chat'
+import { UnifiedChatMessage, getMessageTimestamp } from '../../types/components/chat'
 import { StreamMessage } from '../../types/chat-stream'
 import { useAIMemory } from '@hooks/chat/useAIMemory'
-import { ChatPreferences, ChatPreferencesData } from '../chat/ChatPreferences'
+import { ChatPreferencesData } from '../chat/ChatPreferences'
 
 interface EnhancedVoiceEnabledChatContainerProps {
   userId?: string
@@ -112,7 +112,7 @@ export const EnhancedVoiceEnabledChatContainer = React.memo(function EnhancedVoi
     archiveSession,
     searchSessions,
     clearError: clearSessionError,
-    activeSessions
+    // activeSessions
   } = useChatSessions({
     userId,
     autoLoad: enablePersistence && enableSessionManagement
@@ -165,11 +165,11 @@ export const EnhancedVoiceEnabledChatContainer = React.memo(function EnhancedVoi
     memories,
     isLoading: isLoadingMemory,
     saveMemory,
-    updateMemory,
+    // updateMemory,
     getMemory,
-    searchMemories,
+    // searchMemories,
     getMemoriesByCategory,
-    hasMemory
+    // hasMemory
   } = useAIMemory({
     userId,
     sessionId: currentSessionId,

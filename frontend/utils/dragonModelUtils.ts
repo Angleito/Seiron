@@ -5,6 +5,7 @@
  * system with existing components and hooks.
  */
 
+import React, { useState, useEffect, useMemo } from 'react'
 import { 
   DragonModelConfig,
   DeviceCapabilityDetector,
@@ -19,14 +20,8 @@ import {
 import { logger } from '@lib/logger'
 
 // Integration with existing VoiceAnimationState
-export interface VoiceAnimationState {
-  isListening: boolean
-  isSpeaking: boolean
-  isProcessing: boolean
-  isIdle: boolean
-  volume: number
-  emotion?: 'excited' | 'angry' | 'calm' | 'focused'
-}
+// Note: VoiceAnimationState is imported from DragonRenderer to avoid conflicts
+import { VoiceAnimationState } from '../components/dragon/DragonRenderer'
 
 // Enhanced DragonRenderer props with model configuration
 export interface EnhancedDragonRendererProps {
@@ -61,18 +56,18 @@ export interface EnhancedDragonRendererProps {
 }
 
 // Smart model selection based on props and device capabilities
-export class SmartModelSelector {
-  private static instance: SmartModelSelector
+export class SmartModelSelectorUtil {
+  private static instance: SmartModelSelectorUtil
   private capabilityDetector: DeviceCapabilityDetector
   private modelSelector: DragonModelSelector
   private preloader: ModelPreloader
   private cache: Map<string, DragonModelConfig> = new Map()
   
-  static getInstance(): SmartModelSelector {
-    if (!SmartModelSelector.instance) {
-      SmartModelSelector.instance = new SmartModelSelector()
+  static getInstance(): SmartModelSelectorUtil {
+    if (!SmartModelSelectorUtil.instance) {
+      SmartModelSelectorUtil.instance = new SmartModelSelectorUtil()
     }
-    return SmartModelSelector.instance
+    return SmartModelSelectorUtil.instance
   }
   
   constructor() {
@@ -93,8 +88,10 @@ export class SmartModelSelector {
     
     // If specific model ID is provided, use it
     if (props.modelId) {
-      selectedModel = DRAGON_MODELS[props.modelId]
-      if (!selectedModel) {
+      const specificModel = DRAGON_MODELS[props.modelId]
+      if (specificModel) {
+        selectedModel = specificModel
+      } else {
         logger.warn(`Model ${props.modelId} not found, falling back to smart selection`)
         selectedModel = await this.performSmartSelection(props)
       }
@@ -176,7 +173,15 @@ export class SmartModelSelector {
     if (!model.compatibility[deviceType].supported) {
       logger.warn(`Model ${model.id} not supported on ${deviceType}, finding alternative`)
       const compatibleModels = this.modelSelector.getCompatibleModels(capabilities)
-      return compatibleModels[0] || DRAGON_MODELS['dragon-ascii']
+      const firstCompatible = compatibleModels[0]
+      if (firstCompatible) {
+        return firstCompatible
+      }
+      const asciiModel = DRAGON_MODELS['dragon-ascii']
+      if (!asciiModel) {
+        throw new Error('No compatible models found and ASCII fallback unavailable')
+      }
+      return asciiModel
     }
     
     return model
@@ -204,7 +209,11 @@ export class SmartModelSelector {
     }
     
     // Ultimate fallback
-    return DRAGON_MODELS['dragon-ascii']
+    const asciiModel = DRAGON_MODELS['dragon-ascii']
+    if (!asciiModel) {
+      throw new Error('No compatible models found and ASCII fallback unavailable')
+    }
+    return asciiModel
   }
   
   private hasRequiredFeatures(
@@ -233,16 +242,16 @@ export class SmartModelSelector {
 }
 
 // Model preloading strategies
-export class ModelPreloadingStrategy {
-  private static instance: ModelPreloadingStrategy
+export class ModelPreloadingStrategyUtil {
+  private static instance: ModelPreloadingStrategyUtil
   private preloader: ModelPreloader
   private activePreloads: Set<string> = new Set()
   
-  static getInstance(): ModelPreloadingStrategy {
-    if (!ModelPreloadingStrategy.instance) {
-      ModelPreloadingStrategy.instance = new ModelPreloadingStrategy()
+  static getInstance(): ModelPreloadingStrategyUtil {
+    if (!ModelPreloadingStrategyUtil.instance) {
+      ModelPreloadingStrategyUtil.instance = new ModelPreloadingStrategyUtil()
     }
-    return ModelPreloadingStrategy.instance
+    return ModelPreloadingStrategyUtil.instance
   }
   
   constructor() {
@@ -280,10 +289,18 @@ export class ModelPreloadingStrategy {
   
   private async aggressivePreload(model: DragonModelConfig): Promise<void> {
     // Preload the model and all its alternatives
+    const alternativeModels = model.alternativeModels
+      .map(id => DRAGON_MODELS[id])
+      .filter((m): m is DragonModelConfig => m !== undefined)
+    
+    const fallbackModels = model.fallbackModels
+      .map(id => DRAGON_MODELS[id])
+      .filter((m): m is DragonModelConfig => m !== undefined)
+    
     const modelsToPreload = [
       model,
-      ...model.alternativeModels.map(id => DRAGON_MODELS[id]).filter(Boolean),
-      ...model.fallbackModels.map(id => DRAGON_MODELS[id]).filter(Boolean)
+      ...alternativeModels,
+      ...fallbackModels
     ]
     
     const preloadPromises = modelsToPreload.map(m => this.preloader.preloadModel(m))
@@ -295,9 +312,12 @@ export class ModelPreloadingStrategy {
     const modelsToPreload = [model]
     
     if (model.fallbackModels.length > 0) {
-      const firstFallback = DRAGON_MODELS[model.fallbackModels[0]]
-      if (firstFallback) {
-        modelsToPreload.push(firstFallback)
+      const firstFallbackId = model.fallbackModels[0]
+      if (firstFallbackId) {
+        const firstFallback = DRAGON_MODELS[firstFallbackId]
+        if (firstFallback) {
+          modelsToPreload.push(firstFallback)
+        }
       }
     }
     
@@ -312,16 +332,16 @@ export class ModelPreloadingStrategy {
 }
 
 // Performance optimization utilities
-export class ModelPerformanceOptimizer {
-  private static instance: ModelPerformanceOptimizer
+export class ModelPerformanceOptimizerUtil {
+  private static instance: ModelPerformanceOptimizerUtil
   private performanceData: Map<string, number[]> = new Map()
   private optimizationThreshold: number = 30 // FPS
   
-  static getInstance(): ModelPerformanceOptimizer {
-    if (!ModelPerformanceOptimizer.instance) {
-      ModelPerformanceOptimizer.instance = new ModelPerformanceOptimizer()
+  static getInstance(): ModelPerformanceOptimizerUtil {
+    if (!ModelPerformanceOptimizerUtil.instance) {
+      ModelPerformanceOptimizerUtil.instance = new ModelPerformanceOptimizerUtil()
     }
-    return ModelPerformanceOptimizer.instance
+    return ModelPerformanceOptimizerUtil.instance
   }
   
   recordPerformance(modelId: string, fps: number): void {
@@ -400,11 +420,11 @@ export function useDragonModelConfiguration(props: EnhancedDragonRendererProps) 
   const [error, setError] = React.useState<Error | null>(null)
   const [performanceMetrics, setPerformanceMetrics] = React.useState<any>(null)
   
-  const selector = React.useMemo(() => SmartModelSelector.getInstance(), [])
-  const preloadingStrategy = React.useMemo(() => ModelPreloadingStrategy.getInstance(), [])
-  const optimizer = React.useMemo(() => ModelPerformanceOptimizer.getInstance(), [])
+  const selector = useMemo(() => SmartModelSelectorUtil.getInstance(), [])
+  const preloadingStrategy = useMemo(() => ModelPreloadingStrategyUtil.getInstance(), [])
+  const optimizer = useMemo(() => ModelPerformanceOptimizerUtil.getInstance(), [])
   
-  React.useEffect(() => {
+  useEffect(() => {
     const initializeModel = async () => {
       try {
         setIsLoading(true)
@@ -457,7 +477,7 @@ export function useDragonModelConfiguration(props: EnhancedDragonRendererProps) 
   ])
   
   // Performance monitoring
-  React.useEffect(() => {
+  useEffect(() => {
     if (!selectedModel || !props.enablePerformanceOptimization) return
     
     const performanceInterval = setInterval(() => {
@@ -513,7 +533,8 @@ export function getLegacyModelPath(dragonType: string, size: string): string {
   // This is a simplified synchronous version for backward compatibility
   // In practice, you should use the async getRecommendedModel function
   if (dragonType === 'glb') {
-    return DRAGON_MODELS['seiron-primary'].path
+    const primaryModel = DRAGON_MODELS['seiron-primary']
+    return primaryModel ? primaryModel.path : '/models/seiron.glb'
   } else if (dragonType === '2d') {
     return 'internal://2d-sprite'
   } else {
@@ -539,17 +560,18 @@ export function isModelPreloaded(modelPath: string): boolean {
   return preloader.isModelPreloaded(model.id)
 }
 
-// Export everything for easy use
-export {
-  SmartModelSelector,
-  ModelPreloadingStrategy,
-  ModelPerformanceOptimizer
-}
+// Export everything for easy use (classes already exported above)
+// SmartModelSelector, ModelPreloadingStrategy, ModelPerformanceOptimizer are already exported as classes
+
+// Export classes with corrected names to avoid conflicts
+export const SmartModelSelector = SmartModelSelectorUtil
+export const ModelPreloadingStrategy = ModelPreloadingStrategyUtil
+export const ModelPerformanceOptimizer = ModelPerformanceOptimizerUtil
 
 export default {
-  SmartModelSelector,
-  ModelPreloadingStrategy,
-  ModelPerformanceOptimizer,
+  SmartModelSelector: SmartModelSelectorUtil,
+  ModelPreloadingStrategy: ModelPreloadingStrategyUtil,
+  ModelPerformanceOptimizer: ModelPerformanceOptimizerUtil,
   useDragonModelConfiguration,
   getLegacyModelPath,
   getModelMetadata,

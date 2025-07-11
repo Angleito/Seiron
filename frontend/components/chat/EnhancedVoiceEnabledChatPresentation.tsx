@@ -26,7 +26,7 @@ import { SessionManager } from './parts/SessionManager'
 import { MessagePagination } from './parts/MessagePagination'
 import { ChatLoadingStates } from './parts/ChatLoadingStates'
 import { ChatErrorStates } from './parts/ChatErrorStates'
-import { SessionSearchFilter } from './parts/SessionSearchFilter'
+// import { SessionSearchFilter } from './parts/SessionSearchFilter'
 import { Button } from '../ui/forms/Button'
 import { Card } from '../ui/display/Card'
 import { Badge } from '../ui/display/Badge'
@@ -148,14 +148,14 @@ export const EnhancedVoiceEnabledChatPresentation = React.memo(function Enhanced
   currentSessionId,
   
   // Session management
-  sessions,
-  sessionStats,
+  // sessions,
+  // sessionStats,
   isLoadingSessions,
   isCreatingSession,
   showSessionManager,
   
   // Message history
-  historicalMessages,
+  // historicalMessages,
   messagesPagination,
   isLoadingHistory,
   showMessageHistory,
@@ -168,7 +168,7 @@ export const EnhancedVoiceEnabledChatPresentation = React.memo(function Enhanced
   enablePreferences,
   userPreferences,
   showPreferences,
-  aiMemories,
+  // aiMemories,
   isLoadingMemory,
   
   // Event handlers
@@ -182,10 +182,10 @@ export const EnhancedVoiceEnabledChatPresentation = React.memo(function Enhanced
   // Session management handlers
   onSessionSelect,
   onSessionCreate,
-  onSessionUpdate,
-  onSessionDelete,
-  onSessionArchive,
-  onSessionSearch,
+  // onSessionUpdate,
+  // onSessionDelete,
+  // onSessionArchive,
+  // onSessionSearch,
   onToggleSessionManager,
   
   // Message history handlers
@@ -353,7 +353,7 @@ export const EnhancedVoiceEnabledChatPresentation = React.memo(function Enhanced
                     hasPreviousPage={messagesPagination.hasPrev}
                     isLoading={isLoadingHistory}
                     isLoadingMore={false}
-                    onGoToPage={(page) => {/* Handle page change */}}
+                    onGoToPage={(_page) => {/* Handle page change */}}
                     onGoToNextPage={() => {/* Handle next page */}}
                     onGoToPreviousPage={() => {/* Handle previous page */}}
                     onLoadMoreMessages={onLoadMoreMessages}
