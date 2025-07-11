@@ -844,44 +844,42 @@ export default function WebGL3DPage() {
     }
   }, [deviceCapabilities?.isMobile, deviceCapabilities?.isLowEnd, performanceTracking.currentModelId])
 
-  // Model comparison renderer component - moved here to fix React Error #310 (after functions are declared)
-  const ModelComparisonRenderer = React.useMemo(() => {
-    return ({ modelAId, modelBId }: { modelAId: string; modelBId: string }) => {
-      const modelAData = getModelComparisonData(modelAId)
-      const modelBData = getModelComparisonData(modelBId)
-      const comparison = performanceTracking.compareModels(modelAId, modelBId)
-      
-      if (!modelAData || !modelBData) {
-        return <div className="text-yellow-400 p-4">Please select both models to compare</div>
-      }
-      
-      return (
-        <ModelPerformanceComparison
-          modelA={modelAData}
-          modelB={modelBData}
-          comparison={comparison || undefined}
-          onModelSelect={(modelId) => {
-            const modelConfig = getModelConfig(modelId)
-            if (modelConfig) {
-              handleModelChange(modelConfig.path)
-              setShowModelComparison(false)
-            }
-          }}
-          onRefreshComparison={() => console.log('Refresh comparison')}
-          onExportData={() => {
-            const data = performanceTracking.exportPerformanceData()
-            const blob = new Blob([data], { type: 'application/json' })
-            const url = URL.createObjectURL(blob)
-            const a = document.createElement('a')
-            a.href = url
-            a.download = `model-comparison-${Date.now()}.json`
-            a.click()
-            URL.revokeObjectURL(url)
-          }}
-        />
-      )
+  // Model comparison renderer helpers - simplified to avoid React Error #310
+  const renderModelComparison = useCallback((modelAId: string, modelBId: string) => {
+    const modelAData = getModelComparisonData(modelAId)
+    const modelBData = getModelComparisonData(modelBId)
+    const comparison = performanceTracking.compareModels(modelAId, modelBId)
+    
+    if (!modelAData || !modelBData) {
+      return <div className="text-yellow-400 p-4">Please select both models to compare</div>
     }
-  }, [performanceTracking, getModelComparisonData, handleModelChange, setShowModelComparison])
+    
+    return (
+      <ModelPerformanceComparison
+        modelA={modelAData}
+        modelB={modelBData}
+        comparison={comparison || undefined}
+        onModelSelect={(modelId) => {
+          const modelConfig = getModelConfig(modelId)
+          if (modelConfig) {
+            handleModelChange(modelConfig.path)
+            setShowModelComparison(false)
+          }
+        }}
+        onRefreshComparison={() => console.log('Refresh comparison')}
+        onExportData={() => {
+          const data = performanceTracking.exportPerformanceData()
+          const blob = new Blob([data], { type: 'application/json' })
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `model-comparison-${Date.now()}.json`
+          a.click()
+          URL.revokeObjectURL(url)
+        }}
+      />
+    )
+  }, [getModelComparisonData, performanceTracking, handleModelChange, setShowModelComparison])
 
   // Memoized quality settings for performance
   const memoizedQualitySettings = useMemo(() => qualitySettings, [qualitySettings])
@@ -2001,10 +1999,9 @@ export default function WebGL3DPage() {
                 
                 {/* Comparison Component */}
                 {comparisonModelA && comparisonModelB && (
-                  <ModelComparisonRenderer
-                    modelAId={comparisonModelA}
-                    modelBId={comparisonModelB}
-                  />
+                  <div key={`${comparisonModelA}-${comparisonModelB}`}>
+                    {renderModelComparison(comparisonModelA, comparisonModelB)}
+                  </div>
                 )}
               </div>
             </div>
