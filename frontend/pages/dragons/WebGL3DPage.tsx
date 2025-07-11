@@ -358,7 +358,7 @@ export default function WebGL3DPage() {
         performanceTracking.currentMetrics.qualityReductions += 1
       }
     }
-  }, [performanceState, qualitySettings, performanceTracking])
+  }, [performanceState, qualitySettings])
 
   // Check WebGL capabilities with enhanced detection
   useEffect(() => {
@@ -444,7 +444,7 @@ export default function WebGL3DPage() {
     }
     
     initializeCapabilities()
-  }, [selectedModel, detectDeviceCapabilities, qualitySettings, performanceTracking])
+  }, [])
 
   // Performance monitoring with auto-optimization
   useEffect(() => {
@@ -462,7 +462,7 @@ export default function WebGL3DPage() {
         clearInterval(performanceCheckIntervalRef.current)
       }
     }
-  }, [isInitialized, performanceState.autoOptimize, optimizeQualitySettings, performanceMonitor.metrics])
+  }, [isInitialized, performanceState.autoOptimize, optimizeQualitySettings])
 
   // Enhanced memory management with progressive cleanup
   useEffect(() => {
@@ -519,7 +519,7 @@ export default function WebGL3DPage() {
       // Final cleanup on unmount
       cleanupMemory()
     }
-  }, [deviceCapabilities?.isMobile, performanceState.memoryLimit, performanceState.quality, handleQualityChange])
+  }, [deviceCapabilities?.isMobile, performanceState.memoryLimit, performanceState.quality])
 
   // Enhanced visibility API with performance optimizations
   useEffect(() => {
@@ -729,7 +729,7 @@ export default function WebGL3DPage() {
       console.log('Auto-adjusting quality for mobile-optimized model')
       handleQualityChange('medium')
     }
-  }, [performanceState.quality, deviceCapabilities, handleQualityChange, performanceTracking])
+  }, [performanceState.quality, deviceCapabilities?.isMobile])
 
   const handleModelLoadStart = useCallback(() => {
     setModelLoading(true)
@@ -784,7 +784,7 @@ export default function WebGL3DPage() {
       // Desktop: all models available
       return true
     })
-  }, [deviceCapabilities])
+  }, [deviceCapabilities?.isMobile, deviceCapabilities?.isLowEnd])
   
   // Model performance comparison helper
   const getModelComparisonData = useCallback((modelId: string) => {
@@ -840,7 +840,7 @@ export default function WebGL3DPage() {
       console.error('Failed to get model recommendations:', error)
       return null
     }
-  }, [deviceCapabilities, performanceTracking, recommendationEngine])
+  }, [deviceCapabilities?.isMobile, deviceCapabilities?.isLowEnd, performanceTracking.currentModelId])
 
   // Memoized quality settings for performance
   const memoizedQualitySettings = useMemo(() => qualitySettings, [qualitySettings])
