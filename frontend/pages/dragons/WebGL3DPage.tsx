@@ -519,7 +519,7 @@ export default function WebGL3DPage() {
       // Final cleanup on unmount
       cleanupMemory()
     }
-  }, [deviceCapabilities, performanceState.memoryLimit, performanceState.quality])
+  }, [deviceCapabilities?.isMobile, performanceState.memoryLimit, performanceState.quality])
 
   // Enhanced visibility API with performance optimizations
   useEffect(() => {
@@ -577,7 +577,7 @@ export default function WebGL3DPage() {
       window.removeEventListener('focus', handleWindowFocus)
       window.removeEventListener('blur', handleWindowBlur)
     }
-  }, [performanceState.autoOptimize, deviceCapabilities])
+  }, [performanceState.autoOptimize, deviceCapabilities?.isMobile])
 
   // Voice state handlers with performance awareness
   const handleListening = useCallback(() => {

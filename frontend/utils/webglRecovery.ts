@@ -1199,7 +1199,7 @@ export function useWebGLRecovery(config?: WebGLRecoveryConfig) {
     return () => {
       manager.dispose();
     };
-  }, []);
+  }, [config]);
 
   const initializeRecovery = React.useCallback(
     (canvas: HTMLCanvasElement, renderer?: THREE.WebGLRenderer) => {
