@@ -358,7 +358,7 @@ export default function WebGL3DPage() {
         performanceTracking.currentMetrics.qualityReductions += 1
       }
     }
-  }, [performanceState, qualitySettings])
+  }, [performanceState, qualitySettings, performanceTracking])
 
   // Check WebGL capabilities with enhanced detection
   useEffect(() => {
@@ -444,7 +444,7 @@ export default function WebGL3DPage() {
     }
     
     initializeCapabilities()
-  }, [])
+  }, [selectedModel, detectDeviceCapabilities, qualitySettings, performanceTracking])
 
   // Performance monitoring with auto-optimization
   useEffect(() => {
@@ -462,7 +462,7 @@ export default function WebGL3DPage() {
         clearInterval(performanceCheckIntervalRef.current)
       }
     }
-  }, [isInitialized, performanceState.autoOptimize, optimizeQualitySettings])
+  }, [isInitialized, performanceState.autoOptimize, optimizeQualitySettings, performanceMonitor.metrics])
 
   // Enhanced memory management with progressive cleanup
   useEffect(() => {
@@ -519,7 +519,7 @@ export default function WebGL3DPage() {
       // Final cleanup on unmount
       cleanupMemory()
     }
-  }, [deviceCapabilities?.isMobile, performanceState.memoryLimit, performanceState.quality])
+  }, [deviceCapabilities?.isMobile, performanceState.memoryLimit, performanceState.quality, handleQualityChange])
 
   // Enhanced visibility API with performance optimizations
   useEffect(() => {
@@ -878,6 +878,8 @@ export default function WebGL3DPage() {
 
   // Enhanced recovery stage tracking
   useEffect(() => {
+    let interval: NodeJS.Timeout | null = null
+    
     if (isWebGLRecovering) {
       const stages = [
         'Detecting context loss...',
@@ -888,21 +890,26 @@ export default function WebGL3DPage() {
       ]
       
       let currentStage = 0
-      const interval = setInterval(() => {
+      interval = setInterval(() => {
         if (currentStage < stages.length) {
           setWebglRecoveryStage(stages[currentStage] || '')
           setWebglRecoveryProgress((currentStage + 1) * 20)
           currentStage++
         } else {
-          clearInterval(interval)
+          if (interval) {
+            clearInterval(interval)
+          }
         }
       }, 1000)
-      
-      return () => clearInterval(interval)
     } else {
       setWebglRecoveryStage('')
       setWebglRecoveryProgress(0)
-      return () => {} // Return empty cleanup function
+    }
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval)
+      }
     }
   }, [isWebGLRecovering])
   
@@ -958,7 +965,7 @@ export default function WebGL3DPage() {
     return () => {
       performanceTracking.stopTracking()
     }
-  }, [performanceTracking])
+  }, [])
   
   // Component is ready to render
   if (!isInitialized || !capabilities || !deviceCapabilities) {
