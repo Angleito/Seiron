@@ -214,15 +214,27 @@ function DragonMesh({
     return cloned
   }, [scene, currentConfig])
 
-  // Cleanup animation mixer and dispose of resources on unmount
+  // CRITICAL FIX: Enhanced cleanup with proper resource disposal
   useEffect(() => {
     return () => {
       console.log('🧹 Cleaning up dragon mesh resources')
       
+      // Stop and dispose of animation mixer
       if (mixerRef.current) {
         mixerRef.current.stopAllAction()
         mixerRef.current.uncacheRoot(mixerRef.current.getRoot())
+        
+        // Dispose of all clips
+        mixerRef.current.uncacheRoot(mixerRef.current.getRoot())
+        
+        // Clear reference
         mixerRef.current = null
+      }
+      
+      // Clear action reference
+      if (actionRef.current) {
+        actionRef.current.stop()
+        actionRef.current = null
       }
       
       // Dispose of the cloned scene and its resources
@@ -239,7 +251,7 @@ function DragonMesh({
               if (Array.isArray(child.material)) {
                 child.material.forEach(material => {
                   // Dispose of all texture maps
-                  const textureProperties = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 'bumpMap', 'displacementMap', 'aoMap', 'lightMap', 'alphaMap']
+                  const textureProperties = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 'bumpMap', 'displacementMap', 'aoMap', 'lightMap', 'alphaMap', 'envMap', 'gradientMap']
                   textureProperties.forEach(prop => {
                     if (material[prop]) {
                       material[prop].dispose()
@@ -249,7 +261,7 @@ function DragonMesh({
                 })
               } else {
                 // Dispose of all texture maps
-                const textureProperties = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 'bumpMap', 'displacementMap', 'aoMap', 'lightMap', 'alphaMap']
+                const textureProperties = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 'bumpMap', 'displacementMap', 'aoMap', 'lightMap', 'alphaMap', 'envMap', 'gradientMap']
                 textureProperties.forEach(prop => {
                   if (child.material[prop]) {
                     child.material[prop].dispose()
@@ -259,9 +271,24 @@ function DragonMesh({
               }
             }
           }
+          
+          // Dispose of lights
+          if (child instanceof THREE.Light) {
+            child.dispose()
+          }
         })
+        
+        // Clear the scene
         clonedScene.clear()
+        
+        // Remove from parent if it has one
+        if (clonedScene.parent) {
+          clonedScene.parent.remove(clonedScene)
+        }
       }
+      
+      // Clear mesh reference
+      // Note: meshRef.current is read-only, so we don't need to clear it manually
       
       // Force garbage collection if available
       if (typeof window !== 'undefined' && window.gc) {
@@ -270,7 +297,7 @@ function DragonMesh({
     }
   }, [clonedScene])
 
-  // Animation loop with performance optimization
+  // Animation loop with performance optimization and proper cleanup
   useFrame((state, delta) => {
     if (!meshRef.current || !enableAnimations) return
 
@@ -518,11 +545,13 @@ function DragonScene({
   
   return (
     <Suspense fallback={<LoadingDragon />}>
-      {/* Add grid helper for debugging */}
-      <gridHelper args={[20, 20, 'yellow', 'gray']} />
-      
-      {/* Add axes helper for debugging */}
-      <axesHelper args={[5]} />
+      {/* Add grid helper for debugging - only in development */}
+      {process.env.NODE_ENV === 'development' && (
+        <>
+          <gridHelper args={[20, 20, 'yellow', 'gray']} />
+          <axesHelper args={[5]} />
+        </>
+      )}
       
       <DragonLighting voiceState={voiceState} />
       <DragonMesh 
@@ -830,10 +859,14 @@ const SeironGLBDragonWithCanvas: React.FC<SeironGLBDragonProps> = ({
           if (canvasRef.current) {
             initializeRecovery(canvasRef.current, state.gl)
           }
+          
+          // Log successful canvas creation
+          console.log('🎮 Canvas created successfully with WebGL context')
         }}
         onError={(error) => {
           console.error('🎮 Three.js Canvas error:', error)
-          handleError(new Error('Canvas creation failed'))
+          const errorMessage = error instanceof Error ? error.message : 'Canvas creation failed'
+          handleError(new Error(errorMessage))
         }}
       >
         <SeironGLBDragon

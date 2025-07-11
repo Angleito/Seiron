@@ -532,7 +532,7 @@ export class WebGLRecoveryManager extends EventEmitter {
   }
 
   /**
-   * Clear WebGL state before recovery attempt
+   * CRITICAL FIX: Enhanced WebGL state clearing with comprehensive reset
    */
   private clearWebGLState(): void {
     if (!this.gl) return;
@@ -551,28 +551,57 @@ export class WebGLRecoveryManager extends EventEmitter {
       this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, null);
       this.gl.useProgram(null);
       
-      console.log('[WebGLRecovery] Cleared WebGL state');
+      // Clear additional WebGL 2.0 state if available
+      if (this.gl instanceof WebGL2RenderingContext) {
+        this.gl.bindVertexArray(null);
+        this.gl.bindTransformFeedback(this.gl.TRANSFORM_FEEDBACK, null);
+        this.gl.bindSampler(0, null);
+      }
+      
+      // Reset viewport and scissor
+      this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
+      this.gl.scissor(0, 0, this.gl.canvas.width, this.gl.canvas.height);
+      
+      // Disable all capabilities
+      this.gl.disable(this.gl.BLEND);
+      this.gl.disable(this.gl.CULL_FACE);
+      this.gl.disable(this.gl.DEPTH_TEST);
+      this.gl.disable(this.gl.DITHER);
+      this.gl.disable(this.gl.POLYGON_OFFSET_FILL);
+      this.gl.disable(this.gl.SAMPLE_ALPHA_TO_COVERAGE);
+      this.gl.disable(this.gl.SAMPLE_COVERAGE);
+      this.gl.disable(this.gl.SCISSOR_TEST);
+      this.gl.disable(this.gl.STENCIL_TEST);
+      
+      // Clear buffers
+      this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT | this.gl.STENCIL_BUFFER_BIT);
+      
+      console.log('[WebGLRecovery] Cleared WebGL state comprehensively');
     } catch (error) {
       console.warn('[WebGLRecovery] Error clearing WebGL state:', error);
     }
   }
   
   /**
-   * Force garbage collection if possible
+   * CRITICAL FIX: Enhanced garbage collection with Three.js specific cleanup
    */
   private forceGarbageCollection(): void {
     try {
-      // Try to force garbage collection
-      if (typeof window !== 'undefined' && 'gc' in window) {
-        (window as any).gc();
-        console.log('[WebGLRecovery] Forced garbage collection');
-      }
+      console.log('[WebGLRecovery] Starting enhanced memory cleanup');
       
-      // Clear any cached Three.js objects
+      // Clear Three.js specific caches
       if (typeof THREE !== 'undefined') {
-        // Note: Material and geometry caches are handled internally by Three.js
-        // We don't have direct access to clear them, but disposing of materials
-        // and geometries will help with memory cleanup
+        // Clear material and geometry caches if possible
+        if (THREE.Cache) {
+          THREE.Cache.clear();
+        }
+        
+        // Clear texture loader cache
+        if (THREE.TextureLoader && THREE.TextureLoader.prototype.manager) {
+          THREE.DefaultLoadingManager.itemStart = () => {};
+          THREE.DefaultLoadingManager.itemEnd = () => {};
+          THREE.DefaultLoadingManager.itemError = () => {};
+        }
       }
       
       // Request memory cleanup
@@ -583,7 +612,7 @@ export class WebGLRecoveryManager extends EventEmitter {
         // Force a minor GC by creating and destroying objects (but only if memory is high)
         if (memoryBefore > 100 * 1024 * 1024) { // Only if using more than 100MB
           const cleanup = [];
-          for (let i = 0; i < 100; i++) { // Reduced from 1000 to prevent memory spikes
+          for (let i = 0; i < 50; i++) { // Reduced to 50 for safety
             cleanup.push(new Float32Array(10));
           }
           cleanup.length = 0;
@@ -596,6 +625,13 @@ export class WebGLRecoveryManager extends EventEmitter {
           }
         }, 100);
       }
+      
+      // Try to force garbage collection
+      if (typeof window !== 'undefined' && 'gc' in window) {
+        (window as any).gc();
+        console.log('[WebGLRecovery] Forced garbage collection');
+      }
+      
     } catch (error) {
       console.warn('[WebGLRecovery] Could not force garbage collection:', error);
     }

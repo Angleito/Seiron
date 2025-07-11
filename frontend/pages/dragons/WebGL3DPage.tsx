@@ -9,6 +9,7 @@ import { usePerformanceMonitor } from '../../hooks/usePerformanceMonitor'
 import { DragonMemoryManager } from '../../utils/dragonMemoryManager'
 import { ProductionWebGLErrorBoundary } from '../../components/webgl/ProductionWebGLErrorBoundary'
 import { DeviceCompatibilityBoundary } from '../../components/error-boundaries/DeviceCompatibilityBoundary'
+import ReactError310Handler from '../../components/error-boundaries/ReactError310Handler'
 import WebGLPerformanceMonitor from '../../components/webgl/WebGLPerformanceMonitor'
 import { useWebGLRecovery } from '../../utils/webglRecovery'
 import { 
@@ -464,6 +465,43 @@ export default function WebGL3DPage() {
     }
   }, [isInitialized, performanceState.autoOptimize, optimizeQualitySettings])
 
+  // Model comparison renderer component to fix React Error #310
+  const ModelComparisonRenderer = ({ modelAId, modelBId }: { modelAId: string; modelBId: string }) => {
+    const modelAData = getModelComparisonData(modelAId)
+    const modelBData = getModelComparisonData(modelBId)
+    const comparison = performanceTracking.compareModels(modelAId, modelBId)
+    
+    if (!modelAData || !modelBData) {
+      return <div className="text-yellow-400 p-4">Please select both models to compare</div>
+    }
+    
+    return (
+      <ModelPerformanceComparison
+        modelA={modelAData}
+        modelB={modelBData}
+        comparison={comparison || undefined}
+        onModelSelect={(modelId) => {
+          const modelConfig = getModelConfig(modelId)
+          if (modelConfig) {
+            handleModelChange(modelConfig.path)
+            setShowModelComparison(false)
+          }
+        }}
+        onRefreshComparison={() => console.log('Refresh comparison')}
+        onExportData={() => {
+          const data = performanceTracking.exportPerformanceData()
+          const blob = new Blob([data], { type: 'application/json' })
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `model-comparison-${Date.now()}.json`
+          a.click()
+          URL.revokeObjectURL(url)
+        }}
+      />
+    )
+  }
+
   // Enhanced memory management with progressive cleanup
   useEffect(() => {
     const cleanupMemory = () => {
@@ -857,9 +895,9 @@ export default function WebGL3DPage() {
     gl: {
       antialias: memoizedQualitySettings.antialiasing,
       alpha: true,
-      powerPreference: deviceCapabilities?.isMobile ? 'low-power' : 'high-performance' as const,
+      powerPreference: (deviceCapabilities?.isMobile ? 'low-power' : 'high-performance') as WebGLPowerPreference,
       failIfMajorPerformanceCaveat: false,
-      pixelRatio: Math.min(window.devicePixelRatio * memoizedQualitySettings.resolution, 2),
+      // pixelRatio is handled by dpr prop below
       preserveDrawingBuffer: true, // Better for screenshots and debugging
       premultipliedAlpha: true, // Better alpha blending performance
       stencil: false, // Disable stencil buffer for better performance
@@ -867,6 +905,7 @@ export default function WebGL3DPage() {
       logarithmicDepthBuffer: false // Better compatibility
     },
     frameloop: isVisible ? 'always' : 'never' as 'always' | 'never' | 'demand', // Pause rendering when not visible
+    dpr: [1, Math.min(window.devicePixelRatio * memoizedQualitySettings.resolution, 2)] as [number, number], // Limit pixel ratio to prevent excessive memory usage
     resize: { scroll: false, debounce: { scroll: 50, resize: 0 } },
     performance: {
       current: 1,
@@ -966,6 +1005,71 @@ export default function WebGL3DPage() {
       performanceTracking.stopTracking()
     }
   }, [])
+
+  // CRITICAL FIX: Comprehensive cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      console.log('🧹 WebGL3DPage unmounting - comprehensive cleanup')
+      
+      // Clear all intervals
+      if (performanceCheckIntervalRef.current) {
+        clearInterval(performanceCheckIntervalRef.current)
+      }
+      
+      // Stop performance tracking
+      performanceTracking.stopTracking()
+      
+      // Cleanup Canvas renderer if it exists
+      if (canvasRef.current) {
+        const canvas = canvasRef.current
+        const context = canvas.getContext('webgl2') || canvas.getContext('webgl')
+        
+        if (context) {
+          // Get the Three.js renderer if stored
+          const renderer = (context as any)._threeRenderer
+          if (renderer) {
+            console.log('🧹 Disposing Three.js renderer')
+            
+            // Dispose renderer and all associated resources
+            renderer.dispose()
+            renderer.forceContextLoss()
+            
+            // Clear render targets
+            renderer.setRenderTarget(null)
+            
+            // Clear info
+            renderer.info.memory.geometries = 0
+            renderer.info.memory.textures = 0
+            renderer.info.render.calls = 0
+            renderer.info.render.triangles = 0
+          }
+          
+          // Clean up event listeners
+          if ((context as any)._contextEventCleanup) {
+            (context as any)._contextEventCleanup()
+          }
+          
+          // Force context loss for complete cleanup
+          const loseContext = context.getExtension('WEBGL_lose_context')
+          if (loseContext) {
+            loseContext.loseContext()
+          }
+        }
+      }
+      
+      // Memory manager cleanup
+      if (memoryManagerRef.current) {
+        memoryManagerRef.current.dispose()
+      }
+      
+      // Force garbage collection if available
+      if (typeof window !== 'undefined' && window.gc) {
+        window.gc()
+      }
+      
+      console.log('🧹 WebGL3DPage cleanup complete')
+    }
+  }, [])
   
   // Component is ready to render
   if (!isInitialized || !capabilities || !deviceCapabilities) {
@@ -973,11 +1077,18 @@ export default function WebGL3DPage() {
   }
 
   return (
-    <DeviceCompatibilityBoundary 
-      onDeviceDetected={(caps) => console.log('Device detected:', caps)}
-      enableAutoOptimization={true}
+    <ReactError310Handler
+      onError={(error, errorInfo) => {
+        console.error('🚨 React Error #310 caught in WebGL3DPage:', error)
+        console.error('📍 Component stack:', errorInfo.componentStack)
+        setError(`React Error #310: ${error.message}`)
+      }}
     >
-        <div className="min-h-screen bg-gradient-to-br from-amber-900 via-red-900 to-orange-900 relative">
+      <DeviceCompatibilityBoundary 
+        onDeviceDetected={(caps) => console.log('Device detected:', caps)}
+        enableAutoOptimization={true}
+      >
+          <div className="min-h-screen bg-gradient-to-br from-amber-900 via-red-900 to-orange-900 relative">
         {/* Header */}
         <div className="relative z-10 p-6">
           <div className="max-w-7xl mx-auto">
@@ -1165,46 +1276,140 @@ export default function WebGL3DPage() {
               ref={canvasRef}
               {...canvasProps}
               onCreated={({ gl, scene }) => {
-                // Set pixel ratio and size
-                gl.setPixelRatio(canvasProps.gl.pixelRatio)
-                gl.setSize(window.innerWidth, window.innerHeight, false)
-                
-                // Get WebGL context for low-level operations
-                const glContext = gl.getContext()
-                
-                // Enable optimizations through WebGL context
-                if (glContext) {
-                  // Set up frustum culling
-                  glContext.enable(glContext.CULL_FACE)
-                  glContext.cullFace(glContext.BACK)
+                try {
+                  // Set pixel ratio and size
+                  gl.setPixelRatio(Math.min(window.devicePixelRatio * memoizedQualitySettings.resolution, 2))
+                  gl.setSize(window.innerWidth, window.innerHeight, false)
                   
-                  // Enable depth testing
-                  glContext.enable(glContext.DEPTH_TEST)
-                  glContext.depthFunc(glContext.LEQUAL)
+                  // Get WebGL context for low-level operations
+                  const glContext = gl.getContext()
                   
-                  // Set clear color for better performance
-                  glContext.clearColor(0, 0, 0, 0)
+                  // Enable optimizations through WebGL context
+                  if (glContext) {
+                    // Set up frustum culling
+                    glContext.enable(glContext.CULL_FACE)
+                    glContext.cullFace(glContext.BACK)
+                    
+                    // Enable depth testing
+                    glContext.enable(glContext.DEPTH_TEST)
+                    glContext.depthFunc(glContext.LEQUAL)
+                    
+                    // Set clear color for better performance
+                    glContext.clearColor(0, 0, 0, 0)
+                    
+                    // Configure extensions for better performance
+                    glContext.getExtension('EXT_texture_filter_anisotropic')
+                    glContext.getExtension('WEBGL_compressed_texture_s3tc')
+                    glContext.getExtension('WEBGL_compressed_texture_pvrtc')
+                    glContext.getExtension('WEBGL_compressed_texture_etc1')
+                    
+                    // Enable WebGL state caching for performance
+                    glContext.enable(glContext.SCISSOR_TEST)
+                    glContext.scissor(0, 0, glContext.canvas.width, glContext.canvas.height)
+                    
+                    // CRITICAL FIX: Set up WebGL context loss/restore event listeners
+                    const handleContextLoss = (event: WebGLContextEvent) => {
+                      event.preventDefault()
+                      console.warn('🔴 WebGL context lost in main Canvas')
+                      
+                      // Cleanup Three.js resources immediately
+                      if (scene) {
+                        scene.traverse((child) => {
+                          if (child instanceof THREE.Mesh) {
+                            if (child.geometry) {
+                              child.geometry.dispose()
+                            }
+                            if (child.material) {
+                              if (Array.isArray(child.material)) {
+                                child.material.forEach(material => {
+                                  material.dispose()
+                                  // Dispose textures
+                                  Object.values(material).forEach(value => {
+                                    if (value && typeof value === 'object' && 'dispose' in value && typeof value.dispose === 'function') {
+                                      value.dispose()
+                                    }
+                                  })
+                                })
+                              } else {
+                                child.material.dispose()
+                                // Dispose textures
+                                Object.values(child.material).forEach(value => {
+                                  if (value && typeof value === 'object' && 'dispose' in value && typeof value.dispose === 'function') {
+                                    value.dispose()
+                                  }
+                                })
+                              }
+                            }
+                          }
+                        })
+                      }
+                      
+                      // Clear renderer state
+                      gl.dispose()
+                      gl.forceContextLoss()
+                      
+                      // Trigger recovery through existing system
+                      if (manualWebGLRecover) {
+                        setTimeout(() => manualWebGLRecover(), 100)
+                      }
+                    }
+                    
+                    const handleContextRestore = (event: WebGLContextEvent) => {
+                      console.log('🟢 WebGL context restored in main Canvas')
+                      
+                      // Reinitialize WebGL state
+                      if (glContext && !glContext.isContextLost()) {
+                        // Reset WebGL state
+                        glContext.enable(glContext.CULL_FACE)
+                        glContext.cullFace(glContext.BACK)
+                        glContext.enable(glContext.DEPTH_TEST)
+                        glContext.depthFunc(glContext.LEQUAL)
+                        glContext.clearColor(0, 0, 0, 0)
+                        
+                        // Re-enable extensions
+                        glContext.getExtension('EXT_texture_filter_anisotropic')
+                        glContext.getExtension('WEBGL_compressed_texture_s3tc')
+                        glContext.getExtension('WEBGL_compressed_texture_pvrtc')
+                        glContext.getExtension('WEBGL_compressed_texture_etc1')
+                        
+                        // Reinitialize renderer
+                        gl.setPixelRatio(Math.min(window.devicePixelRatio * memoizedQualitySettings.resolution, 2))
+                        gl.setSize(window.innerWidth, window.innerHeight, false)
+                        gl.shadowMap.enabled = memoizedQualitySettings.shadows
+                        gl.shadowMap.type = THREE.PCFSoftShadowMap
+                        
+                        console.log('🟢 WebGL context and renderer fully restored')
+                      }
+                    }
+                    
+                    // Add context loss/restore event listeners
+                    const canvas = glContext.canvas
+                    canvas.addEventListener('webglcontextlost', handleContextLoss as EventListener)
+                    canvas.addEventListener('webglcontextrestored', handleContextRestore as EventListener)
+                    
+                    // Store cleanup function and renderer reference for later disposal
+                    ;(glContext as any)._contextEventCleanup = () => {
+                      canvas.removeEventListener('webglcontextlost', handleContextLoss as EventListener)
+                      canvas.removeEventListener('webglcontextrestored', handleContextRestore as EventListener)
+                    }
+                    ;(glContext as any)._threeRenderer = gl
+                  }
                   
-                  // Configure extensions for better performance
-                  glContext.getExtension('EXT_texture_filter_anisotropic')
-                  glContext.getExtension('WEBGL_compressed_texture_s3tc')
-                  glContext.getExtension('WEBGL_compressed_texture_pvrtc')
-                  glContext.getExtension('WEBGL_compressed_texture_etc1')
+                  // Memory management optimizations on Three.js objects
+                  // Note: Scene autoUpdate is managed by React Three Fiber
+                  if (scene) {
+                    scene.matrixAutoUpdate = false
+                  }
                   
-                  // Enable WebGL state caching for performance
-                  glContext.enable(glContext.SCISSOR_TEST)
-                  glContext.scissor(0, 0, glContext.canvas.width, glContext.canvas.height)
+                  // Configure renderer-specific optimizations
+                  gl.shadowMap.enabled = memoizedQualitySettings.shadows
+                  gl.shadowMap.type = THREE.PCFSoftShadowMap
+                  
+                  console.log('Canvas created with quality:', performanceState.quality)
+                } catch (error) {
+                  console.error('Error during canvas creation:', error)
+                  // Don't throw here - let the error boundary handle it
                 }
-                
-                // Memory management optimizations on Three.js objects
-                // Note: Scene autoUpdate is managed by React Three Fiber
-                scene.matrixAutoUpdate = false
-                
-                // Configure renderer-specific optimizations
-                gl.shadowMap.enabled = memoizedQualitySettings.shadows
-                gl.shadowMap.type = THREE.PCFSoftShadowMap
-                
-                console.log('Canvas created with quality:', performanceState.quality)
               }}
             >
               <Suspense fallback={null}>
@@ -1745,28 +1950,9 @@ export default function WebGL3DPage() {
                 
                 {/* Comparison Component */}
                 {comparisonModelA && comparisonModelB && (
-                  <ModelPerformanceComparison
-                    modelA={getModelComparisonData(comparisonModelA)!}
-                    modelB={getModelComparisonData(comparisonModelB)!}
-                    comparison={performanceTracking.compareModels(comparisonModelA, comparisonModelB) || undefined}
-                    onModelSelect={(modelId) => {
-                      const modelConfig = getModelConfig(modelId)
-                      if (modelConfig) {
-                        handleModelChange(modelConfig.path)
-                        setShowModelComparison(false)
-                      }
-                    }}
-                    onRefreshComparison={() => console.log('Refresh comparison')}
-                    onExportData={() => {
-                      const data = performanceTracking.exportPerformanceData()
-                      const blob = new Blob([data], { type: 'application/json' })
-                      const url = URL.createObjectURL(blob)
-                      const a = document.createElement('a')
-                      a.href = url
-                      a.download = `model-comparison-${Date.now()}.json`
-                      a.click()
-                      URL.revokeObjectURL(url)
-                    }}
+                  <ModelComparisonRenderer
+                    modelAId={comparisonModelA}
+                    modelBId={comparisonModelB}
                   />
                 )}
               </div>
@@ -1787,5 +1973,6 @@ export default function WebGL3DPage() {
         )}
       </div>
     </DeviceCompatibilityBoundary>
+    </ReactError310Handler>
   )
 }

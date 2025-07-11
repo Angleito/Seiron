@@ -30,7 +30,9 @@
     "verify:models": "node scripts/verify-models.js",
     "test:model-fallback": "node scripts/test-model-fallback.js",
     "check:production-models": "node scripts/check-production-models.js",
-    "build:safe": "npm run verify:models && npm run build"
+    "build:safe": "npm run verify:models && npm run build",
+    "setup:walletconnect": "node scripts/setup-walletconnect.js",
+    "test:walletconnect": "node scripts/test-walletconnect-config.js"
   },
   "overrides": {
     "ox": "0.8.1",

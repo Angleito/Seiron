@@ -1,8 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Enable React strict mode for better error detection
+  reactStrictMode: true,
+  
   // Enable static file serving for 3D models
   experimental: {
     serverComponentsExternalPackages: ['three'],
+    optimizePackageImports: ['three', '@react-three/fiber', '@react-three/drei'],
   },
   
   // Configure headers for 3D model files
@@ -71,9 +75,8 @@ const nextConfig = {
   },
   
   // Enable experimental features for better performance
-  experimental: {
-    optimizePackageImports: ['three', '@react-three/fiber', '@react-three/drei'],
-  },
+  // Note: Merged with above experimental config
+  // optimizePackageImports: ['three', '@react-three/fiber', '@react-three/drei'],
 };
 
 module.exports = nextConfig;

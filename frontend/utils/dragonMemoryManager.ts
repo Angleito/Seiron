@@ -51,7 +51,7 @@ export class DragonMemoryManager {
     return this.geometryCache.get(key) || null
   }
 
-  // Dispose of a specific model
+  // CRITICAL FIX: Enhanced model disposal with comprehensive resource cleanup
   disposeModel(model: THREE.Group): void {
     model.traverse((child) => {
       if (child instanceof THREE.Mesh) {
@@ -69,22 +69,52 @@ export class DragonMemoryManager {
           }
         }
       }
-    })
-    model.clear()
-  }
-
-  // Dispose of a material and its textures
-  private disposeMaterial(material: THREE.Material): void {
-    const materialAny = material as any
-    
-    // Dispose of common texture properties
-    const textureProps = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 'bumpMap', 'displacementMap', 'aoMap']
-    textureProps.forEach(prop => {
-      if (materialAny[prop]) {
-        materialAny[prop].dispose()
+      
+      // Dispose of lights
+      if (child instanceof THREE.Light) {
+        if ('dispose' in child) {
+          (child as any).dispose()
+        }
+      }
+      
+      // Dispose of cameras
+      if (child instanceof THREE.Camera) {
+        // Cameras don't have dispose method, but clear references
+        child.parent = null
       }
     })
     
+    // Clear the model
+    model.clear()
+    
+    // Remove from parent if it has one
+    if (model.parent) {
+      model.parent.remove(model)
+    }
+  }
+
+  // CRITICAL FIX: Enhanced material disposal with comprehensive texture cleanup
+  private disposeMaterial(material: THREE.Material): void {
+    const materialAny = material as any
+    
+    // Dispose of all possible texture properties
+    const textureProps = [
+      'map', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 
+      'bumpMap', 'displacementMap', 'aoMap', 'lightMap', 'alphaMap', 
+      'envMap', 'gradientMap', 'specularMap', 'matcap', 'clearcoatMap', 
+      'clearcoatNormalMap', 'clearcoatRoughnessMap', 'iridescenceMap', 
+      'iridescenceThicknessMap', 'sheenColorMap', 'sheenRoughnessMap', 
+      'transmissionMap', 'thicknessMap', 'anisotropyMap'
+    ]
+    
+    textureProps.forEach(prop => {
+      if (materialAny[prop]) {
+        materialAny[prop].dispose()
+        materialAny[prop] = null
+      }
+    })
+    
+    // Dispose of the material itself
     material.dispose()
   }
 
@@ -136,15 +166,37 @@ export class DragonMemoryManager {
     })
   }
 
-  // Complete cleanup
+  // CRITICAL FIX: Complete cleanup with memory tracking
   dispose(): void {
-    this.loadedModels.forEach(model => this.disposeModel(model))
-    this.textureCache.forEach(texture => texture.dispose())
-    this.geometryCache.forEach(geometry => geometry.dispose())
+    console.log('🧹 DragonMemoryManager disposing all resources')
     
+    const beforeStats = this.getMemoryStats()
+    console.log('Before disposal:', beforeStats)
+    
+    // Dispose models
+    this.loadedModels.forEach(model => this.disposeModel(model))
+    
+    // Dispose textures
+    this.textureCache.forEach(texture => {
+      texture.dispose()
+    })
+    
+    // Dispose geometries
+    this.geometryCache.forEach(geometry => {
+      geometry.dispose()
+    })
+    
+    // Clear all caches
     this.loadedModels.clear()
     this.textureCache.clear()
     this.geometryCache.clear()
+    
+    // Force garbage collection if available
+    if (typeof window !== 'undefined' && window.gc) {
+      window.gc()
+    }
+    
+    console.log('🧹 DragonMemoryManager disposal complete')
   }
 
   // Get memory usage statistics

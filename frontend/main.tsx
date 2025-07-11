@@ -57,13 +57,8 @@ async function renderApp() {
     return
   }
 
-  // Initialize WalletConnect Core before rendering
-  try {
-    await walletConnectManager.initialize()
-  } catch (error) {
-    console.error('❌ WalletConnect initialization failed:', error)
-    // Continue with rendering even if WalletConnect fails
-  }
+  // Note: WalletConnect initialization is handled by WalletConnectProvider
+  // to prevent double initialization and ensure proper component lifecycle
 
   console.log('🏗️ Creating React root...')
   const root = ReactDOM.createRoot(rootElement)

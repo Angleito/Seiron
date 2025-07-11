@@ -60,6 +60,15 @@ class WalletConnectManager {
         return
       }
 
+      // Validate that WalletConnect Project ID is configured
+      const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID
+      if (!projectId || projectId.trim() === '' || projectId.includes('your_')) {
+        logger.info('ℹ️ WalletConnect Project ID not configured, skipping initialization')
+        logger.info('ℹ️ Set VITE_WALLETCONNECT_PROJECT_ID environment variable to enable WalletConnect')
+        this.isInitialized = true // Mark as initialized to prevent retry loops
+        return
+      }
+
       // Mark as initialized before any async operations
       this.isInitialized = true
 
@@ -162,7 +171,11 @@ export function preventDoubleInitialization(): void {
           message.includes('The configured chains are not supported by Coinbase Smart Wallet') ||
           message.includes('Coinbase Smart Wallet: 1329') ||
           message.includes('VITE_WALLETCONNECT_PROJECT_ID not found') ||
-          message.includes('chains are not supported by Coinbase')
+          message.includes('chains are not supported by Coinbase') ||
+          message.includes('does not support chain') ||
+          message.includes('smart wallet does not support') ||
+          message.includes('chainId "1329" is not supported') ||
+          message.includes('Chain ID 1329 is not supported')
         )
       ) {
         logger.debug('Filtered wallet warning:', message)
@@ -179,7 +192,11 @@ export function preventDoubleInitialization(): void {
         typeof message === 'string' &&
         (
           message.includes('Coinbase Smart Wallet') ||
-          message.includes('chains are not supported by Coinbase')
+          message.includes('chains are not supported by Coinbase') ||
+          message.includes('does not support chain') ||
+          message.includes('smart wallet does not support') ||
+          message.includes('chainId "1329" is not supported') ||
+          message.includes('Chain ID 1329 is not supported')
         )
       ) {
         logger.debug('Filtered wallet error:', message)

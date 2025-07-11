@@ -14,8 +14,18 @@ const walletConnectProjectId = envConfig.walletConnectProjectId
 // Debug WalletConnect configuration
 console.log('🔗 WalletConnect configuration:')
 console.log('- Project ID present:', !!walletConnectProjectId)
+console.log('- Project ID valid:', walletConnectProjectId && !walletConnectProjectId.includes('your_'))
 console.log('- Configuration valid:', envConfig.isValid.walletConnect)
 console.log('- Environment:', import.meta.env.MODE)
+
+// Log configuration guidance
+if (!envConfig.isValid.walletConnect) {
+  console.log('ℹ️ To enable WalletConnect:')
+  console.log('1. Go to https://cloud.walletconnect.com/')
+  console.log('2. Create a new project')
+  console.log('3. Copy your project ID')
+  console.log('4. Set VITE_WALLETCONNECT_PROJECT_ID in your .env file')
+}
 
 // Sei Network configuration
 export const seiMainnet = {
