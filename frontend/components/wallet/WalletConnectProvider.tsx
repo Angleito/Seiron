@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, type ReactNode }
 import { walletConnectManager } from '../../utils/walletConnectManager'
 import { walletErrorHandler } from '../../utils/walletErrorHandler'
 import { logger } from '@lib/logger'
+import { envConfig } from '../../utils/envValidation'
 
 interface WalletConnectContextType {
   isInitialized: boolean
@@ -21,6 +22,10 @@ interface WalletConnectProviderProps {
  * 
  * Provides WalletConnect initialization state and methods to child components.
  * Handles proper cleanup and prevents duplicate initialization.
+ * 
+ * IMPORTANT: This provider will automatically detect if WalletConnect is being
+ * handled by Wagmi (when VITE_WALLETCONNECT_PROJECT_ID is configured) and skip
+ * custom initialization to prevent double initialization warnings.
  */
 export function WalletConnectProvider({ children }: WalletConnectProviderProps) {
   const [isInitialized, setIsInitialized] = useState(false)
@@ -32,10 +37,20 @@ export function WalletConnectProvider({ children }: WalletConnectProviderProps) 
       return
     }
 
+    // Check if WalletConnect is being handled by Wagmi
+    const isWagmiHandlingWalletConnect = envConfig.isValid.walletConnect
+    
+    if (isWagmiHandlingWalletConnect) {
+      logger.debug('WalletConnect is being handled by Wagmi, skipping custom initialization')
+      setIsInitialized(true) // Mark as initialized without doing anything
+      return
+    }
+
     try {
       setIsInitializing(true)
       setError(null)
       
+      logger.debug('Initializing custom WalletConnect manager (Wagmi not handling WalletConnect)')
       await walletConnectManager.initialize()
       
       setIsInitialized(true)

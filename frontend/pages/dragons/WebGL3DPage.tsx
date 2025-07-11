@@ -465,42 +465,44 @@ export default function WebGL3DPage() {
     }
   }, [isInitialized, performanceState.autoOptimize, optimizeQualitySettings])
 
-  // Model comparison renderer component to fix React Error #310
-  const ModelComparisonRenderer = ({ modelAId, modelBId }: { modelAId: string; modelBId: string }) => {
-    const modelAData = getModelComparisonData(modelAId)
-    const modelBData = getModelComparisonData(modelBId)
-    const comparison = performanceTracking.compareModels(modelAId, modelBId)
-    
-    if (!modelAData || !modelBData) {
-      return <div className="text-yellow-400 p-4">Please select both models to compare</div>
+  // Model comparison renderer component moved outside to fix React Error #310
+  const ModelComparisonRenderer = React.useMemo(() => {
+    return ({ modelAId, modelBId }: { modelAId: string; modelBId: string }) => {
+      const modelAData = getModelComparisonData(modelAId)
+      const modelBData = getModelComparisonData(modelBId)
+      const comparison = performanceTracking.compareModels(modelAId, modelBId)
+      
+      if (!modelAData || !modelBData) {
+        return <div className="text-yellow-400 p-4">Please select both models to compare</div>
+      }
+      
+      return (
+        <ModelPerformanceComparison
+          modelA={modelAData}
+          modelB={modelBData}
+          comparison={comparison || undefined}
+          onModelSelect={(modelId) => {
+            const modelConfig = getModelConfig(modelId)
+            if (modelConfig) {
+              handleModelChange(modelConfig.path)
+              setShowModelComparison(false)
+            }
+          }}
+          onRefreshComparison={() => console.log('Refresh comparison')}
+          onExportData={() => {
+            const data = performanceTracking.exportPerformanceData()
+            const blob = new Blob([data], { type: 'application/json' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `model-comparison-${Date.now()}.json`
+            a.click()
+            URL.revokeObjectURL(url)
+          }}
+        />
+      )
     }
-    
-    return (
-      <ModelPerformanceComparison
-        modelA={modelAData}
-        modelB={modelBData}
-        comparison={comparison || undefined}
-        onModelSelect={(modelId) => {
-          const modelConfig = getModelConfig(modelId)
-          if (modelConfig) {
-            handleModelChange(modelConfig.path)
-            setShowModelComparison(false)
-          }
-        }}
-        onRefreshComparison={() => console.log('Refresh comparison')}
-        onExportData={() => {
-          const data = performanceTracking.exportPerformanceData()
-          const blob = new Blob([data], { type: 'application/json' })
-          const url = URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = url
-          a.download = `model-comparison-${Date.now()}.json`
-          a.click()
-          URL.revokeObjectURL(url)
-        }}
-      />
-    )
-  }
+  }, [performanceTracking, getModelComparisonData, handleModelChange, setShowModelComparison])
 
   // Enhanced memory management with progressive cleanup
   useEffect(() => {
@@ -1006,70 +1008,118 @@ export default function WebGL3DPage() {
     }
   }, [])
 
-  // CRITICAL FIX: Comprehensive cleanup on component unmount
+  // CRITICAL FIX: Comprehensive cleanup on component unmount - Fixed React Error #310
   useEffect(() => {
     return () => {
-      console.log('🧹 WebGL3DPage unmounting - comprehensive cleanup')
-      
-      // Clear all intervals
-      if (performanceCheckIntervalRef.current) {
-        clearInterval(performanceCheckIntervalRef.current)
-      }
-      
-      // Stop performance tracking
-      performanceTracking.stopTracking()
-      
-      // Cleanup Canvas renderer if it exists
-      if (canvasRef.current) {
-        const canvas = canvasRef.current
-        const context = canvas.getContext('webgl2') || canvas.getContext('webgl')
+      try {
+        console.log('🧹 WebGL3DPage unmounting - comprehensive cleanup')
         
-        if (context) {
-          // Get the Three.js renderer if stored
-          const renderer = (context as any)._threeRenderer
-          if (renderer) {
-            console.log('🧹 Disposing Three.js renderer')
-            
-            // Dispose renderer and all associated resources
-            renderer.dispose()
-            renderer.forceContextLoss()
-            
-            // Clear render targets
-            renderer.setRenderTarget(null)
-            
-            // Clear info
-            renderer.info.memory.geometries = 0
-            renderer.info.memory.textures = 0
-            renderer.info.render.calls = 0
-            renderer.info.render.triangles = 0
+        // Clear all intervals with error handling
+        try {
+          if (performanceCheckIntervalRef.current) {
+            clearInterval(performanceCheckIntervalRef.current)
+            performanceCheckIntervalRef.current = undefined
           }
-          
-          // Clean up event listeners
-          if ((context as any)._contextEventCleanup) {
-            (context as any)._contextEventCleanup()
-          }
-          
-          // Force context loss for complete cleanup
-          const loseContext = context.getExtension('WEBGL_lose_context')
-          if (loseContext) {
-            loseContext.loseContext()
-          }
+        } catch (error) {
+          console.warn('Error clearing performance interval:', error)
         }
+        
+        // Stop performance tracking with error handling
+        try {
+          if (performanceTracking && typeof performanceTracking.stopTracking === 'function') {
+            performanceTracking.stopTracking()
+          }
+        } catch (error) {
+          console.warn('Error stopping performance tracking:', error)
+        }
+        
+        // Cleanup Canvas renderer if it exists
+        try {
+          if (canvasRef.current) {
+            const canvas = canvasRef.current
+            const context = canvas.getContext('webgl2') || canvas.getContext('webgl')
+            
+            if (context && !context.isContextLost()) {
+              try {
+                // Get the Three.js renderer if stored
+                const renderer = (context as any)._threeRenderer
+                if (renderer && typeof renderer.dispose === 'function') {
+                  console.log('🧹 Disposing Three.js renderer')
+                  
+                  // Dispose renderer and all associated resources
+                  renderer.dispose()
+                  
+                  // Clear render targets
+                  if (typeof renderer.setRenderTarget === 'function') {
+                    renderer.setRenderTarget(null)
+                  }
+                  
+                  // Clear info
+                  if (renderer.info) {
+                    renderer.info.memory.geometries = 0
+                    renderer.info.memory.textures = 0
+                    renderer.info.render.calls = 0
+                    renderer.info.render.triangles = 0
+                  }
+                  
+                  // Force context loss if available
+                  if (typeof renderer.forceContextLoss === 'function') {
+                    renderer.forceContextLoss()
+                  }
+                }
+              } catch (rendererError) {
+                console.warn('Error disposing Three.js renderer:', rendererError)
+              }
+              
+              try {
+                // Clean up event listeners
+                if ((context as any)._contextEventCleanup) {
+                  (context as any)._contextEventCleanup()
+                }
+              } catch (eventError) {
+                console.warn('Error cleaning up WebGL event listeners:', eventError)
+              }
+              
+              try {
+                // Force context loss for complete cleanup
+                const loseContext = context.getExtension('WEBGL_lose_context')
+                if (loseContext && typeof loseContext.loseContext === 'function') {
+                  loseContext.loseContext()
+                }
+              } catch (contextError) {
+                console.warn('Error forcing WebGL context loss:', contextError)
+              }
+            }
+          }
+        } catch (canvasError) {
+          console.warn('Error during canvas cleanup:', canvasError)
+        }
+        
+        // Memory manager cleanup with error handling
+        try {
+          if (memoryManagerRef.current && typeof memoryManagerRef.current.dispose === 'function') {
+            memoryManagerRef.current.dispose()
+          }
+        } catch (memoryError) {
+          console.warn('Error disposing memory manager:', memoryError)
+        }
+        
+        // Force garbage collection if available
+        try {
+          if (typeof window !== 'undefined' && window.gc) {
+            window.gc()
+          }
+        } catch (gcError) {
+          console.warn('Error forcing garbage collection:', gcError)
+        }
+        
+        console.log('🧹 WebGL3DPage cleanup complete')
+      } catch (error) {
+        console.error('🚨 Critical error during WebGL3DPage cleanup:', error)
+        // Don't throw - let the component unmount gracefully
       }
-      
-      // Memory manager cleanup
-      if (memoryManagerRef.current) {
-        memoryManagerRef.current.dispose()
-      }
-      
-      // Force garbage collection if available
-      if (typeof window !== 'undefined' && window.gc) {
-        window.gc()
-      }
-      
-      console.log('🧹 WebGL3DPage cleanup complete')
     }
-  }, [])
+  }, []) // Empty dependency array is correct here - cleanup should only run on unmount
   
   // Component is ready to render
   if (!isInitialized || !capabilities || !deviceCapabilities) {
