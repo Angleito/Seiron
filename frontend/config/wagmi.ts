@@ -111,47 +111,51 @@ if (seiSupportedWallets.includes('walletconnect')) {
         }
       } else {
         // STRICTMODE HANDLING: Mark first mount in development
+        let shouldCreateConnector = true
+        
         if (typeof window !== 'undefined' && import.meta.env.DEV) {
           if (isStrictModeDoubleMount) {
             console.log('ℹ️ React StrictMode double mount detected, skipping WalletConnect connector creation')
-            return // Skip connector creation on second mount
+            shouldCreateConnector = false
           } else {
             ;(window as any).__SEIRON_STRICTMODE_FIRST_MOUNT__ = true
           }
         }
         
-        // SAFE TO CREATE: No existing initialization detected
-        connectors.push(
-          walletConnect({
-            projectId: walletConnectProjectId,
-            metadata: {
-              name: 'Seiron',
-              description: 'Seiron Dragon - DeFi Portfolio Management',
-              url: 'https://seiron.vercel.app',
-              icons: ['https://seiron.vercel.app/favicon.ico'],
-            },
-            showQrModal: true,
-          })
-        )
-        console.log('✅ WalletConnect connector added (supported on Sei Network)')
-        
-        // IMMEDIATE FLAG SETTING: Set flags immediately after connector creation
-        if (typeof window !== 'undefined') {
-          ;(window as any).__WAGMI_WALLETCONNECT_INITIALIZED__ = true
-          ;(window as any).__WALLETCONNECT_INITIALIZED__ = true
-          ;(window as any).__WAGMI_WALLETCONNECT_TIMESTAMP__ = Date.now()
+        // SAFE TO CREATE: No existing initialization detected and not blocked by StrictMode
+        if (shouldCreateConnector) {
+          connectors.push(
+            walletConnect({
+              projectId: walletConnectProjectId,
+              metadata: {
+                name: 'Seiron',
+                description: 'Seiron Dragon - DeFi Portfolio Management',
+                url: 'https://seiron.vercel.app',
+                icons: ['https://seiron.vercel.app/favicon.ico'],
+              },
+              showQrModal: true,
+            })
+          )
+          console.log('✅ WalletConnect connector added (supported on Sei Network)')
           
-          // Initialize global state immediately
-          ;(window as any).__SEIRON_WALLETCONNECT_GLOBAL_STATE__ = {
-            isInitialized: true,
-            isInitializing: false,
-            initializationTimestamp: Date.now(),
-            initializationMethod: 'wagmi',
-            instanceCount: 1,
-            lastCleanupTimestamp: null
+          // IMMEDIATE FLAG SETTING: Set flags immediately after connector creation
+          if (typeof window !== 'undefined') {
+            ;(window as any).__WAGMI_WALLETCONNECT_INITIALIZED__ = true
+            ;(window as any).__WALLETCONNECT_INITIALIZED__ = true
+            ;(window as any).__WAGMI_WALLETCONNECT_TIMESTAMP__ = Date.now()
+            
+            // Initialize global state immediately
+            ;(window as any).__SEIRON_WALLETCONNECT_GLOBAL_STATE__ = {
+              isInitialized: true,
+              isInitializing: false,
+              initializationTimestamp: Date.now(),
+              initializationMethod: 'wagmi',
+              instanceCount: 1,
+              lastCleanupTimestamp: null
+            }
+            
+            console.log('🔐 Global WalletConnect state initialized by Wagmi')
           }
-          
-          console.log('🔐 Global WalletConnect state initialized by Wagmi')
         }
       }
     } catch (error) {
