@@ -153,15 +153,15 @@ describe('SeironGLBDragon Dynamic Model Switching', () => {
 
   test('should handle model-specific configuration structure', () => {
     const modelSpecificConfig = {
-      '/models/seiron_low.glb': {
-        quality: 'low' as const,
+      '/models/seiron_optimized.glb': {
+        quality: 'medium' as const,
         optimizations: {
-          shadows: false,
+          shadows: true,
           reflections: false,
-          antialiasing: false
+          antialiasing: true
         }
       },
-      '/models/seiron_high.glb': {
+      '/models/seiron.glb': {
         quality: 'high' as const,
         optimizations: {
           shadows: true,
@@ -174,7 +174,7 @@ describe('SeironGLBDragon Dynamic Model Switching', () => {
     expect(() => {
       render(
         <SeironGLBDragonWithCanvas
-          modelPath="/models/seiron_low.glb"
+          modelPath="/models/seiron_optimized.glb"
           modelSpecificConfig={modelSpecificConfig}
           {...mockCallbacks}
         />

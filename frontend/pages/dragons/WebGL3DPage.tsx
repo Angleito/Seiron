@@ -139,12 +139,29 @@ export default function WebGL3DPage() {
   const memoryManagerRef = useRef(DragonMemoryManager.getInstance())
   const performanceCheckIntervalRef = useRef<NodeJS.Timeout>()
   
-  // WebGL Recovery integration - must be called before any conditional logic
+  // WebGL Recovery integration with DragonMemoryManager coordination - must be called before any conditional logic
   const {
     diagnostics: webglDiagnostics,
     isRecovering: isWebGLRecovering,
     forceRecovery: manualWebGLRecover
-  } = useWebGLRecovery()
+  } = useWebGLRecovery({
+    onContextLost: () => {
+      console.log('🔴 WebGL3DPage: Context lost, notifying DragonMemoryManager')
+      memoryManagerRef.current?.notifyWebGLContextLost()
+    },
+    onContextRestored: () => {
+      console.log('🟢 WebGL3DPage: Context restored, notifying DragonMemoryManager')
+      memoryManagerRef.current?.notifyWebGLContextRestored()
+    },
+    onRecoveryAttempt: (attempt) => {
+      console.log(`🔄 WebGL3DPage: Recovery attempt ${attempt}, notifying DragonMemoryManager`)
+      memoryManagerRef.current?.notifyWebGLRecoveryStart()
+    },
+    onFallback: () => {
+      console.log('⚠️ WebGL3DPage: Fallback triggered, completing recovery notification')
+      memoryManagerRef.current?.notifyWebGLRecoveryComplete()
+    }
+  })
   
   // Model recommendation engine and dragon model manager - must be called before any conditional logic
   const dragonModelManager = useDragonModelManager(selectedModelId)

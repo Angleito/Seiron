@@ -42,17 +42,30 @@ export function WalletConnectProvider({ children }: WalletConnectProviderProps) 
 
     setInitializationChecked(true)
     
-    // Check if WalletConnect is being handled by Wagmi
+    // CRITICAL FIX: Check if WalletConnect is being handled by Wagmi
     const isWagmiHandlingWalletConnect = envConfig.isValid.walletConnect
     
-    // CRITICAL FIX: Additional check for existing WalletConnect instances
-    const hasExistingWalletConnect = typeof window !== 'undefined' && 
-      (window as any).__WALLET_CONNECT_INITIALIZED__ === true
+    // CRITICAL FIX: Check for existing WalletConnect instances using correct flag names
+    const hasExistingWalletConnect = typeof window !== 'undefined' && (
+      (window as any).__WALLET_CONNECT_INITIALIZED__ === true ||
+      (window as any).__WALLETCONNECT_INITIALIZED__ === true ||
+      (window as any).WalletConnectCore !== undefined
+    )
     
-    if (isWagmiHandlingWalletConnect || hasExistingWalletConnect) {
+    // CRITICAL FIX: Check if Wagmi connectors are already initialized with WalletConnect
+    const wagmiWalletConnectActive = typeof window !== 'undefined' && 
+      (window as any).__WAGMI_WALLETCONNECT_INITIALIZED__ === true
+    
+    if (isWagmiHandlingWalletConnect || hasExistingWalletConnect || wagmiWalletConnectActive) {
       logger.debug('WalletConnect is being handled by Wagmi or already initialized, skipping custom initialization', {
         wagmiHandling: isWagmiHandlingWalletConnect,
-        existingInstance: hasExistingWalletConnect
+        existingInstance: hasExistingWalletConnect,
+        wagmiConnectorActive: wagmiWalletConnectActive,
+        globalFlags: {
+          __WALLET_CONNECT_INITIALIZED__: typeof window !== 'undefined' ? (window as any).__WALLET_CONNECT_INITIALIZED__ : false,
+          __WALLETCONNECT_INITIALIZED__: typeof window !== 'undefined' ? (window as any).__WALLETCONNECT_INITIALIZED__ : false,
+          WalletConnectCore: typeof window !== 'undefined' ? !!(window as any).WalletConnectCore : false
+        }
       })
       setIsInitialized(true) // Mark as initialized without doing anything
       return
@@ -65,9 +78,11 @@ export function WalletConnectProvider({ children }: WalletConnectProviderProps) 
       logger.debug('Initializing custom WalletConnect manager (Wagmi not handling WalletConnect)')
       await walletConnectManager.initialize()
       
-      // CRITICAL FIX: Mark globally to prevent other instances
+      // CRITICAL FIX: Mark globally to prevent other instances using both flag formats
       if (typeof window !== 'undefined') {
-        (window as any).__WALLET_CONNECT_INITIALIZED__ = true
+        ;(window as any).__WALLET_CONNECT_INITIALIZED__ = true
+        ;(window as any).__WALLETCONNECT_INITIALIZED__ = true
+        ;(window as any).__WAGMI_WALLETCONNECT_INITIALIZED__ = true
       }
       
       setIsInitialized(true)
@@ -93,9 +108,11 @@ export function WalletConnectProvider({ children }: WalletConnectProviderProps) 
     return () => {
       logger.debug('WalletConnect Provider cleanup')
       
-      // CRITICAL FIX: Clear global initialization marker on cleanup
+      // CRITICAL FIX: Clear global initialization markers on cleanup
       if (typeof window !== 'undefined') {
-        (window as any).__WALLET_CONNECT_INITIALIZED__ = false
+        ;(window as any).__WALLET_CONNECT_INITIALIZED__ = false
+        ;(window as any).__WALLETCONNECT_INITIALIZED__ = false
+        ;(window as any).__WAGMI_WALLETCONNECT_INITIALIZED__ = false
       }
       
       setIsInitialized(false)

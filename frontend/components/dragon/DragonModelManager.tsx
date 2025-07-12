@@ -70,7 +70,7 @@ const DEFAULT_MODELS: Record<string, ModelConfig> = {
     path: '/models/seiron.glb',
     displayName: 'Seiron Dragon (Primary)',
     quality: 'high',
-    fallbackPath: '/models/seiron_low.glb',
+    fallbackPath: '/models/seiron_optimized.glb', // FIXED: Use existing optimized model
     preloadPriority: 'high',
     memoryUsageMB: 64,
     supportsAnimations: true,
@@ -82,11 +82,11 @@ const DEFAULT_MODELS: Record<string, ModelConfig> = {
       webGL2: true
     }
   },
-  'seiron-low': {
-    id: 'seiron-low',
-    path: '/models/seiron_low.glb',
-    displayName: 'Seiron Dragon (Low Quality)',
-    quality: 'low',
+  'seiron-optimized': {
+    id: 'seiron-optimized',
+    path: '/models/seiron_optimized.glb', // FIXED: Use existing optimized model instead of low
+    displayName: 'Seiron Dragon (Optimized)',
+    quality: 'medium', // Changed from low to medium since optimized is better than low
     preloadPriority: 'medium',
     memoryUsageMB: 32,
     supportsAnimations: true,

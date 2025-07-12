@@ -19,35 +19,22 @@ const DragonModelSwitchingExample: React.FC = () => {
     emotion: 'calm'
   })
 
-  // Available models for switching
+  // Available models for switching (FIXED: Updated to use existing model files)
   const availableModels = [
     { path: '/models/seiron.glb', name: 'Default Dragon', quality: 'high' },
-    { path: '/models/seiron_low.glb', name: 'Low Quality Dragon', quality: 'low' },
-    { path: '/models/seiron_medium.glb', name: 'Medium Quality Dragon', quality: 'medium' },
-    { path: '/models/seiron_high.glb', name: 'High Quality Dragon', quality: 'high' },
+    { path: '/models/seiron_optimized.glb', name: 'Optimized Dragon', quality: 'medium' },
+    { path: '/models/dragon_head.glb', name: 'Dragon Head', quality: 'medium' },
+    { path: '/models/dragon_head_optimized.glb', name: 'Dragon Head (Optimized)', quality: 'low' },
     { path: '/models/seiron_animated.gltf', name: 'Animated Dragon', quality: 'high' }
   ]
 
-  // Model-specific configuration
+  // Model-specific configuration (FIXED: Updated to use existing model files)
   const modelSpecificConfig: { [key: string]: any } = {
-    '/models/seiron_low.glb': {
+    '/models/seiron_optimized.glb': {
       scale: 2.0,
       position: [0, -1, 0] as [number, number, number],
       rotation: [0, 0, 0] as [number, number, number],
       animationName: 'idle',
-      quality: 'low' as const,
-      optimizations: {
-        shadows: false,
-        reflections: false,
-        antialiasing: false,
-        particles: false
-      }
-    },
-    '/models/seiron_medium.glb': {
-      scale: 2.5,
-      position: [0, -0.5, 0] as [number, number, number],
-      rotation: [0, 0, 0] as [number, number, number],
-      animationName: 'flying',
       quality: 'medium' as const,
       optimizations: {
         shadows: true,
@@ -56,17 +43,30 @@ const DragonModelSwitchingExample: React.FC = () => {
         particles: true
       }
     },
-    '/models/seiron_high.glb': {
-      scale: 3.0,
-      position: [0, 0, 0] as [number, number, number],
+    '/models/dragon_head.glb': {
+      scale: 2.5,
+      position: [0, -0.5, 0] as [number, number, number],
       rotation: [0, 0, 0] as [number, number, number],
-      animationName: 'flying',
-      quality: 'high' as const,
+      animationName: 'idle',
+      quality: 'medium' as const,
       optimizations: {
         shadows: true,
-        reflections: true,
+        reflections: false,
         antialiasing: true,
         particles: true
+      }
+    },
+    '/models/dragon_head_optimized.glb': {
+      scale: 2.0,
+      position: [0, -0.5, 0] as [number, number, number],
+      rotation: [0, 0, 0] as [number, number, number],
+      animationName: 'idle',
+      quality: 'low' as const,
+      optimizations: {
+        shadows: false,
+        reflections: false,
+        antialiasing: false,
+        particles: false
       }
     },
     '/models/seiron_animated.gltf': {

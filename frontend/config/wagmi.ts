@@ -91,6 +91,12 @@ if (seiSupportedWallets.includes('walletconnect')) {
         })
       )
       console.log('✅ WalletConnect connector added (supported on Sei Network)')
+      
+      // CRITICAL FIX: Mark that Wagmi is handling WalletConnect to prevent double initialization
+      if (typeof window !== 'undefined') {
+        ;(window as any).__WAGMI_WALLETCONNECT_INITIALIZED__ = true
+        ;(window as any).__WALLETCONNECT_INITIALIZED__ = true
+      }
     } catch (error) {
       console.warn('⚠️ Failed to initialize WalletConnect:', error)
     }

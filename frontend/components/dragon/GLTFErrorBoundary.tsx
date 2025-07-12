@@ -18,6 +18,23 @@ interface GLTFErrorBoundaryProps {
   enableDebugInfo?: boolean
 }
 
+interface ErrorSignature {
+  message: string
+  stack: string
+  type: GLTFErrorType
+  timestamp: number
+  componentStack: string
+}
+
+interface CircuitBreakerState {
+  level: 'closed' | 'open' | 'half-open'
+  errorCount: number
+  lastErrorTime: number
+  consecutiveErrors: number
+  errorSignatures: ErrorSignature[]
+  cooldownEnd: number
+}
+
 interface GLTFErrorBoundaryState {
   hasError: boolean
   error: Error | null
@@ -30,6 +47,10 @@ interface GLTFErrorBoundaryState {
   isInErrorLoop: boolean
   errorLoopCount: number
   lastErrorMessage: string
+  circuitBreaker: CircuitBreakerState
+  errorSignatures: ErrorSignature[]
+  mountCycles: number
+  lastMountTime: number
 }
 
 // GLTF-specific error types
@@ -211,7 +232,18 @@ export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErr
       recoveryAttempts: 0,
       isInErrorLoop: false,
       errorLoopCount: 0,
-      lastErrorMessage: ''
+      lastErrorMessage: '',
+      circuitBreaker: {
+        level: 'closed',
+        errorCount: 0,
+        lastErrorTime: 0,
+        consecutiveErrors: 0,
+        errorSignatures: [],
+        cooldownEnd: 0
+      },
+      errorSignatures: [],
+      mountCycles: 0,
+      lastMountTime: Date.now()
     }
     
     // Set mounted ref
@@ -230,42 +262,162 @@ export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErr
     }
   }
   
+  // CRITICAL FIX: Advanced error signature analysis
+  private createErrorSignature(error: Error, errorInfo: ErrorInfo): ErrorSignature {
+    return {
+      message: error.message,
+      stack: error.stack || '',
+      type: classifyGLTFError(error),
+      timestamp: Date.now(),
+      componentStack: errorInfo.componentStack || ''
+    }
+  }
+  
+  // CRITICAL FIX: Enhanced error pattern detection
+  private isIdenticalError(sig1: ErrorSignature, sig2: ErrorSignature): boolean {
+    return sig1.message === sig2.message && 
+           sig1.type === sig2.type &&
+           sig1.stack.slice(0, 200) === sig2.stack.slice(0, 200) // Compare first 200 chars of stack
+  }
+  
+  private isSimilarError(sig1: ErrorSignature, sig2: ErrorSignature): boolean {
+    return sig1.type === sig2.type && 
+           sig1.message.includes(sig2.message.slice(0, 50)) || 
+           sig2.message.includes(sig1.message.slice(0, 50))
+  }
+  
+  // CRITICAL FIX: Multi-level circuit breaker logic
+  private updateCircuitBreaker(errorSignature: ErrorSignature): CircuitBreakerState {
+    const now = Date.now()
+    const { circuitBreaker, errorSignatures } = this.state
+    
+    // Add current error to signatures
+    const newSignatures = [...errorSignatures, errorSignature].slice(-10) // Keep last 10 errors
+    
+    // Count identical errors in recent history (last 30 seconds)
+    const recentErrors = newSignatures.filter(sig => now - sig.timestamp < 30000)
+    const identicalCount = recentErrors.filter(sig => this.isIdenticalError(sig, errorSignature)).length
+    const similarCount = recentErrors.filter(sig => this.isSimilarError(sig, errorSignature)).length
+    
+    // Circuit breaker state machine
+    let newState: CircuitBreakerState = { ...circuitBreaker }
+    
+    if (circuitBreaker.level === 'closed') {
+      // Normal operation - check for error threshold
+      newState.errorCount++
+      newState.consecutiveErrors++
+      newState.lastErrorTime = now
+      newState.errorSignatures = newSignatures
+      
+      // Trip circuit if too many errors
+      if (identicalCount >= 3 || similarCount >= 5 || newState.consecutiveErrors >= 4) {
+        newState.level = 'open'
+        newState.cooldownEnd = now + (Math.min(newState.consecutiveErrors, 8) * 2000) // Exponential backoff
+        logger.error('GLTF Circuit Breaker OPENED - too many errors detected', {
+          identicalCount,
+          similarCount,
+          consecutiveErrors: newState.consecutiveErrors,
+          cooldownPeriod: newState.cooldownEnd - now
+        })
+      }
+    } else if (circuitBreaker.level === 'open') {
+      // Circuit is open - check if cooldown period has passed
+      if (now > circuitBreaker.cooldownEnd) {
+        newState.level = 'half-open'
+        logger.info('GLTF Circuit Breaker moved to HALF-OPEN - testing recovery')
+      } else {
+        // Still in cooldown - reject immediately
+        logger.warn('GLTF Circuit Breaker still OPEN - rejecting error handling', {
+          remainingCooldown: circuitBreaker.cooldownEnd - now
+        })
+      }
+    } else if (circuitBreaker.level === 'half-open') {
+      // Testing recovery - one error puts us back to open
+      newState.level = 'open'
+      newState.cooldownEnd = now + (newState.consecutiveErrors * 3000) // Longer cooldown
+      logger.warn('GLTF Circuit Breaker back to OPEN - recovery failed')
+    }
+    
+    return newState
+  }
+  
+  // CRITICAL FIX: Mount cycle detection to prevent mount/unmount loops
+  private detectMountCycles(): boolean {
+    const now = Date.now()
+    const { mountCycles, lastMountTime } = this.state
+    
+    // If mount happened within 2 seconds of last mount, it's likely a cycle
+    if (now - lastMountTime < 2000) {
+      const newMountCycles = mountCycles + 1
+      
+      this.setState({
+        mountCycles: newMountCycles,
+        lastMountTime: now
+      })
+      
+      if (newMountCycles >= 3) {
+        logger.error('GLTF Error Boundary: Mount/unmount cycle detected', {
+          mountCycles: newMountCycles,
+          timeSinceLastMount: now - lastMountTime
+        })
+        return true
+      }
+    } else {
+      // Reset mount cycle counter if enough time has passed
+      this.setState({
+        mountCycles: 0,
+        lastMountTime: now
+      })
+    }
+    
+    return false
+  }
+  
   override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     const { onError, enableAutoRecovery = true, maxRetries = 3 } = this.props
-    const { retryCount, lastErrorMessage, errorLoopCount, lastErrorTime } = this.state
+    const { retryCount } = this.state
     
     const errorType = classifyGLTFError(error)
     const recoveryStrategy = getRecoveryStrategy(errorType)
     const currentTime = Date.now()
     
-    // CRITICAL FIX: Circuit breaker logic to prevent infinite error loops
-    const isSameError = error.message === lastErrorMessage
-    const isRecentError = currentTime - lastErrorTime < 1000 // Less than 1 second
-    const isErrorLoop = isSameError && isRecentError && errorLoopCount >= 2
+    // CRITICAL FIX: Create error signature for advanced analysis
+    const errorSignature = this.createErrorSignature(error, errorInfo)
     
-    if (isErrorLoop) {
-      logger.error('GLTF Error Loop detected - breaking circuit:', {
-        error: error.message,
-        errorLoopCount: errorLoopCount + 1,
-        lastErrorTime,
-        currentTime
-      })
-      
-      this.setState(prevState => ({
+    // CRITICAL FIX: Check for mount/unmount cycles
+    const hasMountCycles = this.detectMountCycles()
+    if (hasMountCycles) {
+      logger.error('GLTF Error Boundary: Mount cycle detected, forcing permanent fallback')
+      this.setState({
         isInErrorLoop: true,
-        errorLoopCount: prevState.errorLoopCount + 1,
-        lastErrorMessage: error.message
-      }))
-      
-      // Force fallback without recovery attempts
-      setTimeout(() => {
-        this.triggerFallback(errorType)
-      }, 100)
-      
+        errorLoopCount: 999 // High number to prevent any recovery attempts
+      })
+      setTimeout(() => this.triggerFallback(errorType), 100)
       return
     }
     
-    // Enhanced logging for GLTF errors
+    // CRITICAL FIX: Update circuit breaker with advanced error analysis
+    const newCircuitBreakerState = this.updateCircuitBreaker(errorSignature)
+    
+    // Check if circuit breaker is open (blocking error handling)
+    if (newCircuitBreakerState.level === 'open' && currentTime < newCircuitBreakerState.cooldownEnd) {
+      logger.warn('GLTF Circuit Breaker OPEN - blocking error handling during cooldown', {
+        remainingCooldown: newCircuitBreakerState.cooldownEnd - currentTime,
+        consecutiveErrors: newCircuitBreakerState.consecutiveErrors
+      })
+      
+      this.setState(prevState => ({
+        circuitBreaker: newCircuitBreakerState,
+        errorSignatures: [...prevState.errorSignatures, errorSignature],
+        isInErrorLoop: true
+      }))
+      
+      // Force immediate fallback
+      setTimeout(() => this.triggerFallback(errorType), 500)
+      return
+    }
+    
+    // Enhanced logging for GLTF errors with circuit breaker info
     logger.error('GLTF Error Boundary caught error:', {
       error: error.message,
       stack: error.stack,
@@ -274,17 +426,23 @@ export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErr
       retryCount,
       modelPath: this.props.modelPath,
       recoveryStrategy: recoveryStrategy.strategy,
-      canRecover: recoveryStrategy.canRecover
+      canRecover: recoveryStrategy.canRecover,
+      circuitBreakerLevel: newCircuitBreakerState.level,
+      consecutiveErrors: newCircuitBreakerState.consecutiveErrors,
+      errorSignatureCount: newCircuitBreakerState.errorSignatures.length
     })
     
-    // Update state with error info
+    // Update state with enhanced error tracking
     this.setState(prevState => ({
       error,
       errorInfo,
       retryCount: prevState.retryCount + 1,
       recoveryAttempts: prevState.recoveryAttempts + 1,
       lastErrorMessage: error.message,
-      errorLoopCount: isSameError && isRecentError ? prevState.errorLoopCount + 1 : 0
+      lastErrorTime: currentTime,
+      circuitBreaker: newCircuitBreakerState,
+      errorSignatures: [...prevState.errorSignatures, errorSignature].slice(-10), // Keep last 10
+      errorLoopCount: 0 // Reset since we have better circuit breaker detection now
     }))
     
     // Call custom error handler
@@ -305,6 +463,14 @@ export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErr
   
   override componentDidMount() {
     this.mountedRef.current = true
+    
+    // CRITICAL FIX: Detect mount cycles
+    this.detectMountCycles()
+    
+    logger.debug('GLTF Error Boundary mounted', {
+      mountCycles: this.state.mountCycles,
+      circuitBreakerLevel: this.state.circuitBreaker.level
+    })
   }
   
   override componentWillUnmount() {
@@ -354,14 +520,23 @@ export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErr
           break
       }
       
-      // If recovery successful, reset error state
+      // If recovery successful, reset error state and circuit breaker
       if (this.mountedRef.current) {
-        this.setState({
+        this.setState(prevState => ({
           hasError: false,
           error: null,
           errorInfo: null,
-          isRecovering: false
-        })
+          isRecovering: false,
+          // CRITICAL FIX: Reset circuit breaker on successful recovery
+          circuitBreaker: {
+            ...prevState.circuitBreaker,
+            level: 'closed',
+            consecutiveErrors: 0,
+            errorCount: Math.max(0, prevState.circuitBreaker.errorCount - 1) // Gradually reduce error count
+          }
+        }))
+        
+        logger.info('GLTF Error Boundary: Successful recovery, circuit breaker reset to CLOSED')
         
         if (this.props.onRecovery) {
           this.props.onRecovery()
@@ -495,23 +670,61 @@ export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErr
   }
   
   private renderErrorUI = () => {
-    const { error, errorType, retryCount, isRecovering, recoveryAttempts, isInErrorLoop, errorLoopCount } = this.state
+    const { 
+      error, 
+      errorType, 
+      retryCount, 
+      isRecovering, 
+      recoveryAttempts, 
+      isInErrorLoop, 
+      errorLoopCount,
+      circuitBreaker,
+      mountCycles,
+      errorSignatures
+    } = this.state
     const { maxRetries = 3, modelPath, enableDebugInfo = false } = this.props
     
     const recoveryStrategy = getRecoveryStrategy(errorType)
-    const canRetry = retryCount < Math.min(maxRetries, recoveryStrategy.maxRetries) && !isInErrorLoop
+    const canRetry = retryCount < Math.min(maxRetries, recoveryStrategy.maxRetries) && 
+                     !isInErrorLoop && 
+                     circuitBreaker.level !== 'open' &&
+                     mountCycles < 3
     
-    if (isInErrorLoop) {
+    if (isInErrorLoop || circuitBreaker.level === 'open') {
+      const isCircuitBreakerOpen = circuitBreaker.level === 'open'
+      const cooldownRemaining = isCircuitBreakerOpen ? 
+        Math.max(0, circuitBreaker.cooldownEnd - Date.now()) : 0
+      
       return (
         <div className="flex items-center justify-center min-h-[200px] bg-gradient-to-b from-red-900 to-gray-800">
           <div className="text-center max-w-md">
-            <div className="text-4xl mb-4">⚠️</div>
-            <h3 className="text-xl font-bold text-red-300 mb-2">Error Loop Detected</h3>
+            <div className="text-4xl mb-4">
+              {isCircuitBreakerOpen ? '🚫' : '⚠️'}
+            </div>
+            <h3 className="text-xl font-bold text-red-300 mb-2">
+              {isCircuitBreakerOpen ? 'Circuit Breaker Active' : 'Error Loop Detected'}
+            </h3>
             <p className="text-red-200 mb-4">
-              Dragon model encountered repeated errors. Switching to fallback mode.
+              {isCircuitBreakerOpen 
+                ? 'Too many errors detected. Dragon model temporarily disabled to prevent crashes.'
+                : 'Dragon model encountered repeated errors. Switching to fallback mode.'
+              }
             </p>
             <div className="text-sm text-red-400">
-              <p>Error loops: {errorLoopCount}</p>
+              {isCircuitBreakerOpen ? (
+                <>
+                  <p>Circuit breaker: {circuitBreaker.level.toUpperCase()}</p>
+                  <p>Consecutive errors: {circuitBreaker.consecutiveErrors}</p>
+                  {cooldownRemaining > 0 && (
+                    <p>Cooldown: {Math.ceil(cooldownRemaining / 1000)}s remaining</p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p>Error loops: {errorLoopCount}</p>
+                  <p>Mount cycles: {mountCycles}</p>
+                </>
+              )}
               <p>Fallback will activate automatically</p>
             </div>
           </div>
@@ -598,6 +811,15 @@ export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErr
               <p className="text-xs text-gray-600 mt-1">
                 Strategy: {recoveryStrategy.strategy.replace('_', ' ')}
               </p>
+            )}
+            {enableDebugInfo && (
+              <div className="text-xs text-gray-600 mt-2 space-y-1">
+                <p>Circuit: {circuitBreaker.level} | Errors: {circuitBreaker.consecutiveErrors}</p>
+                <p>Signatures: {errorSignatures.length} | Mounts: {mountCycles}</p>
+                {circuitBreaker.level !== 'closed' && circuitBreaker.cooldownEnd > Date.now() && (
+                  <p>Cooldown: {Math.ceil((circuitBreaker.cooldownEnd - Date.now()) / 1000)}s</p>
+                )}
+              </div>
             )}
           </div>
         </div>
