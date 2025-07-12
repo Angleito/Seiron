@@ -1,9 +1,317 @@
 'use client'
 
-import React, { Component, ErrorInfo, ReactNode } from 'react'
+import React, { Component, ErrorInfo, ReactNode, useState, useEffect } from 'react'
 import { AlertTriangle, RefreshCw, FileX, Loader } from 'lucide-react'
 import { logger } from '@lib/logger'
 import { errorRecoveryUtils } from '../../utils/errorRecovery'
+
+// Global circuit breaker singleton to prevent mount/unmount cycles across all instances
+class GlobalGLTFCircuitBreaker {
+  private static instance: GlobalGLTFCircuitBreaker
+  private circuitStates: Map<string, {
+    level: 'closed' | 'open' | 'half-open' | 'permanent'
+    errorCount: number
+    mountAttempts: number
+    lastMountTime: number
+    lastErrorTime: number
+    consecutiveErrors: number
+    consecutiveMountFailures: number
+    cooldownEnd: number
+    permanentFallbackTriggered: boolean
+    errorSignatures: ErrorSignature[]
+    mountCycleDetected: boolean
+    lastRecoveryAttempt: number
+    recoveryCount: number
+  }> = new Map()
+  
+  private globalMountTracking: {
+    mountAttempts: number
+    lastMountTime: number
+    rapidMountCount: number
+  } = {
+    mountAttempts: 0,
+    lastMountTime: 0,
+    rapidMountCount: 0
+  }
+  
+  static getInstance(): GlobalGLTFCircuitBreaker {
+    if (!GlobalGLTFCircuitBreaker.instance) {
+      GlobalGLTFCircuitBreaker.instance = new GlobalGLTFCircuitBreaker()
+    }
+    return GlobalGLTFCircuitBreaker.instance
+  }
+  
+  // Track mount attempts globally to detect cross-component cycling
+  trackMountAttempt(componentId: string): boolean {
+    const now = Date.now()
+    const state = this.getComponentState(componentId)
+    
+    // Update global tracking
+    if (now - this.globalMountTracking.lastMountTime < 3000) {
+      this.globalMountTracking.rapidMountCount++
+    } else {
+      this.globalMountTracking.rapidMountCount = 0
+    }
+    
+    this.globalMountTracking.mountAttempts++
+    this.globalMountTracking.lastMountTime = now
+    
+    // Update component-specific tracking
+    state.mountAttempts++
+    state.lastMountTime = now
+    
+    // Detect rapid mounting patterns
+    const isRapidMount = now - state.lastMountTime < 2000
+    const hasGlobalRapidMounts = this.globalMountTracking.rapidMountCount > 5
+    const hasComponentRapidMounts = state.mountAttempts > 3 && isRapidMount
+    
+    if (hasGlobalRapidMounts || hasComponentRapidMounts) {
+      state.mountCycleDetected = true
+      state.level = 'permanent'
+      state.permanentFallbackTriggered = true
+      
+      logger.error('GLTF Global Circuit Breaker: Mount/unmount cycle detected', {
+        componentId,
+        globalRapidMounts: this.globalMountTracking.rapidMountCount,
+        componentMountAttempts: state.mountAttempts,
+        timeSinceLastMount: now - state.lastMountTime,
+        level: 'PERMANENT_FALLBACK'
+      })
+      
+      return true // Cycle detected
+    }
+    
+    return false
+  }
+  
+  // Record error with advanced pattern detection
+  recordError(componentId: string, errorSignature: ErrorSignature): 'allow' | 'block' | 'permanent' {
+    const now = Date.now()
+    const state = this.getComponentState(componentId)
+    
+    // Add error to signature history
+    state.errorSignatures.push(errorSignature)
+    if (state.errorSignatures.length > 15) {
+      state.errorSignatures = state.errorSignatures.slice(-15) // Keep last 15
+    }
+    
+    // Analyze error patterns
+    const recentErrors = state.errorSignatures.filter(sig => now - sig.timestamp < 60000) // Last minute
+    const identicalErrors = recentErrors.filter(sig => this.isIdenticalError(sig, errorSignature))
+    const similarErrors = recentErrors.filter(sig => this.isSimilarError(sig, errorSignature))
+    
+    state.errorCount++
+    state.consecutiveErrors++
+    state.lastErrorTime = now
+    
+    // Permanent fallback conditions
+    if (state.level === 'permanent' || state.mountCycleDetected) {
+      return 'permanent'
+    }
+    
+    // Critical error pattern detection
+    if (identicalErrors.length >= 4 || similarErrors.length >= 7) {
+      state.level = 'permanent'
+      state.permanentFallbackTriggered = true
+      logger.error('GLTF Circuit Breaker: Critical error pattern detected, permanent fallback activated', {
+        componentId,
+        identicalErrors: identicalErrors.length,
+        similarErrors: similarErrors.length,
+        level: 'PERMANENT'
+      })
+      return 'permanent'
+    }
+    
+    // Progressive circuit breaker logic
+    if (state.level === 'closed') {
+      // Trigger circuit breaker with progressive thresholds
+      if (identicalErrors.length >= 2 || state.consecutiveErrors >= 3) {
+        state.level = 'open'
+        state.cooldownEnd = now + this.calculateCooldownPeriod(state.consecutiveErrors)
+        
+        logger.warn('GLTF Circuit Breaker OPENED', {
+          componentId,
+          consecutiveErrors: state.consecutiveErrors,
+          identicalErrors: identicalErrors.length,
+          cooldownPeriod: state.cooldownEnd - now
+        })
+      }
+    }
+    
+    // Check circuit breaker state
+    if (state.level === 'open') {
+      if (now > state.cooldownEnd) {
+        state.level = 'half-open'
+        logger.info('GLTF Circuit Breaker moved to HALF-OPEN', { componentId })
+        return 'allow'
+      } else {
+        return 'block'
+      }
+    }
+    
+    if (state.level === 'half-open') {
+      // Any error in half-open state triggers escalation
+      state.level = 'open'
+      state.cooldownEnd = now + this.calculateCooldownPeriod(state.consecutiveErrors, true)
+      logger.warn('GLTF Circuit Breaker back to OPEN from half-open', { componentId })
+      return 'block'
+    }
+    
+    return 'allow'
+  }
+  
+  // Smart recovery with time-based backoff
+  canAttemptRecovery(componentId: string): boolean {
+    const state = this.getComponentState(componentId)
+    const now = Date.now()
+    
+    if (state.level === 'permanent' || state.mountCycleDetected) {
+      return false
+    }
+    
+    if (state.level === 'open' && now < state.cooldownEnd) {
+      return false
+    }
+    
+    // Progressive recovery delays
+    const minRecoveryInterval = Math.min(30000, 5000 * Math.pow(2, state.recoveryCount))
+    if (now - state.lastRecoveryAttempt < minRecoveryInterval) {
+      return false
+    }
+    
+    return true
+  }
+  
+  // Record successful recovery
+  recordSuccessfulRecovery(componentId: string): void {
+    const state = this.getComponentState(componentId)
+    
+    // Gradually reset circuit breaker
+    state.consecutiveErrors = Math.max(0, state.consecutiveErrors - 2)
+    state.errorCount = Math.max(0, state.errorCount - 1)
+    state.lastRecoveryAttempt = Date.now()
+    state.recoveryCount++
+    
+    if (state.consecutiveErrors === 0) {
+      state.level = 'closed'
+      logger.info('GLTF Circuit Breaker reset to CLOSED after successful recovery', {
+        componentId,
+        recoveryCount: state.recoveryCount
+      })
+    } else {
+      state.level = 'half-open'
+      logger.info('GLTF Circuit Breaker moved to HALF-OPEN after partial recovery', {
+        componentId,
+        remainingErrors: state.consecutiveErrors
+      })
+    }
+  }
+  
+  // Record failed recovery
+  recordFailedRecovery(componentId: string): void {
+    const state = this.getComponentState(componentId)
+    state.consecutiveMountFailures++
+    state.lastRecoveryAttempt = Date.now()
+    
+    // Escalate to permanent if too many recovery failures
+    if (state.consecutiveMountFailures >= 3) {
+      state.level = 'permanent'
+      state.permanentFallbackTriggered = true
+      logger.error('GLTF Circuit Breaker: Too many recovery failures, permanent fallback activated', {
+        componentId,
+        consecutiveMountFailures: state.consecutiveMountFailures
+      })
+    }
+  }
+  
+  // Get circuit breaker status
+  getStatus(componentId: string): {
+    level: string
+    canMount: boolean
+    canRecover: boolean
+    shouldFallback: boolean
+    cooldownRemaining: number
+    errorCount: number
+    mountAttempts: number
+  } {
+    const state = this.getComponentState(componentId)
+    const now = Date.now()
+    
+    return {
+      level: state.level,
+      canMount: state.level !== 'permanent' && !state.mountCycleDetected,
+      canRecover: this.canAttemptRecovery(componentId),
+      shouldFallback: state.level === 'permanent' || state.permanentFallbackTriggered,
+      cooldownRemaining: Math.max(0, state.cooldownEnd - now),
+      errorCount: state.errorCount,
+      mountAttempts: state.mountAttempts
+    }
+  }
+  
+  private getComponentState(componentId: string) {
+    if (!this.circuitStates.has(componentId)) {
+      this.circuitStates.set(componentId, {
+        level: 'closed',
+        errorCount: 0,
+        mountAttempts: 0,
+        lastMountTime: 0,
+        lastErrorTime: 0,
+        consecutiveErrors: 0,
+        consecutiveMountFailures: 0,
+        cooldownEnd: 0,
+        permanentFallbackTriggered: false,
+        errorSignatures: [],
+        mountCycleDetected: false,
+        lastRecoveryAttempt: 0,
+        recoveryCount: 0
+      })
+    }
+    return this.circuitStates.get(componentId)!
+  }
+  
+  private calculateCooldownPeriod(consecutiveErrors: number, isEscalation = false): number {
+    const baseDelay = isEscalation ? 10000 : 5000
+    const exponentialDelay = Math.min(baseDelay * Math.pow(2, consecutiveErrors - 1), 60000)
+    return exponentialDelay
+  }
+  
+  private isIdenticalError(sig1: ErrorSignature, sig2: ErrorSignature): boolean {
+    return sig1.message === sig2.message && 
+           sig1.type === sig2.type &&
+           sig1.stack.slice(0, 300) === sig2.stack.slice(0, 300)
+  }
+  
+  private isSimilarError(sig1: ErrorSignature, sig2: ErrorSignature): boolean {
+    return sig1.type === sig2.type && (
+      sig1.message.includes(sig2.message.slice(0, 50)) || 
+      sig2.message.includes(sig1.message.slice(0, 50))
+    )
+  }
+  
+  // Reset component state (for testing or force reset)
+  resetComponent(componentId: string): void {
+    this.circuitStates.delete(componentId)
+    logger.info('GLTF Circuit Breaker state reset for component', { componentId })
+  }
+  
+  // Get global statistics
+  getGlobalStats(): {
+    totalComponents: number
+    openCircuits: number
+    permanentFallbacks: number
+    totalMountAttempts: number
+    rapidMountCount: number
+  } {
+    const states = Array.from(this.circuitStates.values())
+    return {
+      totalComponents: states.length,
+      openCircuits: states.filter(s => s.level === 'open').length,
+      permanentFallbacks: states.filter(s => s.level === 'permanent').length,
+      totalMountAttempts: this.globalMountTracking.mountAttempts,
+      rapidMountCount: this.globalMountTracking.rapidMountCount
+    }
+  }
+}
 
 // Types for GLTF-specific errors
 interface GLTFErrorBoundaryProps {
@@ -217,9 +525,14 @@ const getRecoveryStrategy = (errorType: GLTFErrorType): {
 export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErrorBoundaryState> {
   private recoveryTimer: NodeJS.Timeout | null = null
   private mountedRef = { current: true }
+  private globalCircuitBreaker = GlobalGLTFCircuitBreaker.getInstance()
+  private componentId: string
   
   constructor(props: GLTFErrorBoundaryProps) {
     super(props)
+    
+    // Generate unique component ID for circuit breaker tracking
+    this.componentId = `gltf-boundary-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     
     this.state = {
       hasError: false,
@@ -286,90 +599,24 @@ export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErr
            sig2.message.includes(sig1.message.slice(0, 50))
   }
   
-  // CRITICAL FIX: Multi-level circuit breaker logic
+  // DEPRECATED: Replaced by global circuit breaker
+  // This method is kept for backward compatibility but is no longer used
   private updateCircuitBreaker(errorSignature: ErrorSignature): CircuitBreakerState {
-    const now = Date.now()
-    const { circuitBreaker, errorSignatures } = this.state
-    
-    // Add current error to signatures
-    const newSignatures = [...errorSignatures, errorSignature].slice(-10) // Keep last 10 errors
-    
-    // Count identical errors in recent history (last 30 seconds)
-    const recentErrors = newSignatures.filter(sig => now - sig.timestamp < 30000)
-    const identicalCount = recentErrors.filter(sig => this.isIdenticalError(sig, errorSignature)).length
-    const similarCount = recentErrors.filter(sig => this.isSimilarError(sig, errorSignature)).length
-    
-    // Circuit breaker state machine
-    let newState: CircuitBreakerState = { ...circuitBreaker }
-    
-    if (circuitBreaker.level === 'closed') {
-      // Normal operation - check for error threshold
-      newState.errorCount++
-      newState.consecutiveErrors++
-      newState.lastErrorTime = now
-      newState.errorSignatures = newSignatures
-      
-      // Trip circuit if too many errors
-      if (identicalCount >= 3 || similarCount >= 5 || newState.consecutiveErrors >= 4) {
-        newState.level = 'open'
-        newState.cooldownEnd = now + (Math.min(newState.consecutiveErrors, 8) * 2000) // Exponential backoff
-        logger.error('GLTF Circuit Breaker OPENED - too many errors detected', {
-          identicalCount,
-          similarCount,
-          consecutiveErrors: newState.consecutiveErrors,
-          cooldownPeriod: newState.cooldownEnd - now
-        })
-      }
-    } else if (circuitBreaker.level === 'open') {
-      // Circuit is open - check if cooldown period has passed
-      if (now > circuitBreaker.cooldownEnd) {
-        newState.level = 'half-open'
-        logger.info('GLTF Circuit Breaker moved to HALF-OPEN - testing recovery')
-      } else {
-        // Still in cooldown - reject immediately
-        logger.warn('GLTF Circuit Breaker still OPEN - rejecting error handling', {
-          remainingCooldown: circuitBreaker.cooldownEnd - now
-        })
-      }
-    } else if (circuitBreaker.level === 'half-open') {
-      // Testing recovery - one error puts us back to open
-      newState.level = 'open'
-      newState.cooldownEnd = now + (newState.consecutiveErrors * 3000) // Longer cooldown
-      logger.warn('GLTF Circuit Breaker back to OPEN - recovery failed')
+    // Return minimal state as this is handled by global circuit breaker now
+    return {
+      level: 'closed',
+      errorCount: 0,
+      lastErrorTime: Date.now(),
+      consecutiveErrors: 0,
+      errorSignatures: [],
+      cooldownEnd: 0
     }
-    
-    return newState
   }
   
-  // CRITICAL FIX: Mount cycle detection to prevent mount/unmount loops
+  // DEPRECATED: Replaced by global circuit breaker mount tracking
+  // This method is kept for backward compatibility but is no longer used
   private detectMountCycles(): boolean {
-    const now = Date.now()
-    const { mountCycles, lastMountTime } = this.state
-    
-    // If mount happened within 2 seconds of last mount, it's likely a cycle
-    if (now - lastMountTime < 2000) {
-      const newMountCycles = mountCycles + 1
-      
-      this.setState({
-        mountCycles: newMountCycles,
-        lastMountTime: now
-      })
-      
-      if (newMountCycles >= 3) {
-        logger.error('GLTF Error Boundary: Mount/unmount cycle detected', {
-          mountCycles: newMountCycles,
-          timeSinceLastMount: now - lastMountTime
-        })
-        return true
-      }
-    } else {
-      // Reset mount cycle counter if enough time has passed
-      this.setState({
-        mountCycles: 0,
-        lastMountTime: now
-      })
-    }
-    
+    // Mount cycle detection is now handled by the global circuit breaker
     return false
   }
   
@@ -381,44 +628,54 @@ export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErr
     const recoveryStrategy = getRecoveryStrategy(errorType)
     const currentTime = Date.now()
     
-    // CRITICAL FIX: Create error signature for advanced analysis
+    // CRITICAL FIX: Create error signature for global circuit breaker
     const errorSignature = this.createErrorSignature(error, errorInfo)
     
-    // CRITICAL FIX: Check for mount/unmount cycles
-    const hasMountCycles = this.detectMountCycles()
-    if (hasMountCycles) {
-      logger.error('GLTF Error Boundary: Mount cycle detected, forcing permanent fallback')
+    // CRITICAL FIX: Use global circuit breaker to prevent cycles
+    const circuitBreakerDecision = this.globalCircuitBreaker.recordError(this.componentId, errorSignature)
+    
+    if (circuitBreakerDecision === 'permanent') {
+      logger.error('GLTF Global Circuit Breaker: Permanent fallback triggered', {
+        componentId: this.componentId,
+        errorType,
+        errorMessage: error.message
+      })
+      
       this.setState({
         isInErrorLoop: true,
-        errorLoopCount: 999 // High number to prevent any recovery attempts
+        errorLoopCount: 999 // Prevent any recovery attempts
       })
+      
+      // Force immediate permanent fallback
       setTimeout(() => this.triggerFallback(errorType), 100)
       return
     }
     
-    // CRITICAL FIX: Update circuit breaker with advanced error analysis
-    const newCircuitBreakerState = this.updateCircuitBreaker(errorSignature)
-    
-    // Check if circuit breaker is open (blocking error handling)
-    if (newCircuitBreakerState.level === 'open' && currentTime < newCircuitBreakerState.cooldownEnd) {
-      logger.warn('GLTF Circuit Breaker OPEN - blocking error handling during cooldown', {
-        remainingCooldown: newCircuitBreakerState.cooldownEnd - currentTime,
-        consecutiveErrors: newCircuitBreakerState.consecutiveErrors
+    if (circuitBreakerDecision === 'block') {
+      const status = this.globalCircuitBreaker.getStatus(this.componentId)
+      
+      logger.warn('GLTF Global Circuit Breaker: Error handling blocked during cooldown', {
+        componentId: this.componentId,
+        level: status.level,
+        cooldownRemaining: status.cooldownRemaining,
+        errorCount: status.errorCount
       })
       
       this.setState(prevState => ({
-        circuitBreaker: newCircuitBreakerState,
         errorSignatures: [...prevState.errorSignatures, errorSignature],
         isInErrorLoop: true
       }))
       
-      // Force immediate fallback
-      setTimeout(() => this.triggerFallback(errorType), 500)
+      // Schedule fallback after cooldown
+      setTimeout(() => this.triggerFallback(errorType), Math.min(status.cooldownRemaining, 5000))
       return
     }
     
-    // Enhanced logging for GLTF errors with circuit breaker info
+    // Enhanced logging with global circuit breaker info
+    const globalStatus = this.globalCircuitBreaker.getStatus(this.componentId)
+    
     logger.error('GLTF Error Boundary caught error:', {
+      componentId: this.componentId,
       error: error.message,
       stack: error.stack,
       componentStack: errorInfo.componentStack,
@@ -427,12 +684,15 @@ export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErr
       modelPath: this.props.modelPath,
       recoveryStrategy: recoveryStrategy.strategy,
       canRecover: recoveryStrategy.canRecover,
-      circuitBreakerLevel: newCircuitBreakerState.level,
-      consecutiveErrors: newCircuitBreakerState.consecutiveErrors,
-      errorSignatureCount: newCircuitBreakerState.errorSignatures.length
+      globalCircuitBreaker: {
+        level: globalStatus.level,
+        errorCount: globalStatus.errorCount,
+        mountAttempts: globalStatus.mountAttempts,
+        canRecover: globalStatus.canRecover
+      }
     })
     
-    // Update state with enhanced error tracking
+    // Update local state
     this.setState(prevState => ({
       error,
       errorInfo,
@@ -440,9 +700,7 @@ export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErr
       recoveryAttempts: prevState.recoveryAttempts + 1,
       lastErrorMessage: error.message,
       lastErrorTime: currentTime,
-      circuitBreaker: newCircuitBreakerState,
-      errorSignatures: [...prevState.errorSignatures, errorSignature].slice(-10), // Keep last 10
-      errorLoopCount: 0 // Reset since we have better circuit breaker detection now
+      errorSignatures: [...prevState.errorSignatures, errorSignature].slice(-10)
     }))
     
     // Call custom error handler
@@ -450,13 +708,14 @@ export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErr
       onError(error, errorInfo)
     }
     
-    // Automatic recovery logic
+    // Recovery logic with global circuit breaker consideration
     if (enableAutoRecovery && 
+        globalStatus.canRecover &&
         retryCount < Math.min(maxRetries, recoveryStrategy.maxRetries) &&
         recoveryStrategy.canRecover) {
       this.scheduleRecovery(errorType, recoveryStrategy)
-    } else if (!recoveryStrategy.canRecover) {
-      // Trigger fallback for non-recoverable errors
+    } else {
+      // Trigger fallback for non-recoverable errors or circuit breaker block
       this.triggerFallback(errorType)
     }
   }
@@ -464,13 +723,50 @@ export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErr
   override componentDidMount() {
     this.mountedRef.current = true
     
-    // CRITICAL FIX: Detect mount cycles
-    this.detectMountCycles()
+    // CRITICAL FIX: Track mount attempts with global circuit breaker
+    const mountCycleDetected = this.globalCircuitBreaker.trackMountAttempt(this.componentId)
+    
+    if (mountCycleDetected) {
+      logger.error('GLTF Error Boundary: Mount cycle detected during mount', {
+        componentId: this.componentId
+      })
+      
+      this.setState({
+        isInErrorLoop: true,
+        errorLoopCount: 999,
+        mountCycles: 999
+      })
+      
+      // Trigger immediate fallback
+      setTimeout(() => this.triggerFallback(GLTFErrorType.GENERIC_ERROR), 100)
+      return
+    }
+    
+    const globalStatus = this.globalCircuitBreaker.getStatus(this.componentId)
     
     logger.debug('GLTF Error Boundary mounted', {
-      mountCycles: this.state.mountCycles,
-      circuitBreakerLevel: this.state.circuitBreaker.level
+      componentId: this.componentId,
+      globalStatus: {
+        level: globalStatus.level,
+        canMount: globalStatus.canMount,
+        mountAttempts: globalStatus.mountAttempts,
+        errorCount: globalStatus.errorCount
+      }
     })
+    
+    // If circuit breaker says we should fallback immediately, do so
+    if (globalStatus.shouldFallback) {
+      logger.info('GLTF Error Boundary: Immediate fallback required per circuit breaker', {
+        componentId: this.componentId
+      })
+      
+      this.setState({
+        isInErrorLoop: true,
+        errorLoopCount: 999
+      })
+      
+      setTimeout(() => this.triggerFallback(GLTFErrorType.GENERIC_ERROR), 200)
+    }
   }
   
   override componentWillUnmount() {
@@ -480,6 +776,12 @@ export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErr
       clearTimeout(this.recoveryTimer)
       this.recoveryTimer = null
     }
+    
+    // Log unmount for debugging
+    logger.debug('GLTF Error Boundary unmounting', {
+      componentId: this.componentId,
+      globalStatus: this.globalCircuitBreaker.getStatus(this.componentId)
+    })
   }
   
   private scheduleRecovery = (errorType: GLTFErrorType, strategy: ReturnType<typeof getRecoveryStrategy>) => {
@@ -493,7 +795,22 @@ export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErr
   private attemptRecovery = async (errorType: GLTFErrorType, strategy: ReturnType<typeof getRecoveryStrategy>) => {
     if (this.mountedRef.current === false) return
     
-    logger.info(`Attempting GLTF recovery for ${errorType} using strategy: ${strategy.strategy}`)
+    // Check if recovery is allowed by global circuit breaker
+    const globalStatus = this.globalCircuitBreaker.getStatus(this.componentId)
+    if (!globalStatus.canRecover) {
+      logger.warn('GLTF recovery blocked by global circuit breaker', {
+        componentId: this.componentId,
+        level: globalStatus.level
+      })
+      
+      this.setState({ isRecovering: false })
+      this.triggerFallback(errorType)
+      return
+    }
+    
+    logger.info(`Attempting GLTF recovery for ${errorType} using strategy: ${strategy.strategy}`, {
+      componentId: this.componentId
+    })
     
     try {
       switch (strategy.strategy) {
@@ -520,23 +837,23 @@ export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErr
           break
       }
       
-      // If recovery successful, reset error state and circuit breaker
+      // If recovery successful, notify global circuit breaker and reset state
       if (this.mountedRef.current) {
-        this.setState(prevState => ({
+        this.globalCircuitBreaker.recordSuccessfulRecovery(this.componentId)
+        
+        this.setState({
           hasError: false,
           error: null,
           errorInfo: null,
           isRecovering: false,
-          // CRITICAL FIX: Reset circuit breaker on successful recovery
-          circuitBreaker: {
-            ...prevState.circuitBreaker,
-            level: 'closed',
-            consecutiveErrors: 0,
-            errorCount: Math.max(0, prevState.circuitBreaker.errorCount - 1) // Gradually reduce error count
-          }
-        }))
+          isInErrorLoop: false,
+          errorLoopCount: 0
+        })
         
-        logger.info('GLTF Error Boundary: Successful recovery, circuit breaker reset to CLOSED')
+        logger.info('GLTF Error Boundary: Successful recovery', {
+          componentId: this.componentId,
+          strategy: strategy.strategy
+        })
         
         if (this.props.onRecovery) {
           this.props.onRecovery()
@@ -544,6 +861,9 @@ export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErr
       }
     } catch (recoveryError) {
       logger.error('GLTF recovery failed:', recoveryError)
+      
+      // Notify global circuit breaker of failed recovery
+      this.globalCircuitBreaker.recordFailedRecovery(this.componentId)
       
       if (this.mountedRef.current) {
         this.setState({ isRecovering: false })
@@ -678,54 +998,57 @@ export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErr
       recoveryAttempts, 
       isInErrorLoop, 
       errorLoopCount,
-      circuitBreaker,
-      mountCycles,
       errorSignatures
     } = this.state
     const { maxRetries = 3, modelPath, enableDebugInfo = false } = this.props
     
+    // Get current status from global circuit breaker
+    const globalStatus = this.globalCircuitBreaker.getStatus(this.componentId)
+    const globalStats = this.globalCircuitBreaker.getGlobalStats()
+    
     const recoveryStrategy = getRecoveryStrategy(errorType)
     const canRetry = retryCount < Math.min(maxRetries, recoveryStrategy.maxRetries) && 
                      !isInErrorLoop && 
-                     circuitBreaker.level !== 'open' &&
-                     mountCycles < 3
+                     globalStatus.canRecover
     
-    if (isInErrorLoop || circuitBreaker.level === 'open') {
-      const isCircuitBreakerOpen = circuitBreaker.level === 'open'
-      const cooldownRemaining = isCircuitBreakerOpen ? 
-        Math.max(0, circuitBreaker.cooldownEnd - Date.now()) : 0
+    // Enhanced error loop detection with global circuit breaker
+    if (isInErrorLoop || globalStatus.shouldFallback || globalStatus.level === 'permanent') {
+      const isPermanentFallback = globalStatus.level === 'permanent'
+      const isCircuitOpen = globalStatus.level === 'open'
       
       return (
         <div className="flex items-center justify-center min-h-[200px] bg-gradient-to-b from-red-900 to-gray-800">
           <div className="text-center max-w-md">
             <div className="text-4xl mb-4">
-              {isCircuitBreakerOpen ? '🚫' : '⚠️'}
+              {isPermanentFallback ? '🛡️' : isCircuitOpen ? '🚫' : '⚠️'}
             </div>
             <h3 className="text-xl font-bold text-red-300 mb-2">
-              {isCircuitBreakerOpen ? 'Circuit Breaker Active' : 'Error Loop Detected'}
+              {isPermanentFallback ? 'Permanent Fallback Mode' : 
+               isCircuitOpen ? 'Circuit Breaker Active' : 'Error Loop Detected'}
             </h3>
             <p className="text-red-200 mb-4">
-              {isCircuitBreakerOpen 
+              {isPermanentFallback 
+                ? 'Critical error patterns detected. Dragon model permanently disabled to ensure stability.'
+                : isCircuitOpen
                 ? 'Too many errors detected. Dragon model temporarily disabled to prevent crashes.'
                 : 'Dragon model encountered repeated errors. Switching to fallback mode.'
               }
             </p>
             <div className="text-sm text-red-400">
-              {isCircuitBreakerOpen ? (
+              <p>Global Status: {globalStatus.level.toUpperCase()}</p>
+              <p>Component Errors: {globalStatus.errorCount}</p>
+              <p>Mount Attempts: {globalStatus.mountAttempts}</p>
+              {globalStatus.cooldownRemaining > 0 && (
+                <p>Cooldown: {Math.ceil(globalStatus.cooldownRemaining / 1000)}s remaining</p>
+              )}
+              {enableDebugInfo && (
                 <>
-                  <p>Circuit breaker: {circuitBreaker.level.toUpperCase()}</p>
-                  <p>Consecutive errors: {circuitBreaker.consecutiveErrors}</p>
-                  {cooldownRemaining > 0 && (
-                    <p>Cooldown: {Math.ceil(cooldownRemaining / 1000)}s remaining</p>
-                  )}
-                </>
-              ) : (
-                <>
-                  <p>Error loops: {errorLoopCount}</p>
-                  <p>Mount cycles: {mountCycles}</p>
+                  <p>Global Components: {globalStats.totalComponents}</p>
+                  <p>Open Circuits: {globalStats.openCircuits}</p>
+                  <p>Permanent Fallbacks: {globalStats.permanentFallbacks}</p>
                 </>
               )}
-              <p>Fallback will activate automatically</p>
+              <p>{isPermanentFallback ? 'Permanent fallback active' : 'Fallback will activate automatically'}</p>
             </div>
           </div>
         </div>
@@ -814,11 +1137,14 @@ export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErr
             )}
             {enableDebugInfo && (
               <div className="text-xs text-gray-600 mt-2 space-y-1">
-                <p>Circuit: {circuitBreaker.level} | Errors: {circuitBreaker.consecutiveErrors}</p>
-                <p>Signatures: {errorSignatures.length} | Mounts: {mountCycles}</p>
-                {circuitBreaker.level !== 'closed' && circuitBreaker.cooldownEnd > Date.now() && (
-                  <p>Cooldown: {Math.ceil((circuitBreaker.cooldownEnd - Date.now()) / 1000)}s</p>
+                <p>Global Circuit: {globalStatus.level} | Errors: {globalStatus.errorCount}</p>
+                <p>Signatures: {errorSignatures.length} | Mounts: {globalStatus.mountAttempts}</p>
+                <p>Component ID: {this.componentId.slice(-8)}</p>
+                {globalStatus.cooldownRemaining > 0 && (
+                  <p>Cooldown: {Math.ceil(globalStatus.cooldownRemaining / 1000)}s</p>
                 )}
+                <p>Can Recover: {globalStatus.canRecover ? 'Yes' : 'No'}</p>
+                <p>Should Fallback: {globalStatus.shouldFallback ? 'Yes' : 'No'}</p>
               </div>
             )}
           </div>
@@ -874,5 +1200,53 @@ export const DragonGLTFErrorBoundary: React.FC<{
     {children}
   </GLTFErrorBoundary>
 )
+
+// Utility functions for external use
+export const resetGLTFCircuitBreaker = (componentId?: string) => {
+  const circuitBreaker = GlobalGLTFCircuitBreaker.getInstance()
+  if (componentId) {
+    circuitBreaker.resetComponent(componentId)
+  } else {
+    // Reset all components - useful for testing or manual recovery
+    const stats = circuitBreaker.getGlobalStats()
+    logger.info('Resetting all GLTF circuit breakers', { stats })
+    // Note: This would require adding a resetAll method to the circuit breaker
+  }
+}
+
+export const getGLTFCircuitBreakerStats = () => {
+  const circuitBreaker = GlobalGLTFCircuitBreaker.getInstance()
+  return circuitBreaker.getGlobalStats()
+}
+
+export const getGLTFComponentStatus = (componentId: string) => {
+  const circuitBreaker = GlobalGLTFCircuitBreaker.getInstance()
+  return circuitBreaker.getStatus(componentId)
+}
+
+// Hook for monitoring circuit breaker status
+export const useGLTFCircuitBreakerStatus = (componentId?: string) => {
+  const [stats, setStats] = useState(getGLTFCircuitBreakerStats())
+  const [componentStatus, setComponentStatus] = useState(
+    componentId ? getGLTFComponentStatus(componentId) : null
+  )
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setStats(getGLTFCircuitBreakerStats())
+      if (componentId) {
+        setComponentStatus(getGLTFComponentStatus(componentId))
+      }
+    }, 1000)
+    
+    return () => clearInterval(interval)
+  }, [componentId])
+  
+  return {
+    globalStats: stats,
+    componentStatus,
+    resetComponent: componentId ? () => resetGLTFCircuitBreaker(componentId) : undefined
+  }
+}
 
 export default GLTFErrorBoundary
