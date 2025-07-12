@@ -78,14 +78,49 @@ if (seiSupportedWallets.includes('injected')) {
 if (seiSupportedWallets.includes('walletconnect')) {
   if (envConfig.isValid.walletConnect) {
     try {
-      // ROBUST SINGLETON: Check if WalletConnect is already initialized to prevent double setup
+      // CRITICAL FIX: Pre-connector global state checking to prevent WalletConnect Core double initialization
       const existingWagmiInit = typeof window !== 'undefined' && 
         (window as any).__WAGMI_WALLETCONNECT_INITIALIZED__ === true
       
       const existingGlobalState = typeof window !== 'undefined' && 
         (window as any).__SEIRON_WALLETCONNECT_GLOBAL_STATE__?.isInitialized === true
+        
+      // ENHANCED CHECK: Also check for WalletConnect Core existence
+      const walletConnectCoreExists = typeof window !== 'undefined' && 
+        (window as any).WalletConnectCore !== undefined
+        
+      // REACT STRICTMODE DETECTION: Check for development environment double mounting
+      const isStrictModeDoubleMount = typeof window !== 'undefined' && 
+        (window as any).__SEIRON_STRICTMODE_FIRST_MOUNT__ === true
       
-      if (!existingWagmiInit && !existingGlobalState) {
+      if (existingWagmiInit || existingGlobalState || walletConnectCoreExists) {
+        console.log('ℹ️ WalletConnect already initialized, skipping connector creation to prevent double initialization')
+        console.log('- Existing Wagmi init:', existingWagmiInit)
+        console.log('- Existing global state:', existingGlobalState) 
+        console.log('- WalletConnect Core exists:', walletConnectCoreExists)
+        
+        // Don't add connector, just update state tracking
+        if (typeof window !== 'undefined') {
+          ;(window as any).__WAGMI_WALLETCONNECT_SKIPPED__ = true
+          ;(window as any).__WAGMI_WALLETCONNECT_SKIP_REASON__ = {
+            existingWagmiInit,
+            existingGlobalState,
+            walletConnectCoreExists,
+            timestamp: Date.now()
+          }
+        }
+      } else {
+        // STRICTMODE HANDLING: Mark first mount in development
+        if (typeof window !== 'undefined' && import.meta.env.DEV) {
+          if (isStrictModeDoubleMount) {
+            console.log('ℹ️ React StrictMode double mount detected, skipping WalletConnect connector creation')
+            return // Skip connector creation on second mount
+          } else {
+            ;(window as any).__SEIRON_STRICTMODE_FIRST_MOUNT__ = true
+          }
+        }
+        
+        // SAFE TO CREATE: No existing initialization detected
         connectors.push(
           walletConnect({
             projectId: walletConnectProjectId,
@@ -100,31 +135,24 @@ if (seiSupportedWallets.includes('walletconnect')) {
         )
         console.log('✅ WalletConnect connector added (supported on Sei Network)')
         
-        // ENHANCED SINGLETON: Mark that Wagmi is handling WalletConnect with timestamp
+        // IMMEDIATE FLAG SETTING: Set flags immediately after connector creation
         if (typeof window !== 'undefined') {
           ;(window as any).__WAGMI_WALLETCONNECT_INITIALIZED__ = true
           ;(window as any).__WALLETCONNECT_INITIALIZED__ = true
           ;(window as any).__WAGMI_WALLETCONNECT_TIMESTAMP__ = Date.now()
           
-          // Initialize global state if not already present
-          if (!(window as any).__SEIRON_WALLETCONNECT_GLOBAL_STATE__) {
-            ;(window as any).__SEIRON_WALLETCONNECT_GLOBAL_STATE__ = {
-              isInitialized: true,
-              isInitializing: false,
-              initializationTimestamp: Date.now(),
-              initializationMethod: 'wagmi',
-              instanceCount: 1,
-              lastCleanupTimestamp: null
-            }
-          } else {
-            // Update existing state to reflect Wagmi initialization
-            ;(window as any).__SEIRON_WALLETCONNECT_GLOBAL_STATE__.isInitialized = true
-            ;(window as any).__SEIRON_WALLETCONNECT_GLOBAL_STATE__.initializationMethod = 'wagmi'
-            ;(window as any).__SEIRON_WALLETCONNECT_GLOBAL_STATE__.initializationTimestamp = Date.now()
+          // Initialize global state immediately
+          ;(window as any).__SEIRON_WALLETCONNECT_GLOBAL_STATE__ = {
+            isInitialized: true,
+            isInitializing: false,
+            initializationTimestamp: Date.now(),
+            initializationMethod: 'wagmi',
+            instanceCount: 1,
+            lastCleanupTimestamp: null
           }
+          
+          console.log('🔐 Global WalletConnect state initialized by Wagmi')
         }
-      } else {
-        console.log('ℹ️ WalletConnect already initialized, skipping connector creation')
       }
     } catch (error) {
       console.warn('⚠️ Failed to initialize WalletConnect:', error)
