@@ -649,7 +649,7 @@ export class WebGLRecoveryManager extends EventEmitter {
     // Factor in memory pressure
     const memoryInfo = this.getMemoryInfo();
     if (memoryInfo) {
-      const memoryPressure = memoryInfo.usedJSHeapSize / memoryInfo.jsHeapSizeLimit;
+      const memoryPressure = (memoryInfo.usedJSHeapSize || 0) / (memoryInfo.jsHeapSizeLimit || 1);
       this.contextHealth.factors.memoryPressure = memoryPressure;
       healthScore -= memoryPressure * 30; // Up to 30 points for memory pressure
     }
@@ -1314,7 +1314,7 @@ export class WebGLRecoveryManager extends EventEmitter {
       
       // Intelligent memory pressure handling
       if (memoryBefore && memoryBefore.usedJSHeapSize && memoryBefore.jsHeapSizeLimit) {
-        const memoryPressure = memoryBefore.usedJSHeapSize / memoryBefore.jsHeapSizeLimit;
+        const memoryPressure = (memoryBefore.usedJSHeapSize || 0) / (memoryBefore.jsHeapSizeLimit || 1);
         
         // Only create temporary objects if memory pressure is high
         if (memoryPressure > 0.7) {
@@ -1342,8 +1342,8 @@ export class WebGLRecoveryManager extends EventEmitter {
       setTimeout(() => {
         const memoryAfter = this.getMemoryInfo();
         if (memoryBefore && memoryAfter) {
-          const memoryFreed = memoryBefore.usedJSHeapSize - memoryAfter.usedJSHeapSize;
-          const efficiencyPercent = (memoryFreed / memoryBefore.usedJSHeapSize) * 100;
+          const memoryFreed = (memoryBefore.usedJSHeapSize || 0) - (memoryAfter.usedJSHeapSize || 0);
+          const efficiencyPercent = (memoryFreed / (memoryBefore.usedJSHeapSize || 1)) * 100;
           
           if (memoryFreed > 0) {
             console.log(`[WebGLRecovery] Memory cleanup: freed ${(memoryFreed / 1024 / 1024).toFixed(1)}MB (${efficiencyPercent.toFixed(1)}% efficiency) in ${gcTime.toFixed(1)}ms`);
@@ -1432,7 +1432,15 @@ export class WebGLRecoveryManager extends EventEmitter {
       preventiveMeasuresCount: 0,
       contextLossPredictions: 0,
       contextLossRisk: 'low',
-      userNotifications: []
+      userNotifications: [],
+      // Add missing properties for WebGLDiagnostics interface compatibility
+      recoverySuccessRate: 0,
+      averageCooldownPeriod: 0,
+      unnecessaryRecoveryAttempts: 0,
+      batchCleanupEfficiency: 0,
+      monitoringOverheadMs: 0,
+      contextHealthScore: 100,
+      devicePerformanceProfile: 'mid-range' as const
     };
   }
 
