@@ -53,69 +53,125 @@ export class DragonMemoryManager {
 
   // CRITICAL FIX: Enhanced model disposal with comprehensive resource cleanup
   disposeModel(model: THREE.Group): void {
-    model.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        // Dispose of geometry
-        if (child.geometry) {
-          child.geometry.dispose()
-        }
-        
-        // Dispose of materials
-        if (child.material) {
-          if (Array.isArray(child.material)) {
-            child.material.forEach(material => this.disposeMaterial(material))
-          } else {
-            this.disposeMaterial(child.material)
+    try {
+      if (!model) {
+        console.warn('DragonMemoryManager: Attempted to dispose null/undefined model')
+        return
+      }
+
+      model.traverse((child) => {
+        try {
+          if (child instanceof THREE.Mesh) {
+            // Dispose of geometry with null checks
+            if (child.geometry && typeof child.geometry.dispose === 'function') {
+              child.geometry.dispose()
+            }
+            
+            // Dispose of materials with null checks
+            if (child.material) {
+              if (Array.isArray(child.material)) {
+                child.material.forEach(material => {
+                  if (material) {
+                    this.disposeMaterial(material)
+                  }
+                })
+              } else {
+                this.disposeMaterial(child.material)
+              }
+            }
           }
+          
+          // Dispose of lights with error handling
+          if (child instanceof THREE.Light) {
+            try {
+              if ('dispose' in child && typeof (child as any).dispose === 'function') {
+                (child as any).dispose()
+              }
+            } catch (lightError) {
+              console.warn('Error disposing light:', lightError)
+            }
+          }
+          
+          // Dispose of cameras with error handling
+          if (child instanceof THREE.Camera) {
+            try {
+              // Cameras don't have dispose method, but clear references
+              if (child.parent) {
+                child.parent = null
+              }
+            } catch (cameraError) {
+              console.warn('Error clearing camera references:', cameraError)
+            }
+          }
+        } catch (childError) {
+          console.warn('Error disposing child object:', childError)
         }
+      })
+      
+      // Clear the model with error handling
+      try {
+        if (typeof model.clear === 'function') {
+          model.clear()
+        }
+      } catch (clearError) {
+        console.warn('Error clearing model:', clearError)
       }
       
-      // Dispose of lights
-      if (child instanceof THREE.Light) {
-        if ('dispose' in child) {
-          (child as any).dispose()
+      // Remove from parent if it has one with error handling
+      try {
+        if (model.parent && typeof model.parent.remove === 'function') {
+          model.parent.remove(model)
         }
+      } catch (parentError) {
+        console.warn('Error removing model from parent:', parentError)
       }
-      
-      // Dispose of cameras
-      if (child instanceof THREE.Camera) {
-        // Cameras don't have dispose method, but clear references
-        child.parent = null
-      }
-    })
-    
-    // Clear the model
-    model.clear()
-    
-    // Remove from parent if it has one
-    if (model.parent) {
-      model.parent.remove(model)
+    } catch (error) {
+      console.error('Critical error in disposeModel:', error)
     }
   }
 
   // CRITICAL FIX: Enhanced material disposal with comprehensive texture cleanup
   private disposeMaterial(material: THREE.Material): void {
-    const materialAny = material as any
-    
-    // Dispose of all possible texture properties
-    const textureProps = [
-      'map', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 
-      'bumpMap', 'displacementMap', 'aoMap', 'lightMap', 'alphaMap', 
-      'envMap', 'gradientMap', 'specularMap', 'matcap', 'clearcoatMap', 
-      'clearcoatNormalMap', 'clearcoatRoughnessMap', 'iridescenceMap', 
-      'iridescenceThicknessMap', 'sheenColorMap', 'sheenRoughnessMap', 
-      'transmissionMap', 'thicknessMap', 'anisotropyMap'
-    ]
-    
-    textureProps.forEach(prop => {
-      if (materialAny[prop]) {
-        materialAny[prop].dispose()
-        materialAny[prop] = null
+    try {
+      if (!material) {
+        console.warn('DragonMemoryManager: Attempted to dispose null/undefined material')
+        return
       }
-    })
-    
-    // Dispose of the material itself
-    material.dispose()
+
+      const materialAny = material as any
+      
+      // Dispose of all possible texture properties
+      const textureProps = [
+        'map', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 
+        'bumpMap', 'displacementMap', 'aoMap', 'lightMap', 'alphaMap', 
+        'envMap', 'gradientMap', 'specularMap', 'matcap', 'clearcoatMap', 
+        'clearcoatNormalMap', 'clearcoatRoughnessMap', 'iridescenceMap', 
+        'iridescenceThicknessMap', 'sheenColorMap', 'sheenRoughnessMap', 
+        'transmissionMap', 'thicknessMap', 'anisotropyMap'
+      ]
+      
+      textureProps.forEach(prop => {
+        try {
+          if (materialAny[prop] && typeof materialAny[prop].dispose === 'function') {
+            materialAny[prop].dispose()
+            materialAny[prop] = null
+          }
+        } catch (textureError) {
+          console.warn(`Error disposing texture property ${prop}:`, textureError)
+        }
+      })
+      
+      // Dispose of the material itself with error handling
+      try {
+        if (typeof material.dispose === 'function') {
+          material.dispose()
+        }
+      } catch (materialError) {
+        console.warn('Error disposing material:', materialError)
+      }
+    } catch (error) {
+      console.error('Critical error in disposeMaterial:', error)
+    }
   }
 
   // Clean up unused models
@@ -210,13 +266,25 @@ export class DragonMemoryManager {
     
     // Estimate memory usage (very rough approximation)
     this.geometryCache.forEach(geometry => {
+      // CRITICAL FIX: Add comprehensive null checks for geometry attributes
+      if (!geometry || !geometry.attributes) {
+        return
+      }
+      
       const position = geometry.attributes.position
       const normal = geometry.attributes.normal
       const uv = geometry.attributes.uv
       
-      if (position) estimatedMemoryUsage += position.count * 3 * 4 // 3 floats per position
-      if (normal) estimatedMemoryUsage += normal.count * 3 * 4 // 3 floats per normal
-      if (uv) estimatedMemoryUsage += uv.count * 2 * 4 // 2 floats per UV
+      // CRITICAL FIX: Add null checks and validate count property exists
+      if (position && typeof position.count === 'number') {
+        estimatedMemoryUsage += position.count * 3 * 4 // 3 floats per position
+      }
+      if (normal && typeof normal.count === 'number') {
+        estimatedMemoryUsage += normal.count * 3 * 4 // 3 floats per normal
+      }
+      if (uv && typeof uv.count === 'number') {
+        estimatedMemoryUsage += uv.count * 2 * 4 // 2 floats per UV
+      }
     })
     
     this.textureCache.forEach(texture => {

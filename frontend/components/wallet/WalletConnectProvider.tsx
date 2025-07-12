@@ -31,17 +31,29 @@ export function WalletConnectProvider({ children }: WalletConnectProviderProps) 
   const [isInitialized, setIsInitialized] = useState(false)
   const [isInitializing, setIsInitializing] = useState(false)
   const [error, setError] = useState<Error | null>(null)
+  const [initializationChecked, setInitializationChecked] = useState(false)
 
   const initialize = async () => {
-    if (isInitializing || isInitialized) {
+    // CRITICAL FIX: Prevent double initialization with comprehensive checks
+    if (isInitializing || isInitialized || initializationChecked) {
+      logger.debug('WalletConnect initialization already in progress or completed, skipping')
       return
     }
 
+    setInitializationChecked(true)
+    
     // Check if WalletConnect is being handled by Wagmi
     const isWagmiHandlingWalletConnect = envConfig.isValid.walletConnect
     
-    if (isWagmiHandlingWalletConnect) {
-      logger.debug('WalletConnect is being handled by Wagmi, skipping custom initialization')
+    // CRITICAL FIX: Additional check for existing WalletConnect instances
+    const hasExistingWalletConnect = typeof window !== 'undefined' && 
+      (window as any).__WALLET_CONNECT_INITIALIZED__ === true
+    
+    if (isWagmiHandlingWalletConnect || hasExistingWalletConnect) {
+      logger.debug('WalletConnect is being handled by Wagmi or already initialized, skipping custom initialization', {
+        wagmiHandling: isWagmiHandlingWalletConnect,
+        existingInstance: hasExistingWalletConnect
+      })
       setIsInitialized(true) // Mark as initialized without doing anything
       return
     }
@@ -52,6 +64,11 @@ export function WalletConnectProvider({ children }: WalletConnectProviderProps) 
       
       logger.debug('Initializing custom WalletConnect manager (Wagmi not handling WalletConnect)')
       await walletConnectManager.initialize()
+      
+      // CRITICAL FIX: Mark globally to prevent other instances
+      if (typeof window !== 'undefined') {
+        (window as any).__WALLET_CONNECT_INITIALIZED__ = true
+      }
       
       setIsInitialized(true)
       logger.debug('WalletConnect Provider initialization complete')
@@ -75,9 +92,16 @@ export function WalletConnectProvider({ children }: WalletConnectProviderProps) 
     // Cleanup on unmount
     return () => {
       logger.debug('WalletConnect Provider cleanup')
+      
+      // CRITICAL FIX: Clear global initialization marker on cleanup
+      if (typeof window !== 'undefined') {
+        (window as any).__WALLET_CONNECT_INITIALIZED__ = false
+      }
+      
       setIsInitialized(false)
       setIsInitializing(false)
       setError(null)
+      setInitializationChecked(false)
     }
   }, [])
 

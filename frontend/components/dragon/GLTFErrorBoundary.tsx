@@ -27,6 +27,9 @@ interface GLTFErrorBoundaryState {
   errorType: GLTFErrorType
   lastErrorTime: number
   recoveryAttempts: number
+  isInErrorLoop: boolean
+  errorLoopCount: number
+  lastErrorMessage: string
 }
 
 // GLTF-specific error types
@@ -205,7 +208,10 @@ export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErr
       isRecovering: false,
       errorType: GLTFErrorType.GENERIC_ERROR,
       lastErrorTime: 0,
-      recoveryAttempts: 0
+      recoveryAttempts: 0,
+      isInErrorLoop: false,
+      errorLoopCount: 0,
+      lastErrorMessage: ''
     }
     
     // Set mounted ref
@@ -214,21 +220,50 @@ export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErr
   
   static getDerivedStateFromError(error: Error): Partial<GLTFErrorBoundaryState> {
     const errorType = classifyGLTFError(error)
+    const currentTime = Date.now()
     
     return {
       hasError: true,
       error,
       errorType,
-      lastErrorTime: Date.now()
+      lastErrorTime: currentTime
     }
   }
   
   override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     const { onError, enableAutoRecovery = true, maxRetries = 3 } = this.props
-    const { retryCount } = this.state
+    const { retryCount, lastErrorMessage, errorLoopCount, lastErrorTime } = this.state
     
     const errorType = classifyGLTFError(error)
     const recoveryStrategy = getRecoveryStrategy(errorType)
+    const currentTime = Date.now()
+    
+    // CRITICAL FIX: Circuit breaker logic to prevent infinite error loops
+    const isSameError = error.message === lastErrorMessage
+    const isRecentError = currentTime - lastErrorTime < 1000 // Less than 1 second
+    const isErrorLoop = isSameError && isRecentError && errorLoopCount >= 2
+    
+    if (isErrorLoop) {
+      logger.error('GLTF Error Loop detected - breaking circuit:', {
+        error: error.message,
+        errorLoopCount: errorLoopCount + 1,
+        lastErrorTime,
+        currentTime
+      })
+      
+      this.setState(prevState => ({
+        isInErrorLoop: true,
+        errorLoopCount: prevState.errorLoopCount + 1,
+        lastErrorMessage: error.message
+      }))
+      
+      // Force fallback without recovery attempts
+      setTimeout(() => {
+        this.triggerFallback(errorType)
+      }, 100)
+      
+      return
+    }
     
     // Enhanced logging for GLTF errors
     logger.error('GLTF Error Boundary caught error:', {
@@ -247,7 +282,9 @@ export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErr
       error,
       errorInfo,
       retryCount: prevState.retryCount + 1,
-      recoveryAttempts: prevState.recoveryAttempts + 1
+      recoveryAttempts: prevState.recoveryAttempts + 1,
+      lastErrorMessage: error.message,
+      errorLoopCount: isSameError && isRecentError ? prevState.errorLoopCount + 1 : 0
     }))
     
     // Call custom error handler
@@ -458,11 +495,29 @@ export class GLTFErrorBoundary extends Component<GLTFErrorBoundaryProps, GLTFErr
   }
   
   private renderErrorUI = () => {
-    const { error, errorType, retryCount, isRecovering, recoveryAttempts } = this.state
+    const { error, errorType, retryCount, isRecovering, recoveryAttempts, isInErrorLoop, errorLoopCount } = this.state
     const { maxRetries = 3, modelPath, enableDebugInfo = false } = this.props
     
     const recoveryStrategy = getRecoveryStrategy(errorType)
-    const canRetry = retryCount < Math.min(maxRetries, recoveryStrategy.maxRetries)
+    const canRetry = retryCount < Math.min(maxRetries, recoveryStrategy.maxRetries) && !isInErrorLoop
+    
+    if (isInErrorLoop) {
+      return (
+        <div className="flex items-center justify-center min-h-[200px] bg-gradient-to-b from-red-900 to-gray-800">
+          <div className="text-center max-w-md">
+            <div className="text-4xl mb-4">⚠️</div>
+            <h3 className="text-xl font-bold text-red-300 mb-2">Error Loop Detected</h3>
+            <p className="text-red-200 mb-4">
+              Dragon model encountered repeated errors. Switching to fallback mode.
+            </p>
+            <div className="text-sm text-red-400">
+              <p>Error loops: {errorLoopCount}</p>
+              <p>Fallback will activate automatically</p>
+            </div>
+          </div>
+        </div>
+      )
+    }
     
     if (isRecovering) {
       return (
