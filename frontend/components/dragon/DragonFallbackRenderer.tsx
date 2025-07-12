@@ -1,11 +1,27 @@
 'use client'
 
 import React, { useRef, useEffect, useState, useMemo } from 'react'
-import * as THREE from 'three'
-import { Canvas, useFrame } from '@react-three/fiber'
 import { webglFallbackManager, WebGLFallbackManager, FallbackContext } from '../../utils/webglFallback'
 import { webglDiagnostics } from '../../utils/webglDiagnostics'
 import { WebGLErrorBoundary } from '../error-boundaries/WebGLErrorBoundary'
+
+// Conditional imports to handle THREE.js unavailability
+let THREE: any = null
+let Canvas: any = null
+let useFrame: any = null
+
+try {
+  THREE = require('three')
+  const fiber = require('@react-three/fiber')
+  Canvas = fiber.Canvas
+  useFrame = fiber.useFrame
+} catch (error) {
+  console.warn('THREE.js or React Three Fiber not available:', error)
+  // Set to null to indicate unavailability
+  THREE = null
+  Canvas = null
+  useFrame = null
+}
 
 export interface DragonFallbackRendererProps {
   className?: string
@@ -142,7 +158,11 @@ ${energyChar}██████████████████████$
   }, [dragonState])
 
   return (
-    <div className="font-mono text-xs leading-tight select-none">
+    <div 
+      className="font-mono text-xs leading-tight select-none"
+      data-testid="ascii-dragon-fallback-renderer"
+      data-dragon-type="ascii-fallback-renderer"
+    >
       <pre 
         style={{ 
           color: dragonState.color,
@@ -420,6 +440,39 @@ export function DragonFallbackRenderer({
       try {
         setIsLoading(true)
         
+        // Check if THREE.js is available
+        if (!THREE && (preferredMode === 'webgl' || preferredMode === 'webgl2' || preferredMode === 'auto')) {
+          console.warn('THREE.js not available, forcing mock mode')
+          setFallbackContext({
+            type: 'mock',
+            context: null,
+            canvas: null,
+            renderer: null,
+            capabilities: {
+              webgl: false,
+              webgl2: false,
+              canvas2d: true,
+              offscreenCanvas: false,
+              headlessMode: true,
+              softwareRendering: false,
+              mockCanvas: true,
+              recommendedMode: 'mock'
+            },
+            isHeadless: true,
+            isDocker: true,
+            performance: {
+              initTime: 0,
+              renderTime: 0,
+              memoryUsage: 0
+            }
+          })
+          setIsLoading(false)
+          if (onLoad) {
+            onLoad()
+          }
+          return
+        }
+        
         // Create fallback manager
         const manager = new WebGLFallbackManager({
           enableSoftwareRendering: true,
@@ -443,11 +496,16 @@ export function DragonFallbackRenderer({
           mode = capabilities.recommendedMode
         }
         
+        // Force mock mode if THREE.js is not available and we need WebGL
+        if (!THREE && (mode === 'webgl' || mode === 'webgl2')) {
+          mode = 'mock'
+        }
+        
         const context = manager.createContext(mode)
         setFallbackContext(context)
         
-        // Test Three.js if using WebGL modes
-        if (context.type === 'webgl' || context.type === 'webgl2') {
+        // Test Three.js if using WebGL modes and THREE is available
+        if (THREE && (context.type === 'webgl' || context.type === 'webgl2')) {
           const threeJSWorking = manager.testThreeJS()
           if (!threeJSWorking && enableAutoFallback) {
             console.warn('Three.js test failed, falling back to Canvas2D')
@@ -501,25 +559,51 @@ export function DragonFallbackRenderer({
     switch (fallbackContext.type) {
       case 'webgl':
       case 'webgl2':
-        // Use React Three Fiber for WebGL modes
-        return (
-          <Canvas
-            style={{ width, height }}
-            gl={{ 
-              context: fallbackContext.context as WebGLRenderingContext,
-              antialias: false,
-              alpha: true
-            }}
-            camera={{ position: [0, 0, 5], fov: 75 }}
-          >
-            <ambientLight intensity={0.5} />
-            <pointLight position={[10, 10, 10]} />
-            <mesh>
-              <boxGeometry args={[1, 1, 1]} />
-              <meshStandardMaterial color={dragonState.color} />
-            </mesh>
-          </Canvas>
-        )
+        // Use React Three Fiber for WebGL modes if available
+        if (!Canvas || !THREE) {
+          console.warn('React Three Fiber or THREE.js not available, falling back to ASCII')
+          return (
+            <div className="flex items-center justify-center h-full bg-black">
+              <ASCIIDragon 
+                dragonState={dragonState}
+                width={Math.floor(width / 8)}
+                height={Math.floor(height / 16)}
+              />
+            </div>
+          )
+        }
+        
+        try {
+          return (
+            <Canvas
+              style={{ width, height }}
+              gl={{ 
+                context: fallbackContext.context as WebGLRenderingContext,
+                antialias: false,
+                alpha: true
+              }}
+              camera={{ position: [0, 0, 5], fov: 75 }}
+            >
+              <ambientLight intensity={0.5} />
+              <pointLight position={[10, 10, 10]} />
+              <mesh>
+                <boxGeometry args={[1, 1, 1]} />
+                <meshStandardMaterial color={dragonState.color} />
+              </mesh>
+            </Canvas>
+          )
+        } catch (error) {
+          console.error('React Three Fiber failed:', error)
+          return (
+            <div className="flex items-center justify-center h-full bg-black">
+              <ASCIIDragon 
+                dragonState={dragonState}
+                width={Math.floor(width / 8)}
+                height={Math.floor(height / 16)}
+              />
+            </div>
+          )
+        }
       
       case 'software':
       case 'canvas2d':
@@ -559,7 +643,12 @@ export function DragonFallbackRenderer({
 
   if (hasError) {
     return (
-      <div className={`flex items-center justify-center ${className}`} style={{ width, height }}>
+      <div 
+        className={`flex items-center justify-center ${className}`} 
+        style={{ width, height }}
+        data-testid="dragon-fallback-error"
+        data-dragon-type="fallback-error"
+      >
         <div className="text-center">
           <div className="text-4xl mb-2">⚠️</div>
           <p className="text-red-400">Dragon System Error</p>
@@ -571,7 +660,13 @@ export function DragonFallbackRenderer({
   }
 
   return (
-    <div className={className} style={{ width, height }}>
+    <div 
+      className={className} 
+      style={{ width, height }}
+      data-testid="dragon-fallback-renderer"
+      data-dragon-type="fallback-renderer"
+      data-fallback-mode={fallbackContext?.type || 'unknown'}
+    >
       {renderDragon()}
       
       {/* Debug info in development */}
@@ -579,7 +674,8 @@ export function DragonFallbackRenderer({
         <div className="absolute bottom-2 left-2 text-xs text-gray-500 bg-black bg-opacity-50 p-1 rounded">
           Mode: {fallbackContext.type} | 
           Headless: {fallbackContext.isHeadless ? 'Yes' : 'No'} |
-          Docker: {fallbackContext.isDocker ? 'Yes' : 'No'}
+          Docker: {fallbackContext.isDocker ? 'Yes' : 'No'} |
+          THREE: {THREE ? 'Available' : 'Not Available'}
         </div>
       )}
     </div>

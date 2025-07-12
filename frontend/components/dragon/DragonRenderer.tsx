@@ -64,8 +64,16 @@ const ASCIIDragon: React.FC<{
   `
 
   return (
-    <div className={`flex items-center justify-center ${className}`}>
-      <pre className="text-yellow-400 font-mono text-center animate-pulse">
+    <div 
+      className={`flex items-center justify-center ${className}`}
+      data-testid="ascii-dragon"
+      data-dragon-type="ascii"
+      data-voice-state={voiceState?.isListening ? 'listening' : voiceState?.isSpeaking ? 'speaking' : 'idle'}
+    >
+      <pre 
+        className="text-yellow-400 font-mono text-center animate-pulse"
+        data-testid="ascii-dragon-content"
+      >
         {dragonArt}
       </pre>
     </div>
@@ -82,9 +90,19 @@ const Dragon2D: React.FC<{
   const color = voiceState?.isListening ? 'text-blue-400' : 'text-yellow-400'
   
   return (
-    <div className={`flex items-center justify-center ${className}`}>
+    <div 
+      className={`flex items-center justify-center ${className}`}
+      data-testid="dragon-2d"
+      data-dragon-type="2d"
+      data-voice-state={voiceState?.isListening ? 'listening' : voiceState?.isSpeaking ? 'speaking' : 'idle'}
+    >
       <div className={`transition-all duration-300 ${scale} ${color}`}>
-        <div className="text-8xl animate-bounce">🐲</div>
+        <div 
+          className="text-8xl animate-bounce"
+          data-testid="dragon-2d-sprite"
+        >
+          🐲
+        </div>
         {voiceState?.isSpeaking && (
           <div className="text-center text-sm mt-2 animate-pulse">Speaking...</div>
         )}
@@ -146,8 +164,8 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
     const determineOptimalType = () => {
       // Check if in headless/Docker environment
       if (isHeadlessEnvironment()) {
-        logger.info('Headless environment detected, using fallback renderer')
-        return 'fallback'
+        logger.info('Headless environment detected, using ASCII dragon')
+        return 'ascii'
       }
       
       // Check WebGL capabilities if using auto mode
@@ -157,14 +175,23 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
         if (capabilities.webgl2 || capabilities.webgl) {
           return 'glb'
         } else if (capabilities.canvas2d) {
-          return 'fallback'
+          return '2d'
         } else {
           return 'ascii'
         }
       }
       
+      // If GLB is requested but WebGL is not available, fallback immediately
+      if (dragonType === 'glb') {
+        const capabilities = webglFallbackManager.detectCapabilities()
+        if (!capabilities.webgl && !capabilities.webgl2) {
+          logger.info('WebGL not available, falling back to ASCII dragon')
+          return 'ascii'
+        }
+      }
+      
       // Check if we should use optimal dragon type based on capabilities
-      if (enableErrorRecovery) {
+      if (enableErrorRecovery && fallbackSystem.current.getOptimalDragonType) {
         const optimalType = fallbackSystem.current.getOptimalDragonType()
         
         if (optimalType !== dragonType) {
@@ -267,19 +294,50 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
     }
     lastErrorTimeRef.current = now
     
-    const errorMessage = errorRecoveryUtils.getErrorMessage(error)
+    const errorMessage = errorRecoveryUtils.getErrorMessage ? 
+      errorRecoveryUtils.getErrorMessage(error) : error.message
     logger.error(`Dragon ${currentType} error:`, errorMessage)
     errorCountRef.current++
     
     // Record error for monitoring
-    errorMonitor.current.recordError(error, `DragonRenderer:${currentType}`, false)
+    if (errorMonitor.current.recordError) {
+      errorMonitor.current.recordError(error, `DragonRenderer:${currentType}`, false)
+    }
     
     if (onError) {
       onError(error, currentType)
     }
     
+    // Check for WebGL unavailability or THREE.js errors
+    const isWebGLError = error.message.includes('WebGL') || 
+                        error.message.includes('THREE is not defined') ||
+                        error.message.includes('context lost') ||
+                        error.message.includes('GL_OUT_OF_MEMORY')
+    
+    // For WebGL/THREE.js errors, immediately fallback to ASCII
+    if (isWebGLError && currentType === 'glb') {
+      logger.warn(`WebGL/THREE.js error detected, falling back to ASCII dragon immediately`)
+      
+      const newFallbackEntry = {
+        from: currentType,
+        to: 'ascii' as const,
+        reason: 'WebGL/THREE.js unavailable'
+      }
+      
+      setFallbackHistory(prev => [...prev, newFallbackEntry])
+      
+      if (onFallback) {
+        onFallback(currentType, 'ascii')
+      }
+      
+      setCurrentType('ascii')
+      setHasError(false)
+      errorCountRef.current = 0
+      return
+    }
+    
     // Check if this is a model-related error and should trigger immediate fallback
-    if (errorRecoveryUtils.isModelError(error)) {
+    if (errorRecoveryUtils.isModelError && errorRecoveryUtils.isModelError(error)) {
       logger.warn(`Model error detected for ${currentType}, triggering immediate fallback`)
       setHasError(true)
       // Skip recovery attempts for model errors
@@ -287,24 +345,30 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
     }
 
     // Try error recovery first if enabled
-    if (enableErrorRecovery && errorCountRef.current <= maxErrorRetries) {
-      if (errorRecoveryUtils.isRecoverable(error)) {
+    if (enableErrorRecovery && errorCountRef.current <= maxErrorRetries && !isWebGLError) {
+      if (errorRecoveryUtils.isRecoverable && errorRecoveryUtils.isRecoverable(error)) {
         setIsRecovering(true)
         
         try {
           // Attempt recovery based on error type
           if (currentType === 'glb') {
             // Try to force garbage collection
-            errorRecoveryUtils.forceGC()
+            if (errorRecoveryUtils.forceGC) {
+              errorRecoveryUtils.forceGC()
+            }
             
             // Wait a bit before retrying
-            await errorRecoveryUtils.delay(1000)
+            if (errorRecoveryUtils.delay) {
+              await errorRecoveryUtils.delay(1000)
+            }
             
             // Reset error state for retry
             if (mountedRef.current) {
               setHasError(false)
               setIsRecovering(false)
-              errorMonitor.current.recordError(error, `DragonRenderer:${currentType}`, true)
+              if (errorMonitor.current.recordError) {
+                errorMonitor.current.recordError(error, `DragonRenderer:${currentType}`, true)
+              }
               return
             }
           }
@@ -324,8 +388,9 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
       let fallbackReason = error.message
       
       if (currentType === 'glb') {
-        nextType = fallbackType === 'fallback' ? 'fallback' : fallbackType || '2d'
-        fallbackReason = 'WebGL/3D rendering failed'
+        // For WebGL errors, go directly to ASCII to avoid Three.js dependency
+        nextType = isWebGLError ? 'ascii' : (fallbackType === 'fallback' ? 'fallback' : fallbackType || '2d')
+        fallbackReason = isWebGLError ? 'WebGL/THREE.js unavailable' : 'WebGL/3D rendering failed'
       } else if (currentType === 'fallback') {
         nextType = 'ascii'
         fallbackReason = 'Fallback renderer failed'
@@ -338,7 +403,9 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
         logger.info(`Falling back from ${currentType} to ${nextType}`, { reason: fallbackReason })
         
         // Record fallback
-        fallbackSystem.current.recordFallbackReason(currentType, nextType, fallbackReason)
+        if (fallbackSystem.current.recordFallbackReason) {
+          fallbackSystem.current.recordFallbackReason(currentType, nextType, fallbackReason)
+        }
         
         const newFallbackEntry = {
           from: currentType,
@@ -405,7 +472,11 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
   const renderDragon = () => {
     if (isRecovering) {
       return (
-        <div className="flex items-center justify-center h-full">
+        <div 
+          className="flex items-center justify-center h-full"
+          data-testid="dragon-recovering"
+          data-dragon-type="recovering"
+        >
           <div className="text-yellow-400 text-center">
             <div className="animate-spin text-4xl mb-2">⚡</div>
             <div>Dragon is recovering...</div>
@@ -417,7 +488,11 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
     
     if (hasError && !enableFallback) {
       return (
-        <div className="flex items-center justify-center h-full">
+        <div 
+          className="flex items-center justify-center h-full"
+          data-testid="dragon-error"
+          data-dragon-type="error"
+        >
           <div className="text-red-400 text-center">
             <div className="text-4xl mb-2">⚠️</div>
             <div>Dragon failed to load</div>
@@ -426,6 +501,14 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
                 Fallback attempts: {fallbackHistory.length}
               </div>
             )}
+            {/* Render ASCII dragon as final fallback even in error state */}
+            <div className="mt-4">
+              <ASCIIDragon
+                size={size}
+                voiceState={voiceState}
+                className="w-full"
+              />
+            </div>
           </div>
         </div>
       )
@@ -451,28 +534,56 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
         )
       
       case 'fallback':
-        return (
-          <DragonFallbackRendererWithErrorBoundary
-            voiceState={voiceState}
-            className="w-full h-full"
-            width={width}
-            height={height}
-            enableEyeTracking={enableAnimations}
-            lightningActive={voiceState?.isSpeaking && voiceState?.volume > 0.7}
-            enableAutoFallback={enableWebGLFallback}
-            preferredMode={preferredFallbackMode}
-            onError={(error) => handleError(error)}
-            onFallback={(mode) => {
-              logger.info(`WebGL fallback renderer switched to ${mode}`)
-              if (onFallback) {
-                onFallback('fallback', mode)
-              }
-            }}
-          />
-        )
+        // Try to use DragonFallbackRenderer, but catch any errors and fallback to ASCII
+        try {
+          return (
+            <DragonFallbackRendererWithErrorBoundary
+              voiceState={voiceState}
+              className="w-full h-full"
+              width={width}
+              height={height}
+              enableEyeTracking={enableAnimations}
+              lightningActive={voiceState?.isSpeaking && voiceState?.volume > 0.7}
+              enableAutoFallback={enableWebGLFallback}
+              preferredMode={preferredFallbackMode}
+              onError={(error) => {
+                logger.error('DragonFallbackRenderer error, falling back to ASCII:', error)
+                handleError(error)
+              }}
+              onFallback={(mode) => {
+                logger.info(`WebGL fallback renderer switched to ${mode}`)
+                if (onFallback) {
+                  onFallback('fallback', mode)
+                }
+              }}
+            />
+          )
+        } catch (error) {
+          logger.error('DragonFallbackRenderer failed to load, using ASCII dragon:', error)
+          return (
+            <ASCIIDragon
+              size={size}
+              voiceState={voiceState}
+              className="w-full h-full"
+            />
+          )
+        }
       
       case 'glb':
       default:
+        // Check WebGL availability before attempting to render GLB
+        const capabilities = webglFallbackManager.detectCapabilities()
+        if (!capabilities.webgl && !capabilities.webgl2) {
+          logger.warn('WebGL not available, falling back to ASCII dragon')
+          return (
+            <ASCIIDragon
+              size={size}
+              voiceState={voiceState}
+              className="w-full h-full"
+            />
+          )
+        }
+        
         // LOD selection based on size and availability
         const getLODModel = () => {
           if (enableProgressiveLoading) {
@@ -490,47 +601,48 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
           
           // LOD based on size with availability checking and safe fallbacks
           // Prioritize models that are confirmed to work in production
-          const safeModels = [
-            '/models/seiron.glb' // Primary working model - use this for everything
-          ]
-          
-          switch (size) {
-            case 'sm':
-            case 'md':
-              // For all sizes, use the primary working model
-              return '/models/seiron.glb'
-            case 'lg':
-              // Use the primary working model
-              return '/models/seiron.glb'
-            case 'xl':
-            case 'gigantic':
-            default:
-              // Use the primary working model
-              return '/models/seiron.glb'
-          }
+          return '/models/seiron.glb' // Primary working model - use this for everything
         }
         
         const modelPath = getLODModel()
         
-        return (
-          <DragonWebGLErrorBoundary>
-            <SeironGLBDragonWithErrorBoundary
-              voiceState={voiceState}
+        try {
+          return (
+            <DragonWebGLErrorBoundary>
+              <SeironGLBDragonWithErrorBoundary
+                voiceState={voiceState}
+                size={size}
+                enableAnimations={enableAnimations}
+                className="w-full h-full"
+                modelPath={modelPath}
+                isProgressiveLoading={enableProgressiveLoading}
+                isLoadingHighQuality={isLoadingHighQuality}
+                onError={handleError}
+              />
+            </DragonWebGLErrorBoundary>
+          )
+        } catch (error) {
+          logger.error('SeironGLBDragon failed to load, using ASCII dragon:', error)
+          return (
+            <ASCIIDragon
               size={size}
-              enableAnimations={enableAnimations}
+              voiceState={voiceState}
               className="w-full h-full"
-              modelPath={modelPath}
-              isProgressiveLoading={enableProgressiveLoading}
-              isLoadingHighQuality={isLoadingHighQuality}
-              onError={handleError}
             />
-          </DragonWebGLErrorBoundary>
-        )
+          )
+        }
     }
   }
 
   return (
-    <div className={`w-full h-full ${className}`}>
+    <div 
+      className={`w-full h-full ${className}`}
+      data-testid="dragon-renderer"
+      data-dragon-type={currentType}
+      data-voice-state={voiceState?.isListening ? 'listening' : voiceState?.isSpeaking ? 'speaking' : 'idle'}
+      data-has-error={hasError}
+      data-is-recovering={isRecovering}
+    >
       <div key={currentType}>
         {renderDragon()}
       </div>

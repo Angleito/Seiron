@@ -5,6 +5,70 @@ import { DragonBallErrorBoundary } from './DragonBallErrorBoundary'
 import { webglDiagnostics } from '../../utils/webglDiagnostics'
 import { webGLRecoveryManager } from '../../utils/webglRecovery'
 
+// ASCII Dragon Fallback Component
+const ASCIIDragonFallback: React.FC<{
+  voiceState?: {
+    isListening?: boolean
+    isSpeaking?: boolean
+    isProcessing?: boolean
+  }
+}> = ({ voiceState }) => {
+  const dragonArt = voiceState?.isSpeaking ? `
+    🔥🔥🔥 ROAAAAR! 🔥🔥🔥
+       🐉
+    ~~~~~~~~~~~~~~~~~~
+  ` : voiceState?.isListening ? `
+    👂 Listening... 👂
+         🐉
+    ~~~~~~~~~~~~~~~~
+  ` : `
+       🐉
+    ~~~~~~~~
+  `
+
+  return (
+    <div 
+      className="flex items-center justify-center min-h-[200px]"
+      data-testid="ascii-dragon-fallback"
+      data-dragon-type="ascii-fallback"
+    >
+      <pre className="text-yellow-400 font-mono text-center animate-pulse">
+        {dragonArt}
+      </pre>
+    </div>
+  )
+}
+
+// 2D Dragon Fallback Component
+const Dragon2DFallback: React.FC<{
+  voiceState?: {
+    isListening?: boolean
+    isSpeaking?: boolean
+    isProcessing?: boolean
+  }
+}> = ({ voiceState }) => {
+  const scale = voiceState?.isSpeaking ? 'scale-110' : 'scale-100'
+  const color = voiceState?.isListening ? 'text-blue-400' : 'text-yellow-400'
+  
+  return (
+    <div 
+      className="flex items-center justify-center min-h-[200px]"
+      data-testid="dragon-2d-fallback"
+      data-dragon-type="2d-fallback"
+    >
+      <div className={`transition-all duration-300 ${scale} ${color}`}>
+        <div className="text-8xl animate-bounce">🐲</div>
+        {voiceState?.isSpeaking && (
+          <div className="text-center text-sm mt-2 animate-pulse">Speaking...</div>
+        )}
+        {voiceState?.isListening && (
+          <div className="text-center text-sm mt-2 animate-pulse">Listening...</div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 interface WebGLErrorBoundaryProps {
   children: ReactNode
   fallback?: ReactNode
@@ -16,6 +80,13 @@ interface WebGLErrorBoundaryProps {
   onRecoverySuccess?: () => void
   onRecoveryFailure?: () => void
   onFallbackRequested?: () => void
+  voiceState?: {
+    isListening?: boolean
+    isSpeaking?: boolean
+    isProcessing?: boolean
+  }
+  enableActualFallback?: boolean
+  preferredFallbackType?: 'ascii' | '2d'
 }
 
 interface WebGLErrorBoundaryState {
@@ -30,6 +101,8 @@ interface WebGLErrorBoundaryState {
   lastErrorTime: number
   recoveryAttempts: number
   diagnostics: ReturnType<typeof webglDiagnostics.getContextLossStats> | null
+  showFallbackDragon: boolean
+  fallbackType: 'ascii' | '2d'
 }
 
 // WebGL capability detection
@@ -106,7 +179,9 @@ export class WebGLErrorBoundary extends Component<WebGLErrorBoundaryProps, WebGL
       hardwareAccelerated: capabilities.hardwareAccelerated,
       lastErrorTime: 0,
       recoveryAttempts: 0,
-      diagnostics: null
+      diagnostics: null,
+      showFallbackDragon: false,
+      fallbackType: props.preferredFallbackType || 'ascii'
     }
   }
 
@@ -323,7 +398,8 @@ export class WebGLErrorBoundary extends Component<WebGLErrorBoundaryProps, WebGL
       hasError: false,
       error: null,
       errorInfo: null,
-      isRecovering: false
+      isRecovering: false,
+      showFallbackDragon: false // Hide fallback to retry 3D
     })
     
     // Notify success callback
@@ -333,6 +409,12 @@ export class WebGLErrorBoundary extends Component<WebGLErrorBoundaryProps, WebGL
   }
 
   private handleFallbackMode = () => {
+    // Show fallback dragon instead of blocking rendering
+    this.setState({ 
+      showFallbackDragon: true,
+      hasError: false // Clear error state to show fallback
+    })
+    
     // Force fallback to 2D mode
     window.dispatchEvent(new CustomEvent('webgl-fallback-requested'))
     
@@ -340,6 +422,12 @@ export class WebGLErrorBoundary extends Component<WebGLErrorBoundaryProps, WebGL
     if (this.props.onFallbackRequested) {
       this.props.onFallbackRequested()
     }
+  }
+  
+  private switchFallbackType = () => {
+    this.setState(prevState => ({
+      fallbackType: prevState.fallbackType === 'ascii' ? '2d' : 'ascii'
+    }))
   }
 
   private renderErrorUI = () => {
@@ -396,7 +484,7 @@ export class WebGLErrorBoundary extends Component<WebGLErrorBoundaryProps, WebGL
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-100 rounded transition-colors"
               >
                 <Zap className="h-4 w-4" />
-                Use 2D Dragon
+                Use Fallback Dragon
               </button>
             </div>
           </div>
@@ -422,13 +510,20 @@ export class WebGLErrorBoundary extends Component<WebGLErrorBoundaryProps, WebGL
               Your browser or device doesn't support WebGL. The Dragon will use 2D mode instead.
             </p>
 
-            <button
-              onClick={this.handleFallbackMode}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded transition-colors"
-            >
-              <Zap className="h-4 w-4" />
-              Continue with 2D Dragon
-            </button>
+            <div className="space-y-2">
+              <button
+                onClick={this.handleFallbackMode}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded transition-colors"
+              >
+                <Zap className="h-4 w-4" />
+                Continue with Fallback Dragon
+              </button>
+              
+              {/* Show fallback dragon immediately */}
+              <div className="mt-4 p-4 bg-black/30 rounded">
+                <ASCIIDragonFallback voiceState={this.props.voiceState} />
+              </div>
+            </div>
           </div>
         </div>
       )
@@ -481,13 +576,22 @@ export class WebGLErrorBoundary extends Component<WebGLErrorBoundaryProps, WebGL
               </button>
             )}
             
-            <button
-              onClick={this.handleFallbackMode}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-100 rounded transition-colors"
-            >
-              <Zap className="h-4 w-4" />
-              Use 2D Dragon Instead
-            </button>
+            <div className="space-y-2">
+              <button
+                onClick={this.handleFallbackMode}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-100 rounded transition-colors"
+              >
+                <Zap className="h-4 w-4" />
+                Use Fallback Dragon
+              </button>
+              
+              <button
+                onClick={this.switchFallbackType}
+                className="w-full px-3 py-1 text-sm bg-gray-600 hover:bg-gray-500 text-gray-200 rounded transition-colors"
+              >
+                Switch to {this.state.fallbackType === 'ascii' ? '2D' : 'ASCII'} Dragon
+              </button>
+            </div>
           </div>
 
           <p className="text-xs text-gray-500 text-center mt-4">
@@ -520,8 +624,39 @@ export class WebGLErrorBoundary extends Component<WebGLErrorBoundaryProps, WebGL
   }
 
   override render() {
-    const { children, fallback } = this.props
-    const { hasError } = this.state
+    const { children, fallback, enableActualFallback = true } = this.props
+    const { hasError, showFallbackDragon, fallbackType } = this.state
+
+    // If showing fallback dragon, render it instead of error UI
+    if (showFallbackDragon && enableActualFallback) {
+      const FallbackComponent = fallbackType === 'ascii' ? ASCIIDragonFallback : Dragon2DFallback
+      return (
+        <div 
+          className="w-full h-full flex flex-col items-center justify-center"
+          data-testid="webgl-fallback-dragon"
+          data-fallback-type={fallbackType}
+        >
+          <FallbackComponent voiceState={this.props.voiceState} />
+          
+          {/* Allow switching between fallback types */}
+          <div className="mt-4 flex gap-2">
+            <button
+              onClick={this.switchFallbackType}
+              className="px-3 py-1 text-sm bg-gray-600 hover:bg-gray-500 text-white rounded transition-colors"
+            >
+              Switch to {fallbackType === 'ascii' ? '2D' : 'ASCII'}
+            </button>
+            
+            <button
+              onClick={this.handleManualRetry}
+              className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors"
+            >
+              Retry 3D
+            </button>
+          </div>
+        </div>
+      )
+    }
 
     if (hasError) {
       return fallback || this.renderErrorUI()
@@ -548,7 +683,14 @@ export function withWebGLErrorBoundary<P extends object>(
 }
 
 // Specialized Dragon WebGL Error Boundary with Dragon Ball theme
-export const DragonWebGLErrorBoundary: React.FC<{ children: ReactNode }> = ({ children }) => (
+export const DragonWebGLErrorBoundary: React.FC<{ 
+  children: ReactNode
+  voiceState?: {
+    isListening?: boolean
+    isSpeaking?: boolean
+    isProcessing?: boolean
+  }
+}> = ({ children, voiceState }) => (
   <DragonBallErrorBoundary
     name="3D Dragon System"
     level="component"
@@ -562,7 +704,13 @@ export const DragonWebGLErrorBoundary: React.FC<{ children: ReactNode }> = ({ ch
     <WebGLErrorBoundary
       enableAutoRecovery={true}
       enableContextLossRecovery={true}
+      enableActualFallback={true}
+      preferredFallbackType="ascii"
       maxRetries={2}
+      voiceState={voiceState}
+      onFallbackRequested={() => {
+        logger.info('WebGL Error Boundary requested fallback to dragon renderer')
+      }}
     >
       {children}
     </WebGLErrorBoundary>
