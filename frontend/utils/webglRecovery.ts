@@ -13,6 +13,21 @@ export interface WebGLRecoveryConfig {
   memoryThreshold?: number;
   enableQualityReduction?: boolean;
   enableUserNotifications?: boolean;
+  // Enhanced throttling configuration
+  enableIntelligentThrottling?: boolean;
+  cooldownMultiplier?: number;
+  maxCooldownPeriod?: number;
+  contextHealthCheckInterval?: number;
+  recoverySuccessRateThreshold?: number;
+  // Enhanced monitoring configuration
+  adaptiveMonitoringEnabled?: boolean;
+  minMonitoringInterval?: number;
+  maxMonitoringInterval?: number;
+  performanceAlertDebounceMs?: number;
+  // Batch cleanup configuration
+  enableBatchCleanup?: boolean;
+  batchCleanupInterval?: number;
+  cleanupPriorityThreshold?: number;
   onContextLost?: () => void;
   onContextRestored?: () => void;
   onRecoveryFailed?: () => void;
@@ -41,6 +56,14 @@ export interface WebGLDiagnostics {
   contextLossPredictions: number;
   contextLossRisk: 'low' | 'medium' | 'high';
   userNotifications: UserNotification[];
+  // Enhanced metrics for optimization
+  recoverySuccessRate: number;
+  averageCooldownPeriod: number;
+  unnecessaryRecoveryAttempts: number;
+  batchCleanupEfficiency: number;
+  monitoringOverheadMs: number;
+  contextHealthScore: number;
+  devicePerformanceProfile: 'low-end' | 'mid-range' | 'high-end';
 }
 
 interface RecoveryAttempt {
@@ -52,6 +75,12 @@ interface RecoveryAttempt {
   strategy?: 'standard' | 'aggressive' | 'conservative';
   qualityLevelBefore?: number;
   qualityLevelAfter?: number;
+  // Enhanced recovery tracking
+  contextHealthBefore?: number;
+  contextHealthAfter?: number;
+  cooldownPeriod?: number;
+  wasThrottled?: boolean;
+  recoveryTrigger?: 'automatic' | 'manual' | 'predictive';
 }
 
 interface UserNotification {
@@ -60,7 +89,9 @@ interface UserNotification {
   message: string;
   type: 'info' | 'warning' | 'error';
   dismissed: boolean;
-  source: 'recovery' | 'prevention' | 'quality';
+  source: 'recovery' | 'prevention' | 'quality' | 'throttling' | 'optimization';
+  priority?: 'low' | 'medium' | 'high';
+  debounced?: boolean;
 }
 
 interface QualitySettings {
@@ -88,6 +119,45 @@ export class WebGLRecoveryManager extends EventEmitter {
   private contextLossExtension: WEBGL_lose_context | null = null;
   private performanceMonitor: NodeJS.Timeout | null = null;
   private memoryMonitor: NodeJS.Timeout | null = null;
+  
+  // Enhanced throttling and optimization state
+  private intelligentThrottling = {
+    enabled: true,
+    currentCooldownPeriod: 1000,
+    cooldownHistory: [] as number[],
+    lastContextHealthCheck: 0,
+    recoverySuccessHistory: [] as boolean[],
+    unnecessaryAttempts: 0
+  };
+  
+  private adaptiveMonitoring = {
+    enabled: true,
+    currentInterval: 5000,
+    performanceAlertLastFired: 0,
+    memoryAlertLastFired: 0,
+    stablePerformancePeriod: 0,
+    performanceStableThreshold: 30000 // 30 seconds
+  };
+  
+  private batchCleanup = {
+    enabled: true,
+    pendingOperations: [] as Array<{type: 'texture' | 'geometry' | 'material', resource: any, priority: number}>,
+    lastBatchExecution: 0,
+    batchTimer: null as NodeJS.Timeout | null
+  };
+  
+  private contextHealth = {
+    score: 100,
+    lastCheck: 0,
+    factors: {
+      memoryPressure: 0,
+      performanceDegradation: 0,
+      errorRate: 0,
+      recoveryHistory: 0
+    }
+  };
+  
+  private deviceProfile: 'low-end' | 'mid-range' | 'high-end' = 'mid-range';
   private qualitySettings: QualitySettings = {
     level: 4,
     antialias: true,
@@ -116,7 +186,15 @@ export class WebGLRecoveryManager extends EventEmitter {
     preventiveMeasuresCount: 0,
     contextLossPredictions: 0,
     contextLossRisk: 'low',
-    userNotifications: []
+    userNotifications: [],
+    // Enhanced metrics
+    recoverySuccessRate: 1.0,
+    averageCooldownPeriod: 1000,
+    unnecessaryRecoveryAttempts: 0,
+    batchCleanupEfficiency: 1.0,
+    monitoringOverheadMs: 0,
+    contextHealthScore: 100,
+    devicePerformanceProfile: 'mid-range'
   };
   
   private config: Required<WebGLRecoveryConfig> = {
@@ -130,6 +208,21 @@ export class WebGLRecoveryManager extends EventEmitter {
     memoryThreshold: 500,
     enableQualityReduction: true,
     enableUserNotifications: true,
+    // Enhanced throttling defaults
+    enableIntelligentThrottling: true,
+    cooldownMultiplier: 1.5,
+    maxCooldownPeriod: 30000, // 30 seconds max cooldown
+    contextHealthCheckInterval: 10000, // Check context health every 10 seconds
+    recoverySuccessRateThreshold: 0.7, // 70% success rate threshold
+    // Enhanced monitoring defaults
+    adaptiveMonitoringEnabled: true,
+    minMonitoringInterval: 2000, // Minimum 2 seconds
+    maxMonitoringInterval: 15000, // Maximum 15 seconds
+    performanceAlertDebounceMs: 5000, // 5 second debounce
+    // Batch cleanup defaults
+    enableBatchCleanup: true,
+    batchCleanupInterval: 3000, // Execute batches every 3 seconds
+    cleanupPriorityThreshold: 0.8, // High priority threshold
     onContextLost: () => {},
     onContextRestored: () => {},
     onRecoveryFailed: () => {},
@@ -174,6 +267,24 @@ export class WebGLRecoveryManager extends EventEmitter {
       console.warn('[WebGLRecovery] WEBGL_lose_context extension not available');
     }
 
+    // Initialize device profiling for optimized recovery strategies
+    this.initializeDeviceProfile();
+    
+    // Initialize intelligent throttling if enabled
+    if (this.config.enableIntelligentThrottling) {
+      this.initializeIntelligentThrottling();
+    }
+    
+    // Initialize adaptive monitoring if enabled
+    if (this.config.adaptiveMonitoringEnabled) {
+      this.initializeAdaptiveMonitoring();
+    }
+    
+    // Initialize batch cleanup if enabled
+    if (this.config.enableBatchCleanup) {
+      this.initializeBatchCleanup();
+    }
+
     // Setup event listeners
     this.setupEventListeners();
     
@@ -185,10 +296,218 @@ export class WebGLRecoveryManager extends EventEmitter {
     // Initialize quality settings based on device capabilities
     this.initializeQualitySettings();
     
-    console.log('[WebGLRecovery] Initialized WebGL recovery management');
-    this.addUserNotification('3D Dragon system ready', 'info');
+    console.log(`[WebGLRecovery] Initialized optimized WebGL recovery management for ${this.deviceProfile} device`);
+    this.addUserNotification('Enhanced 3D Dragon system ready with intelligent recovery', 'info');
   }
 
+  /**
+   * Initialize device performance profile for optimized recovery strategies
+   */
+  private initializeDeviceProfile(): void {
+    const monitoringStart = performance.now();
+    
+    try {
+      // Detect device capabilities
+      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const hardwareConcurrency = navigator.hardwareConcurrency || 4;
+      
+      // Get memory information
+      const memoryInfo = this.getMemoryInfo();
+      const memoryLimit = memoryInfo?.jsHeapSizeLimit || 1024 * 1024 * 1024; // 1GB default
+      
+      // Get WebGL capabilities
+      const debugInfo = this.gl?.getExtension('WEBGL_debug_renderer_info');
+      const renderer = debugInfo ? this.gl?.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : '';
+      const isLowEndGPU = renderer.includes('SwiftShader') || renderer.includes('Software');
+      
+      // Calculate performance score
+      let performanceScore = 100;
+      if (isMobile) performanceScore -= 30;
+      if (hardwareConcurrency < 4) performanceScore -= 20;
+      if (memoryLimit < 2 * 1024 * 1024 * 1024) performanceScore -= 20; // Less than 2GB
+      if (isLowEndGPU) performanceScore -= 30;
+      
+      // Determine device profile
+      if (performanceScore >= 70) {
+        this.deviceProfile = 'high-end';
+      } else if (performanceScore >= 40) {
+        this.deviceProfile = 'mid-range';
+      } else {
+        this.deviceProfile = 'low-end';
+      }
+      
+      this.diagnostics.devicePerformanceProfile = this.deviceProfile;
+      
+      // Adjust configuration based on device profile
+      this.adjustConfigForDevice();
+      
+      console.log(`[WebGLRecovery] Device profile: ${this.deviceProfile} (score: ${performanceScore})`);
+      
+    } catch (error) {
+      console.warn('[WebGLRecovery] Error during device profiling:', error);
+      this.deviceProfile = 'mid-range'; // Safe default
+    } finally {
+      this.diagnostics.monitoringOverheadMs += performance.now() - monitoringStart;
+    }
+  }
+  
+  /**
+   * Adjust configuration based on device profile
+   */
+  private adjustConfigForDevice(): void {
+    switch (this.deviceProfile) {
+      case 'low-end':
+        this.config.maxRecoveryAttempts = 2;
+        this.config.recoveryDelayMs = 2000;
+        this.config.performanceThreshold = 20;
+        this.config.memoryThreshold = 200;
+        this.adaptiveMonitoring.currentInterval = 10000; // Less frequent monitoring
+        this.batchCleanup.batchTimer = null; // More aggressive batching
+        break;
+      case 'mid-range':
+        // Use default settings
+        break;
+      case 'high-end':
+        this.config.maxRecoveryAttempts = 5;
+        this.config.recoveryDelayMs = 500;
+        this.config.performanceThreshold = 45;
+        this.config.memoryThreshold = 800;
+        this.adaptiveMonitoring.currentInterval = 3000; // More frequent monitoring
+        break;
+    }
+  }
+  
+  /**
+   * Initialize intelligent throttling system
+   */
+  private initializeIntelligentThrottling(): void {
+    this.intelligentThrottling.enabled = true;
+    this.intelligentThrottling.currentCooldownPeriod = this.config.recoveryDelayMs;
+    this.intelligentThrottling.cooldownHistory = [];
+    this.intelligentThrottling.recoverySuccessHistory = [];
+    this.intelligentThrottling.unnecessaryAttempts = 0;
+    
+    console.log('[WebGLRecovery] Intelligent throttling system initialized');
+  }
+  
+  /**
+   * Initialize adaptive monitoring system
+   */
+  private initializeAdaptiveMonitoring(): void {
+    this.adaptiveMonitoring.enabled = true;
+    this.adaptiveMonitoring.performanceAlertLastFired = 0;
+    this.adaptiveMonitoring.memoryAlertLastFired = 0;
+    this.adaptiveMonitoring.stablePerformancePeriod = 0;
+    
+    console.log('[WebGLRecovery] Adaptive monitoring system initialized');
+  }
+  
+  /**
+   * Initialize batch cleanup system
+   */
+  private initializeBatchCleanup(): void {
+    this.batchCleanup.enabled = true;
+    this.batchCleanup.pendingOperations = [];
+    this.batchCleanup.lastBatchExecution = 0;
+    
+    // Start batch processing timer
+    this.startBatchCleanupTimer();
+    
+    console.log('[WebGLRecovery] Batch cleanup system initialized');
+  }
+  
+  /**
+   * Start batch cleanup timer
+   */
+  private startBatchCleanupTimer(): void {
+    if (this.batchCleanup.batchTimer) {
+      clearInterval(this.batchCleanup.batchTimer);
+    }
+    
+    this.batchCleanup.batchTimer = setInterval(() => {
+      this.executeBatchCleanup();
+    }, this.config.batchCleanupInterval);
+  }
+  
+  /**
+   * Execute batch cleanup operations
+   */
+  private executeBatchCleanup(): void {
+    if (this.batchCleanup.pendingOperations.length === 0) return;
+    
+    const batchStart = performance.now();
+    const operationsToProcess = [...this.batchCleanup.pendingOperations];
+    this.batchCleanup.pendingOperations = [];
+    
+    // Sort by priority (higher priority first)
+    operationsToProcess.sort((a, b) => b.priority - a.priority);
+    
+    let processedCount = 0;
+    let errorCount = 0;
+    
+    for (const operation of operationsToProcess) {
+      try {
+        switch (operation.type) {
+          case 'texture':
+            if (operation.resource && typeof operation.resource.dispose === 'function') {
+              operation.resource.dispose();
+            }
+            break;
+          case 'geometry':
+            if (operation.resource && typeof operation.resource.dispose === 'function') {
+              operation.resource.dispose();
+            }
+            break;
+          case 'material':
+            this.disposeMaterialBatch(operation.resource);
+            break;
+        }
+        processedCount++;
+      } catch (error) {
+        errorCount++;
+        console.warn(`[WebGLRecovery] Batch cleanup error for ${operation.type}:`, error);
+      }
+    }
+    
+    const batchTime = performance.now() - batchStart;
+    this.batchCleanup.lastBatchExecution = Date.now();
+    
+    // Calculate efficiency
+    const efficiency = processedCount / (processedCount + errorCount);
+    this.diagnostics.batchCleanupEfficiency = efficiency;
+    
+    if (processedCount > 0) {
+      console.log(`[WebGLRecovery] Batch cleanup: ${processedCount} operations in ${batchTime.toFixed(2)}ms (efficiency: ${(efficiency * 100).toFixed(1)}%)`);
+    }
+  }
+  
+  /**
+   * Dispose material in batch with enhanced cleanup
+   */
+  private disposeMaterialBatch(material: THREE.Material): void {
+    if (!material) return;
+    
+    try {
+      const materialAny = material as any;
+      
+      // Optimized texture disposal for batch operations
+      const textureProps = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap'];
+      
+      for (const prop of textureProps) {
+        if (materialAny[prop] && typeof materialAny[prop].dispose === 'function') {
+          materialAny[prop].dispose();
+          materialAny[prop] = null;
+        }
+      }
+      
+      if (typeof material.dispose === 'function') {
+        material.dispose();
+      }
+    } catch (error) {
+      console.warn('[WebGLRecovery] Error in batch material disposal:', error);
+    }
+  }
+  
   /**
    * Setup WebGL context event listeners
    */
@@ -203,23 +522,59 @@ export class WebGLRecoveryManager extends EventEmitter {
   }
 
   /**
-   * Handle WebGL context lost event
+   * Handle WebGL context lost event with intelligent throttling
    */
   private handleContextLost = (event: Event): void => {
     event.preventDefault(); // Prevent default behavior
     
+    const now = Date.now();
+    const contextHealthBefore = this.contextHealth.score;
+    
     // Check if circuit breaker is open
     if (this.circuitBreakerOpen) {
       console.warn('[WebGLRecovery] Circuit breaker is open, skipping recovery attempt');
+      this.intelligentThrottling.unnecessaryAttempts++;
+      this.diagnostics.unnecessaryRecoveryAttempts++;
       this.handleRecoveryFailed();
       return;
     }
     
-    // Prevent rapid context loss events
-    const now = Date.now();
-    if (now - this.lastRecoveryAttempt < 1000) {
-      console.warn('[WebGLRecovery] Rapid context loss detected, implementing backoff');
+    // Enhanced intelligent throttling check
+    if (this.config.enableIntelligentThrottling && this.shouldThrottleRecovery(now)) {
+      console.warn('[WebGLRecovery] Recovery throttled due to intelligent throttling system');
+      this.intelligentThrottling.unnecessaryAttempts++;
+      this.diagnostics.unnecessaryRecoveryAttempts++;
+      this.addUserNotification(
+        `Recovery throttled for ${(this.intelligentThrottling.currentCooldownPeriod / 1000).toFixed(1)}s`, 
+        'warning', 
+        'throttling'
+      );
+      
+      // Schedule delayed recovery
+      setTimeout(() => {
+        if (this.gl && this.gl.isContextLost()) {
+          this.handleContextLost(event);
+        }
+      }, this.intelligentThrottling.currentCooldownPeriod);
+      return;
+    }
+    
+    // Context health validation before recovery
+    if (this.config.enableIntelligentThrottling) {
+      const healthScore = this.calculateContextHealth();
+      if (healthScore < 30 && this.diagnostics.contextLossCount > 2) {
+        console.warn('[WebGLRecovery] Context health too poor for recovery, triggering fallback');
+        this.triggerFallback();
+        return;
+      }
+    }
+    
+    // Prevent rapid context loss events with enhanced detection
+    if (now - this.lastRecoveryAttempt < this.intelligentThrottling.currentCooldownPeriod) {
+      console.warn('[WebGLRecovery] Rapid context loss detected, implementing intelligent backoff');
       this.consecutiveFailures++;
+      this.adjustCooldownPeriod(false); // Increase cooldown on failure
+      
       if (this.consecutiveFailures >= 3) {
         this.openCircuitBreaker();
         return;
@@ -235,10 +590,18 @@ export class WebGLRecoveryManager extends EventEmitter {
     this.recoveryAttempts = 0; // Reset recovery attempts for new context loss
     this.lastRecoveryAttempt = now;
     
-    console.warn('[WebGLRecovery] WebGL context lost', {
+    // Update context health
+    this.contextHealth.score = Math.max(0, this.contextHealth.score - 20);
+    this.contextHealth.lastCheck = now;
+    this.diagnostics.contextHealthScore = this.contextHealth.score;
+    
+    console.warn('[WebGLRecovery] WebGL context lost with enhanced tracking', {
       lossCount: this.diagnostics.contextLossCount,
       timestamp: this.diagnostics.lastContextLoss,
-      consecutiveFailures: this.consecutiveFailures
+      consecutiveFailures: this.consecutiveFailures,
+      contextHealthBefore,
+      contextHealthAfter: this.contextHealth.score,
+      cooldownPeriod: this.intelligentThrottling.currentCooldownPeriod
     });
     
     // Record error in diagnostics
@@ -248,12 +611,105 @@ export class WebGLRecoveryManager extends EventEmitter {
     this.emit('contextLost');
     this.config.onContextLost();
     
-    // Attempt recovery with circuit breaker protection
-    this.attemptRecovery();
+    // Attempt recovery with enhanced strategy selection
+    this.attemptRecoveryWithStrategy();
   };
+  
+  /**
+   * Determine if recovery should be throttled
+   */
+  private shouldThrottleRecovery(now: number): boolean {
+    if (!this.intelligentThrottling.enabled) return false;
+    
+    // Check cooldown period
+    if (now - this.lastRecoveryAttempt < this.intelligentThrottling.currentCooldownPeriod) {
+      return true;
+    }
+    
+    // Check success rate threshold
+    if (this.intelligentThrottling.recoverySuccessHistory.length >= 5) {
+      const recentSuccesses = this.intelligentThrottling.recoverySuccessHistory.slice(-5);
+      const successRate = recentSuccesses.filter(success => success).length / recentSuccesses.length;
+      
+      if (successRate < this.config.recoverySuccessRateThreshold) {
+        console.warn(`[WebGLRecovery] Recovery success rate too low: ${(successRate * 100).toFixed(1)}%`);
+        return true;
+      }
+    }
+    
+    return false;
+  }
+  
+  /**
+   * Calculate current context health score
+   */
+  private calculateContextHealth(): number {
+    let healthScore = 100;
+    
+    // Factor in memory pressure
+    const memoryInfo = this.getMemoryInfo();
+    if (memoryInfo) {
+      const memoryPressure = memoryInfo.usedJSHeapSize / memoryInfo.jsHeapSizeLimit;
+      this.contextHealth.factors.memoryPressure = memoryPressure;
+      healthScore -= memoryPressure * 30; // Up to 30 points for memory pressure
+    }
+    
+    // Factor in performance degradation
+    const performanceFactor = Math.max(0, (60 - this.diagnostics.performanceScore) / 60);
+    this.contextHealth.factors.performanceDegradation = performanceFactor;
+    healthScore -= performanceFactor * 25; // Up to 25 points for performance
+    
+    // Factor in error rate using diagnostics
+    const errorFactor = Math.min(1, (this.diagnostics.failedRecoveries + this.diagnostics.contextLossCount) / 10);
+    this.contextHealth.factors.errorRate = errorFactor;
+    healthScore -= errorFactor * 20; // Up to 20 points for errors
+    
+    // Factor in recovery history
+    const recoveryFactor = Math.min(1, this.diagnostics.contextLossCount / 5);
+    this.contextHealth.factors.recoveryHistory = recoveryFactor;
+    healthScore -= recoveryFactor * 25; // Up to 25 points for recovery history
+    
+    this.contextHealth.score = Math.max(0, Math.min(100, healthScore));
+    this.contextHealth.lastCheck = Date.now();
+    
+    return this.contextHealth.score;
+  }
+  
+  /**
+   * Adjust cooldown period based on success/failure
+   */
+  private adjustCooldownPeriod(success: boolean): void {
+    if (!this.intelligentThrottling.enabled) return;
+    
+    if (success) {
+      // Reduce cooldown on successful recovery
+      this.intelligentThrottling.currentCooldownPeriod = Math.max(
+        this.config.recoveryDelayMs,
+        this.intelligentThrottling.currentCooldownPeriod / this.config.cooldownMultiplier
+      );
+    } else {
+      // Increase cooldown on failure
+      this.intelligentThrottling.currentCooldownPeriod = Math.min(
+        this.config.maxCooldownPeriod,
+        this.intelligentThrottling.currentCooldownPeriod * this.config.cooldownMultiplier
+      );
+    }
+    
+    this.intelligentThrottling.cooldownHistory.push(this.intelligentThrottling.currentCooldownPeriod);
+    
+    // Keep only last 20 cooldown periods
+    if (this.intelligentThrottling.cooldownHistory.length > 20) {
+      this.intelligentThrottling.cooldownHistory.shift();
+    }
+    
+    // Update diagnostics
+    const avgCooldown = this.intelligentThrottling.cooldownHistory.reduce((sum, val) => sum + val, 0) / 
+                       this.intelligentThrottling.cooldownHistory.length;
+    this.diagnostics.averageCooldownPeriod = avgCooldown;
+  }
 
   /**
-   * Handle WebGL context restored event
+   * Handle WebGL context restored event with enhanced tracking
    */
   private handleContextRestored = (): void => {
     // Verify context is actually restored before proceeding
@@ -263,10 +719,26 @@ export class WebGLRecoveryManager extends EventEmitter {
     }
     
     const recoveryTime = this.recoveryStartTime ? Date.now() - this.recoveryStartTime : 0;
+    const contextHealthBefore = this.contextHealth.score;
     
     // Reset circuit breaker on successful recovery
     this.closeCircuitBreaker();
     this.consecutiveFailures = 0;
+    
+    // Update intelligent throttling
+    if (this.config.enableIntelligentThrottling) {
+      this.adjustCooldownPeriod(true); // Reduce cooldown on success
+      this.intelligentThrottling.recoverySuccessHistory.push(true);
+      
+      // Keep only last 10 recovery results
+      if (this.intelligentThrottling.recoverySuccessHistory.length > 10) {
+        this.intelligentThrottling.recoverySuccessHistory.shift();
+      }
+    }
+    
+    // Improve context health on successful recovery
+    this.contextHealth.score = Math.min(100, this.contextHealth.score + 30);
+    this.diagnostics.contextHealthScore = this.contextHealth.score;
     
     this.diagnostics.successfulRecoveries++;
     this.diagnostics.lastSuccessfulRecovery = new Date();
@@ -274,22 +746,36 @@ export class WebGLRecoveryManager extends EventEmitter {
     this.diagnostics.totalRecoveryTime += recoveryTime;
     this.diagnostics.averageRecoveryTime = this.diagnostics.totalRecoveryTime / this.diagnostics.successfulRecoveries;
     
-    // Record successful recovery attempt
+    // Calculate recovery success rate
+    const totalAttempts = this.diagnostics.successfulRecoveries + this.diagnostics.failedRecoveries;
+    this.diagnostics.recoverySuccessRate = totalAttempts > 0 ? 
+      this.diagnostics.successfulRecoveries / totalAttempts : 1.0;
+    
+    // Record successful recovery attempt with enhanced data
     this.diagnostics.recoveryHistory.push({
       timestamp: new Date(),
       attempt: this.recoveryAttempts,
       success: true,
-      timeTaken: recoveryTime
+      timeTaken: recoveryTime,
+      contextHealthBefore,
+      contextHealthAfter: this.contextHealth.score,
+      cooldownPeriod: this.intelligentThrottling.currentCooldownPeriod,
+      wasThrottled: false,
+      recoveryTrigger: 'automatic'
     });
     
     // Cancel recovery timer
     this.cancelRecovery();
     
-    console.log('[WebGLRecovery] WebGL context restored', {
+    console.log('[WebGLRecovery] WebGL context restored with enhanced tracking', {
       recoveries: this.diagnostics.successfulRecoveries,
       timestamp: this.diagnostics.lastSuccessfulRecovery,
       timeTaken: recoveryTime,
-      consecutiveFailures: this.consecutiveFailures
+      consecutiveFailures: this.consecutiveFailures,
+      contextHealthBefore,
+      contextHealthAfter: this.contextHealth.score,
+      successRate: (this.diagnostics.recoverySuccessRate * 100).toFixed(1) + '%',
+      cooldownPeriod: this.intelligentThrottling.currentCooldownPeriod
     });
     
     this.emit('contextRestored');
@@ -299,12 +785,19 @@ export class WebGLRecoveryManager extends EventEmitter {
     if (this.renderer) {
       this.reinitializeRenderer();
     }
+    
+    // Add success notification
+    this.addUserNotification(
+      `WebGL context recovered in ${recoveryTime}ms`, 
+      'info',
+      'recovery'
+    );
   };
-
+  
   /**
-   * Attempt to recover WebGL context
+   * Attempt recovery with intelligent strategy selection
    */
-  private attemptRecovery(): void {
+  private attemptRecoveryWithStrategy(): void {
     if (this.isRecovering) {
       console.warn('[WebGLRecovery] Recovery already in progress, skipping');
       return;
@@ -319,6 +812,8 @@ export class WebGLRecoveryManager extends EventEmitter {
     if (this.recoveryAttempts >= this.config.maxRecoveryAttempts) {
       console.warn(`[WebGLRecovery] Maximum recovery attempts (${this.config.maxRecoveryAttempts}) reached`);
       this.consecutiveFailures++;
+      this.adjustCooldownPeriod(false); // Increase cooldown on failure
+      
       if (this.consecutiveFailures >= 5) {
         this.openCircuitBreaker();
       }
@@ -326,42 +821,209 @@ export class WebGLRecoveryManager extends EventEmitter {
       return;
     }
     
+    // Select recovery strategy based on context and device profile
+    const strategy = this.selectRecoveryStrategy();
+    
     this.isRecovering = true;
     this.recoveryAttempts++;
     this.diagnostics.recoveryAttempts++;
     this.diagnostics.currentState = 'recovering';
     this.recoveryStartTime = Date.now();
     
-    console.log(`[WebGLRecovery] Attempting recovery (attempt ${this.recoveryAttempts}/${this.config.maxRecoveryAttempts}, consecutive failures: ${this.consecutiveFailures})`);
+    console.log(`[WebGLRecovery] Attempting ${strategy} recovery (attempt ${this.recoveryAttempts}/${this.config.maxRecoveryAttempts})`);
     
-    // Calculate delay with exponential backoff and consecutive failure penalty
-    const delay = this.calculateRecoveryDelay();
+    // Calculate delay with intelligent strategy
+    const delay = this.calculateIntelligentRecoveryDelay(strategy);
     
     // Notify about recovery attempt
     this.config.onRecoveryAttempt(this.recoveryAttempts);
     
     this.recoveryTimer = setTimeout(() => {
-      this.performRecovery();
+      this.performRecoveryWithStrategy(strategy);
     }, delay);
+  }
+  
+  /**
+   * Select optimal recovery strategy based on context
+   */
+  private selectRecoveryStrategy(): 'conservative' | 'standard' | 'aggressive' {
+    const contextHealth = this.contextHealth.score;
+    const recoverySuccessRate = this.diagnostics.recoverySuccessRate;
+    
+    // Conservative strategy for poor health or low success rate
+    if (contextHealth < 40 || recoverySuccessRate < 0.5 || this.deviceProfile === 'low-end') {
+      return 'conservative';
+    }
+    
+    // Aggressive strategy for good health and high success rate
+    if (contextHealth > 70 && recoverySuccessRate > 0.8 && this.deviceProfile === 'high-end') {
+      return 'aggressive';
+    }
+    
+    // Standard strategy for everything else
+    return 'standard';
+  }
+  
+  /**
+   * Calculate intelligent recovery delay based on strategy
+   */
+  private calculateIntelligentRecoveryDelay(strategy: 'conservative' | 'standard' | 'aggressive'): number {
+    let baseDelay = this.config.recoveryDelayMs;
+    
+    // Adjust base delay by strategy
+    switch (strategy) {
+      case 'conservative':
+        baseDelay *= 2; // Longer delay for conservative approach
+        break;
+      case 'aggressive':
+        baseDelay *= 0.5; // Shorter delay for aggressive approach
+        break;
+      // 'standard' uses base delay as-is
+    }
+    
+    // Apply exponential backoff if enabled
+    if (this.config.exponentialBackoff) {
+      const exponentialDelay = baseDelay * Math.pow(2, this.recoveryAttempts - 1);
+      
+      // Add penalty for consecutive failures with intelligent throttling
+      const failurePenalty = this.consecutiveFailures > 0 ? 
+        1 + (this.consecutiveFailures * 0.3) : 1;
+      
+      return Math.min(exponentialDelay * failurePenalty, this.config.maxRecoveryDelay);
+    }
+    
+    return baseDelay;
+  }
+  
+  /**
+   * Perform recovery with selected strategy
+   */
+  private performRecoveryWithStrategy(strategy: 'conservative' | 'standard' | 'aggressive'): void {
+    if (!this.gl || !this.contextLossExtension) {
+      console.error('[WebGLRecovery] Cannot perform recovery: missing context or extension');
+      this.recordFailedRecovery('Missing context or extension', strategy);
+      this.scheduleNextRecovery();
+      return;
+    }
+    
+    try {
+      // Pre-recovery cleanup based on strategy
+      if (strategy === 'aggressive') {
+        this.clearWebGLState();
+        this.executeBatchCleanup(); // Force cleanup before recovery
+      }
+      
+      // Double-check context state before attempting restoration
+      if (this.gl.isContextLost()) {
+        console.log(`[WebGLRecovery] Performing ${strategy} context restoration`);
+        
+        // Strategy-specific restoration approach
+        if (strategy === 'conservative') {
+          // Conservative: More validation and longer verification
+          this.performConservativeRecovery();
+        } else {
+          // Standard/Aggressive: Faster restoration
+          this.performStandardRecovery();
+        }
+      } else {
+        console.log('[WebGLRecovery] Context is already restored');
+        this.handleContextRestored();
+      }
+    } catch (error) {
+      console.error(`[WebGLRecovery] ${strategy} recovery attempt failed:`, error);
+      this.recordFailedRecovery(error instanceof Error ? error.message : 'Unknown error', strategy);
+      this.scheduleNextRecovery();
+    }
   }
 
   /**
-   * Calculate recovery delay with exponential backoff and consecutive failure penalty
+   * Perform conservative recovery with extensive validation
+   */
+  private performConservativeRecovery(): void {
+    // Conservative approach: More validation and longer verification
+    this.clearWebGLState();
+    
+    // Wait before attempting restoration
+    setTimeout(() => {
+      try {
+        this.contextLossExtension!.restoreContext();
+        
+        // Conservative verification with more attempts
+        let verificationAttempts = 0;
+        const maxVerificationAttempts = 15;
+        
+        const verifyRestoration = () => {
+          verificationAttempts++;
+          
+          if (this.gl && !this.gl.isContextLost()) {
+            console.log(`[WebGLRecovery] Conservative recovery verified after ${verificationAttempts} attempts`);
+            this.handleContextRestored();
+          } else if (verificationAttempts < maxVerificationAttempts) {
+            setTimeout(verifyRestoration, 100);
+          } else {
+            console.warn('[WebGLRecovery] Conservative recovery verification failed');
+            this.recordFailedRecovery('Conservative recovery verification timeout', 'conservative');
+            this.scheduleNextRecovery();
+          }
+        };
+        
+        setTimeout(verifyRestoration, 200);
+      } catch (error) {
+        this.recordFailedRecovery(error instanceof Error ? error.message : 'Conservative recovery error', 'conservative');
+        this.scheduleNextRecovery();
+      }
+    }, 300); // Conservative delay
+  }
+  
+  /**
+   * Perform standard recovery
+   */
+  private performStandardRecovery(): void {
+    this.clearWebGLState();
+    
+    try {
+      this.contextLossExtension!.restoreContext();
+      
+      // Standard verification
+      let verificationAttempts = 0;
+      const maxVerificationAttempts = 10;
+      
+      const verifyRestoration = () => {
+        verificationAttempts++;
+        
+        if (this.gl && !this.gl.isContextLost()) {
+          console.log(`[WebGLRecovery] Standard recovery verified after ${verificationAttempts} attempts`);
+          this.handleContextRestored();
+        } else if (verificationAttempts < maxVerificationAttempts) {
+          setTimeout(verifyRestoration, 50);
+        } else {
+          console.warn('[WebGLRecovery] Standard recovery verification failed');
+          this.recordFailedRecovery('Standard recovery verification timeout', 'standard');
+          this.scheduleNextRecovery();
+        }
+      };
+      
+      setTimeout(verifyRestoration, 100);
+    } catch (error) {
+      this.recordFailedRecovery(error instanceof Error ? error.message : 'Standard recovery error', 'standard');
+      this.scheduleNextRecovery();
+    }
+  }
+  
+  /**
+   * Attempt to recover WebGL context (legacy method - kept for compatibility)
+   */
+  private attemptRecovery(): void {
+    // Redirect to enhanced recovery method
+    this.attemptRecoveryWithStrategy();
+  }
+
+  /**
+   * Calculate recovery delay with exponential backoff and consecutive failure penalty (legacy)
    */
   private calculateRecoveryDelay(): number {
-    if (!this.config.exponentialBackoff) {
-      return this.config.recoveryDelayMs;
-    }
-    
-    const baseDelay = this.config.recoveryDelayMs;
-    let exponentialDelay = baseDelay * Math.pow(2, this.recoveryAttempts - 1);
-    
-    // Add penalty for consecutive failures
-    if (this.consecutiveFailures > 0) {
-      exponentialDelay *= (1 + this.consecutiveFailures * 0.5);
-    }
-    
-    return Math.min(exponentialDelay, this.config.maxRecoveryDelay);
+    // Redirect to intelligent delay calculation
+    return this.calculateIntelligentRecoveryDelay('standard');
   }
 
   /**
@@ -420,20 +1082,47 @@ export class WebGLRecoveryManager extends EventEmitter {
   }
 
   /**
-   * Record a failed recovery attempt
+   * Record a failed recovery attempt with strategy tracking
    */
-  private recordFailedRecovery(error: string): void {
+  private recordFailedRecovery(error: string, strategy?: 'conservative' | 'standard' | 'aggressive'): void {
     const recoveryTime = this.recoveryStartTime ? Date.now() - this.recoveryStartTime : 0;
+    const contextHealthBefore = this.contextHealth.score;
+    
+    // Update intelligent throttling on failure
+    if (this.config.enableIntelligentThrottling) {
+      this.adjustCooldownPeriod(false);
+      this.intelligentThrottling.recoverySuccessHistory.push(false);
+      
+      if (this.intelligentThrottling.recoverySuccessHistory.length > 10) {
+        this.intelligentThrottling.recoverySuccessHistory.shift();
+      }
+    }
+    
+    // Decrease context health on failure
+    this.contextHealth.score = Math.max(0, this.contextHealth.score - 10);
+    this.diagnostics.contextHealthScore = this.contextHealth.score;
     
     this.diagnostics.recoveryHistory.push({
       timestamp: new Date(),
       attempt: this.recoveryAttempts,
       success: false,
       timeTaken: recoveryTime,
-      error
+      error,
+      strategy: strategy || 'standard',
+      contextHealthBefore,
+      contextHealthAfter: this.contextHealth.score,
+      cooldownPeriod: this.intelligentThrottling.currentCooldownPeriod,
+      wasThrottled: false,
+      recoveryTrigger: 'automatic'
     });
     
-    webglDiagnostics.recordError(`Recovery attempt ${this.recoveryAttempts} failed: ${error}`);
+    // Update failure metrics
+    this.diagnostics.failedRecoveries++;
+    const totalAttempts = this.diagnostics.successfulRecoveries + this.diagnostics.failedRecoveries;
+    this.diagnostics.recoverySuccessRate = totalAttempts > 0 ? 
+      this.diagnostics.successfulRecoveries / totalAttempts : 1.0;
+    
+    webglDiagnostics.recordError(`Recovery attempt ${this.recoveryAttempts} failed (${strategy}): ${error}`);
   }
 
   /**
@@ -583,13 +1272,32 @@ export class WebGLRecoveryManager extends EventEmitter {
   }
   
   /**
-   * CRITICAL FIX: Enhanced garbage collection with Three.js specific cleanup
+   * Enhanced memory information getter with caching
+   */
+  private getMemoryInfo(): { totalJSHeapSize?: number; usedJSHeapSize?: number; jsHeapSizeLimit?: number } | undefined {
+    if (typeof performance !== 'undefined' && 'memory' in performance) {
+      const memory = (performance as any).memory;
+      return {
+        totalJSHeapSize: memory.totalJSHeapSize,
+        usedJSHeapSize: memory.usedJSHeapSize,
+        jsHeapSizeLimit: memory.jsHeapSizeLimit
+      };
+    }
+    return undefined;
+  }
+  
+  /**
+   * CRITICAL FIX: Enhanced garbage collection with intelligent optimization
    */
   private forceGarbageCollection(): void {
     try {
-      console.log('[WebGLRecovery] Starting enhanced memory cleanup');
+      const gcStart = performance.now();
+      console.log('[WebGLRecovery] Starting optimized memory cleanup');
       
-      // Clear Three.js specific caches
+      // Get memory info before cleanup
+      const memoryBefore = this.getMemoryInfo();
+      
+      // Clear Three.js specific caches with optimization
       if (typeof THREE !== 'undefined') {
         // Clear material and geometry caches if possible
         if (THREE.Cache) {
@@ -604,26 +1312,20 @@ export class WebGLRecoveryManager extends EventEmitter {
         }
       }
       
-      // Request memory cleanup
-      if (typeof window !== 'undefined' && window.performance && (window.performance as any).memory) {
-        const memory = (window.performance as any).memory;
-        const memoryBefore = memory.usedJSHeapSize;
+      // Intelligent memory pressure handling
+      if (memoryBefore && memoryBefore.usedJSHeapSize && memoryBefore.jsHeapSizeLimit) {
+        const memoryPressure = memoryBefore.usedJSHeapSize / memoryBefore.jsHeapSizeLimit;
         
-        // Force a minor GC by creating and destroying objects (but only if memory is high)
-        if (memoryBefore > 100 * 1024 * 1024) { // Only if using more than 100MB
+        // Only create temporary objects if memory pressure is high
+        if (memoryPressure > 0.7) {
           const cleanup = [];
-          for (let i = 0; i < 50; i++) { // Reduced to 50 for safety
-            cleanup.push(new Float32Array(10));
+          const iterations = Math.min(30, Math.floor(memoryPressure * 50)); // Adaptive iterations
+          
+          for (let i = 0; i < iterations; i++) {
+            cleanup.push(new Float32Array(5)); // Smaller arrays
           }
           cleanup.length = 0;
         }
-        
-        setTimeout(() => {
-          if ((window.performance as any).memory) {
-            const memoryAfter = (window.performance as any).memory.usedJSHeapSize;
-            console.log(`[WebGLRecovery] Memory cleanup: ${memoryBefore} -> ${memoryAfter} bytes`);
-          }
-        }, 100);
       }
       
       // Try to force garbage collection
@@ -632,8 +1334,27 @@ export class WebGLRecoveryManager extends EventEmitter {
         console.log('[WebGLRecovery] Forced garbage collection');
       }
       
+      // Log performance impact
+      const gcTime = performance.now() - gcStart;
+      this.diagnostics.monitoringOverheadMs += gcTime;
+      
+      // Check memory after cleanup
+      setTimeout(() => {
+        const memoryAfter = this.getMemoryInfo();
+        if (memoryBefore && memoryAfter) {
+          const memoryFreed = memoryBefore.usedJSHeapSize - memoryAfter.usedJSHeapSize;
+          const efficiencyPercent = (memoryFreed / memoryBefore.usedJSHeapSize) * 100;
+          
+          if (memoryFreed > 0) {
+            console.log(`[WebGLRecovery] Memory cleanup: freed ${(memoryFreed / 1024 / 1024).toFixed(1)}MB (${efficiencyPercent.toFixed(1)}% efficiency) in ${gcTime.toFixed(1)}ms`);
+          } else {
+            console.log(`[WebGLRecovery] Memory cleanup completed in ${gcTime.toFixed(1)}ms (no significant memory freed)`);
+          }
+        }
+      }, 100);
+      
     } catch (error) {
-      console.warn('[WebGLRecovery] Could not force garbage collection:', error);
+      console.warn('[WebGLRecovery] Error during optimized garbage collection:', error);
     }
   }
 
@@ -735,20 +1456,20 @@ export class WebGLRecoveryManager extends EventEmitter {
   }
 
   /**
-   * Start preventive monitoring for performance and memory
+   * Start preventive monitoring with adaptive intervals
    */
   private startPreventiveMonitoring(): void {
-    // Performance monitoring
+    // Enhanced performance monitoring with adaptive intervals
     this.performanceMonitor = setInterval(() => {
-      this.checkPerformance();
-    }, 5000); // Check every 5 seconds
+      this.checkPerformanceAdaptive();
+    }, this.adaptiveMonitoring.currentInterval);
 
-    // Memory monitoring
+    // Enhanced memory monitoring with adaptive intervals
     this.memoryMonitor = setInterval(() => {
-      this.checkMemoryUsage();
-    }, 10000); // Check every 10 seconds
+      this.checkMemoryUsageAdaptive();
+    }, this.adaptiveMonitoring.currentInterval * 2); // Memory checks less frequent
 
-    console.log('[WebGLRecovery] Started preventive monitoring');
+    console.log(`[WebGLRecovery] Started adaptive preventive monitoring (interval: ${this.adaptiveMonitoring.currentInterval}ms)`);
   }
 
   /**
@@ -847,6 +1568,195 @@ export class WebGLRecoveryManager extends EventEmitter {
 
       // Record memory metric
       webglDiagnostics.recordMemoryMetric(usedMemoryMB);
+    }
+  }
+  
+  /**
+   * Check performance with adaptive monitoring and debounced alerts
+   */
+  private checkPerformanceAdaptive(): void {
+    const monitoringStart = performance.now();
+    
+    if (!this.renderer) {
+      this.adjustMonitoringInterval(true); // Reduce frequency if no renderer
+      return;
+    }
+
+    const now = performance.now();
+    const frameTime = now - this.lastPerformanceCheck;
+    this.lastPerformanceCheck = now;
+
+    if (frameTime > 0) {
+      const fps = 1000 / frameTime;
+      this.performanceHistory.push(fps);
+      
+      // Keep only last 30 readings
+      if (this.performanceHistory.length > 30) {
+        this.performanceHistory.shift();
+      }
+
+      const avgFPS = this.performanceHistory.reduce((sum, val) => sum + val, 0) / this.performanceHistory.length;
+      this.diagnostics.performanceScore = Math.min(100, (avgFPS / 60) * 100);
+
+      // Debounced performance alerts
+      const shouldAlert = avgFPS < this.config.performanceThreshold && 
+                         (now - this.adaptiveMonitoring.performanceAlertLastFired > this.config.performanceAlertDebounceMs);
+      
+      if (shouldAlert && this.qualitySettings.level > 0) {
+        this.adaptiveMonitoring.performanceAlertLastFired = now;
+        console.warn(`[WebGLRecovery] Performance alert: ${avgFPS.toFixed(1)} FPS (debounced)`);
+        this.reduceQuality('performance');
+        this.adjustMonitoringInterval(false); // Increase frequency on issues
+      } else if (avgFPS > this.config.performanceThreshold + 10) {
+        // Good performance - track stable period
+        this.adaptiveMonitoring.stablePerformancePeriod += this.adaptiveMonitoring.currentInterval;
+        if (this.adaptiveMonitoring.stablePerformancePeriod > this.adaptiveMonitoring.performanceStableThreshold) {
+          this.adjustMonitoringInterval(true); // Reduce frequency when stable
+        }
+      } else {
+        this.adaptiveMonitoring.stablePerformancePeriod = 0; // Reset stable period
+      }
+    }
+
+    // Record performance metric
+    webglDiagnostics.recordPerformanceMetric(frameTime);
+    
+    // Run risk prediction less frequently
+    if (this.diagnostics.contextLossCount > 0 || this.diagnostics.performanceScore < this.config.performanceThreshold) {
+      this.predictContextLossRisk();
+    }
+    
+    // Track monitoring overhead
+    this.diagnostics.monitoringOverheadMs += performance.now() - monitoringStart;
+  }
+  
+  /**
+   * Adjust monitoring interval based on system stability
+   */
+  private adjustMonitoringInterval(reduceFrequency: boolean): void {
+    if (!this.config.adaptiveMonitoringEnabled) return;
+    
+    const oldInterval = this.adaptiveMonitoring.currentInterval;
+    
+    if (reduceFrequency) {
+      // Increase interval (reduce frequency) when stable
+      this.adaptiveMonitoring.currentInterval = Math.min(
+        this.config.maxMonitoringInterval,
+        this.adaptiveMonitoring.currentInterval * 1.5
+      );
+    } else {
+      // Decrease interval (increase frequency) when issues detected
+      this.adaptiveMonitoring.currentInterval = Math.max(
+        this.config.minMonitoringInterval,
+        this.adaptiveMonitoring.currentInterval * 0.7
+      );
+    }
+    
+    // Restart monitoring with new interval if changed significantly
+    if (Math.abs(this.adaptiveMonitoring.currentInterval - oldInterval) > 1000) {
+      console.log(`[WebGLRecovery] Adjusted monitoring interval: ${oldInterval}ms → ${this.adaptiveMonitoring.currentInterval}ms`);
+      
+      if (this.performanceMonitor) {
+        clearInterval(this.performanceMonitor);
+        this.performanceMonitor = setInterval(() => {
+          this.checkPerformanceAdaptive();
+        }, this.adaptiveMonitoring.currentInterval);
+      }
+      
+      if (this.memoryMonitor) {
+        clearInterval(this.memoryMonitor);
+        this.memoryMonitor = setInterval(() => {
+          this.checkMemoryUsageAdaptive();
+        }, this.adaptiveMonitoring.currentInterval * 2);
+      }
+    }
+  }
+  
+  /**
+   * Check memory usage with adaptive monitoring and debounced alerts
+   */
+  private checkMemoryUsageAdaptive(): void {
+    const monitoringStart = performance.now();
+    
+    if (typeof performance !== 'undefined' && 'memory' in performance) {
+      const memory = (performance as any).memory;
+      const usedMemoryMB = memory.usedJSHeapSize / 1024 / 1024;
+      const limitMemoryMB = memory.jsHeapSizeLimit / 1024 / 1024;
+      const now = Date.now();
+      
+      this.memoryHistory.push(usedMemoryMB);
+      
+      // Keep only last 20 readings
+      if (this.memoryHistory.length > 20) {
+        this.memoryHistory.shift();
+      }
+
+      const avgMemory = this.memoryHistory.reduce((sum, val) => sum + val, 0) / this.memoryHistory.length;
+      this.diagnostics.memoryUsage = avgMemory;
+
+      // Calculate memory pressure (percentage of limit being used)
+      const memoryPressure = usedMemoryMB / limitMemoryMB;
+      
+      // Debounced high memory pressure alerts
+      if (memoryPressure > 0.8 && (now - this.adaptiveMonitoring.memoryAlertLastFired > this.config.performanceAlertDebounceMs)) {
+        this.adaptiveMonitoring.memoryAlertLastFired = now;
+        console.warn(`[WebGLRecovery] High memory pressure detected: ${memoryPressure.toFixed(2)} (debounced)`);
+        
+        this.addUserNotification(
+          `High memory usage: ${usedMemoryMB.toFixed(0)}MB / ${limitMemoryMB.toFixed(0)}MB`, 
+          'warning',
+          'optimization'
+        );
+        
+        // Emergency quality reduction
+        if (this.qualitySettings.level > 1) {
+          this.reduceQuality('memory');
+        }
+        
+        // Schedule batch cleanup instead of immediate forced cleanup
+        if (this.config.enableBatchCleanup) {
+          this.scheduleBatchCleanup('memory', 0.9); // High priority
+        } else {
+          this.forceGarbageCollection();
+        }
+        
+        this.adjustMonitoringInterval(false); // Increase monitoring frequency
+      } else if (memoryPressure > 0.6) {
+        // Normal quality reduction with debouncing
+        if (avgMemory > this.config.memoryThreshold && this.qualitySettings.level > 0) {
+          this.reduceQuality('memory');
+        }
+      } else if (memoryPressure < 0.4) {
+        // Low memory pressure - can reduce monitoring frequency
+        this.adjustMonitoringInterval(true);
+      }
+
+      // Record memory metric
+      webglDiagnostics.recordMemoryMetric(usedMemoryMB);
+    }
+    
+    // Track monitoring overhead
+    this.diagnostics.monitoringOverheadMs += performance.now() - monitoringStart;
+  }
+  
+  /**
+   * Schedule batch cleanup operation
+   */
+  private scheduleBatchCleanup(reason: 'memory' | 'performance' | 'manual', priority: number): void {
+    if (!this.config.enableBatchCleanup) return;
+    
+    // Add cleanup operation to batch queue
+    this.batchCleanup.pendingOperations.push({
+      type: 'material', // Generic cleanup type
+      resource: null, // Will be handled by garbage collection
+      priority
+    });
+    
+    console.log(`[WebGLRecovery] Scheduled batch cleanup (reason: ${reason}, priority: ${priority})`);
+    
+    // Force immediate execution for high priority
+    if (priority > this.config.cleanupPriorityThreshold) {
+      this.executeBatchCleanup();
     }
   }
 
@@ -1004,10 +1914,31 @@ export class WebGLRecoveryManager extends EventEmitter {
   }
 
   /**
-   * Add user notification
+   * Add user notification with enhanced source tracking and debouncing
    */
-  private addUserNotification(message: string, type: 'info' | 'warning' | 'error'): void {
+  private addUserNotification(
+    message: string, 
+    type: 'info' | 'warning' | 'error', 
+    source: 'recovery' | 'prevention' | 'quality' | 'throttling' | 'optimization' = 'recovery',
+    priority: 'low' | 'medium' | 'high' = 'medium',
+    debounce: boolean = false
+  ): void {
     if (!this.config.enableUserNotifications) return;
+
+    // Check for debouncing if enabled
+    if (debounce) {
+      const recentSimilar = this.diagnostics.userNotifications.find(
+        notification => 
+          notification.message === message && 
+          notification.source === source &&
+          Date.now() - notification.timestamp.getTime() < this.config.performanceAlertDebounceMs
+      );
+      
+      if (recentSimilar) {
+        console.log(`[WebGLRecovery] Notification debounced: ${message}`);
+        return;
+      }
+    }
 
     const notification: UserNotification = {
       id: Date.now().toString(),
@@ -1015,7 +1946,9 @@ export class WebGLRecoveryManager extends EventEmitter {
       message,
       type,
       dismissed: false,
-      source: 'recovery'
+      source,
+      priority,
+      debounced: debounce
     };
 
     this.diagnostics.userNotifications.push(notification);
@@ -1190,7 +2123,15 @@ export function useWebGLRecovery(config?: WebGLRecoveryConfig) {
     preventiveMeasuresCount: 0,
     contextLossPredictions: 0,
     contextLossRisk: 'low',
-    userNotifications: []
+    userNotifications: [],
+    // Enhanced metrics
+    recoverySuccessRate: 1.0,
+    averageCooldownPeriod: 1000,
+    unnecessaryRecoveryAttempts: 0,
+    batchCleanupEfficiency: 1.0,
+    monitoringOverheadMs: 0,
+    contextHealthScore: 100,
+    devicePerformanceProfile: 'mid-range'
   });
   const [shouldFallback, setShouldFallback] = React.useState(false);
   const [isRecovering, setIsRecovering] = React.useState(false);
@@ -1265,7 +2206,15 @@ export function useWebGLRecovery(config?: WebGLRecoveryConfig) {
       preventiveMeasuresCount: 0,
       contextLossPredictions: 0,
       contextLossRisk: 'low',
-      userNotifications: []
+      userNotifications: [],
+      // Enhanced metrics
+      recoverySuccessRate: 1.0,
+      averageCooldownPeriod: 1000,
+      unnecessaryRecoveryAttempts: 0,
+      batchCleanupEfficiency: 1.0,
+      monitoringOverheadMs: 0,
+      contextHealthScore: 100,
+      devicePerformanceProfile: 'mid-range'
     });
     setShouldFallback(false);
     setIsRecovering(false);

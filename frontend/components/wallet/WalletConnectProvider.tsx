@@ -4,6 +4,52 @@ import { walletErrorHandler } from '../../utils/walletErrorHandler'
 import { logger } from '@lib/logger'
 import { envConfig } from '../../utils/envValidation'
 
+// Global singleton state for WalletConnect to prevent interference between instances
+interface WalletConnectGlobalState {
+  isInitialized: boolean
+  isInitializing: boolean
+  initializationTimestamp: number | null
+  initializationMethod: 'wagmi' | 'custom' | null
+  instanceCount: number
+  lastCleanupTimestamp: number | null
+}
+
+const getGlobalWalletConnectState = (): WalletConnectGlobalState => {
+  if (typeof window === 'undefined') {
+    return {
+      isInitialized: false,
+      isInitializing: false,
+      initializationTimestamp: null,
+      initializationMethod: null,
+      instanceCount: 0,
+      lastCleanupTimestamp: null
+    }
+  }
+
+  if (!(window as any).__SEIRON_WALLETCONNECT_GLOBAL_STATE__) {
+    (window as any).__SEIRON_WALLETCONNECT_GLOBAL_STATE__ = {
+      isInitialized: false,
+      isInitializing: false,
+      initializationTimestamp: null,
+      initializationMethod: null,
+      instanceCount: 0,
+      lastCleanupTimestamp: null
+    }
+  }
+
+  return (window as any).__SEIRON_WALLETCONNECT_GLOBAL_STATE__
+}
+
+const updateGlobalWalletConnectState = (updates: Partial<WalletConnectGlobalState>) => {
+  if (typeof window !== 'undefined') {
+    const currentState = getGlobalWalletConnectState()
+    ;(window as any).__SEIRON_WALLETCONNECT_GLOBAL_STATE__ = {
+      ...currentState,
+      ...updates
+    }
+  }
+}
+
 interface WalletConnectContextType {
   isInitialized: boolean
   isInitializing: boolean
@@ -21,78 +67,106 @@ interface WalletConnectProviderProps {
  * WalletConnect Provider Component
  * 
  * Provides WalletConnect initialization state and methods to child components.
- * Handles proper cleanup and prevents duplicate initialization.
+ * Uses a robust singleton pattern to prevent interference between instances and Wagmi.
  * 
  * IMPORTANT: This provider will automatically detect if WalletConnect is being
- * handled by Wagmi (when VITE_WALLETCONNECT_PROJECT_ID is configured) and skip
- * custom initialization to prevent double initialization warnings.
+ * handled by Wagmi and skip custom initialization. The singleton state persists
+ * across component mount/unmount cycles to prevent double initialization.
  */
 export function WalletConnectProvider({ children }: WalletConnectProviderProps) {
   const [isInitialized, setIsInitialized] = useState(false)
   const [isInitializing, setIsInitializing] = useState(false)
   const [error, setError] = useState<Error | null>(null)
-  const [initializationChecked, setInitializationChecked] = useState(false)
 
   const initialize = async () => {
-    // CRITICAL FIX: Prevent double initialization with comprehensive checks
-    if (isInitializing || isInitialized || initializationChecked) {
-      logger.debug('WalletConnect initialization already in progress or completed, skipping')
+    const globalState = getGlobalWalletConnectState()
+    
+    // ROBUST SINGLETON: Check global state first
+    if (globalState.isInitializing || globalState.isInitialized) {
+      logger.debug('WalletConnect already initialized globally', {
+        method: globalState.initializationMethod,
+        timestamp: globalState.initializationTimestamp,
+        instanceCount: globalState.instanceCount
+      })
+      setIsInitialized(globalState.isInitialized)
+      setIsInitializing(globalState.isInitializing)
       return
     }
 
-    setInitializationChecked(true)
-    
-    // CRITICAL FIX: Check if WalletConnect is being handled by Wagmi
+    // WAGMI DETECTION: Check if Wagmi is handling WalletConnect
     const isWagmiHandlingWalletConnect = envConfig.isValid.walletConnect
     
-    // CRITICAL FIX: Check for existing WalletConnect instances using correct flag names
-    const hasExistingWalletConnect = typeof window !== 'undefined' && (
+    // EXISTING INSTANCE DETECTION: Check for any existing WalletConnect instances
+    const hasWagmiWalletConnect = typeof window !== 'undefined' && 
+      (window as any).__WAGMI_WALLETCONNECT_INITIALIZED__ === true
+    
+    const hasLegacyWalletConnect = typeof window !== 'undefined' && (
       (window as any).__WALLET_CONNECT_INITIALIZED__ === true ||
       (window as any).__WALLETCONNECT_INITIALIZED__ === true ||
       (window as any).WalletConnectCore !== undefined
     )
     
-    // CRITICAL FIX: Check if Wagmi connectors are already initialized with WalletConnect
-    const wagmiWalletConnectActive = typeof window !== 'undefined' && 
-      (window as any).__WAGMI_WALLETCONNECT_INITIALIZED__ === true
-    
-    if (isWagmiHandlingWalletConnect || hasExistingWalletConnect || wagmiWalletConnectActive) {
-      logger.debug('WalletConnect is being handled by Wagmi or already initialized, skipping custom initialization', {
-        wagmiHandling: isWagmiHandlingWalletConnect,
-        existingInstance: hasExistingWalletConnect,
-        wagmiConnectorActive: wagmiWalletConnectActive,
-        globalFlags: {
-          __WALLET_CONNECT_INITIALIZED__: typeof window !== 'undefined' ? (window as any).__WALLET_CONNECT_INITIALIZED__ : false,
-          __WALLETCONNECT_INITIALIZED__: typeof window !== 'undefined' ? (window as any).__WALLETCONNECT_INITIALIZED__ : false,
-          WalletConnectCore: typeof window !== 'undefined' ? !!(window as any).WalletConnectCore : false
-        }
+    // SKIP CUSTOM INITIALIZATION: If Wagmi or other instance is handling it
+    if (isWagmiHandlingWalletConnect || hasWagmiWalletConnect || hasLegacyWalletConnect) {
+      logger.debug('WalletConnect handled by Wagmi, marking as initialized', {
+        wagmiConfigured: isWagmiHandlingWalletConnect,
+        wagmiInstance: hasWagmiWalletConnect,
+        legacyInstance: hasLegacyWalletConnect,
+        globalState
       })
-      setIsInitialized(true) // Mark as initialized without doing anything
+      
+      // UPDATE GLOBAL STATE: Mark as initialized by Wagmi
+      updateGlobalWalletConnectState({
+        isInitialized: true,
+        isInitializing: false,
+        initializationTimestamp: Date.now(),
+        initializationMethod: 'wagmi'
+      })
+      
+      setIsInitialized(true)
+      setIsInitializing(false)
       return
     }
 
+    // CUSTOM INITIALIZATION: Only if no other instance exists
     try {
+      logger.debug('Starting custom WalletConnect initialization')
+      
+      // UPDATE GLOBAL STATE: Mark as initializing
+      updateGlobalWalletConnectState({
+        isInitializing: true,
+        initializationMethod: 'custom'
+      })
+      
       setIsInitializing(true)
       setError(null)
       
-      logger.debug('Initializing custom WalletConnect manager (Wagmi not handling WalletConnect)')
       await walletConnectManager.initialize()
       
-      // CRITICAL FIX: Mark globally to prevent other instances using both flag formats
-      if (typeof window !== 'undefined') {
-        ;(window as any).__WALLET_CONNECT_INITIALIZED__ = true
-        ;(window as any).__WALLETCONNECT_INITIALIZED__ = true
-        ;(window as any).__WAGMI_WALLETCONNECT_INITIALIZED__ = true
-      }
+      // UPDATE GLOBAL STATE: Mark as initialized
+      updateGlobalWalletConnectState({
+        isInitialized: true,
+        isInitializing: false,
+        initializationTimestamp: Date.now()
+      })
       
       setIsInitialized(true)
-      logger.debug('WalletConnect Provider initialization complete')
+      logger.debug('Custom WalletConnect initialization complete')
     } catch (err) {
       const error = err instanceof Error ? err : new Error('WalletConnect initialization failed')
       const walletError = walletErrorHandler.handleError(error, {
         operation: 'walletconnect-initialization',
         component: 'WalletConnectProvider'
       })
+      
+      // UPDATE GLOBAL STATE: Reset on error
+      updateGlobalWalletConnectState({
+        isInitialized: false,
+        isInitializing: false,
+        initializationTimestamp: null,
+        initializationMethod: null
+      })
+      
       setError(error)
       logger.error('WalletConnect Provider initialization failed:', walletError)
     } finally {
@@ -101,24 +175,37 @@ export function WalletConnectProvider({ children }: WalletConnectProviderProps) 
   }
 
   useEffect(() => {
+    // INCREMENT INSTANCE COUNT
+    const globalState = getGlobalWalletConnectState()
+    updateGlobalWalletConnectState({
+      instanceCount: globalState.instanceCount + 1
+    })
+    
     // Initialize on mount
     initialize()
 
-    // Cleanup on unmount
+    // SAFE CLEANUP: Only decrement instance count, never clear Wagmi flags
     return () => {
-      logger.debug('WalletConnect Provider cleanup')
+      const currentState = getGlobalWalletConnectState()
+      const newInstanceCount = Math.max(0, currentState.instanceCount - 1)
       
-      // CRITICAL FIX: Clear global initialization markers on cleanup
-      if (typeof window !== 'undefined') {
-        ;(window as any).__WALLET_CONNECT_INITIALIZED__ = false
-        ;(window as any).__WALLETCONNECT_INITIALIZED__ = false
-        ;(window as any).__WAGMI_WALLETCONNECT_INITIALIZED__ = false
-      }
+      logger.debug('WalletConnect Provider cleanup', {
+        remainingInstances: newInstanceCount,
+        initializationMethod: currentState.initializationMethod
+      })
       
+      updateGlobalWalletConnectState({
+        instanceCount: newInstanceCount,
+        lastCleanupTimestamp: Date.now()
+      })
+      
+      // CRITICAL: Never clear global state if initialized by Wagmi
+      // This prevents interference with Wagmi's WalletConnect handling
+      
+      // Only clear local component state
       setIsInitialized(false)
       setIsInitializing(false)
       setError(null)
-      setInitializationChecked(false)
     }
   }, [])
 

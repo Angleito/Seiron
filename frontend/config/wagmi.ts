@@ -78,24 +78,53 @@ if (seiSupportedWallets.includes('injected')) {
 if (seiSupportedWallets.includes('walletconnect')) {
   if (envConfig.isValid.walletConnect) {
     try {
-      connectors.push(
-        walletConnect({
-          projectId: walletConnectProjectId,
-          metadata: {
-            name: 'Seiron',
-            description: 'Seiron Dragon - DeFi Portfolio Management',
-            url: 'https://seiron.vercel.app',
-            icons: ['https://seiron.vercel.app/favicon.ico'],
-          },
-          showQrModal: true,
-        })
-      )
-      console.log('✅ WalletConnect connector added (supported on Sei Network)')
+      // ROBUST SINGLETON: Check if WalletConnect is already initialized to prevent double setup
+      const existingWagmiInit = typeof window !== 'undefined' && 
+        (window as any).__WAGMI_WALLETCONNECT_INITIALIZED__ === true
       
-      // CRITICAL FIX: Mark that Wagmi is handling WalletConnect to prevent double initialization
-      if (typeof window !== 'undefined') {
-        ;(window as any).__WAGMI_WALLETCONNECT_INITIALIZED__ = true
-        ;(window as any).__WALLETCONNECT_INITIALIZED__ = true
+      const existingGlobalState = typeof window !== 'undefined' && 
+        (window as any).__SEIRON_WALLETCONNECT_GLOBAL_STATE__?.isInitialized === true
+      
+      if (!existingWagmiInit && !existingGlobalState) {
+        connectors.push(
+          walletConnect({
+            projectId: walletConnectProjectId,
+            metadata: {
+              name: 'Seiron',
+              description: 'Seiron Dragon - DeFi Portfolio Management',
+              url: 'https://seiron.vercel.app',
+              icons: ['https://seiron.vercel.app/favicon.ico'],
+            },
+            showQrModal: true,
+          })
+        )
+        console.log('✅ WalletConnect connector added (supported on Sei Network)')
+        
+        // ENHANCED SINGLETON: Mark that Wagmi is handling WalletConnect with timestamp
+        if (typeof window !== 'undefined') {
+          ;(window as any).__WAGMI_WALLETCONNECT_INITIALIZED__ = true
+          ;(window as any).__WALLETCONNECT_INITIALIZED__ = true
+          ;(window as any).__WAGMI_WALLETCONNECT_TIMESTAMP__ = Date.now()
+          
+          // Initialize global state if not already present
+          if (!(window as any).__SEIRON_WALLETCONNECT_GLOBAL_STATE__) {
+            ;(window as any).__SEIRON_WALLETCONNECT_GLOBAL_STATE__ = {
+              isInitialized: true,
+              isInitializing: false,
+              initializationTimestamp: Date.now(),
+              initializationMethod: 'wagmi',
+              instanceCount: 1,
+              lastCleanupTimestamp: null
+            }
+          } else {
+            // Update existing state to reflect Wagmi initialization
+            ;(window as any).__SEIRON_WALLETCONNECT_GLOBAL_STATE__.isInitialized = true
+            ;(window as any).__SEIRON_WALLETCONNECT_GLOBAL_STATE__.initializationMethod = 'wagmi'
+            ;(window as any).__SEIRON_WALLETCONNECT_GLOBAL_STATE__.initializationTimestamp = Date.now()
+          }
+        }
+      } else {
+        console.log('ℹ️ WalletConnect already initialized, skipping connector creation')
       }
     } catch (error) {
       console.warn('⚠️ Failed to initialize WalletConnect:', error)

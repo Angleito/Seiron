@@ -7,6 +7,8 @@ import { VoiceAnimationState } from './DragonRenderer'
 import { DragonGLTFLoader } from './DragonGLTFLoader'
 import { DragonGLTFErrorBoundary } from './GLTFErrorBoundary'
 import { errorRecoveryUtils } from '../../utils/errorRecovery'
+import { ModelExistenceValidator, AVAILABLE_MODEL_PATHS } from '../../utils/modelExistenceValidator'
+import { EnhancedModelLoader } from '../../utils/enhancedModelLoader'
 
 // Types for model management
 interface ModelConfig {
@@ -63,14 +65,14 @@ interface ModelManagerState {
   }
 }
 
-// Default model configurations
+// Enhanced model configurations using validated paths
 const DEFAULT_MODELS: Record<string, ModelConfig> = {
   'seiron-primary': {
     id: 'seiron-primary',
     path: '/models/seiron.glb',
     displayName: 'Seiron Dragon (Primary)',
     quality: 'high',
-    fallbackPath: '/models/seiron_optimized.glb', // FIXED: Use existing optimized model
+    fallbackPath: '/models/seiron_optimized.glb',
     preloadPriority: 'high',
     memoryUsageMB: 64,
     supportsAnimations: true,
@@ -84,9 +86,10 @@ const DEFAULT_MODELS: Record<string, ModelConfig> = {
   },
   'seiron-optimized': {
     id: 'seiron-optimized',
-    path: '/models/seiron_optimized.glb', // FIXED: Use existing optimized model instead of low
+    path: '/models/seiron_optimized.glb',
     displayName: 'Seiron Dragon (Optimized)',
-    quality: 'medium', // Changed from low to medium since optimized is better than low
+    quality: 'medium',
+    fallbackPath: '/models/dragon_head_optimized.glb',
     preloadPriority: 'medium',
     memoryUsageMB: 32,
     supportsAnimations: true,
@@ -103,7 +106,7 @@ const DEFAULT_MODELS: Record<string, ModelConfig> = {
     path: '/models/seiron_animated.gltf',
     displayName: 'Seiron Dragon (Animated)',
     quality: 'ultra',
-    fallbackPath: '/models/seiron.glb',
+    fallbackPath: '/models/seiron_animated_optimized.gltf',
     preloadPriority: 'low',
     memoryUsageMB: 128,
     supportsAnimations: true,
@@ -112,6 +115,56 @@ const DEFAULT_MODELS: Record<string, ModelConfig> = {
       mobile: false,
       desktop: true,
       webGL1: false,
+      webGL2: true
+    }
+  },
+  'seiron-animated-optimized': {
+    id: 'seiron-animated-optimized',
+    path: '/models/seiron_animated_optimized.gltf',
+    displayName: 'Seiron Dragon (Animated Optimized)',
+    quality: 'high',
+    fallbackPath: '/models/seiron_optimized.glb',
+    preloadPriority: 'medium',
+    memoryUsageMB: 64,
+    supportsAnimations: true,
+    supportsVoiceReactions: true,
+    deviceCompatibility: {
+      mobile: true,
+      desktop: true,
+      webGL1: true,
+      webGL2: true
+    }
+  },
+  'dragon-head': {
+    id: 'dragon-head',
+    path: '/models/dragon_head.glb',
+    displayName: 'Dragon Head (Detailed)',
+    quality: 'high',
+    fallbackPath: '/models/dragon_head_optimized.glb',
+    preloadPriority: 'medium',
+    memoryUsageMB: 48,
+    supportsAnimations: true,
+    supportsVoiceReactions: true,
+    deviceCompatibility: {
+      mobile: true,
+      desktop: true,
+      webGL1: true,
+      webGL2: true
+    }
+  },
+  'dragon-head-optimized': {
+    id: 'dragon-head-optimized',
+    path: '/models/dragon_head_optimized.glb',
+    displayName: 'Dragon Head (Optimized)',
+    quality: 'medium',
+    preloadPriority: 'high',
+    memoryUsageMB: 24,
+    supportsAnimations: true,
+    supportsVoiceReactions: true,
+    deviceCompatibility: {
+      mobile: true,
+      desktop: true,
+      webGL1: true,
       webGL2: true
     }
   }
@@ -141,17 +194,24 @@ const checkModelCompatibility = (model: ModelConfig): boolean => {
   return true
 }
 
-// Model preloader utility
+// Enhanced model preloader with validation
 class ModelPreloader {
   private static instance: ModelPreloader
   private preloadedModels: Set<string> = new Set()
   private preloadPromises: Map<string, Promise<void>> = new Map()
+  private validator: ModelExistenceValidator
+  private enhancedLoader: EnhancedModelLoader
   
   static getInstance(): ModelPreloader {
     if (!ModelPreloader.instance) {
       ModelPreloader.instance = new ModelPreloader()
     }
     return ModelPreloader.instance
+  }
+
+  constructor() {
+    this.validator = ModelExistenceValidator.getInstance()
+    this.enhancedLoader = EnhancedModelLoader.getInstance()
   }
   
   async preloadModel(model: ModelConfig): Promise<void> {
@@ -172,6 +232,7 @@ class ModelPreloader {
       logger.info(`Preloaded model: ${model.displayName}`, { modelId: model.id })
     } catch (error) {
       logger.error(`Failed to preload model: ${model.displayName}`, error)
+      throw error
     } finally {
       this.preloadPromises.delete(model.id)
     }
@@ -179,15 +240,63 @@ class ModelPreloader {
   
   private async executePreload(model: ModelConfig): Promise<void> {
     try {
-      useGLTF.preload(model.path)
+      // Validate model existence first
+      const validation = await this.validator.validateModel(model.path)
       
-      // Also preload fallback if available
-      if (model.fallbackPath) {
-        useGLTF.preload(model.fallbackPath)
+      if (!validation.exists) {
+        // Try fallback path if primary fails
+        if (model.fallbackPath) {
+          const fallbackValidation = await this.validator.validateModel(model.fallbackPath)
+          if (!fallbackValidation.exists) {
+            throw new Error(`Neither primary (${model.path}) nor fallback (${model.fallbackPath}) models exist`)
+          }
+          
+          logger.info(`Preloading fallback model: ${model.fallbackPath}`, { modelId: model.id })
+          useGLTF.preload(model.fallbackPath)
+        } else {
+          throw new Error(`Model does not exist: ${model.path}`)
+        }
+      } else {
+        // Preload primary model
+        useGLTF.preload(model.path)
+        
+        // Also preload fallback if available
+        if (model.fallbackPath) {
+          const fallbackValidation = await this.validator.validateModel(model.fallbackPath)
+          if (fallbackValidation.exists) {
+            useGLTF.preload(model.fallbackPath)
+          }
+        }
       }
     } catch (error) {
       throw new Error(`Preload failed for ${model.path}: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
+  }
+  
+  async preloadWithFallbacks(modelId: string): Promise<void> {
+    const model = DEFAULT_MODELS[modelId]
+    if (!model) {
+      throw new Error(`Model configuration not found: ${modelId}`)
+    }
+
+    // Get comprehensive fallback chain
+    const fallbackChain = await this.validator.createFallbackChain(modelId)
+    
+    logger.info(`Preloading model with fallback chain: ${modelId}`, {
+      chainLength: fallbackChain.length,
+      chain: fallbackChain
+    })
+
+    // Preload all models in the chain
+    for (const modelPath of fallbackChain) {
+      try {
+        useGLTF.preload(modelPath)
+      } catch (error) {
+        logger.warn(`Failed to preload fallback model: ${modelPath}`, error)
+      }
+    }
+
+    this.preloadedModels.add(modelId)
   }
   
   isPreloaded(modelId: string): boolean {
@@ -201,6 +310,29 @@ class ModelPreloader {
   clearAll(): void {
     this.preloadedModels.clear()
     this.preloadPromises.clear()
+  }
+
+  async validateAllModels(): Promise<Map<string, boolean>> {
+    const results = new Map<string, boolean>()
+    
+    for (const [modelId, model] of Object.entries(DEFAULT_MODELS)) {
+      try {
+        const validation = await this.validator.validateModel(model.path)
+        results.set(modelId, validation.exists)
+        
+        if (!validation.exists) {
+          logger.warn(`Model validation failed: ${modelId}`, {
+            path: model.path,
+            error: validation.error
+          })
+        }
+      } catch (error) {
+        results.set(modelId, false)
+        logger.error(`Model validation error: ${modelId}`, error)
+      }
+    }
+    
+    return results
   }
 }
 

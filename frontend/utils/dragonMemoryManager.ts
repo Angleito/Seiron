@@ -21,6 +21,38 @@ export class DragonMemoryManager {
   private textureCache: Map<string, THREE.Texture> = new Map()
   private geometryCache: Map<string, THREE.BufferGeometry> = new Map()
   
+  // CRITICAL FIX: Global error boundary for any unexpected property access
+  private safePropertyAccess<T>(obj: any, propertyPath: string, fallback: T, context?: string): T {
+    try {
+      if (!obj || typeof obj !== 'object') {
+        console.warn(`DragonMemoryManager: Invalid object for property access '${propertyPath}' in ${context || 'unknown context'}`);
+        return fallback;
+      }
+      
+      const keys = propertyPath.split('.');
+      let current = obj;
+      
+      for (const key of keys) {
+        if (current === null || current === undefined) {
+          console.warn(`DragonMemoryManager: Null/undefined encountered at '${key}' in path '${propertyPath}' in ${context || 'unknown context'}`);
+          return fallback;
+        }
+        
+        if (!(key in current)) {
+          console.warn(`DragonMemoryManager: Property '${key}' not found in path '${propertyPath}' in ${context || 'unknown context'}`);
+          return fallback;
+        }
+        
+        current = current[key];
+      }
+      
+      return current as T;
+    } catch (error) {
+      console.warn(`DragonMemoryManager: Error accessing property '${propertyPath}' in ${context || 'unknown context'}:`, error);
+      return fallback;
+    }
+  }
+  
   // CRITICAL FIX: Add disposal state tracking for coordination
   private disposalState: DisposalState = {
     isDisposing: false,
@@ -33,6 +65,24 @@ export class DragonMemoryManager {
   private webglRecoveryHooks: WebGLRecoveryHooks = {}
   private isWebGLContextLost = false
   private isInRecovery = false
+  
+  // Queue for deferred disposal when WebGL context is unsafe
+  private deferredDisposalQueue: Array<{
+    type: 'model' | 'texture' | 'geometry'
+    resource: any
+    priority: number
+    timestamp: number
+  }> = []
+  
+  // Queue for batch disposal optimization
+  private batchDisposalQueue: Array<{
+    type: 'model' | 'texture' | 'geometry'
+    resource: any
+    priority: number
+    timestamp: number
+  }> = []
+  
+  private batchDisposalTimer: NodeJS.Timeout | null = null
 
   private constructor() {}
 
@@ -154,8 +204,8 @@ export class DragonMemoryManager {
     return this.geometryCache.get(key) || null
   }
 
-  // CRITICAL FIX: Enhanced model disposal with WebGL recovery coordination
-  disposeModel(model: THREE.Group): void {
+  // Enhanced model disposal with optimized batch coordination
+  disposeModel(model: THREE.Group, priority: number = 0.5): void {
     const modelId = `model_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     
     try {
@@ -164,18 +214,149 @@ export class DragonMemoryManager {
         return
       }
       
-      // CRITICAL FIX: Check if disposal is safe during WebGL operations
+      // Check if disposal is safe during WebGL operations
       if (!this.canSafelyDispose(modelId)) {
         console.warn('DragonMemoryManager: Deferring model disposal due to unsafe conditions')
-        // Could implement a queue here for deferred disposals
+        // Queue for later disposal instead of skipping
+        this.queueDeferredDisposal('model', model, priority)
         return
       }
       
-      // Mark disposal as active
-      this.disposalState.activeDisposals.add(modelId)
-      this.disposalState.isDisposing = true
-      this.disposalState.lastDisposalTime = Date.now()
-      this.disposalState.disposalCount++
+      // Optimized batch disposal for better performance
+      if (priority < 0.8) {
+        this.queueBatchDisposal('model', model, priority)
+        return
+      }
+      
+      // Immediate disposal for high priority items
+      this.performModelDisposal(model, modelId)
+      
+    } catch (error) {
+      console.error('Critical error in disposeModel:', error)
+    }
+  }
+  
+  /**
+   * Queue disposal for later when conditions are unsafe
+   */
+  private queueDeferredDisposal(type: 'model' | 'texture' | 'geometry', resource: any, priority: number): void {
+    if (!this.deferredDisposalQueue) {
+      this.deferredDisposalQueue = []
+    }
+    
+    this.deferredDisposalQueue.push({
+      type,
+      resource,
+      priority,
+      timestamp: Date.now()
+    })
+    
+    // Limit queue size to prevent memory leaks
+    if (this.deferredDisposalQueue.length > 50) {
+      console.warn('DragonMemoryManager: Deferred disposal queue is full, forcing oldest disposal')
+      const oldest = this.deferredDisposalQueue.shift()
+      if (oldest) {
+        this.forceDisposal(oldest.type, oldest.resource)
+      }
+    }
+  }
+  
+  /**
+   * Queue disposal for batch processing
+   */
+  private queueBatchDisposal(type: 'model' | 'texture' | 'geometry', resource: any, priority: number): void {
+    if (!this.batchDisposalQueue) {
+      this.batchDisposalQueue = []
+    }
+    
+    this.batchDisposalQueue.push({
+      type,
+      resource,
+      priority,
+      timestamp: Date.now()
+    })
+    
+    // Start batch timer if not already running
+    if (!this.batchDisposalTimer) {
+      this.batchDisposalTimer = setTimeout(() => {
+        this.processBatchDisposals()
+      }, 100) // Small delay to batch multiple operations
+    }
+  }
+  
+  /**
+   * Process batch disposals for optimal performance
+   */
+  private processBatchDisposals(): void {
+    if (!this.batchDisposalQueue || this.batchDisposalQueue.length === 0) {
+      this.batchDisposalTimer = null
+      return
+    }
+    
+    const batchStart = performance.now()
+    console.log(`[DragonMemoryManager] Processing batch disposal of ${this.batchDisposalQueue.length} items`)
+    
+    // Sort by priority (higher first)
+    this.batchDisposalQueue.sort((a, b) => b.priority - a.priority)
+    
+    const itemsToProcess = [...this.batchDisposalQueue]
+    this.batchDisposalQueue = []
+    this.batchDisposalTimer = null
+    
+    let processedCount = 0
+    let errorCount = 0
+    
+    for (const item of itemsToProcess) {
+      try {
+        this.forceDisposal(item.type, item.resource)
+        processedCount++
+      } catch (error) {
+        errorCount++
+        console.warn(`DragonMemoryManager: Batch disposal error for ${item.type}:`, error)
+      }
+    }
+    
+    const batchTime = performance.now() - batchStart
+    const efficiency = processedCount / (processedCount + errorCount)
+    
+    console.log(`[DragonMemoryManager] Batch disposal completed: ${processedCount} items in ${batchTime.toFixed(2)}ms (efficiency: ${(efficiency * 100).toFixed(1)}%)`)
+  }
+  
+  /**
+   * Force disposal regardless of safety checks (for cleanup)
+   */
+  private forceDisposal(type: 'model' | 'texture' | 'geometry', resource: any): void {
+    try {
+      switch (type) {
+        case 'model':
+          const modelId = `force_${Date.now()}`
+          this.performModelDisposal(resource, modelId)
+          break
+        case 'texture':
+          if (resource && typeof resource.dispose === 'function') {
+            resource.dispose()
+          }
+          break
+        case 'geometry':
+          if (resource && typeof resource.dispose === 'function') {
+            resource.dispose()
+          }
+          break
+      }
+    } catch (error) {
+      console.warn(`DragonMemoryManager: Error in force disposal of ${type}:`, error)
+    }
+  }
+  
+  /**
+   * Perform actual model disposal with tracking
+   */
+  private performModelDisposal(model: THREE.Group, modelId: string): void {
+    // Mark disposal as active
+    this.disposalState.activeDisposals.add(modelId)
+    this.disposalState.isDisposing = true
+    this.disposalState.lastDisposalTime = Date.now()
+    this.disposalState.disposalCount++
 
       model.traverse((child) => {
         try {
@@ -279,8 +460,14 @@ export class DragonMemoryManager {
       
       textureProps.forEach(prop => {
         try {
-          if (materialAny[prop] && typeof materialAny[prop].dispose === 'function') {
-            materialAny[prop].dispose()
+          const textureProperty = materialAny[prop];
+          // CRITICAL FIX: Enhanced null checking for texture properties
+          if (textureProperty && 
+              typeof textureProperty === 'object' && 
+              textureProperty !== null &&
+              'dispose' in textureProperty &&
+              typeof textureProperty.dispose === 'function') {
+            textureProperty.dispose()
             materialAny[prop] = null
           }
         } catch (textureError) {
@@ -301,13 +488,13 @@ export class DragonMemoryManager {
     }
   }
 
-  // Clean up unused models
-  cleanupUnusedModels(activeModels: string[]): void {
+  // Clean up unused models with priority-based disposal
+  cleanupUnusedModels(activeModels: string[], priority: number = 0.3): void {
     const modelsToRemove: string[] = []
     
     this.loadedModels.forEach((model, path) => {
       if (!activeModels.includes(path)) {
-        this.disposeModel(model)
+        this.disposeModel(model, priority) // Use priority-based disposal
         modelsToRemove.push(path)
       }
     })
@@ -315,6 +502,10 @@ export class DragonMemoryManager {
     modelsToRemove.forEach(path => {
       this.loadedModels.delete(path)
     })
+    
+    if (modelsToRemove.length > 0) {
+      console.log(`[DragonMemoryManager] Queued cleanup of ${modelsToRemove.length} unused models`)
+    }
   }
 
   // Clean up unused textures
@@ -443,6 +634,128 @@ export class DragonMemoryManager {
   // CRITICAL FIX: Enhanced memory statistics with race condition protection
   private isCalculatingStats = false
   
+  // CRITICAL FIX: SafeBufferAttributeInspector utility for bulletproof attribute access
+  private safeGetAttributeMemory(attribute: any, name: string): number {
+    try {
+      // Multiple layers of validation
+      if (!attribute) {
+        console.warn(`DragonMemoryManager: Null attribute: ${name}`);
+        return 0;
+      }
+      
+      // Check if attribute has required properties
+      if (typeof attribute !== 'object') {
+        console.warn(`DragonMemoryManager: Invalid attribute type for ${name}:`, typeof attribute);
+        return 0;
+      }
+      
+      // Safe count access using the global property accessor
+      const count = this.safePropertyAccess(attribute, 'count', 0, `attribute ${name}`);
+      if (typeof count !== 'number' || count <= 0 || !isFinite(count) || count > 1000000) {
+        console.warn(`DragonMemoryManager: Invalid count for ${name}:`, count);
+        return 0;
+      }
+      
+      // Safe array access using the global property accessor
+      const arrayObj = this.safePropertyAccess(attribute, 'array', null, `attribute ${name}`);
+      if (arrayObj && typeof arrayObj === 'object') {
+        const arrayLength = this.safePropertyAccess(arrayObj, 'length', 0, `attribute ${name} array`);
+        if (typeof arrayLength === 'number' && arrayLength >= 0 && isFinite(arrayLength) && arrayLength <= 10000000) {
+          // Calculate based on common attribute patterns
+          if (name === 'position' || name === 'normal') {
+            return count * 3 * 4; // 3 floats per vertex
+          } else if (name === 'uv') {
+            return count * 2 * 4; // 2 floats per UV
+          } else {
+            // Default calculation for other attributes
+            return Math.min(arrayLength * 4, count * 4 * 4); // Conservative estimate
+          }
+        } else {
+          console.warn(`DragonMemoryManager: Invalid array length for ${name}:`, arrayLength);
+        }
+      }
+      
+      // Fallback calculation based on count only
+      if (name === 'position' || name === 'normal') {
+        return count * 3 * 4; // 3 floats per vertex
+      } else if (name === 'uv') {
+        return count * 2 * 4; // 2 floats per UV
+      } else {
+        return count * 4; // Default single float per element
+      }
+    } catch (error) {
+      console.warn(`DragonMemoryManager: Error calculating memory for ${name}:`, error);
+      return 0;
+    }
+  }
+  
+  // CRITICAL FIX: SafeGeometryInspector for comprehensive geometry validation
+  private safeInspectGeometry(geometry: any, key: string): number {
+    try {
+      // Null and type validation
+      if (!geometry) {
+        console.warn(`DragonMemoryManager: Null geometry for key: ${key}`);
+        return 0;
+      }
+      
+      if (typeof geometry !== 'object') {
+        console.warn(`DragonMemoryManager: Invalid geometry type for key: ${key}`);
+        return 0;
+      }
+      
+      // Check if geometry is disposed using safe property access
+      const disposed = this.safePropertyAccess(geometry, 'disposed', false, `geometry ${key}`);
+      if (disposed) {
+        console.warn(`DragonMemoryManager: Found disposed geometry for key: ${key}`);
+        return 0;
+      }
+      
+      // Safe attributes access using safe property accessor
+      const attributes = this.safePropertyAccess(geometry, 'attributes', null, `geometry ${key}`);
+      if (!attributes || typeof attributes !== 'object') {
+        console.warn(`DragonMemoryManager: Geometry missing or invalid attributes for key: ${key}`);
+        return 0;
+      }
+      
+      let totalMemory = 0;
+      
+      // Safe processing of common attributes
+      const attributeNames = ['position', 'normal', 'uv', 'color', 'index'];
+      for (const attrName of attributeNames) {
+        const attribute = this.safePropertyAccess(attributes, attrName, null, `geometry ${key} attributes`);
+        if (attribute) {
+          const attrMemory = this.safeGetAttributeMemory(attribute, attrName);
+          totalMemory += attrMemory;
+        }
+      }
+      
+      // Process any additional attributes safely
+      try {
+        const allKeys = Object.keys(attributes);
+        for (const attrKey of allKeys) {
+          if (!attributeNames.includes(attrKey)) {
+            try {
+              const attribute = this.safePropertyAccess(attributes, attrKey, null, `geometry ${key} attributes`);
+              if (attribute) {
+                const attrMemory = this.safeGetAttributeMemory(attribute, attrKey);
+                totalMemory += attrMemory;
+              }
+            } catch (error) {
+              console.warn(`DragonMemoryManager: Error processing attribute ${attrKey} for geometry ${key}:`, error);
+            }
+          }
+        }
+      } catch (keysError) {
+        console.warn(`DragonMemoryManager: Error getting attribute keys for geometry ${key}:`, keysError);
+      }
+      
+      return totalMemory;
+    } catch (error) {
+      console.warn(`DragonMemoryManager: Error inspecting geometry ${key}:`, error);
+      return 0;
+    }
+  }
+  
   // Get memory usage statistics with comprehensive error handling
   getMemoryStats(): {
     modelsCount: number
@@ -465,58 +778,16 @@ export class DragonMemoryManager {
     let estimatedMemoryUsage = 0
     
     try {
-      // CRITICAL FIX: Comprehensive null checks and error handling for geometry cache
+      // CRITICAL FIX: Use SafeGeometryInspector for bulletproof geometry processing
       this.geometryCache.forEach((geometry, key) => {
         try {
-          // Multiple layers of null checking
-          if (!geometry) {
-            console.warn(`DragonMemoryManager: Null geometry found in cache for key: ${key}`)
-            return
-          }
-          
-          if (!geometry.attributes) {
-            console.warn(`DragonMemoryManager: Geometry missing attributes for key: ${key}`)
-            return
-          }
-          
-          // Check if geometry is disposed
-          if ('disposed' in geometry && geometry.disposed) {
-            console.warn(`DragonMemoryManager: Found disposed geometry in cache for key: ${key}`)
-            return
-          }
-          
-          const position = geometry.attributes.position
-          const normal = geometry.attributes.normal
-          const uv = geometry.attributes.uv
-          
-          // CRITICAL FIX: Enhanced null checks with type validation for BufferAttribute
-          if (position && 
-              typeof position === 'object' && 
-              'count' in position && 
-              typeof position.count === 'number' && 
-              position.count > 0) {
-            estimatedMemoryUsage += position.count * 3 * 4 // 3 floats per position
-          }
-          
-          if (normal && 
-              typeof normal === 'object' && 
-              'count' in normal && 
-              typeof normal.count === 'number' && 
-              normal.count > 0) {
-            estimatedMemoryUsage += normal.count * 3 * 4 // 3 floats per normal
-          }
-          
-          if (uv && 
-              typeof uv === 'object' && 
-              'count' in uv && 
-              typeof uv.count === 'number' && 
-              uv.count > 0) {
-            estimatedMemoryUsage += uv.count * 2 * 4 // 2 floats per UV
-          }
+          const geometryMemory = this.safeInspectGeometry(geometry, key);
+          estimatedMemoryUsage += geometryMemory;
         } catch (geometryError) {
-          console.warn(`DragonMemoryManager: Error processing geometry ${key}:`, geometryError)
+          console.warn(`DragonMemoryManager: Critical error processing geometry ${key}:`, geometryError);
+          // Continue processing other geometries
         }
-      })
+      });
       
       // CRITICAL FIX: Enhanced null checks for texture cache
       this.textureCache.forEach((texture, key) => {
@@ -526,22 +797,53 @@ export class DragonMemoryManager {
             return
           }
           
-          // Check if texture is disposed
-          if ('disposed' in texture && texture.disposed) {
+          // Check if texture is disposed using safe property access
+          const disposed = this.safePropertyAccess(texture, 'disposed', false, `texture ${key}`);
+          if (disposed) {
             console.warn(`DragonMemoryManager: Found disposed texture in cache for key: ${key}`)
             return
           }
           
-          // Safe texture size calculation with fallbacks
-          const width = texture.image?.width || texture.image?.naturalWidth || 256
-          const height = texture.image?.height || texture.image?.naturalHeight || 256
+          // CRITICAL FIX: Enhanced safe texture size calculation using safe property accessor
+          let width = 256;
+          let height = 256;
           
-          // Validate dimensions are reasonable
+          try {
+            // Safe image property access using safe property accessor
+            const image = this.safePropertyAccess(texture, 'image', null, `texture ${key}`);
+            if (image && typeof image === 'object') {
+              // Safe width access with fallback to naturalWidth
+              const imageWidth = this.safePropertyAccess(image, 'width', 0, `texture ${key} image`);
+              const naturalWidth = this.safePropertyAccess(image, 'naturalWidth', 0, `texture ${key} image`);
+              
+              if (typeof imageWidth === 'number' && imageWidth > 0 && imageWidth <= 8192) {
+                width = imageWidth;
+              } else if (typeof naturalWidth === 'number' && naturalWidth > 0 && naturalWidth <= 8192) {
+                width = naturalWidth;
+              }
+              
+              // Safe height access with fallback to naturalHeight
+              const imageHeight = this.safePropertyAccess(image, 'height', 0, `texture ${key} image`);
+              const naturalHeight = this.safePropertyAccess(image, 'naturalHeight', 0, `texture ${key} image`);
+              
+              if (typeof imageHeight === 'number' && imageHeight > 0 && imageHeight <= 8192) {
+                height = imageHeight;
+              } else if (typeof naturalHeight === 'number' && naturalHeight > 0 && naturalHeight <= 8192) {
+                height = naturalHeight;
+              }
+            }
+          } catch (imageError) {
+            console.warn(`DragonMemoryManager: Error accessing texture image properties for key: ${key}`, imageError);
+            // Use fallback dimensions
+          }
+          
+          // Final validation of dimensions
           if (typeof width === 'number' && typeof height === 'number' && 
-              width > 0 && height > 0 && width <= 8192 && height <= 8192) {
+              width > 0 && height > 0 && width <= 8192 && height <= 8192 &&
+              isFinite(width) && isFinite(height)) {
             estimatedMemoryUsage += width * height * 4 // RGBA
           } else {
-            console.warn(`DragonMemoryManager: Invalid texture dimensions for key: ${key}`, { width, height })
+            console.warn(`DragonMemoryManager: Using fallback texture dimensions for key: ${key}`, { width, height })
             estimatedMemoryUsage += 256 * 256 * 4 // fallback size
           }
         } catch (textureError) {
@@ -563,14 +865,116 @@ export class DragonMemoryManager {
       estimatedMemoryUsage
     }
     
-    // Validate stats before returning
+    // CRITICAL FIX: Enhanced stats validation with comprehensive checks
     if (typeof stats.estimatedMemoryUsage !== 'number' || 
         stats.estimatedMemoryUsage < 0 || 
-        !isFinite(stats.estimatedMemoryUsage)) {
-      console.warn('DragonMemoryManager: Invalid memory usage calculated, resetting to 0')
+        !isFinite(stats.estimatedMemoryUsage) ||
+        isNaN(stats.estimatedMemoryUsage) ||
+        stats.estimatedMemoryUsage > 10737418240) { // 10GB sanity check
+      console.warn('DragonMemoryManager: Invalid memory usage calculated, resetting to 0', {
+        value: stats.estimatedMemoryUsage,
+        type: typeof stats.estimatedMemoryUsage
+      })
       stats.estimatedMemoryUsage = 0
     }
     
+    // Additional validation for other stats properties
+    if (typeof stats.modelsCount !== 'number' || stats.modelsCount < 0 || !isFinite(stats.modelsCount)) {
+      console.warn('DragonMemoryManager: Invalid models count, resetting to 0')
+      stats.modelsCount = 0
+    }
+    
+    if (typeof stats.texturesCount !== 'number' || stats.texturesCount < 0 || !isFinite(stats.texturesCount)) {
+      console.warn('DragonMemoryManager: Invalid textures count, resetting to 0')
+      stats.texturesCount = 0
+    }
+    
+    if (typeof stats.geometriesCount !== 'number' || stats.geometriesCount < 0 || !isFinite(stats.geometriesCount)) {
+      console.warn('DragonMemoryManager: Invalid geometries count, resetting to 0')
+      stats.geometriesCount = 0
+    }
+    
     return stats
+  }
+  
+  /**
+   * Process deferred disposals when WebGL context is restored
+   */
+  processDeferredDisposals(): void {
+    if (this.deferredDisposalQueue.length === 0) return
+    
+    console.log(`[DragonMemoryManager] Processing ${this.deferredDisposalQueue.length} deferred disposals`)
+    
+    const itemsToProcess = [...this.deferredDisposalQueue]
+    this.deferredDisposalQueue = []
+    
+    // Sort by priority and age (older items first for fairness)
+    itemsToProcess.sort((a, b) => {
+      const priorityDiff = b.priority - a.priority
+      if (Math.abs(priorityDiff) > 0.1) return priorityDiff
+      return a.timestamp - b.timestamp // Older first if similar priority
+    })
+    
+    let processedCount = 0
+    
+    for (const item of itemsToProcess) {
+      try {
+        // Check if item is still valid (not already disposed)
+        if (item.resource && !this.isResourceDisposed(item.resource)) {
+          this.forceDisposal(item.type, item.resource)
+          processedCount++
+        }
+      } catch (error) {
+        console.warn(`DragonMemoryManager: Error processing deferred disposal:`, error)
+      }
+    }
+    
+    console.log(`[DragonMemoryManager] Processed ${processedCount} deferred disposals`)
+  }
+  
+  /**
+   * Check if a resource has already been disposed
+   */
+  private isResourceDisposed(resource: any): boolean {
+    try {
+      return resource && 
+             typeof resource === 'object' && 
+             'disposed' in resource && 
+             resource.disposed === true
+    } catch {
+      return false
+    }
+  }
+  
+  /**
+   * Get batch disposal queue statistics
+   */
+  getBatchDisposalStats(): {
+    deferredCount: number
+    batchCount: number
+    isProcessing: boolean
+  } {
+    return {
+      deferredCount: this.deferredDisposalQueue.length,
+      batchCount: this.batchDisposalQueue.length,
+      isProcessing: this.batchDisposalTimer !== null
+    }
+  }
+  
+  /**
+   * Force immediate processing of all queued disposals
+   */
+  flushDisposalQueues(): void {
+    console.log('[DragonMemoryManager] Flushing all disposal queues')
+    
+    // Process batch queue first
+    if (this.batchDisposalTimer) {
+      clearTimeout(this.batchDisposalTimer)
+      this.batchDisposalTimer = null
+    }
+    this.processBatchDisposals()
+    
+    // Process deferred queue
+    this.processDeferredDisposals()
   }
 }
