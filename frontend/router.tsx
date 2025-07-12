@@ -1,7 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom'
 import { RootLayout } from './components/layouts/RootLayout'
 import { lazy } from 'react'
-import { PageErrorBoundary } from '@components/error-boundaries'
+import { PageErrorBoundary, CompositeErrorBoundary } from '@components/error-boundaries'
 import { LazyLoadingBoundary } from '@components/ui/LazyLoadingBoundary'
 import { 
   VoiceFeatureLoader, 
@@ -28,6 +28,9 @@ const AsciiComplexPage = lazy(() => import('./pages/dragons/AsciiComplexPage'))
 const AsciiAnimatedPage = lazy(() => import('./pages/dragons/AsciiAnimatedPage'))
 const Sprite2DPage = lazy(() => import('./pages/dragons/Sprite2DPage'))
 const WebGL3DPage = lazy(() => import('./pages/dragons/WebGL3DPage'))
+
+// Verification Pages
+const ReactError310VerificationPage = lazy(() => import('./pages/verification/ReactError310VerificationPage'))
 
 const PageLoader = ({ 
   children, 
@@ -63,6 +66,44 @@ const PageLoader = ({
         {children}
       </LazyLoadingBoundary>
     </PageErrorBoundary>
+  )
+}
+
+// Enhanced page loader for WebGL/3D content with comprehensive error boundary
+const WebGL3DPageLoader = ({ 
+  children, 
+  pageName,
+  modelPath
+}: { 
+  children: React.ReactNode
+  pageName?: string
+  modelPath?: string
+}) => {
+  return (
+    <CompositeErrorBoundary
+      enableAutoRecovery={true}
+      enablePerformanceMonitoring={true}
+      enableWebGLRecovery={true}
+      enableGLTFRecovery={true}
+      enableSuspenseRecovery={true}
+      maxRetries={3}
+      retryDelay={2000}
+      modelPath={modelPath}
+      onError={(error, errorInfo, errorSource) => {
+        console.error(`WebGL3D Error in ${pageName}:`, { error, errorInfo, errorSource })
+      }}
+      onRecovery={(recoveryType) => {
+        console.info(`WebGL3D Recovery successful in ${pageName}: ${recoveryType}`)
+      }}
+    >
+      <LazyLoadingBoundary
+        fallback={<GenericFeatureLoader featureName={pageName || '3D Content'} />}
+        featureName={pageName}
+        showProgress={true}
+      >
+        {children}
+      </LazyLoadingBoundary>
+    </CompositeErrorBoundary>
   )
 }
 
@@ -178,8 +219,19 @@ export const router = createBrowserRouter([
       {
         path: 'dragons/webgl-3d',
         element: (
-          <PageLoader pageName="3D WebGL Dragons">
+          <WebGL3DPageLoader 
+            pageName="3D WebGL Dragons"
+            modelPath="/models/dragon.glb"
+          >
             <WebGL3DPage />
+          </WebGL3DPageLoader>
+        ),
+      },
+      {
+        path: 'verification/react-error-310',
+        element: (
+          <PageLoader pageName="React Error #310 Verification">
+            <ReactError310VerificationPage />
           </PageLoader>
         ),
       },

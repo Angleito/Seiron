@@ -48,6 +48,18 @@ export * from './ui';
 // Utility functions and helpers
 export * from '../utils';
 
+// Error Boundaries
+export * from './error-boundaries';
+
+// Verification Components
+export * from './verification';
+
+// Dragon Components
+export * from './dragon';
+
+// Voice Components
+export * from './voice';
+
 // Existing Components
 export { WalletConnect } from './wallet/wallet-connect';
 export { Providers } from './providers';

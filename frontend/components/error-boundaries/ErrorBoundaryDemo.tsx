@@ -4,7 +4,8 @@ import {
   DragonWalletErrorBoundary,
   VoiceErrorBoundary,
   ErrorMonitoringDashboard,
-  createMonitoredErrorBoundary
+  createMonitoredErrorBoundary,
+  CompositeErrorBoundary
 } from './index'
 import { EnhancedDragonRenderer } from '../dragon/DragonRenderer'
 import { WalletConnectButtonWithErrorBoundary } from '../wallet/WalletConnectButton'
@@ -42,7 +43,11 @@ const ErrorThrowingComponent: React.FC<{ errorType: string }> = ({ errorType }) 
 }
 
 // Create a monitored error boundary for this demo
-const DemoErrorBoundary = createMonitoredErrorBoundary('ErrorBoundaryDemo', 'feature')
+const DemoErrorBoundary = ({ children }: { children: React.ReactNode }) => (
+  <CompositeErrorBoundary name="ErrorBoundaryDemo" pageName="feature">
+    {children}
+  </CompositeErrorBoundary>
+)
 
 export const ErrorBoundaryDemo: React.FC = () => {
   const [webglError, setWebglError] = useState(false)

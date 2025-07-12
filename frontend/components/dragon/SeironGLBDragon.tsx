@@ -7,6 +7,9 @@ import * as THREE from 'three'
 import { VoiceAnimationState } from './DragonRenderer'
 import { useWebGLRecovery } from '../../utils/webglRecovery'
 import { WebGLErrorBoundary } from '../error-boundaries/WebGLErrorBoundary'
+import { DragonGLTFLoader } from './DragonGLTFLoader'
+import { DragonGLTFErrorBoundary } from './GLTFErrorBoundary'
+import { DragonModelManager } from './DragonModelManager'
 
 // Debug logging for dragon initialization
 console.log('🐉 SeironGLBDragon component loading...')
@@ -566,7 +569,7 @@ function DragonScene({
   )
 }
 
-// Main GLB Dragon component that only renders Three.js objects (no Canvas wrapper)
+// Enhanced GLB Dragon component using new GLTF loading patterns
 const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
   voiceState,
   size = 'gigantic',
@@ -578,28 +581,12 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
   onError,
   onFallback
 }) => {
-  const [isLoaded, setIsLoaded] = useState(false)
   const [hasError, setHasError] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string>('')
 
-  console.log('🐉 SeironGLBDragon rendering with props:', { size, enableAnimations, voiceState })
+  console.log('🐉 SeironGLBDragon rendering with new patterns:', { size, enableAnimations, voiceState })
 
-  useEffect(() => {
-    let mounted = true
-    console.log('⏰ Starting dragon load timer...')
-    const timer = setTimeout(() => {
-      if (mounted) {
-        console.log('✅ Dragon load timer complete')
-        setIsLoaded(true)
-      }
-    }, 100)
-    return () => {
-      mounted = false
-      clearTimeout(timer)
-    }
-  }, [])
-
-  // Error handler
+  // Error handler with enhanced logging
   const handleError = (error: Error) => {
     console.error('❌ Dragon error:', error)
     
@@ -629,6 +616,14 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
     }
   }
 
+  // Handle fallback requests
+  const handleFallback = () => {
+    console.log('🔄 Fallback requested for SeironGLBDragon')
+    if (onFallback) {
+      onFallback()
+    }
+  }
+
   // For Three.js objects only - no HTML elements inside Canvas
   if (hasError) {
     console.log('💥 Dragon error state, returning null to let parent handle')
@@ -639,9 +634,9 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
     return null
   }
 
-  console.log('🎨 Rendering Dragon Three.js objects with isLoaded:', isLoaded)
+  console.log('🎨 Rendering Dragon with new GLTF loading patterns')
 
-  // Return Three.js objects only - no HTML div wrappers
+  // Use new GLTF loading pattern with proper Suspense and error boundaries
   return (
     <group>
       {/* Debug mesh for development */}
@@ -652,15 +647,27 @@ const SeironGLBDragon: React.FC<SeironGLBDragonProps> = ({
         </mesh>
       )}
       
-      {isLoaded && (
-        <DragonScene 
-          voiceState={voiceState}
-          size={size}
-          enableAnimations={enableAnimations}
-          modelPath={modelPath}
-          onError={handleError}
-        />
-      )}
+      {/* Use new DragonGLTFLoader with built-in Suspense */}
+      <DragonGLTFLoader
+        modelPath={modelPath}
+        voiceState={voiceState}
+        size={size}
+        enableAnimations={enableAnimations}
+        enablePreloading={true}
+        onError={handleError}
+        onLoad={(gltf) => {
+          console.log('✅ GLTF loaded successfully:', gltf)
+        }}
+        onProgress={(progress) => {
+          console.log(`📊 GLTF loading progress: ${progress}%`)
+        }}
+      />
+      
+      {/* Enhanced lighting for new loader */}
+      <DragonLighting voiceState={voiceState} />
+      
+      {/* Fog for depth */}
+      <fog attach="fog" args={['#000000', 10, 50]} />
     </group>
   )
 }
@@ -943,6 +950,77 @@ const SeironGLBDragonWithWebGLErrorBoundary: React.FC<SeironGLBDragonProps> = (p
   )
 }
 
+// Enhanced component using DragonModelManager for advanced model switching
+const SeironGLBDragonWithModelManager: React.FC<SeironGLBDragonProps & {
+  enableModelManager?: boolean
+  initialModelId?: string
+  onModelSwitch?: (from: any, to: any) => void
+}> = ({
+  enableModelManager = false,
+  initialModelId = 'seiron-primary',
+  onModelSwitch,
+  ...props
+}) => {
+  if (!enableModelManager) {
+    return <SeironGLBDragonWithWebGLErrorBoundary {...props} />
+  }
+
+  return (
+    <div className={`w-full h-full ${props.className}`}>
+      <Canvas
+        camera={{ 
+          position: [0, 2, 12], 
+          fov: 45,
+          near: 0.1,
+          far: 100
+        }}
+        style={{ 
+          width: '100%',
+          height: '100%',
+          display: 'block'
+        }}
+        gl={{ 
+          antialias: true, 
+          alpha: true,
+          powerPreference: 'high-performance',
+          preserveDrawingBuffer: true,
+          failIfMajorPerformanceCaveat: false,
+          stencil: true,
+          depth: true
+        }}
+        shadows
+        onCreated={(state) => {
+          // Configure renderer
+          state.gl.debug.checkShaderErrors = false
+          state.gl.capabilities.logarithmicDepthBuffer = false
+          
+          console.log('🎮 Canvas created for DragonModelManager')
+        }}
+        onError={(event) => {
+          console.error('🎮 Three.js Canvas error in ModelManager:', event)
+          if (props.onError) {
+            // Convert SyntheticEvent to Error
+            const error = new Error(event.type || 'Canvas error')
+            props.onError(error)
+          }
+        }}
+      >
+        <DragonModelManager
+          initialModelId={initialModelId}
+          voiceState={props.voiceState}
+          size={props.size}
+          enableAnimations={props.enableAnimations}
+          enablePreloading={true}
+          enableAutoFallback={true}
+          onModelSwitch={onModelSwitch}
+          onError={props.onError}
+          onFallback={props.onFallback}
+        />
+      </Canvas>
+    </div>
+  )
+}
+
 // Preload the optimized GLTF models only once
 if (typeof window !== 'undefined') {
   try {
@@ -959,5 +1037,6 @@ export {
   SeironGLBDragon, 
   SeironGLBDragonWithCanvas,
   SeironGLBDragonWithErrorBoundary, 
-  SeironGLBDragonWithWebGLErrorBoundary 
+  SeironGLBDragonWithWebGLErrorBoundary,
+  SeironGLBDragonWithModelManager
 }
