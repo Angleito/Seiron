@@ -1,4 +1,2 @@
-export { WalletConnectButton } from './WalletConnectButton'
-export { MinimalWalletConnect } from './MinimalWalletConnect'
+// Simplified wallet exports - WalletConnect removed
 export { WalletConnect, ComplexWalletConnect } from './wallet-connect'
-export { WalletConnectProvider, useWalletConnect, withWalletConnect } from './WalletConnectProvider'

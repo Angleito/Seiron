@@ -62,10 +62,12 @@ export default defineConfig(({ mode }) => {
             return 'assets/[name]-[hash][extname]'
           },
           manualChunks: {
-            // Separate Lit-related libraries into their own chunk
-            'lit-vendor': ['lit', '@lit/reactive-element', 'lit-element', 'lit-html'],
-            // WalletConnect and related UI libraries
-            'wallet-vendor': ['@reown/appkit', '@reown/appkit-ui', '@reown/appkit-scaffold-ui', '@walletconnect/modal', '@walletconnect/modal-ui']
+            // Separate Three.js and 3D rendering libraries
+            'threejs-vendor': ['three', '@react-three/fiber', '@react-three/drei'],
+            // Animation and UI libraries  
+            'ui-vendor': ['framer-motion'],
+            // React and core libraries
+            'react-vendor': ['react', 'react-dom', 'react-router-dom']
           }
         }
       }

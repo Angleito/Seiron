@@ -18,8 +18,9 @@ import { DragonModelManager, useDragonModelManager } from '../../components/drag
 // import { useModelPerformanceTracking } from '../../hooks/useModelPerformanceTracking'
 import { 
   DRAGON_MODELS, 
-  getRecommendedModel,
-  createFallbackChain,
+  getDefaultModel,
+  getDefaultFallback,
+  getModelConfig,
   DragonModelConfig
 } from '../../config/dragonModels'
 import { logger } from '@lib/logger'
@@ -326,10 +327,12 @@ export default function WebGL3DPage() {
   useEffect(() => {
     const initializeModels = async () => {
       try {
-        const recommended = await getRecommendedModel('high', 'primary-display')
-        setRecommendedModel(recommended)
+        // Simplified - use default model
+        const recommended = getModelConfig(getDefaultModel())
+        if (recommended) setRecommendedModel(recommended)
         
-        const chain = createFallbackChain(selectedModelId)
+        // Simple fallback chain
+        const chain = [getModelConfig(getDefaultFallback()), getModelConfig('dragon-2d-sprite'), getModelConfig('dragon-ascii')].filter((model): model is DragonModelConfig => model !== undefined)
         setFallbackChain(chain)
       } catch (error) {
         logger.error('Failed to initialize model recommendations:', error)

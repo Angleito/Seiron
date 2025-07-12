@@ -1,31 +1,11 @@
 import { createConfig, http } from 'wagmi'
 import { mainnet } from 'wagmi/chains'
-import { injected, metaMask, walletConnect } from 'wagmi/connectors'
+import { injected, metaMask } from 'wagmi/connectors'
 import { 
   getSupportedWalletsForChain, 
   validateWalletCompatibility, 
   type WalletType 
 } from '../utils/walletCompatibility'
-import { envConfig } from '../utils/envValidation'
-
-// WalletConnect configuration using environment validation
-const walletConnectProjectId = envConfig.walletConnectProjectId
-
-// Debug WalletConnect configuration
-console.log('🔗 WalletConnect configuration:')
-console.log('- Project ID present:', !!walletConnectProjectId)
-console.log('- Project ID valid:', walletConnectProjectId && !walletConnectProjectId.includes('your_'))
-console.log('- Configuration valid:', envConfig.isValid.walletConnect)
-console.log('- Environment:', import.meta.env.MODE)
-
-// Log configuration guidance
-if (!envConfig.isValid.walletConnect) {
-  console.log('ℹ️ To enable WalletConnect:')
-  console.log('1. Go to https://cloud.walletconnect.com/')
-  console.log('2. Create a new project')
-  console.log('3. Copy your project ID')
-  console.log('4. Set VITE_WALLETCONNECT_PROJECT_ID in your .env file')
-}
 
 // Sei Network configuration
 export const seiMainnet = {
@@ -46,17 +26,14 @@ export const seiMainnet = {
   },
 } as const
 
-// Get supported wallets for Sei Network
-const seiSupportedWallets = getSupportedWalletsForChain(seiMainnet.id)
+// Get supported wallets for Sei Network (excluding WalletConnect)
+const seiSupportedWallets = getSupportedWalletsForChain(seiMainnet.id).filter(
+  wallet => wallet !== 'walletconnect'
+)
 console.log('🔗 Supported wallets for Sei Network:', seiSupportedWallets)
 
-// Create connectors with proper WalletConnect configuration and compatibility checks
+// Create simplified connectors without WalletConnect
 const connectors = []
-
-// Log excluded wallets to prevent warnings
-const excludedWallets = ['coinbase', 'coinbase_smart_wallet', 'coinbase_wallet']
-console.log('🚫 Excluded wallets for Sei Network:', excludedWallets)
-console.log('🔗 This prevents "chains not supported" warnings')
 
 // Add MetaMask connector if supported
 if (seiSupportedWallets.includes('metamask')) {
@@ -72,101 +49,6 @@ if (seiSupportedWallets.includes('injected')) {
   console.log('✅ Injected connector added (supported on Sei Network)')
 } else {
   console.warn('⚠️ Injected wallets not supported on Sei Network, skipping connector')
-}
-
-// Add WalletConnect connector if supported and project ID is provided
-if (seiSupportedWallets.includes('walletconnect')) {
-  if (envConfig.isValid.walletConnect) {
-    try {
-      // CRITICAL FIX: Pre-connector global state checking to prevent WalletConnect Core double initialization
-      const existingWagmiInit = typeof window !== 'undefined' && 
-        (window as any).__WAGMI_WALLETCONNECT_INITIALIZED__ === true
-      
-      const existingGlobalState = typeof window !== 'undefined' && 
-        (window as any).__SEIRON_WALLETCONNECT_GLOBAL_STATE__?.isInitialized === true
-        
-      // ENHANCED CHECK: Also check for WalletConnect Core existence
-      const walletConnectCoreExists = typeof window !== 'undefined' && 
-        (window as any).WalletConnectCore !== undefined
-        
-      // REACT STRICTMODE DETECTION: Check for development environment double mounting
-      const isStrictModeDoubleMount = typeof window !== 'undefined' && 
-        (window as any).__SEIRON_STRICTMODE_FIRST_MOUNT__ === true
-      
-      if (existingWagmiInit || existingGlobalState || walletConnectCoreExists) {
-        console.log('ℹ️ WalletConnect already initialized, skipping connector creation to prevent double initialization')
-        console.log('- Existing Wagmi init:', existingWagmiInit)
-        console.log('- Existing global state:', existingGlobalState) 
-        console.log('- WalletConnect Core exists:', walletConnectCoreExists)
-        
-        // Don't add connector, just update state tracking
-        if (typeof window !== 'undefined') {
-          ;(window as any).__WAGMI_WALLETCONNECT_SKIPPED__ = true
-          ;(window as any).__WAGMI_WALLETCONNECT_SKIP_REASON__ = {
-            existingWagmiInit,
-            existingGlobalState,
-            walletConnectCoreExists,
-            timestamp: Date.now()
-          }
-        }
-      } else {
-        // STRICTMODE HANDLING: Mark first mount in development
-        let shouldCreateConnector = true
-        
-        if (typeof window !== 'undefined' && import.meta.env.DEV) {
-          if (isStrictModeDoubleMount) {
-            console.log('ℹ️ React StrictMode double mount detected, skipping WalletConnect connector creation')
-            shouldCreateConnector = false
-          } else {
-            ;(window as any).__SEIRON_STRICTMODE_FIRST_MOUNT__ = true
-          }
-        }
-        
-        // SAFE TO CREATE: No existing initialization detected and not blocked by StrictMode
-        if (shouldCreateConnector) {
-          connectors.push(
-            walletConnect({
-              projectId: walletConnectProjectId,
-              metadata: {
-                name: 'Seiron',
-                description: 'Seiron Dragon - DeFi Portfolio Management',
-                url: 'https://seiron.vercel.app',
-                icons: ['https://seiron.vercel.app/favicon.ico'],
-              },
-              showQrModal: true,
-            })
-          )
-          console.log('✅ WalletConnect connector added (supported on Sei Network)')
-          
-          // IMMEDIATE FLAG SETTING: Set flags immediately after connector creation
-          if (typeof window !== 'undefined') {
-            ;(window as any).__WAGMI_WALLETCONNECT_INITIALIZED__ = true
-            ;(window as any).__WALLETCONNECT_INITIALIZED__ = true
-            ;(window as any).__WAGMI_WALLETCONNECT_TIMESTAMP__ = Date.now()
-            
-            // Initialize global state immediately
-            ;(window as any).__SEIRON_WALLETCONNECT_GLOBAL_STATE__ = {
-              isInitialized: true,
-              isInitializing: false,
-              initializationTimestamp: Date.now(),
-              initializationMethod: 'wagmi',
-              instanceCount: 1,
-              lastCleanupTimestamp: null
-            }
-            
-            console.log('🔐 Global WalletConnect state initialized by Wagmi')
-          }
-        }
-      }
-    } catch (error) {
-      console.warn('⚠️ Failed to initialize WalletConnect:', error)
-    }
-  } else {
-    console.info('ℹ️ WalletConnect Project ID not configured, skipping WalletConnect connector')
-    console.info('ℹ️ Set VITE_WALLETCONNECT_PROJECT_ID environment variable to enable WalletConnect')
-  }
-} else {
-  console.warn('⚠️ WalletConnect not supported on Sei Network, skipping connector')
 }
 
 // Validate final connector configuration
@@ -231,11 +113,15 @@ export const isChainSupported = (chainId: number): boolean => {
 // Chain-specific exports
 // ============================================================================
 
-export const seiNetworkSupportedWallets = getSupportedWalletsForChain(seiMainnet.id)
-export const mainnetSupportedWallets = getSupportedWalletsForChain(1)
+export const seiNetworkSupportedWallets = getSupportedWalletsForChain(seiMainnet.id).filter(
+  wallet => wallet !== 'walletconnect'
+)
+export const mainnetSupportedWallets = getSupportedWalletsForChain(1).filter(
+  wallet => wallet !== 'walletconnect'
+)
 
 // Log final configuration
-console.log('🔗 Wagmi Configuration Summary:')
+console.log('🔗 Simplified Wagmi Configuration (No WalletConnect):')
 console.log('- Chains:', wagmiConfig.chains.map(c => `${c.name} (${c.id})`))
 console.log('- Connectors:', connectors.map(c => c.name))
 console.log('- Sei Network supported wallets:', seiNetworkSupportedWallets)

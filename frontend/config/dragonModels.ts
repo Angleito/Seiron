@@ -1,11 +1,7 @@
 /**
- * Comprehensive Dragon Model Configuration System
+ * Simplified Dragon Model Configuration System
  * 
- * This file provides centralized configuration for all dragon models with:
- * - Performance profiles and device compatibility
- * - Quality settings and optimization parameters
- * - Model metadata and fallback chains
- * - Device-based recommendations and preloading strategies
+ * Focused on Seiron Animated model with basic fallbacks
  */
 
 import { logger } from '@lib/logger'
@@ -219,160 +215,18 @@ export const DRAGON_MODEL_CONSTANTS = {
   ERROR_RECOVERY_TIMEOUT: 2000, // ms
 } as const
 
-// Comprehensive model configurations
+// Simplified model configurations - Focus on Seiron Animated
 export const DRAGON_MODELS: Record<string, DragonModelConfig> = {
-  // Primary optimized GLB model - Production ready
-  'seiron-primary': {
-    id: 'seiron-primary',
-    name: 'seiron.glb',
-    displayName: 'Seiron Primary',
-    description: 'Main production-ready dragon model with optimal performance',
-    path: '/models/seiron.glb',
-    format: 'glb',
-    fileSize: 1024 * 1024, // 1MB estimate
-    quality: 'high',
-    type: 'full',
-    version: '1.2.0',
-    lastUpdated: '2024-01-15',
-    status: 'stable',
-    maintainer: 'Seiron Team',
-    documentation: '/docs/models/seiron-primary.md',
-    changelog: '/docs/models/seiron-primary-changelog.md',
-    
-    compatibility: {
-      desktop: { supported: true, performance: 'excellent', fallbackRequired: false },
-      mobile: { supported: true, performance: 'good', fallbackRequired: false },
-      tablet: { supported: true, performance: 'good', fallbackRequired: false },
-      lowEndDevice: { supported: true, performance: 'fair', fallbackRequired: false }
-    },
-    
-    performance: {
-      renderComplexity: 6,
-      memoryUsageMB: 24,
-      loadTimeMs: 1500,
-      frameTimeMs: 16,
-      vertexCount: 12000,
-      triangleCount: 24000,
-      textureMemoryMB: 8,
-      recommendedFPS: 60,
-      minDeviceMemoryMB: 256,
-      cpuIntensity: 4,
-      gpuIntensity: 5,
-      batteryImpact: 'medium'
-    },
-    
-    features: {
-      hasLevelOfDetail: false,
-      hasAnimations: true,
-      hasVoiceIntegration: true,
-      hasEmotionSystem: true,
-      hasParticleEffects: false,
-      hasPhysics: false,
-      hasCollisions: false,
-      hasEnvironmentMapping: true,
-      supportsMorphing: false,
-      supportsDeformation: false,
-      hasCustomShaders: false,
-      hasProceduralTextures: false
-    },
-    
-    scaling: {
-      sm: { scale: 0.8, position: [0, -0.5, 0] },
-      md: { scale: 1.0, position: [0, -0.8, 0] },
-      lg: { scale: 1.3, position: [0, -1.0, 0] },
-      xl: { scale: 1.6, position: [0, -1.2, 0] },
-      gigantic: { scale: 2.0, position: [0, -1.5, 0] }
-    },
-    
-    animations: {
-      hasIdleAnimation: true,
-      hasVoiceReactiveAnimation: true,
-      hasEmotionAnimations: true,
-      hasSpecialEffects: false,
-      supportsMorphTargets: false,
-      supportsKeyframes: true,
-      maxConcurrentAnimations: 2,
-      animationComplexity: 4
-    },
-    
-    materials: {
-      diffuseTexture: '/models/textures/Material.002_baseColor.webp',
-      normalTexture: '/models/textures/Material.002_normal.webp',
-      metallicRoughnessTexture: '/models/textures/Material.002_metallicRoughness.webp',
-      emissiveTexture: '/models/textures/Material.002_emissive.webp',
-      hasTransparency: false,
-      supportsPBR: true,
-      materialComplexity: 6,
-      shaderRequirements: ['standard', 'pbr'],
-      textureCompressionFormat: 'basis'
-    },
-    
-    qualitySettings: {
-      low: {
-        enabled: true,
-        polygonReduction: 0.5,
-        textureSize: 512,
-        shadowQuality: 'none',
-        antialiasingLevel: 0,
-        effectsLevel: 'minimal'
-      },
-      medium: {
-        enabled: true,
-        polygonReduction: 0.2,
-        textureSize: 1024,
-        shadowQuality: 'low',
-        antialiasingLevel: 2,
-        effectsLevel: 'basic'
-      },
-      high: {
-        enabled: true,
-        polygonReduction: 0.0,
-        textureSize: 2048,
-        shadowQuality: 'medium',
-        antialiasingLevel: 4,
-        effectsLevel: 'full'
-      },
-      ultra: {
-        enabled: false,
-        polygonReduction: 0.0,
-        textureSize: 4096,
-        shadowQuality: 'high',
-        antialiasingLevel: 8,
-        effectsLevel: 'full'
-      }
-    },
-    
-    preloading: {
-      priority: 'critical',
-      preloadOnHover: false,
-      preloadOnVisible: true,
-      preloadOnIdle: true,
-      preloadDependencies: [],
-      cacheStrategy: 'aggressive',
-      maxCacheSize: 32,
-      cacheEviction: 'lru'
-    },
-    
-    recommendedUseCases: [
-      'primary-display',
-      'voice-interface',
-      'mobile-optimized',
-      'production-ready'
-    ],
-    fallbackModels: ['dragon-head-optimized', 'dragon-2d-sprite'],
-    alternativeModels: ['seiron-animated', 'seiron-lod-high']
-  },
-  
-  // High-quality animated model
+  // Primary animated model - MAIN MODEL
   'seiron-animated': {
     id: 'seiron-animated',
     name: 'seiron_animated.gltf',
     displayName: 'Seiron Animated',
-    description: 'High-quality animated dragon with advanced features',
+    description: 'Primary animated dragon with voice integration and advanced features',
     path: '/models/seiron_animated.gltf',
     format: 'gltf',
     fileSize: 2048 * 1024, // 2MB estimate
-    quality: 'ultra',
+    quality: 'high',
     type: 'animated',
     version: '1.1.0',
     lastUpdated: '2024-01-10',
@@ -383,24 +237,24 @@ export const DRAGON_MODELS: Record<string, DragonModelConfig> = {
     
     compatibility: {
       desktop: { supported: true, performance: 'excellent', fallbackRequired: false },
-      mobile: { supported: false, performance: 'poor', fallbackRequired: true },
-      tablet: { supported: true, performance: 'fair', fallbackRequired: false },
-      lowEndDevice: { supported: false, performance: 'poor', fallbackRequired: true }
+      mobile: { supported: true, performance: 'good', fallbackRequired: false },
+      tablet: { supported: true, performance: 'good', fallbackRequired: false },
+      lowEndDevice: { supported: true, performance: 'fair', fallbackRequired: false }
     },
     
     performance: {
-      renderComplexity: 9,
-      memoryUsageMB: 48,
-      loadTimeMs: 3000,
-      frameTimeMs: 20,
-      vertexCount: 25000,
-      triangleCount: 50000,
-      textureMemoryMB: 16,
-      recommendedFPS: 45,
-      minDeviceMemoryMB: 512,
-      cpuIntensity: 7,
-      gpuIntensity: 8,
-      batteryImpact: 'high'
+      renderComplexity: 7,
+      memoryUsageMB: 32,
+      loadTimeMs: 2000,
+      frameTimeMs: 16,
+      vertexCount: 20000,
+      triangleCount: 40000,
+      textureMemoryMB: 12,
+      recommendedFPS: 60,
+      minDeviceMemoryMB: 256,
+      cpuIntensity: 5,
+      gpuIntensity: 6,
+      batteryImpact: 'medium'
     },
     
     features: {
@@ -438,10 +292,10 @@ export const DRAGON_MODELS: Record<string, DragonModelConfig> = {
     },
     
     materials: {
-      diffuseTexture: '/models/textures/Material.002_baseColor.webp',
-      normalTexture: '/models/textures/Material.002_normal.webp',
-      metallicRoughnessTexture: '/models/textures/Material.002_metallicRoughness.webp',
-      emissiveTexture: '/models/textures/Material.002_emissive.webp',
+      diffuseTexture: '/models/textures/Material.002_baseColor.png',
+      normalTexture: '/models/textures/Material.002_normal.png',
+      metallicRoughnessTexture: '/models/textures/Material.002_metallicRoughness.png',
+      emissiveTexture: '/models/textures/Material.002_emissive.png',
       hasTransparency: true,
       supportsPBR: true,
       materialComplexity: 8,
@@ -451,12 +305,12 @@ export const DRAGON_MODELS: Record<string, DragonModelConfig> = {
     
     qualitySettings: {
       low: {
-        enabled: false,
-        polygonReduction: 0.7,
+        enabled: true,
+        polygonReduction: 0.5,
         textureSize: 512,
         shadowQuality: 'none',
         antialiasingLevel: 0,
-        effectsLevel: 'none'
+        effectsLevel: 'minimal'
       },
       medium: {
         enabled: true,
@@ -485,327 +339,44 @@ export const DRAGON_MODELS: Record<string, DragonModelConfig> = {
     },
     
     preloading: {
-      priority: 'medium',
-      preloadOnHover: true,
-      preloadOnVisible: false,
+      priority: 'critical',
+      preloadOnHover: false,
+      preloadOnVisible: true,
       preloadOnIdle: true,
       preloadDependencies: ['seiron_animated.bin'],
-      cacheStrategy: 'moderate',
+      cacheStrategy: 'aggressive',
       maxCacheSize: 64,
       cacheEviction: 'lru'
     },
     
     recommendedUseCases: [
-      'desktop-showcase',
-      'high-end-devices',
-      'detailed-interactions',
-      'premium-experience'
-    ],
-    fallbackModels: ['seiron-primary', 'dragon-head-optimized'],
-    alternativeModels: ['seiron-lod-high', 'seiron-primary']
-  },
-  
-  // Ultra-high quality LOD model
-  'seiron-lod-high': {
-    id: 'seiron-lod-high',
-    name: 'seiron_animated_lod_high.gltf',
-    displayName: 'Seiron LOD High',
-    description: 'Ultra-high quality model with level-of-detail optimization',
-    path: '/models/seiron_animated_lod_high.gltf',
-    format: 'gltf',
-    fileSize: 3072 * 1024, // 3MB estimate
-    quality: 'ultra',
-    type: 'animated',
-    version: '1.0.0',
-    lastUpdated: '2024-01-05',
-    status: 'beta',
-    maintainer: 'Seiron Team',
-    documentation: '/docs/models/seiron-lod-high.md',
-    changelog: '/docs/models/seiron-lod-high-changelog.md',
-    
-    compatibility: {
-      desktop: { supported: true, performance: 'good', fallbackRequired: false },
-      mobile: { supported: false, performance: 'poor', fallbackRequired: true },
-      tablet: { supported: false, performance: 'poor', fallbackRequired: true },
-      lowEndDevice: { supported: false, performance: 'poor', fallbackRequired: true }
-    },
-    
-    performance: {
-      renderComplexity: 10,
-      memoryUsageMB: 72,
-      loadTimeMs: 4500,
-      frameTimeMs: 25,
-      vertexCount: 45000,
-      triangleCount: 90000,
-      textureMemoryMB: 24,
-      recommendedFPS: 30,
-      minDeviceMemoryMB: 1024,
-      cpuIntensity: 8,
-      gpuIntensity: 9,
-      batteryImpact: 'high'
-    },
-    
-    features: {
-      hasLevelOfDetail: true,
-      hasAnimations: true,
-      hasVoiceIntegration: true,
-      hasEmotionSystem: true,
-      hasParticleEffects: true,
-      hasPhysics: true,
-      hasCollisions: true,
-      hasEnvironmentMapping: true,
-      supportsMorphing: true,
-      supportsDeformation: true,
-      hasCustomShaders: true,
-      hasProceduralTextures: true
-    },
-    
-    scaling: {
-      sm: { scale: 1.0, position: [0, -0.7, 0] },
-      md: { scale: 1.2, position: [0, -1.0, 0] },
-      lg: { scale: 1.5, position: [0, -1.2, 0] },
-      xl: { scale: 1.8, position: [0, -1.4, 0] },
-      gigantic: { scale: 2.2, position: [0, -1.7, 0] }
-    },
-    
-    animations: {
-      hasIdleAnimation: true,
-      hasVoiceReactiveAnimation: true,
-      hasEmotionAnimations: true,
-      hasSpecialEffects: true,
-      supportsMorphTargets: true,
-      supportsKeyframes: true,
-      maxConcurrentAnimations: 8,
-      animationComplexity: 10
-    },
-    
-    materials: {
-      diffuseTexture: '/models/textures/Material.002_baseColor.webp',
-      normalTexture: '/models/textures/Material.002_normal.webp',
-      metallicRoughnessTexture: '/models/textures/Material.002_metallicRoughness.webp',
-      emissiveTexture: '/models/textures/Material.002_emissive.webp',
-      hasTransparency: true,
-      supportsPBR: true,
-      materialComplexity: 10,
-      shaderRequirements: ['standard', 'pbr', 'custom', 'advanced'],
-      textureCompressionFormat: 'basis'
-    },
-    
-    qualitySettings: {
-      low: {
-        enabled: false,
-        polygonReduction: 0.8,
-        textureSize: 512,
-        shadowQuality: 'none',
-        antialiasingLevel: 0,
-        effectsLevel: 'none'
-      },
-      medium: {
-        enabled: false,
-        polygonReduction: 0.5,
-        textureSize: 1024,
-        shadowQuality: 'low',
-        antialiasingLevel: 2,
-        effectsLevel: 'basic'
-      },
-      high: {
-        enabled: true,
-        polygonReduction: 0.2,
-        textureSize: 2048,
-        shadowQuality: 'medium',
-        antialiasingLevel: 4,
-        effectsLevel: 'full'
-      },
-      ultra: {
-        enabled: true,
-        polygonReduction: 0.0,
-        textureSize: 4096,
-        shadowQuality: 'high',
-        antialiasingLevel: 8,
-        effectsLevel: 'full'
-      }
-    },
-    
-    preloading: {
-      priority: 'low',
-      preloadOnHover: false,
-      preloadOnVisible: false,
-      preloadOnIdle: true,
-      preloadDependencies: [],
-      cacheStrategy: 'conservative',
-      maxCacheSize: 96,
-      cacheEviction: 'lfu'
-    },
-    
-    recommendedUseCases: [
-      'high-end-desktop',
-      'showcase-mode',
-      'professional-demos',
-      'premium-tier'
-    ],
-    fallbackModels: ['seiron-animated', 'seiron-primary'],
-    alternativeModels: ['seiron-animated', 'seiron-primary']
-  },
-  
-  // Head-only model for focused interactions
-  'dragon-head': {
-    id: 'dragon-head',
-    name: 'dragon_head.obj',
-    displayName: 'Dragon Head',
-    description: 'Focused dragon head model for close-up interactions',
-    path: '/models/dragon_head.obj',
-    format: 'obj',
-    fileSize: 1536 * 1024, // 1.5MB estimate
-    quality: 'high',
-    type: 'head',
-    version: '1.0.0',
-    lastUpdated: '2024-01-01',
-    status: 'stable',
-    maintainer: 'Seiron Team',
-    documentation: '/docs/models/dragon-head.md',
-    changelog: '/docs/models/dragon-head-changelog.md',
-    
-    compatibility: {
-      desktop: { supported: true, performance: 'excellent', fallbackRequired: false },
-      mobile: { supported: true, performance: 'good', fallbackRequired: false },
-      tablet: { supported: true, performance: 'good', fallbackRequired: false },
-      lowEndDevice: { supported: true, performance: 'fair', fallbackRequired: false }
-    },
-    
-    performance: {
-      renderComplexity: 7,
-      memoryUsageMB: 32,
-      loadTimeMs: 2000,
-      frameTimeMs: 18,
-      vertexCount: 18000,
-      triangleCount: 36000,
-      textureMemoryMB: 12,
-      recommendedFPS: 55,
-      minDeviceMemoryMB: 256,
-      cpuIntensity: 5,
-      gpuIntensity: 6,
-      batteryImpact: 'medium'
-    },
-    
-    features: {
-      hasLevelOfDetail: false,
-      hasAnimations: true,
-      hasVoiceIntegration: true,
-      hasEmotionSystem: true,
-      hasParticleEffects: false,
-      hasPhysics: false,
-      hasCollisions: false,
-      hasEnvironmentMapping: true,
-      supportsMorphing: true,
-      supportsDeformation: false,
-      hasCustomShaders: false,
-      hasProceduralTextures: false
-    },
-    
-    scaling: {
-      sm: { scale: 1.2, position: [0, -0.3, 0] },
-      md: { scale: 1.5, position: [0, -0.4, 0] },
-      lg: { scale: 1.8, position: [0, -0.5, 0] },
-      xl: { scale: 2.1, position: [0, -0.6, 0] },
-      gigantic: { scale: 2.5, position: [0, -0.7, 0] }
-    },
-    
-    animations: {
-      hasIdleAnimation: true,
-      hasVoiceReactiveAnimation: true,
-      hasEmotionAnimations: true,
-      hasSpecialEffects: false,
-      supportsMorphTargets: true,
-      supportsKeyframes: true,
-      maxConcurrentAnimations: 3,
-      animationComplexity: 6
-    },
-    
-    materials: {
-      diffuseTexture: '/models/textures/Material.002_baseColor.webp',
-      normalTexture: '/models/textures/Material.002_normal.webp',
-      metallicRoughnessTexture: '/models/textures/Material.002_metallicRoughness.webp',
-      emissiveTexture: '/models/textures/Material.002_emissive.webp',
-      hasTransparency: false,
-      supportsPBR: true,
-      materialComplexity: 7,
-      shaderRequirements: ['standard', 'pbr'],
-      textureCompressionFormat: 'basis'
-    },
-    
-    qualitySettings: {
-      low: {
-        enabled: true,
-        polygonReduction: 0.4,
-        textureSize: 512,
-        shadowQuality: 'none',
-        antialiasingLevel: 0,
-        effectsLevel: 'minimal'
-      },
-      medium: {
-        enabled: true,
-        polygonReduction: 0.2,
-        textureSize: 1024,
-        shadowQuality: 'low',
-        antialiasingLevel: 2,
-        effectsLevel: 'basic'
-      },
-      high: {
-        enabled: true,
-        polygonReduction: 0.0,
-        textureSize: 2048,
-        shadowQuality: 'medium',
-        antialiasingLevel: 4,
-        effectsLevel: 'full'
-      },
-      ultra: {
-        enabled: false,
-        polygonReduction: 0.0,
-        textureSize: 4096,
-        shadowQuality: 'high',
-        antialiasingLevel: 8,
-        effectsLevel: 'full'
-      }
-    },
-    
-    preloading: {
-      priority: 'medium',
-      preloadOnHover: true,
-      preloadOnVisible: true,
-      preloadOnIdle: false,
-      preloadDependencies: [],
-      cacheStrategy: 'moderate',
-      maxCacheSize: 40,
-      cacheEviction: 'lru'
-    },
-    
-    recommendedUseCases: [
+      'primary-display',
       'voice-interface',
-      'close-up-interactions',
-      'portrait-mode',
-      'conversation-focus'
+      'animation-showcase',
+      'desktop-experience',
+      'mobile-experience'
     ],
-    fallbackModels: ['dragon-head-optimized', 'dragon-2d-sprite'],
-    alternativeModels: ['dragon-head-optimized', 'seiron-primary']
+    fallbackModels: ['seiron-backup', 'dragon-2d-sprite'],
+    alternativeModels: ['seiron-backup']
   },
   
-  // Optimized head model for mobile
-  'dragon-head-optimized': {
-    id: 'dragon-head-optimized',
-    name: 'dragon_head_optimized.glb',
-    displayName: 'Dragon Head Optimized',
-    description: 'Mobile-optimized dragon head with reduced polygon count',
-    path: '/models/dragon_head_optimized.glb',
+  // Fallback GLB model - Simple backup
+  'seiron-backup': {
+    id: 'seiron-backup',
+    name: 'seiron.glb',
+    displayName: 'Seiron Backup',
+    description: 'Simple GLB fallback model for compatibility',
+    path: '/models/seiron.glb',
     format: 'glb',
-    fileSize: 512 * 1024, // 512KB estimate
+    fileSize: 1024 * 1024, // 1MB estimate
     quality: 'medium',
-    type: 'head',
-    version: '1.1.0',
-    lastUpdated: '2024-01-12',
+    type: 'static',
+    version: '1.0.0',
+    lastUpdated: '2024-01-15',
     status: 'stable',
     maintainer: 'Seiron Team',
-    documentation: '/docs/models/dragon-head-optimized.md',
-    changelog: '/docs/models/dragon-head-optimized-changelog.md',
+    documentation: '/docs/models/seiron-backup.md',
+    changelog: '/docs/models/seiron-backup-changelog.md',
     
     compatibility: {
       desktop: { supported: true, performance: 'excellent', fallbackRequired: false },
@@ -819,21 +390,21 @@ export const DRAGON_MODELS: Record<string, DragonModelConfig> = {
       memoryUsageMB: 16,
       loadTimeMs: 800,
       frameTimeMs: 12,
-      vertexCount: 6000,
-      triangleCount: 12000,
-      textureMemoryMB: 4,
+      vertexCount: 8000,
+      triangleCount: 16000,
+      textureMemoryMB: 6,
       recommendedFPS: 60,
       minDeviceMemoryMB: 128,
       cpuIntensity: 3,
-      gpuIntensity: 3,
+      gpuIntensity: 4,
       batteryImpact: 'low'
     },
     
     features: {
       hasLevelOfDetail: false,
-      hasAnimations: true,
+      hasAnimations: false,
       hasVoiceIntegration: true,
-      hasEmotionSystem: true,
+      hasEmotionSystem: false,
       hasParticleEffects: false,
       hasPhysics: false,
       hasCollisions: false,
@@ -845,33 +416,33 @@ export const DRAGON_MODELS: Record<string, DragonModelConfig> = {
     },
     
     scaling: {
-      sm: { scale: 1.0, position: [0, -0.2, 0] },
-      md: { scale: 1.3, position: [0, -0.3, 0] },
-      lg: { scale: 1.6, position: [0, -0.4, 0] },
-      xl: { scale: 1.9, position: [0, -0.5, 0] },
-      gigantic: { scale: 2.3, position: [0, -0.6, 0] }
+      sm: { scale: 0.8, position: [0, -0.5, 0] },
+      md: { scale: 1.0, position: [0, -0.8, 0] },
+      lg: { scale: 1.3, position: [0, -1.0, 0] },
+      xl: { scale: 1.6, position: [0, -1.2, 0] },
+      gigantic: { scale: 2.0, position: [0, -1.5, 0] }
     },
     
     animations: {
-      hasIdleAnimation: true,
+      hasIdleAnimation: false,
       hasVoiceReactiveAnimation: true,
-      hasEmotionAnimations: true,
+      hasEmotionAnimations: false,
       hasSpecialEffects: false,
       supportsMorphTargets: false,
-      supportsKeyframes: true,
-      maxConcurrentAnimations: 2,
-      animationComplexity: 3
+      supportsKeyframes: false,
+      maxConcurrentAnimations: 1,
+      animationComplexity: 2
     },
     
     materials: {
-      diffuseTexture: '/models/textures/Material.002_baseColor.webp',
-      normalTexture: null,
-      metallicRoughnessTexture: null,
-      emissiveTexture: null,
+      diffuseTexture: '/models/textures/Material.002_baseColor.png',
+      normalTexture: '/models/textures/Material.002_normal.png',
+      metallicRoughnessTexture: '/models/textures/Material.002_metallicRoughness.png',
+      emissiveTexture: '/models/textures/Material.002_emissive.png',
       hasTransparency: false,
-      supportsPBR: false,
-      materialComplexity: 3,
-      shaderRequirements: ['standard'],
+      supportsPBR: true,
+      materialComplexity: 4,
+      shaderRequirements: ['standard', 'pbr'],
       textureCompressionFormat: 'basis'
     },
     
@@ -879,56 +450,56 @@ export const DRAGON_MODELS: Record<string, DragonModelConfig> = {
       low: {
         enabled: true,
         polygonReduction: 0.3,
-        textureSize: 256,
-        shadowQuality: 'none',
-        antialiasingLevel: 0,
-        effectsLevel: 'none'
-      },
-      medium: {
-        enabled: true,
-        polygonReduction: 0.1,
         textureSize: 512,
         shadowQuality: 'none',
         antialiasingLevel: 0,
         effectsLevel: 'minimal'
       },
-      high: {
+      medium: {
         enabled: true,
-        polygonReduction: 0.0,
+        polygonReduction: 0.1,
         textureSize: 1024,
         shadowQuality: 'low',
         antialiasingLevel: 2,
         effectsLevel: 'basic'
       },
-      ultra: {
-        enabled: false,
+      high: {
+        enabled: true,
         polygonReduction: 0.0,
         textureSize: 2048,
         shadowQuality: 'medium',
         antialiasingLevel: 4,
         effectsLevel: 'full'
+      },
+      ultra: {
+        enabled: false,
+        polygonReduction: 0.0,
+        textureSize: 4096,
+        shadowQuality: 'high',
+        antialiasingLevel: 8,
+        effectsLevel: 'full'
       }
     },
     
     preloading: {
-      priority: 'high',
+      priority: 'medium',
       preloadOnHover: false,
       preloadOnVisible: true,
       preloadOnIdle: true,
       preloadDependencies: [],
-      cacheStrategy: 'aggressive',
+      cacheStrategy: 'moderate',
       maxCacheSize: 20,
       cacheEviction: 'lru'
     },
     
     recommendedUseCases: [
-      'mobile-primary',
+      'fallback-rendering',
+      'mobile-optimized',
       'low-end-devices',
-      'battery-conservation',
-      'quick-loading'
+      'battery-conservation'
     ],
     fallbackModels: ['dragon-2d-sprite', 'dragon-ascii'],
-    alternativeModels: ['dragon-head', 'seiron-primary']
+    alternativeModels: ['dragon-2d-sprite']
   },
   
   // 2D sprite fallback
@@ -1216,500 +787,20 @@ export const DRAGON_MODELS: Record<string, DragonModelConfig> = {
   }
 }
 
-// Device capability detection utilities
-export class DeviceCapabilityDetector {
-  private static instance: DeviceCapabilityDetector
-  private capabilities: DeviceCapability | null = null
-  
-  static getInstance(): DeviceCapabilityDetector {
-    if (!DeviceCapabilityDetector.instance) {
-      DeviceCapabilityDetector.instance = new DeviceCapabilityDetector()
-    }
-    return DeviceCapabilityDetector.instance
-  }
-  
-  async detectCapabilities(): Promise<DeviceCapability> {
-    if (this.capabilities) {
-      return this.capabilities
-    }
-    
-    // Detect WebGL capabilities
-    const canvas = document.createElement('canvas')
-    const webgl2 = !!canvas.getContext('webgl2')
-    const webgl1 = !!canvas.getContext('webgl') || !!canvas.getContext('experimental-webgl')
-    
-    // Estimate device memory
-    const memoryMB = (navigator as any).deviceMemory 
-      ? (navigator as any).deviceMemory * 1024 
-      : this.estimateDeviceMemory()
-    
-    // Detect device type
-    const userAgent = navigator.userAgent
-    const isDesktop = !/Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)
-    const isMobile = /Mobile|Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)
-    const isTablet = /iPad|Android(?!.*Mobile)/i.test(userAgent)
-    
-    // Detect GPU tier
-    const gpuTier = await this.detectGPUTier()
-    
-    // Detect CPU cores
-    const cpuCores = navigator.hardwareConcurrency || 4
-    
-    // Get WebGL context info
-    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl')
-    const maxTextureSize = gl ? gl.getParameter(gl.MAX_TEXTURE_SIZE) : 2048
-    const maxVertexCount = gl ? gl.getParameter(gl.MAX_VERTEX_ATTRIBS) : 16
-    
-    // Detect HDR and float support
-    const supportsHDR = webgl2 && gl ? this.checkHDRSupport(gl) : false
-    const supportsFloat = webgl1 && gl ? this.checkFloatSupport(gl) : false
-    
-    this.capabilities = {
-      webgl2,
-      webgl1,
-      memoryMB,
-      maxTextureSize,
-      maxVertexCount,
-      isDesktop,
-      isMobile,
-      isTablet,
-      supportsHDR,
-      supportsFloat,
-      cpuCores,
-      gpuTier
-    }
-    
-    return this.capabilities
-  }
-  
-  private estimateDeviceMemory(): number {
-    // Fallback memory estimation based on device type
-    const userAgent = navigator.userAgent
-    
-    if (/iPhone|iPad|iPod/i.test(userAgent)) {
-      return 2048 // iOS devices typically have 2-4GB
-    } else if (/Android/i.test(userAgent)) {
-      return 1536 // Android devices vary widely
-    } else {
-      return 4096 // Desktop fallback
-    }
-  }
-  
-  private async detectGPUTier(): Promise<'low' | 'medium' | 'high'> {
-    const canvas = document.createElement('canvas')
-    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl')
-    
-    if (!gl) return 'low'
-    
-    // Get GPU info
-    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info')
-    const renderer = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : ''
-    
-    // Simple GPU classification
-    if (renderer.includes('GTX') || renderer.includes('RTX') || renderer.includes('Radeon')) {
-      return 'high'
-    } else if (renderer.includes('Intel') || renderer.includes('Iris')) {
-      return 'medium'
-    } else {
-      return 'low'
-    }
-  }
-  
-  private checkHDRSupport(gl: WebGLRenderingContext | WebGL2RenderingContext): boolean {
-    return gl.getExtension('EXT_color_buffer_float') !== null
-  }
-  
-  private checkFloatSupport(gl: WebGLRenderingContext | WebGL2RenderingContext): boolean {
-    return gl.getExtension('OES_texture_float') !== null
-  }
+// Default model recommendations
+export function getDefaultModel(): string {
+  return 'seiron-animated'
 }
 
-// Model selection utilities
-export class DragonModelSelector {
-  private static instance: DragonModelSelector
-  private capabilityDetector: DeviceCapabilityDetector
-  
-  static getInstance(): DragonModelSelector {
-    if (!DragonModelSelector.instance) {
-      DragonModelSelector.instance = new DragonModelSelector()
-    }
-    return DragonModelSelector.instance
-  }
-  
-  constructor() {
-    this.capabilityDetector = DeviceCapabilityDetector.getInstance()
-  }
-  
-  async getRecommendedModel(
-    preferredQuality: DragonModelQuality = 'medium',
-    useCase: string = 'general'
-  ): Promise<DragonModelConfig> {
-    const capabilities = await this.capabilityDetector.detectCapabilities()
-    
-    // Filter models by device capabilities
-    const compatibleModels = this.getCompatibleModels(capabilities)
-    
-    // Filter by use case
-    const useCaseModels = compatibleModels.filter(model =>
-      model.recommendedUseCases.includes(useCase) ||
-      model.recommendedUseCases.includes('general')
-    )
-    
-    // Sort by quality preference and performance
-    const sortedModels = this.sortModelsByPreference(
-      useCaseModels,
-      preferredQuality,
-      capabilities
-    )
-    
-    // Return the best match
-    const bestModel = sortedModels[0]
-    if (bestModel) {
-      const selectedModel = DRAGON_MODELS[bestModel.id]
-      if (selectedModel) {
-        return selectedModel
-      }
-    }
-    
-    // Final fallback to ASCII dragon
-    const asciiModel = DRAGON_MODELS['dragon-ascii']
-    if (!asciiModel) {
-      throw new Error('ASCII dragon model not found - this should never happen')
-    }
-    return asciiModel
-  }
-  
-  getCompatibleModels(capabilities: DeviceCapability): DragonModelConfig[] {
-    return Object.values(DRAGON_MODELS).filter(model => {
-      // Check basic compatibility
-      if (capabilities.isDesktop && model.compatibility.desktop.supported) {
-        return model.compatibility.desktop.performance !== 'poor'
-      } else if (capabilities.isMobile && model.compatibility.mobile.supported) {
-        return model.compatibility.mobile.performance !== 'poor'
-      } else if (capabilities.isTablet && model.compatibility.tablet.supported) {
-        return model.compatibility.tablet.performance !== 'poor'
-      }
-      
-      // Check memory requirements
-      if (capabilities.memoryMB < model.performance.minDeviceMemoryMB) {
-        return false
-      }
-      
-      // Check WebGL requirements
-      if (model.format === 'glb' || model.format === 'gltf') {
-        return capabilities.webgl1 || capabilities.webgl2
-      }
-      
-      return true
-    })
-  }
-  
-  private sortModelsByPreference(
-    models: DragonModelConfig[],
-    preferredQuality: DragonModelQuality,
-    capabilities: DeviceCapability
-  ): DragonModelConfig[] {
-    return models.sort((a, b) => {
-      // Priority 1: Quality match
-      const aQualityMatch = a.quality === preferredQuality ? 2 : 0
-      const bQualityMatch = b.quality === preferredQuality ? 2 : 0
-      
-      // Priority 2: Performance compatibility
-      const aPerformanceScore = this.getPerformanceScore(a, capabilities)
-      const bPerformanceScore = this.getPerformanceScore(b, capabilities)
-      
-      // Priority 3: Feature richness
-      const aFeatureScore = this.getFeatureScore(a)
-      const bFeatureScore = this.getFeatureScore(b)
-      
-      const aScore = aQualityMatch + aPerformanceScore + aFeatureScore
-      const bScore = bQualityMatch + bPerformanceScore + bFeatureScore
-      
-      return bScore - aScore
-    })
-  }
-  
-  private getPerformanceScore(model: DragonModelConfig, capabilities: DeviceCapability): number {
-    let score = 0
-    
-    // Memory efficiency
-    if (model.performance.memoryUsageMB < capabilities.memoryMB * 0.1) {
-      score += 3
-    } else if (model.performance.memoryUsageMB < capabilities.memoryMB * 0.2) {
-      score += 2
-    } else if (model.performance.memoryUsageMB < capabilities.memoryMB * 0.3) {
-      score += 1
-    }
-    
-    // GPU efficiency
-    if (capabilities.gpuTier === 'high' && model.performance.gpuIntensity <= 8) {
-      score += 2
-    } else if (capabilities.gpuTier === 'medium' && model.performance.gpuIntensity <= 6) {
-      score += 2
-    } else if (capabilities.gpuTier === 'low' && model.performance.gpuIntensity <= 4) {
-      score += 2
-    }
-    
-    // Battery efficiency for mobile
-    if (capabilities.isMobile && model.performance.batteryImpact === 'low') {
-      score += 2
-    }
-    
-    return score
-  }
-  
-  private getFeatureScore(model: DragonModelConfig): number {
-    let score = 0
-    
-    // Voice integration
-    if (model.features.hasVoiceIntegration) score += 1
-    
-    // Animations
-    if (model.features.hasAnimations) score += 1
-    
-    // Emotion system
-    if (model.features.hasEmotionSystem) score += 1
-    
-    // Advanced features
-    if (model.features.hasParticleEffects) score += 0.5
-    if (model.features.hasCustomShaders) score += 0.5
-    
-    return score
-  }
-  
-  createFallbackChain(primaryModel: DragonModelConfig): DragonModelConfig[] {
-    const chain: DragonModelConfig[] = [primaryModel]
-    
-    // Add explicit fallback models
-    for (const fallbackId of primaryModel.fallbackModels) {
-      const fallbackModel = DRAGON_MODELS[fallbackId]
-      if (fallbackModel) {
-        chain.push(fallbackModel)
-      }
-    }
-    
-    // Ensure we have ASCII as ultimate fallback
-    if (!chain.find(model => model.id === 'dragon-ascii')) {
-      const asciiModel = DRAGON_MODELS['dragon-ascii']
-      if (asciiModel) {
-        chain.push(asciiModel)
-      }
-    }
-    
-    return chain
-  }
-  
-  getOptimalQualitySettings(
-    model: DragonModelConfig,
-    capabilities: DeviceCapability
-  ): QualitySettings[keyof QualitySettings] {
-    // Determine optimal quality level based on capabilities
-    let targetQuality: keyof QualitySettings = 'medium'
-    
-    if (capabilities.gpuTier === 'high' && capabilities.memoryMB >= 2048) {
-      targetQuality = 'high'
-    } else if (capabilities.gpuTier === 'medium' && capabilities.memoryMB >= 1024) {
-      targetQuality = 'medium'
-    } else {
-      targetQuality = 'low'
-    }
-    
-    // Check if the model supports the target quality
-    const qualitySettings = model.qualitySettings[targetQuality]
-    if (!qualitySettings.enabled) {
-      // Find the highest available quality
-      const availableQualities = Object.entries(model.qualitySettings)
-        .filter(([_, settings]) => settings.enabled)
-        .map(([quality, _]) => quality as keyof QualitySettings)
-      
-      if (availableQualities.length > 0) {
-        const lastQuality = availableQualities[availableQualities.length - 1]
-        if (lastQuality) {
-          targetQuality = lastQuality
-        }
-      }
-    }
-    
-    return model.qualitySettings[targetQuality]
-  }
+export function getDefaultFallback(): string {
+  return 'seiron-backup'
 }
 
-// Model preloading utilities
-export class ModelPreloader {
-  private static instance: ModelPreloader
-  private preloadedModels: Map<string, Promise<any>> = new Map()
-  private cacheSize: number = 0
-  private maxCacheSize: number = DRAGON_MODEL_CONSTANTS.DEFAULT_CACHE_SIZE * 1024 * 1024 // Convert to bytes
-  
-  static getInstance(): ModelPreloader {
-    if (!ModelPreloader.instance) {
-      ModelPreloader.instance = new ModelPreloader()
-    }
-    return ModelPreloader.instance
-  }
-  
-  async preloadModel(model: DragonModelConfig): Promise<void> {
-    const modelId = model.id
-    
-    if (this.preloadedModels.has(modelId)) {
-      return this.preloadedModels.get(modelId)
-    }
-    
-    const preloadPromise = this.performPreload(model)
-    this.preloadedModels.set(modelId, preloadPromise)
-    
-    try {
-      await preloadPromise
-      this.cacheSize += model.fileSize
-      this.checkCacheSize()
-    } catch (error) {
-      // Remove failed preload
-      this.preloadedModels.delete(modelId)
-      logger.error(`Failed to preload model ${modelId}:`, error)
-      throw error
-    }
-  }
-  
-  private async performPreload(model: DragonModelConfig): Promise<void> {
-    if (model.path.startsWith('internal://')) {
-      // Internal models don't need preloading
-      return Promise.resolve()
-    }
-    
-    // Preload the main model file
-    const response = await fetch(model.path, {
-      method: 'GET',
-      headers: {
-        'Cache-Control': 'max-age=31536000' // 1 year
-      }
-    })
-    
-    if (!response.ok) {
-      throw new Error(`Failed to preload model ${model.id}: ${response.status}`)
-    }
-    
-    // Preload dependencies
-    for (const depPath of model.preloading.preloadDependencies) {
-      await fetch(depPath, {
-        method: 'GET',
-        headers: {
-          'Cache-Control': 'max-age=31536000'
-        }
-      })
-    }
-    
-    // Preload textures
-    const texturePromises: Promise<void>[] = []
-    
-    if (model.materials.diffuseTexture) {
-      texturePromises.push(this.preloadTexture(model.materials.diffuseTexture))
-    }
-    if (model.materials.normalTexture) {
-      texturePromises.push(this.preloadTexture(model.materials.normalTexture))
-    }
-    if (model.materials.metallicRoughnessTexture) {
-      texturePromises.push(this.preloadTexture(model.materials.metallicRoughnessTexture))
-    }
-    if (model.materials.emissiveTexture) {
-      texturePromises.push(this.preloadTexture(model.materials.emissiveTexture))
-    }
-    
-    await Promise.all(texturePromises)
-  }
-  
-  private async preloadTexture(texturePath: string): Promise<void> {
-    const response = await fetch(texturePath, {
-      method: 'GET',
-      headers: {
-        'Cache-Control': 'max-age=31536000'
-      }
-    })
-    
-    if (!response.ok) {
-      logger.warn(`Failed to preload texture ${texturePath}: ${response.status}`)
-    }
-  }
-  
-  private checkCacheSize(): void {
-    if (this.cacheSize > this.maxCacheSize) {
-      // Implement LRU cache eviction
-      const models = Array.from(this.preloadedModels.entries())
-      const modelsToEvict = models.slice(0, Math.floor(models.length * 0.3))
-      
-      for (const [modelId, _] of modelsToEvict) {
-        this.preloadedModels.delete(modelId)
-        
-        // Estimate and subtract file size
-        const model = Object.values(DRAGON_MODELS).find(m => m.id === modelId)
-        if (model) {
-          this.cacheSize -= model.fileSize
-        }
-      }
-      
-      logger.info(`Evicted ${modelsToEvict.length} models from cache`)
-    }
-  }
-  
-  async preloadModelSet(modelIds: string[]): Promise<void> {
-    const preloadPromises = modelIds.map(id => {
-      const model = DRAGON_MODELS[id]
-      if (model) {
-        return this.preloadModel(model)
-      }
-      return Promise.resolve()
-    })
-    
-    await Promise.all(preloadPromises)
-  }
-  
-  isModelPreloaded(modelId: string): boolean {
-    return this.preloadedModels.has(modelId)
-  }
-  
-  clearCache(): void {
-    this.preloadedModels.clear()
-    this.cacheSize = 0
-  }
+export function getUltimateFallback(): string {
+  return 'dragon-ascii'
 }
 
-// Utility functions for model management
-export function getModelsByDeviceCapability(capabilities: DeviceCapability): DragonModelConfig[] {
-  const selector = DragonModelSelector.getInstance()
-  return selector.getCompatibleModels(capabilities)
-}
-
-export async function getRecommendedModel(
-  preferredQuality: DragonModelQuality = 'medium',
-  useCase: string = 'general'
-): Promise<DragonModelConfig> {
-  const selector = DragonModelSelector.getInstance()
-  return selector.getRecommendedModel(preferredQuality, useCase)
-}
-
-export function getOptimalQualitySettings(
-  model: DragonModelConfig,
-  capabilities: DeviceCapability
-): QualitySettings[keyof QualitySettings] {
-  const selector = DragonModelSelector.getInstance()
-  return selector.getOptimalQualitySettings(model, capabilities)
-}
-
-export function createFallbackChain(primaryModelId: string): DragonModelConfig[] {
-  const primaryModel = DRAGON_MODELS[primaryModelId]
-  if (!primaryModel) {
-    const asciiModel = DRAGON_MODELS['dragon-ascii']
-    return asciiModel ? [asciiModel] : []
-  }
-  
-  const selector = DragonModelSelector.getInstance()
-  return selector.createFallbackChain(primaryModel)
-}
-
-export async function preloadModelSet(modelIds: string[]): Promise<void> {
-  const preloader = ModelPreloader.getInstance()
-  return preloader.preloadModelSet(modelIds)
-}
-
+// Export utilities
 export function getModelConfig(modelId: string): DragonModelConfig | undefined {
   return DRAGON_MODELS[modelId]
 }
@@ -1732,95 +823,13 @@ export function getModelsByUseCase(useCase: string): DragonModelConfig[] {
   )
 }
 
-// Performance monitoring for models
-export class ModelPerformanceMonitor {
-  private static instance: ModelPerformanceMonitor
-  private performanceData: Map<string, PerformanceProfile> = new Map()
-  
-  static getInstance(): ModelPerformanceMonitor {
-    if (!ModelPerformanceMonitor.instance) {
-      ModelPerformanceMonitor.instance = new ModelPerformanceMonitor()
-    }
-    return ModelPerformanceMonitor.instance
-  }
-  
-  recordModelPerformance(modelId: string, metrics: Partial<PerformanceProfile>): void {
-    const existing = this.performanceData.get(modelId)
-    const updated = { ...existing, ...metrics } as PerformanceProfile
-    this.performanceData.set(modelId, updated)
-  }
-  
-  getModelPerformance(modelId: string): PerformanceProfile | undefined {
-    return this.performanceData.get(modelId)
-  }
-  
-  getAveragePerformance(): PerformanceProfile {
-    const allMetrics = Array.from(this.performanceData.values())
-    
-    if (allMetrics.length === 0) {
-      return {
-        renderComplexity: 0,
-        memoryUsageMB: 0,
-        loadTimeMs: 0,
-        frameTimeMs: 0,
-        vertexCount: 0,
-        triangleCount: 0,
-        textureMemoryMB: 0,
-        recommendedFPS: 60,
-        minDeviceMemoryMB: 0,
-        cpuIntensity: 0,
-        gpuIntensity: 0,
-        batteryImpact: 'low'
-      }
-    }
-    
-    const avg = allMetrics.reduce((acc, metrics) => ({
-      renderComplexity: acc.renderComplexity + metrics.renderComplexity,
-      memoryUsageMB: acc.memoryUsageMB + metrics.memoryUsageMB,
-      loadTimeMs: acc.loadTimeMs + metrics.loadTimeMs,
-      frameTimeMs: acc.frameTimeMs + metrics.frameTimeMs,
-      vertexCount: acc.vertexCount + metrics.vertexCount,
-      triangleCount: acc.triangleCount + metrics.triangleCount,
-      textureMemoryMB: acc.textureMemoryMB + metrics.textureMemoryMB,
-      recommendedFPS: acc.recommendedFPS + metrics.recommendedFPS,
-      minDeviceMemoryMB: acc.minDeviceMemoryMB + metrics.minDeviceMemoryMB,
-      cpuIntensity: acc.cpuIntensity + metrics.cpuIntensity,
-      gpuIntensity: acc.gpuIntensity + metrics.gpuIntensity,
-      batteryImpact: acc.batteryImpact // Keep last value
-    }))
-    
-    const count = allMetrics.length
-    
-    return {
-      renderComplexity: avg.renderComplexity / count,
-      memoryUsageMB: avg.memoryUsageMB / count,
-      loadTimeMs: avg.loadTimeMs / count,
-      frameTimeMs: avg.frameTimeMs / count,
-      vertexCount: avg.vertexCount / count,
-      triangleCount: avg.triangleCount / count,
-      textureMemoryMB: avg.textureMemoryMB / count,
-      recommendedFPS: avg.recommendedFPS / count,
-      minDeviceMemoryMB: avg.minDeviceMemoryMB / count,
-      cpuIntensity: avg.cpuIntensity / count,
-      gpuIntensity: avg.gpuIntensity / count,
-      batteryImpact: avg.batteryImpact
-    }
-  }
-}
-
-// Export the main configuration and utilities
+// Export the main configuration
 export default {
   DRAGON_MODELS,
   DRAGON_MODEL_CONSTANTS,
-  DeviceCapabilityDetector,
-  DragonModelSelector,
-  ModelPreloader,
-  ModelPerformanceMonitor,
-  getModelsByDeviceCapability,
-  getRecommendedModel,
-  getOptimalQualitySettings,
-  createFallbackChain,
-  preloadModelSet,
+  getDefaultModel,
+  getDefaultFallback,
+  getUltimateFallback,
   getModelConfig,
   getAllModelIds,
   getModelsByQuality,

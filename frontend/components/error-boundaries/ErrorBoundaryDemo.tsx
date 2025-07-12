@@ -8,7 +8,7 @@ import {
   CompositeErrorBoundary
 } from './index'
 import { EnhancedDragonRenderer } from '../dragon/DragonRenderer'
-import { WalletConnectButtonWithErrorBoundary } from '../wallet/WalletConnectButton'
+// import { WalletConnectButtonWithErrorBoundary } from '../wallet/WalletConnectButton' // Removed WalletConnect
 import { Button } from '@/components/ui/forms/Button'
 import { errorRecoveryUtils } from '@utils/errorRecovery'
 
@@ -165,7 +165,7 @@ export const ErrorBoundaryDemo: React.FC = () => {
                   {walletError ? (
                     <ErrorThrowingComponent errorType="wallet" />
                   ) : (
-                    <WalletConnectButtonWithErrorBoundary />
+                    <div className="p-4 text-gray-400">WalletConnect removed</div>
                   )}
                 </DragonWalletErrorBoundary>
               </div>

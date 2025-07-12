@@ -1,11 +1,19 @@
 'use client'
 
-// Export the minimal version as default for cleaner UI
-export { MinimalWalletConnect as WalletConnect } from './MinimalWalletConnect'
+// WalletConnect has been removed - placeholder components for compatibility
 
-// Keep the original complex version available as ComplexWalletConnect
-import { WalletConnectButton } from './WalletConnectButton'
+export function WalletConnect() {
+  return (
+    <div className="p-4 text-gray-400 border border-gray-600 rounded">
+      WalletConnect has been removed
+    </div>
+  )
+}
 
 export function ComplexWalletConnect() {
-  return <WalletConnectButton />
+  return (
+    <div className="p-4 text-gray-400 border border-gray-600 rounded">
+      WalletConnect has been removed
+    </div>
+  )
 }
