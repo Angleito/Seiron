@@ -32,7 +32,7 @@ export interface FallbackCapabilities {
 
 export interface FallbackContext {
   type: 'webgl' | 'webgl2' | 'software' | 'canvas2d' | 'mock' | 'none';
-  context: WebGLRenderingContext | WebGL2RenderingContext | CanvasRenderingContext2D | MockWebGLContext | null;
+  context: WebGLRenderingContext | WebGL2RenderingContext | CanvasRenderingContext2D | MockWebGLContext | MockCanvas2DContext | null;
   canvas: HTMLCanvasElement | OffscreenCanvas | MockCanvas | null;
   renderer: THREE.WebGLRenderer | SoftwareRenderer | Canvas2DRenderer | MockRenderer | null;
   capabilities: FallbackCapabilities;
@@ -451,6 +451,7 @@ class MockCanvas2DContext {
   moveTo(x: number, y: number): void {}
   lineTo(x: number, y: number): void {}
   arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {}
+  ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {}
   fill(): void {}
   stroke(): void {}
   save(): void {}
@@ -631,7 +632,12 @@ class Canvas2DRenderer {
     
     // Dragon body (oval)
     this.context.beginPath();
-    this.context.ellipse(centerX, centerY, 60, 40, 0, 0, Math.PI * 2);
+    if ('ellipse' in this.context && typeof this.context.ellipse === 'function') {
+      this.context.ellipse(centerX, centerY, 60, 40, 0, 0, Math.PI * 2);
+    } else {
+      // Fallback for contexts without ellipse support
+      this.context.arc(centerX, centerY, 50, 0, Math.PI * 2);
+    }
     this.context.fill();
     
     // Dragon head (circle)
@@ -751,8 +757,9 @@ export class WebGLFallbackManager {
     }
 
     // Check for headless Chrome indicators
-    const isHeadlessChrome = !window.chrome || 
-                            !window.chrome.runtime ||
+    const windowChrome = (window as any).chrome;
+    const isHeadlessChrome = !windowChrome || 
+                            !windowChrome.runtime ||
                             navigator.webdriver === true ||
                             window.navigator.userAgent.includes('HeadlessChrome');
 
@@ -812,7 +819,7 @@ export class WebGLFallbackManager {
       
       // Test WebGL 2
       const gl2 = canvas.getContext('webgl2');
-      if (gl2 && !gl2.isContextLost()) {
+      if (gl2 && 'isContextLost' in gl2 && !gl2.isContextLost()) {
         capabilities.webgl2 = true;
         capabilities.webgl = true;
         this.log('debug', 'WebGL 2 support detected');
@@ -821,7 +828,7 @@ export class WebGLFallbackManager {
       // Test WebGL 1 if WebGL 2 not available
       if (!capabilities.webgl2) {
         const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-        if (gl && !gl.isContextLost()) {
+        if (gl && 'isContextLost' in gl && !gl.isContextLost()) {
           capabilities.webgl = true;
           this.log('debug', 'WebGL 1 support detected');
         }
@@ -977,7 +984,7 @@ export class WebGLFallbackManager {
       failIfMajorPerformanceCaveat: false
     });
 
-    if (!gl || gl.isContextLost()) {
+    if (!gl || ('isContextLost' in gl && gl.isContextLost())) {
       throw new Error('Failed to create WebGL 2 context');
     }
 
@@ -1026,7 +1033,7 @@ export class WebGLFallbackManager {
       failIfMajorPerformanceCaveat: false
     }) || canvas.getContext('experimental-webgl');
 
-    if (!gl || gl.isContextLost()) {
+    if (!gl || ('isContextLost' in gl && gl.isContextLost())) {
       throw new Error('Failed to create WebGL context');
     }
 
@@ -1078,7 +1085,7 @@ export class WebGLFallbackManager {
 
     return {
       type: 'software',
-      context: context as CanvasRenderingContext2D | MockCanvas2DContext,
+      context: context,
       canvas,
       renderer,
       capabilities: this.capabilities!,
@@ -1115,7 +1122,7 @@ export class WebGLFallbackManager {
 
     return {
       type: 'canvas2d',
-      context: context as CanvasRenderingContext2D | MockCanvas2DContext,
+      context: context,
       canvas,
       renderer,
       capabilities: this.capabilities!,
@@ -1319,9 +1326,11 @@ export function detectWebGLCapabilities(): FallbackCapabilities {
 }
 
 export function isHeadlessEnvironment(): boolean {
-  return typeof window === 'undefined' || 
-         !window.chrome || 
-         !window.chrome.runtime || 
+  if (typeof window === 'undefined') return true;
+  
+  const windowChrome = (window as any).chrome;
+  return !windowChrome || 
+         !windowChrome.runtime || 
          navigator.webdriver === true;
 }
 

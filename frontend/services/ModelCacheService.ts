@@ -332,7 +332,8 @@ export class ModelCacheService {
 
   private normalizeUrl(url: string): string {
     // Remove query parameters and fragments
-    return url.split('?')[0].split('#')[0]
+    const baseUrl = url.split('?')[0]?.split('#')[0]
+    return baseUrl || url
   }
 
   private getModelFormat(url: string): ModelFormat {

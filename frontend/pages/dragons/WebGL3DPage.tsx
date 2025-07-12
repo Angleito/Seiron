@@ -348,9 +348,11 @@ export default function WebGL3DPage() {
         
         // Stop performance tracking with error handling
         try {
-          if (performanceTracking && typeof performanceTracking.stopTracking === 'function') {
-            performanceTracking.stopTracking()
-          }
+          // Performance tracking cleanup - currently disabled for debugging
+          // if (performanceTracking && typeof performanceTracking.stopTracking === 'function') {
+          //   performanceTracking.stopTracking()
+          // }
+          console.log('Performance tracking cleanup skipped (temporarily disabled)')
         } catch (error) {
           console.warn('Error stopping performance tracking:', error)
         }

@@ -94,6 +94,10 @@ export function ModelLoadingTest() {
     const items = []
     const baseModel = testModels[0] // Use same model multiple times to test concurrent loading
     
+    if (!baseModel) {
+      return [<div key="no-model" className="text-red-500">No base model available for concurrent testing</div>]
+    }
+    
     for (let i = 0; i < concurrentCount; i++) {
       items.push(
         <ModelTestCard 

@@ -55,15 +55,18 @@ export default function DragonFallbackTestPage() {
   const simulateVoiceStates = () => {
     // Cycle through voice states for testing
     const states = [
-      { isListening: true, isSpeaking: false, isProcessing: false, isIdle: false, volume: 0.7, emotion: 'focused' },
-      { isListening: false, isSpeaking: true, isProcessing: false, isIdle: false, volume: 0.9, emotion: 'excited' },
-      { isListening: false, isSpeaking: false, isProcessing: true, isIdle: false, volume: 0.3, emotion: 'calm' },
-      { isListening: false, isSpeaking: false, isProcessing: false, isIdle: true, volume: 0.2, emotion: 'calm' }
-    ] as const
+      { isListening: true, isSpeaking: false, isProcessing: false, isIdle: false, volume: 0.7, emotion: 'calm' as const },
+      { isListening: false, isSpeaking: true, isProcessing: false, isIdle: false, volume: 0.9, emotion: 'calm' as const },
+      { isListening: false, isSpeaking: false, isProcessing: true, isIdle: false, volume: 0.3, emotion: 'calm' as const },
+      { isListening: false, isSpeaking: false, isProcessing: false, isIdle: true, volume: 0.2, emotion: 'calm' as const }
+    ]
 
     let currentIndex = 0
     const interval = setInterval(() => {
-      setVoiceState(states[currentIndex])
+      const currentState = states[currentIndex]
+      if (currentState) {
+        setVoiceState(currentState)
+      }
       currentIndex = (currentIndex + 1) % states.length
     }, 3000)
 

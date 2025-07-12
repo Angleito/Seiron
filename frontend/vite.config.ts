@@ -33,8 +33,8 @@ export default defineConfig(({ mode }) => {
         'Cache-Control': 'public, max-age=31536000', // 1 year cache for static assets
       },
       // Configure MIME types for model files
-      configure: (app) => {
-        app.use((req, res, next) => {
+      configure: (app: any) => {
+        app.use((req: any, res: any, next: any) => {
           if (req.url?.endsWith('.glb')) {
             res.setHeader('Content-Type', 'model/gltf-binary')
           } else if (req.url?.endsWith('.gltf')) {
