@@ -59,11 +59,16 @@ export class WebGLDiagnostics {
    * Get comprehensive WebGL diagnostic information
    */
   public getDiagnosticInfo(renderer?: THREE.WebGLRenderer): WebGLDiagnosticInfo {
+    // Check if we're in a headless environment
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return this.getHeadlessDiagnosticInfo();
+    }
+
     const canvas = document.createElement('canvas');
     const gl = canvas.getContext('webgl') || canvas.getContext('webgl2');
     
     if (!gl) {
-      throw new Error('WebGL not supported');
+      return this.getHeadlessDiagnosticInfo();
     }
 
     // Get basic WebGL info
@@ -104,9 +109,43 @@ export class WebGLDiagnostics {
   }
 
   /**
+   * Get diagnostic info for headless environments
+   */
+  private getHeadlessDiagnosticInfo(): WebGLDiagnosticInfo {
+    return {
+      renderer: 'Software Renderer (Headless)',
+      vendor: 'Seiron Fallback System',
+      version: 'WebGL 1.0 (Mock)',
+      shadingLanguageVersion: 'WebGL GLSL ES 1.0 (Mock)',
+      maxTextureSize: 2048,
+      maxVertexAttributes: 16,
+      maxFragmentUniforms: 1024,
+      maxVertexUniforms: 1024,
+      maxVaryings: 30,
+      maxCombinedTextureImageUnits: 32,
+      supportedExtensions: ['WEBGL_lose_context'],
+      contextAttributes: {
+        alpha: true,
+        antialias: false,
+        depth: true,
+        premultipliedAlpha: true,
+        preserveDrawingBuffer: false,
+        stencil: false
+      },
+      memoryInfo: this.getMemoryInfo(),
+      timestamp: new Date()
+    };
+  }
+
+  /**
    * Get current WebGL health metrics
    */
   public getHealthMetrics(renderer?: THREE.WebGLRenderer): WebGLHealthMetrics {
+    // Check if we're in a headless environment
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return this.getHeadlessHealthMetrics();
+    }
+
     const canvas = document.createElement('canvas');
     const gl = canvas.getContext('webgl') || canvas.getContext('webgl2');
     
@@ -138,6 +177,23 @@ export class WebGLDiagnostics {
     canvas.remove();
 
     return metrics;
+  }
+
+  /**
+   * Get health metrics for headless environments
+   */
+  private getHeadlessHealthMetrics(): WebGLHealthMetrics {
+    return {
+      isContextLost: false,
+      isContextAvailable: false,
+      renderingContextType: 'mock',
+      performanceScore: 50, // Moderate performance for software rendering
+      memoryUsage: this.calculateMemoryUsage(),
+      errorCount: this.errorCount,
+      lastError: this.lastError,
+      uptime: Date.now() - this.startTime,
+      timestamp: new Date()
+    };
   }
 
   /**
@@ -245,11 +301,16 @@ export class WebGLDiagnostics {
    * Test WebGL capabilities
    */
   public testCapabilities(): Record<string, boolean> {
+    // Check if we're in a headless environment
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return this.getHeadlessCapabilities();
+    }
+
     const canvas = document.createElement('canvas');
     const gl = canvas.getContext('webgl') || canvas.getContext('webgl2');
     
     if (!gl) {
-      return { webgl: false };
+      return this.getHeadlessCapabilities();
     }
 
     const capabilities = {
@@ -281,6 +342,40 @@ export class WebGLDiagnostics {
     canvas.remove();
 
     return capabilities;
+  }
+
+  /**
+   * Get capabilities for headless environments
+   */
+  private getHeadlessCapabilities(): Record<string, boolean> {
+    return {
+      webgl: false,
+      webgl2: false,
+      headlessMode: true,
+      softwareRendering: true,
+      mockCanvas: true,
+      canvas2d: true,
+      instancing: false,
+      drawBuffers: false,
+      vertexArrayObject: false,
+      textureFloat: false,
+      textureHalfFloat: false,
+      depthTexture: false,
+      colorBufferFloat: false,
+      colorBufferHalfFloat: false,
+      sRGB: false,
+      anisotropicFiltering: false,
+      standardDerivatives: false,
+      fragDepth: false,
+      shaderTextureLOD: false,
+      loseContext: true, // Mock context loss support
+      debugRendererInfo: false,
+      debugShaders: false,
+      compressedTextureS3TC: false,
+      compressedTextureETC1: false,
+      compressedTexturePVRTC: false,
+      compressedTextureATC: false
+    };
   }
 
   /**
@@ -359,7 +454,7 @@ ${JSON.stringify(diagnosticInfo.contextAttributes, null, 2)}
    * Get memory information
    */
   private getMemoryInfo(): WebGLDiagnosticInfo['memoryInfo'] {
-    if ('memory' in performance) {
+    if (typeof performance !== 'undefined' && 'memory' in performance) {
       const memory = (performance as any).memory;
       return {
         totalJSHeapSize: memory.totalJSHeapSize,
@@ -367,6 +462,16 @@ ${JSON.stringify(diagnosticInfo.contextAttributes, null, 2)}
         jsHeapSizeLimit: memory.jsHeapSizeLimit
       };
     }
+    
+    // For headless environments, provide reasonable defaults
+    if (typeof window === 'undefined') {
+      return {
+        totalJSHeapSize: 50 * 1024 * 1024, // 50MB default
+        usedJSHeapSize: 25 * 1024 * 1024,  // 25MB default
+        jsHeapSizeLimit: 100 * 1024 * 1024 // 100MB default
+      };
+    }
+    
     return undefined;
   }
 

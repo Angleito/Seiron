@@ -1,36 +1,23 @@
 import React, { Suspense, useRef } from 'react'
-import { Canvas, useFrame, useLoader } from '@react-three/fiber'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
-import { OBJLoader } from 'three/addons/loaders/OBJLoader.js'
 import * as THREE from 'three'
+import { useDragonModel } from '@/hooks/useDragonModel'
 
 // 3D Dragon Component
 function Dragon3D() {
   const meshRef = useRef<THREE.Group>(null)
   const [isMobile, setIsMobile] = React.useState(false)
-  const [obj, setObj] = React.useState<THREE.Group | null>(null)
-  const [error, setError] = React.useState<string | null>(null)
   
-  // Load OBJ with error handling
-  React.useEffect(() => {
-    const loader = new OBJLoader()
-    console.log('Loading OBJ from:', '/models/dragon_head.obj')
-    
-    loader.load(
-      '/models/dragon_head.obj',
-      (object) => {
-        console.log('OBJ loaded successfully:', object)
-        setObj(object)
-      },
-      (progress) => {
-        console.log('Loading progress:', progress)
-      },
-      (error) => {
-        console.error('Error loading OBJ:', error)
-        setError(error instanceof Error ? error.message : 'Failed to load dragon model')
-      }
-    )
-  }, [])
+  // Load OBJ using centralized cache service
+  const { model: obj, isLoading, error } = useDragonModel('/models/dragon_head.obj', {
+    onLoad: (loadedModel) => {
+      console.log('🐉 HomePage3D: Dragon model loaded successfully:', loadedModel)
+    },
+    onError: (loadError) => {
+      console.error('🔴 HomePage3D: Dragon model load failed:', loadError)
+    }
+  })
   
   // Check if mobile
   React.useEffect(() => {
@@ -95,7 +82,7 @@ function Dragon3D() {
     )
   }
   
-  if (!clonedModel) {
+  if (isLoading || !clonedModel) {
     // Fallback with a simple dragon-like shape
     return (
       <group position={[0, isMobile ? 0 : -1, 0]}>
@@ -282,5 +269,4 @@ export default function HomePage3D() {
   )
 }
 
-// Preload the OBJ model
-useLoader.preload(OBJLoader, '/models/dragon_head.obj')
+// Model preloading is now handled by the centralized cache service

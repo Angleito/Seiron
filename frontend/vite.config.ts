@@ -28,6 +28,25 @@ export default defineConfig(({ mode }) => {
       host: true,
       // Handle SPA routing - always serve index.html for any route
       middlewareMode: false,
+      // Configure headers for model files
+      headers: {
+        'Cache-Control': 'public, max-age=31536000', // 1 year cache for static assets
+      },
+      // Configure MIME types for model files
+      configure: (app) => {
+        app.use((req, res, next) => {
+          if (req.url?.endsWith('.glb')) {
+            res.setHeader('Content-Type', 'model/gltf-binary')
+          } else if (req.url?.endsWith('.gltf')) {
+            res.setHeader('Content-Type', 'model/gltf+json')
+          } else if (req.url?.endsWith('.obj')) {
+            res.setHeader('Content-Type', 'model/obj')
+          } else if (req.url?.endsWith('.bin')) {
+            res.setHeader('Content-Type', 'application/octet-stream')
+          }
+          next()
+        })
+      },
     },
     build: {
       target: 'esnext',

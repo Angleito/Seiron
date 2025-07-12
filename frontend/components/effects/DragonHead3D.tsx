@@ -1,11 +1,11 @@
 'use client'
 
 import React, { useRef, useEffect, useState, useMemo, Suspense } from 'react'
-import { Canvas, useFrame, useLoader } from '@react-three/fiber'
-import { OBJLoader } from 'three-stdlib'
+import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useMouseTracking } from '@/hooks/useMouseTracking'
 import { useWebGLRecovery } from '../../utils/webglRecovery'
+import { useDragonModel } from '@/hooks/useDragonModel'
 
 interface DragonHead3DProps {
   className?: string
@@ -30,8 +30,15 @@ function DragonHeadMesh({
   const rightEyeRef = useRef<THREE.Object3D>(null)
   const blinkRef = useRef({ isBlinking: false, blinkTimer: 0, nextBlink: Math.random() * 5 + 3 })
   
-  // Load the OBJ model
-  const obj = useLoader(OBJLoader, '/models/dragon_head.obj')
+  // Load the OBJ model using centralized cache service
+  const { model: obj, isLoading, error } = useDragonModel('/models/dragon_head.obj', {
+    onLoad: (loadedModel) => {
+      console.log('🐉 Dragon head model loaded successfully:', loadedModel)
+    },
+    onError: (loadError) => {
+      console.error('🔴 Dragon head model load failed:', loadError)
+    }
+  })
   
   // Mouse tracking for eye movement
   const { mousePosition, isMouseActive } = useMouseTracking(undefined, {
@@ -41,6 +48,8 @@ function DragonHeadMesh({
 
   // Clone the model to avoid issues with reusing geometry
   const clonedObj = useMemo(() => {
+    if (!obj) return null
+    
     const cloned = obj.clone()
     
     // Scale and position the dragon head
@@ -63,6 +72,25 @@ function DragonHeadMesh({
     
     return cloned
   }, [obj])
+  
+  // Show loading state or error
+  if (isLoading) {
+    return (
+      <mesh>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshPhongMaterial color="#666666" wireframe />
+      </mesh>
+    )
+  }
+  
+  if (error || !clonedObj) {
+    return (
+      <mesh>
+        <coneGeometry args={[1, 2, 8]} />
+        <meshPhongMaterial color="#ff6600" />
+      </mesh>
+    )
+  }
 
   // Calculate eye rotation based on mouse position
   const calculateEyeRotation = (mouseX: number, mouseY: number) => {

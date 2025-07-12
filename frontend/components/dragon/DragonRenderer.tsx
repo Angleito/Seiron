@@ -5,6 +5,8 @@ import { SeironGLBDragonWithErrorBoundary } from './SeironGLBDragon'
 import { DragonPerformanceMonitor } from './DragonPerformanceMonitor'
 import { DragonMemoryManager } from '../../utils/dragonMemoryManager'
 import { WebGLErrorBoundary, DragonWebGLErrorBoundary } from '../error-boundaries/WebGLErrorBoundary'
+import { DragonFallbackRendererWithErrorBoundary } from './DragonFallbackRenderer'
+import { webglFallbackManager, isHeadlessEnvironment } from '../../utils/webglFallback'
 import { errorRecoveryUtils } from '../../utils/errorRecovery'
 import { logger } from '@lib/logger'
 
@@ -22,9 +24,9 @@ export interface DragonRendererProps {
   voiceState?: VoiceAnimationState
   enableAnimations?: boolean
   className?: string
-  dragonType?: 'glb' | '2d' | 'ascii'
+  dragonType?: 'glb' | '2d' | 'ascii' | 'fallback' | 'auto'
   enableFallback?: boolean
-  fallbackType?: '2d' | 'ascii'
+  fallbackType?: '2d' | 'ascii' | 'fallback'
   enableProgressiveLoading?: boolean
   modelPath?: string
   lowQualityModel?: string
@@ -36,6 +38,10 @@ export interface DragonRendererProps {
   onProgressiveLoadComplete?: () => void
   enableErrorRecovery?: boolean
   maxErrorRetries?: number
+  enableWebGLFallback?: boolean
+  preferredFallbackMode?: 'webgl2' | 'webgl' | 'software' | 'canvas2d' | 'mock' | 'auto'
+  width?: number
+  height?: number
 }
 
 // ASCII Dragon Component
@@ -96,9 +102,9 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
   voiceState,
   enableAnimations = true,
   className = '',
-  dragonType = 'glb',
+  dragonType = 'auto',
   enableFallback = true,
-  fallbackType = '2d',
+  fallbackType = 'fallback',
   enableProgressiveLoading = false,
   modelPath,
   lowQualityModel = '/models/seiron.glb',
@@ -109,7 +115,11 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
   onFallback,
   onProgressiveLoadComplete,
   enableErrorRecovery = true,
-  maxErrorRetries = 3
+  maxErrorRetries = 3,
+  enableWebGLFallback = true,
+  preferredFallbackMode = 'auto',
+  width = 400,
+  height = 300
 }) => {
   const [currentType, setCurrentType] = useState(dragonType)
   const [hasError, setHasError] = useState(false)
@@ -132,14 +142,43 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
     // Reset fallback system
     fallbackSystem.current.reset()
     
-    // Check if we should use optimal dragon type based on capabilities
-    if (enableErrorRecovery) {
-      const optimalType = fallbackSystem.current.getOptimalDragonType()
-      
-      if (optimalType !== dragonType) {
-        logger.info(`Using optimal dragon type: ${optimalType} instead of ${dragonType}`)
-        setCurrentType(optimalType)
+    // Auto-detect optimal dragon type based on environment and capabilities
+    const determineOptimalType = () => {
+      // Check if in headless/Docker environment
+      if (isHeadlessEnvironment()) {
+        logger.info('Headless environment detected, using fallback renderer')
+        return 'fallback'
       }
+      
+      // Check WebGL capabilities if using auto mode
+      if (dragonType === 'auto') {
+        const capabilities = webglFallbackManager.detectCapabilities()
+        
+        if (capabilities.webgl2 || capabilities.webgl) {
+          return 'glb'
+        } else if (capabilities.canvas2d) {
+          return 'fallback'
+        } else {
+          return 'ascii'
+        }
+      }
+      
+      // Check if we should use optimal dragon type based on capabilities
+      if (enableErrorRecovery) {
+        const optimalType = fallbackSystem.current.getOptimalDragonType()
+        
+        if (optimalType !== dragonType) {
+          logger.info(`Using optimal dragon type: ${optimalType} instead of ${dragonType}`)
+          return optimalType
+        }
+      }
+      
+      return dragonType
+    }
+    
+    const optimalType = determineOptimalType()
+    if (optimalType !== currentType) {
+      setCurrentType(optimalType)
     }
     
     // Check availability of all models
@@ -281,12 +320,15 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
 
     // Fallback logic with enhanced tracking
     if (enableFallback && errorCountRef.current <= maxErrorRetries) {
-      let nextType: '2d' | 'ascii' | null = null
+      let nextType: '2d' | 'ascii' | 'fallback' | null = null
       let fallbackReason = error.message
       
       if (currentType === 'glb') {
-        nextType = fallbackType || '2d'
+        nextType = fallbackType === 'fallback' ? 'fallback' : fallbackType || '2d'
         fallbackReason = 'WebGL/3D rendering failed'
+      } else if (currentType === 'fallback') {
+        nextType = 'ascii'
+        fallbackReason = 'Fallback renderer failed'
       } else if (currentType === '2d') {
         nextType = 'ascii'
         fallbackReason = '2D rendering failed'
@@ -313,7 +355,7 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
         // Delay to prevent rapid fallback loops
         setTimeout(() => {
           if (mountedRef.current) {
-            setCurrentType(nextType as '2d' | 'ascii')
+            setCurrentType(nextType as '2d' | 'ascii' | 'fallback')
             setHasError(false)
             errorCountRef.current = 0 // Reset error count for new type
           }
@@ -405,6 +447,27 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
             size={size}
             voiceState={voiceState}
             className="w-full h-full"
+          />
+        )
+      
+      case 'fallback':
+        return (
+          <DragonFallbackRendererWithErrorBoundary
+            voiceState={voiceState}
+            className="w-full h-full"
+            width={width}
+            height={height}
+            enableEyeTracking={enableAnimations}
+            lightningActive={voiceState?.isSpeaking && voiceState?.volume > 0.7}
+            enableAutoFallback={enableWebGLFallback}
+            preferredMode={preferredFallbackMode}
+            onError={(error) => handleError(error)}
+            onFallback={(mode) => {
+              logger.info(`WebGL fallback renderer switched to ${mode}`)
+              if (onFallback) {
+                onFallback('fallback', mode)
+              }
+            }}
           />
         )
       

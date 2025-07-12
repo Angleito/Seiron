@@ -1,0 +1,3563 @@
+{
+  "timestamp": "2025-07-12T02:26:28.297Z",
+  "testUrl": "http://localhost:3000/dragons/webgl-3d",
+  "environment": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/127.0.0.0 Safari/537.36",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "platform": "darwin",
+    "nodeVersion": "v22.16.0"
+  },
+  "diagnostics": {
+    "pageLoad": {
+      "success": true,
+      "status": 200,
+      "statusText": "OK",
+      "loadTime": 1159,
+      "finalUrl": "http://localhost:3000/dragons/webgl-3d"
+    },
+    "webglContext": {
+      "supported": false,
+      "error": "WebGL context creation failed",
+      "canvas2dSupported": true,
+      "mockWebGLAvailable": false,
+      "fallbackManagerAvailable": false,
+      "fallbackCapabilities": null
+    },
+    "threeJsInit": {
+      "loaded": false,
+      "error": "THREE is not defined on window object"
+    },
+    "modelLoading": {
+      "accessibility": [
+        {
+          "path": "/models/dragon_head.glb",
+          "url": "http://localhost:3000/models/dragon_head.glb",
+          "accessible": false,
+          "error": "net::ERR_ABORTED at http://localhost:3000/models/dragon_head.glb"
+        },
+        {
+          "path": "/models/dragon_head_optimized.glb",
+          "url": "http://localhost:3000/models/dragon_head_optimized.glb",
+          "accessible": false,
+          "error": "net::ERR_ABORTED at http://localhost:3000/models/dragon_head_optimized.glb"
+        },
+        {
+          "path": "/models/dragon_head.obj",
+          "url": "http://localhost:3000/models/dragon_head.obj",
+          "accessible": false,
+          "error": "net::ERR_ABORTED at http://localhost:3000/models/dragon_head.obj"
+        },
+        {
+          "path": "/assets/models/dragon_head.glb",
+          "url": "http://localhost:3000/assets/models/dragon_head.glb",
+          "accessible": true,
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/html",
+          "contentLength": "2101",
+          "loadTime": 0
+        },
+        {
+          "path": "/public/models/dragon_head.glb",
+          "url": "http://localhost:3000/public/models/dragon_head.glb",
+          "accessible": false,
+          "error": "net::ERR_ABORTED at http://localhost:3000/public/models/dragon_head.glb"
+        }
+      ],
+      "loadingStates": [
+        {
+          "timestamp": 1752287200786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287201786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287202786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287203786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287204786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287205786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287206786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287207786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287208786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287209786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287210786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287211786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287212786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287213786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287214786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287215786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287216785,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287217786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287218786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287219785,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287220786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287221786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287222785,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287223786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287224785,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287225785,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287226786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287227786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287228786,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752287229785,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        }
+      ]
+    },
+    "networkRequests": {
+      "modelFiles": [
+        {
+          "url": "http://localhost:3000/dragons/webgl-3d",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/html",
+          "contentLength": "2101",
+          "timestamp": "2025-07-12T02:26:30.530Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/components/dragon/GLTFErrorBoundary.tsx",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "64941",
+          "timestamp": "2025-07-12T02:26:30.716Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx?t=1752286203001",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "117730",
+          "timestamp": "2025-07-12T02:26:30.898Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "20101",
+          "timestamp": "2025-07-12T02:26:30.937Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/components/dragon/DragonModelManager.tsx",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "59964",
+          "timestamp": "2025-07-12T02:26:30.940Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/config/dragonModels.ts",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "155901",
+          "timestamp": "2025-07-12T02:26:30.940Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/components/dragon/DragonGLTFLoader.tsx",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "45469",
+          "timestamp": "2025-07-12T02:26:30.942Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/models/dragon_head.glb",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "model/gltf-binary",
+          "contentLength": "706032",
+          "timestamp": "2025-07-12T02:26:36.946Z",
+          "isModelFile": true
+        },
+        {
+          "url": "http://localhost:3000/models/dragon_head_optimized.glb",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "model/gltf-binary",
+          "contentLength": "108536",
+          "timestamp": "2025-07-12T02:26:36.963Z",
+          "isModelFile": true
+        },
+        {
+          "url": "http://localhost:3000/models/dragon_head.obj",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "model/obj",
+          "contentLength": "2184707",
+          "timestamp": "2025-07-12T02:26:36.972Z",
+          "isModelFile": true
+        },
+        {
+          "url": "http://localhost:3000/assets/models/dragon_head.glb",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/html",
+          "contentLength": "2101",
+          "timestamp": "2025-07-12T02:26:36.988Z",
+          "isModelFile": true
+        },
+        {
+          "url": "http://localhost:3000/components/dragon/GLTFErrorBoundary.tsx",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "64941",
+          "timestamp": "2025-07-12T02:26:37.051Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/public/models/dragon_head.glb",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "model/gltf-binary",
+          "contentLength": "706032",
+          "timestamp": "2025-07-12T02:26:39.001Z",
+          "isModelFile": true
+        },
+        {
+          "url": "http://localhost:3000/dragons/webgl-3d",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/html",
+          "contentLength": "2101",
+          "timestamp": "2025-07-12T02:26:39.009Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/components/dragon/GLTFErrorBoundary.tsx",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "64941",
+          "timestamp": "2025-07-12T02:26:39.064Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx?t=1752286203001",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "117730",
+          "timestamp": "2025-07-12T02:26:39.159Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "20101",
+          "timestamp": "2025-07-12T02:26:39.165Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/components/dragon/DragonModelManager.tsx",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "59964",
+          "timestamp": "2025-07-12T02:26:39.169Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/config/dragonModels.ts",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "155901",
+          "timestamp": "2025-07-12T02:26:39.180Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/components/dragon/DragonGLTFLoader.tsx",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "45469",
+          "timestamp": "2025-07-12T02:26:39.181Z",
+          "isModelFile": false
+        }
+      ],
+      "failed": [
+        {
+          "url": "http://localhost:3000/models/dragon_head.glb",
+          "method": "GET",
+          "failure": "net::ERR_ABORTED",
+          "timestamp": "2025-07-12T02:26:36.946Z"
+        },
+        {
+          "url": "http://localhost:3000/models/dragon_head_optimized.glb",
+          "method": "GET",
+          "failure": "net::ERR_ABORTED",
+          "timestamp": "2025-07-12T02:26:36.964Z"
+        },
+        {
+          "url": "http://localhost:3000/models/dragon_head.obj",
+          "method": "GET",
+          "failure": "net::ERR_ABORTED",
+          "timestamp": "2025-07-12T02:26:36.972Z"
+        },
+        {
+          "url": "http://localhost:3000/public/models/dragon_head.glb",
+          "method": "GET",
+          "failure": "net::ERR_ABORTED",
+          "timestamp": "2025-07-12T02:26:39.002Z"
+        }
+      ]
+    },
+    "jsErrors": [],
+    "consoleMessages": [
+      {
+        "type": "log",
+        "text": "🟠 HTML Script executing...",
+        "timestamp": "2025-07-12T02:26:30.536Z",
+        "location": {
+          "url": "http://localhost:3000/dragons/webgl-3d",
+          "lineNumber": 33,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "timestamp": "2025-07-12T02:26:30.618Z",
+        "location": {
+          "url": "http://localhost:3000/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "timestamp": "2025-07-12T02:26:30.636Z",
+        "location": {
+          "url": "http://localhost:3000/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "timestamp": "2025-07-12T02:26:30.740Z",
+        "location": {
+          "url": "http://localhost:3000/node_modules/.vite/deps/chunk-QO2SV6KV.js?v=0f3262ae",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        }
+      },
+      {
+        "type": "warn",
+        "text": "Module \"buffer\" has been externalized for browser compatibility. Cannot access \"buffer.Buffer\" in client code. See https://vite.dev/guide/troubleshooting.html#module-externalized-for-browser-compatibility for more details.",
+        "timestamp": "2025-07-12T02:26:30.803Z",
+        "location": {
+          "url": "http://localhost:3000/node_modules/.vite/deps/chunk-LKQADTO2.js?v=0f3262ae",
+          "lineNumber": 10,
+          "columnNumber": 18
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔐 Privy Configuration Status:",
+        "timestamp": "2025-07-12T02:26:30.862Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 32,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- App ID present: false",
+        "timestamp": "2025-07-12T02:26:30.862Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 33,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- App ID length: 0",
+        "timestamp": "2025-07-12T02:26:30.862Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 34,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Environment: development",
+        "timestamp": "2025-07-12T02:26:30.862Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 35,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Client ID present: false",
+        "timestamp": "2025-07-12T02:26:30.862Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 36,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Configuration valid: false",
+        "timestamp": "2025-07-12T02:26:30.862Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 37,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Wallet Compatibility for Sei Network:",
+        "timestamp": "2025-07-12T02:26:30.862Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 45,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Supported wallets: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:30.862Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 46,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Supported login methods: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:30.862Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 47,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Embedded wallets disabled: true",
+        "timestamp": "2025-07-12T02:26:30.862Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 48,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Coinbase Smart Wallet excluded: true",
+        "timestamp": "2025-07-12T02:26:30.862Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 49,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 WalletConnect configuration:",
+        "timestamp": "2025-07-12T02:26:30.864Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 10,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Project ID present: false",
+        "timestamp": "2025-07-12T02:26:30.864Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 11,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Project ID valid: ",
+        "timestamp": "2025-07-12T02:26:30.864Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 12,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Configuration valid: false",
+        "timestamp": "2025-07-12T02:26:30.864Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 13,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Environment: development",
+        "timestamp": "2025-07-12T02:26:30.864Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 14,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "ℹ️ To enable WalletConnect:",
+        "timestamp": "2025-07-12T02:26:30.864Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 16,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "1. Go to https://cloud.walletconnect.com/",
+        "timestamp": "2025-07-12T02:26:30.864Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 17,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "2. Create a new project",
+        "timestamp": "2025-07-12T02:26:30.864Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 18,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "3. Copy your project ID",
+        "timestamp": "2025-07-12T02:26:30.864Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 19,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "4. Set VITE_WALLETCONNECT_PROJECT_ID in your .env file",
+        "timestamp": "2025-07-12T02:26:30.864Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 20,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Supported wallets for Sei Network: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:30.864Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 40,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🚫 Excluded wallets for Sei Network: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:30.864Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 43,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 This prevents \"chains not supported\" warnings",
+        "timestamp": "2025-07-12T02:26:30.864Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 44,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "✅ MetaMask connector added (supported on Sei Network)",
+        "timestamp": "2025-07-12T02:26:30.864Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 47,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "✅ Injected connector added (supported on Sei Network)",
+        "timestamp": "2025-07-12T02:26:30.864Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 53,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "info",
+        "text": "ℹ️ WalletConnect Project ID not configured, skipping WalletConnect connector",
+        "timestamp": "2025-07-12T02:26:30.864Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 77,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "info",
+        "text": "ℹ️ Set VITE_WALLETCONNECT_PROJECT_ID environment variable to enable WalletConnect",
+        "timestamp": "2025-07-12T02:26:30.864Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 78,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Final connector configuration:",
+        "timestamp": "2025-07-12T02:26:30.864Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 83,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Total connectors: 2",
+        "timestamp": "2025-07-12T02:26:30.864Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 84,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Connector types: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:30.864Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 85,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Wagmi Configuration Summary:",
+        "timestamp": "2025-07-12T02:26:30.866Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 114,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Chains: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:30.866Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 115,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Connectors: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:30.866Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 116,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Sei Network supported wallets: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:30.866Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 117,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Ethereum supported wallets: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:30.866Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 118,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🚀 Seiron App Initializing...",
+        "timestamp": "2025-07-12T02:26:30.868Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 16,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Environment: development",
+        "timestamp": "2025-07-12T02:26:30.868Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 17,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Base URL: /",
+        "timestamp": "2025-07-12T02:26:30.868Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 18,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Dev mode: true",
+        "timestamp": "2025-07-12T02:26:30.868Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 19,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Prod mode: false",
+        "timestamp": "2025-07-12T02:26:30.868Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 20,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T02:26:30.868Z] [Seiron] [DEBUG] 🔍 Environment Validation Starting...",
+        "timestamp": "2025-07-12T02:26:30.869Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T02:26:30.869Z] [Seiron] [DEBUG] Environment Status: JSHandle@object",
+        "timestamp": "2025-07-12T02:26:30.870Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "warn",
+        "text": "[2025-07-12T02:26:30.870Z] [Seiron] [WARN] Missing required environment variables: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:30.871Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 109,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T02:26:30.871Z] [Seiron] [INFO] ℹ️ VITE_WALLETCONNECT_PROJECT_ID not configured - WalletConnect will not be available",
+        "timestamp": "2025-07-12T02:26:30.871Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T02:26:30.871Z] [Seiron] [INFO] ℹ️ VITE_ELEVENLABS_API_KEY not configured - Voice features will be disabled",
+        "timestamp": "2025-07-12T02:26:30.872Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T02:26:30.871Z] [Seiron] [INFO] ℹ️ VITE_ELEVENLABS_VOICE_ID not configured - Default voice will be used",
+        "timestamp": "2025-07-12T02:26:30.872Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "warn",
+        "text": "[2025-07-12T02:26:30.871Z] [Seiron] [WARN] ⚠️ Privy authentication not configured in development",
+        "timestamp": "2025-07-12T02:26:30.872Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 109,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T02:26:30.871Z] [Seiron] [INFO] ℹ️ WalletConnect not configured (optional feature)",
+        "timestamp": "2025-07-12T02:26:30.872Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T02:26:30.871Z] [Seiron] [INFO] ℹ️ Voice features not configured (optional feature)",
+        "timestamp": "2025-07-12T02:26:30.872Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T02:26:30.871Z] [Seiron] [DEBUG] ✅ Environment Validation Complete",
+        "timestamp": "2025-07-12T02:26:30.872Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "🏗️ Creating React root...",
+        "timestamp": "2025-07-12T02:26:30.872Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 46,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔍 App configuration check:",
+        "timestamp": "2025-07-12T02:26:30.873Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 52,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Has Privy config: false",
+        "timestamp": "2025-07-12T02:26:30.873Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 53,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Production mode: false",
+        "timestamp": "2025-07-12T02:26:30.873Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 54,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Will use authentication: false",
+        "timestamp": "2025-07-12T02:26:30.873Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 55,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🎨 Rendering app with routing but without authentication...",
+        "timestamp": "2025-07-12T02:26:30.873Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 101,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "✅ App render complete",
+        "timestamp": "2025-07-12T02:26:30.875Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 128,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🎯 RootLayout rendering",
+        "timestamp": "2025-07-12T02:26:30.880Z",
+        "location": {
+          "url": "http://localhost:3000/components/layouts/RootLayout.tsx",
+          "lineNumber": 21,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "Window location: /dragons/webgl-3d",
+        "timestamp": "2025-07-12T02:26:30.880Z",
+        "location": {
+          "url": "http://localhost:3000/components/layouts/RootLayout.tsx",
+          "lineNumber": 22,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🎯 RootLayout rendering",
+        "timestamp": "2025-07-12T02:26:30.880Z",
+        "location": {
+          "url": "http://localhost:3000/components/layouts/RootLayout.tsx",
+          "lineNumber": 21,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "Window location: /dragons/webgl-3d",
+        "timestamp": "2025-07-12T02:26:30.880Z",
+        "location": {
+          "url": "http://localhost:3000/components/layouts/RootLayout.tsx",
+          "lineNumber": 22,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "warn",
+        "text": "⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.",
+        "timestamp": "2025-07-12T02:26:30.897Z",
+        "location": {
+          "url": "http://localhost:3000/utils/walletConnectManager.ts",
+          "lineNumber": 120,
+          "columnNumber": 19
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T02:26:31.132Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 538,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting enhanced memory cleanup",
+        "timestamp": "2025-07-12T02:26:31.132Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 398,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T02:26:31.132Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 351,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T02:26:31.133Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 839,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T02:26:31.133Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 538,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting enhanced memory cleanup",
+        "timestamp": "2025-07-12T02:26:31.133Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 398,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T02:26:31.133Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 351,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T02:26:31.133Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 839,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 WebGL3DPage unmounting - comprehensive cleanup",
+        "timestamp": "2025-07-12T02:26:31.134Z",
+        "location": {
+          "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx?t=1752286203001",
+          "lineNumber": 203,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 DragonMemoryManager disposing all resources",
+        "timestamp": "2025-07-12T02:26:31.134Z",
+        "location": {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "lineNumber": 152,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "Before disposal: JSHandle@object",
+        "timestamp": "2025-07-12T02:26:31.134Z",
+        "location": {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "lineNumber": 154,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 DragonMemoryManager disposal complete",
+        "timestamp": "2025-07-12T02:26:31.134Z",
+        "location": {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "lineNumber": 168,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 WebGL3DPage cleanup complete",
+        "timestamp": "2025-07-12T02:26:31.134Z",
+        "location": {
+          "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx?t=1752286203001",
+          "lineNumber": 279,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup: 62964652 -> 63187201 bytes",
+        "timestamp": "2025-07-12T02:26:31.235Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 425,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup: 62964652 -> 63187201 bytes",
+        "timestamp": "2025-07-12T02:26:31.236Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 425,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 Unmounting React app...",
+        "timestamp": "2025-07-12T02:26:36.921Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 132,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T02:26:36.922Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 538,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting enhanced memory cleanup",
+        "timestamp": "2025-07-12T02:26:36.922Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 398,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T02:26:36.923Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 351,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T02:26:36.923Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 839,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 WebGL3DPage unmounting - comprehensive cleanup",
+        "timestamp": "2025-07-12T02:26:36.923Z",
+        "location": {
+          "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx?t=1752286203001",
+          "lineNumber": 203,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 DragonMemoryManager disposing all resources",
+        "timestamp": "2025-07-12T02:26:36.923Z",
+        "location": {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "lineNumber": 152,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "Before disposal: JSHandle@object",
+        "timestamp": "2025-07-12T02:26:36.923Z",
+        "location": {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "lineNumber": 154,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 DragonMemoryManager disposal complete",
+        "timestamp": "2025-07-12T02:26:36.923Z",
+        "location": {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "lineNumber": 168,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 WebGL3DPage cleanup complete",
+        "timestamp": "2025-07-12T02:26:36.923Z",
+        "location": {
+          "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx?t=1752286203001",
+          "lineNumber": 279,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T02:26:36.923Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 538,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting enhanced memory cleanup",
+        "timestamp": "2025-07-12T02:26:36.923Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 398,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T02:26:36.923Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 351,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T02:26:36.923Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 839,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "🟠 HTML Script executing...",
+        "timestamp": "2025-07-12T02:26:37.021Z",
+        "location": {
+          "url": "http://localhost:3000/assets/models/dragon_head.glb",
+          "lineNumber": 33,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "timestamp": "2025-07-12T02:26:37.033Z",
+        "location": {
+          "url": "http://localhost:3000/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "timestamp": "2025-07-12T02:26:37.034Z",
+        "location": {
+          "url": "http://localhost:3000/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "timestamp": "2025-07-12T02:26:37.075Z",
+        "location": {
+          "url": "http://localhost:3000/node_modules/.vite/deps/chunk-QO2SV6KV.js?v=0f3262ae",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        }
+      },
+      {
+        "type": "warn",
+        "text": "Module \"buffer\" has been externalized for browser compatibility. Cannot access \"buffer.Buffer\" in client code. See https://vite.dev/guide/troubleshooting.html#module-externalized-for-browser-compatibility for more details.",
+        "timestamp": "2025-07-12T02:26:37.088Z",
+        "location": {
+          "url": "http://localhost:3000/node_modules/.vite/deps/chunk-LKQADTO2.js?v=0f3262ae",
+          "lineNumber": 10,
+          "columnNumber": 18
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔐 Privy Configuration Status:",
+        "timestamp": "2025-07-12T02:26:37.119Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 32,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- App ID present: false",
+        "timestamp": "2025-07-12T02:26:37.120Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 33,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- App ID length: 0",
+        "timestamp": "2025-07-12T02:26:37.120Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 34,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Environment: development",
+        "timestamp": "2025-07-12T02:26:37.120Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 35,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Client ID present: false",
+        "timestamp": "2025-07-12T02:26:37.120Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 36,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Configuration valid: false",
+        "timestamp": "2025-07-12T02:26:37.120Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 37,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Wallet Compatibility for Sei Network:",
+        "timestamp": "2025-07-12T02:26:37.120Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 45,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Supported wallets: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:37.120Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 46,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Supported login methods: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:37.120Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 47,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Embedded wallets disabled: true",
+        "timestamp": "2025-07-12T02:26:37.120Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 48,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Coinbase Smart Wallet excluded: true",
+        "timestamp": "2025-07-12T02:26:37.120Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 49,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 WalletConnect configuration:",
+        "timestamp": "2025-07-12T02:26:37.121Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 10,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Project ID present: false",
+        "timestamp": "2025-07-12T02:26:37.121Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 11,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Project ID valid: ",
+        "timestamp": "2025-07-12T02:26:37.121Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 12,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Configuration valid: false",
+        "timestamp": "2025-07-12T02:26:37.121Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 13,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Environment: development",
+        "timestamp": "2025-07-12T02:26:37.121Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 14,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "ℹ️ To enable WalletConnect:",
+        "timestamp": "2025-07-12T02:26:37.121Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 16,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "1. Go to https://cloud.walletconnect.com/",
+        "timestamp": "2025-07-12T02:26:37.121Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 17,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "2. Create a new project",
+        "timestamp": "2025-07-12T02:26:37.121Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 18,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "3. Copy your project ID",
+        "timestamp": "2025-07-12T02:26:37.121Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 19,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "4. Set VITE_WALLETCONNECT_PROJECT_ID in your .env file",
+        "timestamp": "2025-07-12T02:26:37.121Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 20,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Supported wallets for Sei Network: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:37.121Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 40,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🚫 Excluded wallets for Sei Network: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:37.121Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 43,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 This prevents \"chains not supported\" warnings",
+        "timestamp": "2025-07-12T02:26:37.121Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 44,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "✅ MetaMask connector added (supported on Sei Network)",
+        "timestamp": "2025-07-12T02:26:37.121Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 47,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "✅ Injected connector added (supported on Sei Network)",
+        "timestamp": "2025-07-12T02:26:37.122Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 53,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "info",
+        "text": "ℹ️ WalletConnect Project ID not configured, skipping WalletConnect connector",
+        "timestamp": "2025-07-12T02:26:37.122Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 77,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "info",
+        "text": "ℹ️ Set VITE_WALLETCONNECT_PROJECT_ID environment variable to enable WalletConnect",
+        "timestamp": "2025-07-12T02:26:37.122Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 78,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Final connector configuration:",
+        "timestamp": "2025-07-12T02:26:37.122Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 83,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Total connectors: 2",
+        "timestamp": "2025-07-12T02:26:37.122Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 84,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Connector types: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:37.122Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 85,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Wagmi Configuration Summary:",
+        "timestamp": "2025-07-12T02:26:37.122Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 114,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Chains: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:37.122Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 115,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Connectors: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:37.122Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 116,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Sei Network supported wallets: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:37.122Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 117,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Ethereum supported wallets: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:37.122Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 118,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🚀 Seiron App Initializing...",
+        "timestamp": "2025-07-12T02:26:37.123Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 16,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Environment: development",
+        "timestamp": "2025-07-12T02:26:37.123Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 17,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Base URL: /",
+        "timestamp": "2025-07-12T02:26:37.123Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 18,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Dev mode: true",
+        "timestamp": "2025-07-12T02:26:37.123Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 19,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Prod mode: false",
+        "timestamp": "2025-07-12T02:26:37.123Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 20,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T02:26:37.123Z] [Seiron] [DEBUG] 🔍 Environment Validation Starting...",
+        "timestamp": "2025-07-12T02:26:37.124Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T02:26:37.123Z] [Seiron] [DEBUG] Environment Status: JSHandle@object",
+        "timestamp": "2025-07-12T02:26:37.124Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "warn",
+        "text": "[2025-07-12T02:26:37.123Z] [Seiron] [WARN] Missing required environment variables: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:37.124Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 109,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T02:26:37.123Z] [Seiron] [INFO] ℹ️ VITE_WALLETCONNECT_PROJECT_ID not configured - WalletConnect will not be available",
+        "timestamp": "2025-07-12T02:26:37.124Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T02:26:37.123Z] [Seiron] [INFO] ℹ️ VITE_ELEVENLABS_API_KEY not configured - Voice features will be disabled",
+        "timestamp": "2025-07-12T02:26:37.124Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T02:26:37.123Z] [Seiron] [INFO] ℹ️ VITE_ELEVENLABS_VOICE_ID not configured - Default voice will be used",
+        "timestamp": "2025-07-12T02:26:37.124Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "warn",
+        "text": "[2025-07-12T02:26:37.123Z] [Seiron] [WARN] ⚠️ Privy authentication not configured in development",
+        "timestamp": "2025-07-12T02:26:37.124Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 109,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T02:26:37.123Z] [Seiron] [INFO] ℹ️ WalletConnect not configured (optional feature)",
+        "timestamp": "2025-07-12T02:26:37.124Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T02:26:37.123Z] [Seiron] [INFO] ℹ️ Voice features not configured (optional feature)",
+        "timestamp": "2025-07-12T02:26:37.124Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T02:26:37.123Z] [Seiron] [DEBUG] ✅ Environment Validation Complete",
+        "timestamp": "2025-07-12T02:26:37.124Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "🏗️ Creating React root...",
+        "timestamp": "2025-07-12T02:26:37.124Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 46,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔍 App configuration check:",
+        "timestamp": "2025-07-12T02:26:37.124Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 52,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Has Privy config: false",
+        "timestamp": "2025-07-12T02:26:37.124Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 53,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Production mode: false",
+        "timestamp": "2025-07-12T02:26:37.124Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 54,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Will use authentication: false",
+        "timestamp": "2025-07-12T02:26:37.124Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 55,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🎨 Rendering app with routing but without authentication...",
+        "timestamp": "2025-07-12T02:26:37.124Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 101,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "✅ App render complete",
+        "timestamp": "2025-07-12T02:26:37.124Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 128,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "warn",
+        "text": "No routes matched location \"/assets/models/dragon_head.glb\" ",
+        "timestamp": "2025-07-12T02:26:37.137Z",
+        "location": {
+          "url": "http://localhost:3000/utils/walletConnectManager.ts",
+          "lineNumber": 120,
+          "columnNumber": 19
+        }
+      },
+      {
+        "type": "warn",
+        "text": "No routes matched location \"/assets/models/dragon_head.glb\" ",
+        "timestamp": "2025-07-12T02:26:37.137Z",
+        "location": {
+          "url": "http://localhost:3000/utils/walletConnectManager.ts",
+          "lineNumber": 120,
+          "columnNumber": 19
+        }
+      },
+      {
+        "type": "error",
+        "text": "Error handled by React Router default ErrorBoundary: JSHandle@object",
+        "timestamp": "2025-07-12T02:26:37.139Z",
+        "location": {
+          "url": "http://localhost:3000/utils/walletConnectManager.ts",
+          "lineNumber": 129,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "error",
+        "text": "Error handled by React Router default ErrorBoundary: JSHandle@object",
+        "timestamp": "2025-07-12T02:26:37.139Z",
+        "location": {
+          "url": "http://localhost:3000/utils/walletConnectManager.ts",
+          "lineNumber": 129,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "warn",
+        "text": "⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.",
+        "timestamp": "2025-07-12T02:26:37.139Z",
+        "location": {
+          "url": "http://localhost:3000/utils/walletConnectManager.ts",
+          "lineNumber": 120,
+          "columnNumber": 19
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 Unmounting React app...",
+        "timestamp": "2025-07-12T02:26:38.989Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 132,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "🟠 HTML Script executing...",
+        "timestamp": "2025-07-12T02:26:39.039Z",
+        "location": {
+          "url": "http://localhost:3000/dragons/webgl-3d",
+          "lineNumber": 33,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "timestamp": "2025-07-12T02:26:39.054Z",
+        "location": {
+          "url": "http://localhost:3000/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "timestamp": "2025-07-12T02:26:39.064Z",
+        "location": {
+          "url": "http://localhost:3000/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "timestamp": "2025-07-12T02:26:39.072Z",
+        "location": {
+          "url": "http://localhost:3000/node_modules/.vite/deps/chunk-QO2SV6KV.js?v=0f3262ae",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        }
+      },
+      {
+        "type": "warn",
+        "text": "Module \"buffer\" has been externalized for browser compatibility. Cannot access \"buffer.Buffer\" in client code. See https://vite.dev/guide/troubleshooting.html#module-externalized-for-browser-compatibility for more details.",
+        "timestamp": "2025-07-12T02:26:39.082Z",
+        "location": {
+          "url": "http://localhost:3000/node_modules/.vite/deps/chunk-LKQADTO2.js?v=0f3262ae",
+          "lineNumber": 10,
+          "columnNumber": 18
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔐 Privy Configuration Status:",
+        "timestamp": "2025-07-12T02:26:39.113Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 32,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- App ID present: false",
+        "timestamp": "2025-07-12T02:26:39.113Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 33,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- App ID length: 0",
+        "timestamp": "2025-07-12T02:26:39.113Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 34,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Environment: development",
+        "timestamp": "2025-07-12T02:26:39.113Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 35,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Client ID present: false",
+        "timestamp": "2025-07-12T02:26:39.113Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 36,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Configuration valid: false",
+        "timestamp": "2025-07-12T02:26:39.113Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 37,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Wallet Compatibility for Sei Network:",
+        "timestamp": "2025-07-12T02:26:39.113Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 45,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Supported wallets: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:39.113Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 46,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Supported login methods: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:39.113Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 47,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Embedded wallets disabled: true",
+        "timestamp": "2025-07-12T02:26:39.113Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 48,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Coinbase Smart Wallet excluded: true",
+        "timestamp": "2025-07-12T02:26:39.113Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 49,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 WalletConnect configuration:",
+        "timestamp": "2025-07-12T02:26:39.114Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 10,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Project ID present: false",
+        "timestamp": "2025-07-12T02:26:39.114Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 11,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Project ID valid: ",
+        "timestamp": "2025-07-12T02:26:39.114Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 12,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Configuration valid: false",
+        "timestamp": "2025-07-12T02:26:39.114Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 13,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Environment: development",
+        "timestamp": "2025-07-12T02:26:39.114Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 14,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "ℹ️ To enable WalletConnect:",
+        "timestamp": "2025-07-12T02:26:39.114Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 16,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "1. Go to https://cloud.walletconnect.com/",
+        "timestamp": "2025-07-12T02:26:39.114Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 17,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "2. Create a new project",
+        "timestamp": "2025-07-12T02:26:39.114Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 18,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "3. Copy your project ID",
+        "timestamp": "2025-07-12T02:26:39.114Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 19,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "4. Set VITE_WALLETCONNECT_PROJECT_ID in your .env file",
+        "timestamp": "2025-07-12T02:26:39.114Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 20,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Supported wallets for Sei Network: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:39.114Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 40,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🚫 Excluded wallets for Sei Network: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:39.114Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 43,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 This prevents \"chains not supported\" warnings",
+        "timestamp": "2025-07-12T02:26:39.114Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 44,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "✅ MetaMask connector added (supported on Sei Network)",
+        "timestamp": "2025-07-12T02:26:39.114Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 47,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "✅ Injected connector added (supported on Sei Network)",
+        "timestamp": "2025-07-12T02:26:39.114Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 53,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "info",
+        "text": "ℹ️ WalletConnect Project ID not configured, skipping WalletConnect connector",
+        "timestamp": "2025-07-12T02:26:39.115Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 77,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "info",
+        "text": "ℹ️ Set VITE_WALLETCONNECT_PROJECT_ID environment variable to enable WalletConnect",
+        "timestamp": "2025-07-12T02:26:39.115Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 78,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Final connector configuration:",
+        "timestamp": "2025-07-12T02:26:39.115Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 83,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Total connectors: 2",
+        "timestamp": "2025-07-12T02:26:39.115Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 84,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Connector types: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:39.115Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 85,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Wagmi Configuration Summary:",
+        "timestamp": "2025-07-12T02:26:39.115Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 114,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Chains: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:39.115Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 115,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Connectors: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:39.115Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 116,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Sei Network supported wallets: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:39.115Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 117,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Ethereum supported wallets: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:39.115Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 118,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🚀 Seiron App Initializing...",
+        "timestamp": "2025-07-12T02:26:39.116Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 16,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Environment: development",
+        "timestamp": "2025-07-12T02:26:39.116Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 17,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Base URL: /",
+        "timestamp": "2025-07-12T02:26:39.116Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 18,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Dev mode: true",
+        "timestamp": "2025-07-12T02:26:39.116Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 19,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Prod mode: false",
+        "timestamp": "2025-07-12T02:26:39.116Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 20,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T02:26:39.116Z] [Seiron] [DEBUG] 🔍 Environment Validation Starting...",
+        "timestamp": "2025-07-12T02:26:39.116Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T02:26:39.116Z] [Seiron] [DEBUG] Environment Status: JSHandle@object",
+        "timestamp": "2025-07-12T02:26:39.116Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "warn",
+        "text": "[2025-07-12T02:26:39.116Z] [Seiron] [WARN] Missing required environment variables: JSHandle@array",
+        "timestamp": "2025-07-12T02:26:39.116Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 109,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T02:26:39.116Z] [Seiron] [INFO] ℹ️ VITE_WALLETCONNECT_PROJECT_ID not configured - WalletConnect will not be available",
+        "timestamp": "2025-07-12T02:26:39.117Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T02:26:39.116Z] [Seiron] [INFO] ℹ️ VITE_ELEVENLABS_API_KEY not configured - Voice features will be disabled",
+        "timestamp": "2025-07-12T02:26:39.117Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T02:26:39.116Z] [Seiron] [INFO] ℹ️ VITE_ELEVENLABS_VOICE_ID not configured - Default voice will be used",
+        "timestamp": "2025-07-12T02:26:39.117Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "warn",
+        "text": "[2025-07-12T02:26:39.116Z] [Seiron] [WARN] ⚠️ Privy authentication not configured in development",
+        "timestamp": "2025-07-12T02:26:39.117Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 109,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T02:26:39.116Z] [Seiron] [INFO] ℹ️ WalletConnect not configured (optional feature)",
+        "timestamp": "2025-07-12T02:26:39.117Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T02:26:39.116Z] [Seiron] [INFO] ℹ️ Voice features not configured (optional feature)",
+        "timestamp": "2025-07-12T02:26:39.117Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T02:26:39.116Z] [Seiron] [DEBUG] ✅ Environment Validation Complete",
+        "timestamp": "2025-07-12T02:26:39.117Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "🏗️ Creating React root...",
+        "timestamp": "2025-07-12T02:26:39.118Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 46,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔍 App configuration check:",
+        "timestamp": "2025-07-12T02:26:39.119Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 52,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Has Privy config: false",
+        "timestamp": "2025-07-12T02:26:39.119Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 53,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Production mode: false",
+        "timestamp": "2025-07-12T02:26:39.119Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 54,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Will use authentication: false",
+        "timestamp": "2025-07-12T02:26:39.120Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 55,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🎨 Rendering app with routing but without authentication...",
+        "timestamp": "2025-07-12T02:26:39.120Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 101,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "✅ App render complete",
+        "timestamp": "2025-07-12T02:26:39.120Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx?t=1752286203001",
+          "lineNumber": 128,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🎯 RootLayout rendering",
+        "timestamp": "2025-07-12T02:26:39.132Z",
+        "location": {
+          "url": "http://localhost:3000/components/layouts/RootLayout.tsx",
+          "lineNumber": 21,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "Window location: /dragons/webgl-3d",
+        "timestamp": "2025-07-12T02:26:39.132Z",
+        "location": {
+          "url": "http://localhost:3000/components/layouts/RootLayout.tsx",
+          "lineNumber": 22,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🎯 RootLayout rendering",
+        "timestamp": "2025-07-12T02:26:39.133Z",
+        "location": {
+          "url": "http://localhost:3000/components/layouts/RootLayout.tsx",
+          "lineNumber": 21,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "Window location: /dragons/webgl-3d",
+        "timestamp": "2025-07-12T02:26:39.133Z",
+        "location": {
+          "url": "http://localhost:3000/components/layouts/RootLayout.tsx",
+          "lineNumber": 22,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "warn",
+        "text": "⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.",
+        "timestamp": "2025-07-12T02:26:39.134Z",
+        "location": {
+          "url": "http://localhost:3000/utils/walletConnectManager.ts",
+          "lineNumber": 120,
+          "columnNumber": 19
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T02:26:39.264Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 538,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting enhanced memory cleanup",
+        "timestamp": "2025-07-12T02:26:39.264Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 398,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T02:26:39.264Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 351,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T02:26:39.264Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 839,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T02:26:39.264Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 538,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting enhanced memory cleanup",
+        "timestamp": "2025-07-12T02:26:39.264Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 398,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T02:26:39.264Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 351,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T02:26:39.264Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 839,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 WebGL3DPage unmounting - comprehensive cleanup",
+        "timestamp": "2025-07-12T02:26:39.264Z",
+        "location": {
+          "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx?t=1752286203001",
+          "lineNumber": 203,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 DragonMemoryManager disposing all resources",
+        "timestamp": "2025-07-12T02:26:39.264Z",
+        "location": {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "lineNumber": 152,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "Before disposal: JSHandle@object",
+        "timestamp": "2025-07-12T02:26:39.264Z",
+        "location": {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "lineNumber": 154,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 DragonMemoryManager disposal complete",
+        "timestamp": "2025-07-12T02:26:39.265Z",
+        "location": {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "lineNumber": 168,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 WebGL3DPage cleanup complete",
+        "timestamp": "2025-07-12T02:26:39.265Z",
+        "location": {
+          "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx?t=1752286203001",
+          "lineNumber": 279,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup: 119397458 -> 119572571 bytes",
+        "timestamp": "2025-07-12T02:26:39.367Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 425,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup: 119397458 -> 119572571 bytes",
+        "timestamp": "2025-07-12T02:26:39.367Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts?t=1752286203001",
+          "lineNumber": 425,
+          "columnNumber": 20
+        }
+      }
+    ],
+    "performanceMetrics": {
+      "navigation": {
+        "domContentLoaded": 0,
+        "loadComplete": 0,
+        "domInteractive": 7.4000000059604645,
+        "totalLoadTime": 114.7000000178814
+      },
+      "paint": {
+        "first-paint": 26.700000017881393,
+        "first-contentful-paint": 26.700000017881393
+      },
+      "memory": {
+        "usedJSHeapSize": 62494715,
+        "totalJSHeapSize": 63995071,
+        "jsHeapSizeLimit": 4294705152
+      },
+      "resourceCount": 106,
+      "puppeteer": {
+        "Timestamp": 209282.457163,
+        "Documents": 4,
+        "Frames": 4,
+        "JSEventListeners": 205,
+        "Nodes": 113,
+        "LayoutCount": 90,
+        "RecalcStyleCount": 1856,
+        "LayoutDuration": 0.021341,
+        "RecalcStyleDuration": 0.182424,
+        "ScriptDuration": 0.232999,
+        "TaskDuration": 0.921577,
+        "JSHeapUsedSize": 28780976,
+        "JSHeapTotalSize": 29917184
+      }
+    },
+    "fallbackBehavior": {
+      "fallbackElementsFound": 0,
+      "sprite2DElementsFound": 0,
+      "asciiElementsFound": 0,
+      "mockCanvasElementsFound": 0,
+      "canvas2DElementsFound": 0,
+      "dragonFallbackElementsFound": 0,
+      "webglFallbackActive": false,
+      "webglFallbackDiagnostics": null,
+      "debugInfo": "",
+      "fallbackTypes": [],
+      "currentRenderingMode": "unknown",
+      "canvas2DInfo": {
+        "totalCanvases": 0,
+        "canvas2DCanvases": 0,
+        "canvasInfo": []
+      }
+    },
+    "accessibility": {},
+    "modelCacheService": {
+      "available": false
+    },
+    "webglFallbackManager": {},
+    "logs": [
+      {
+        "timestamp": "2025-07-12T02:26:28.298Z",
+        "level": "info",
+        "message": "Output directory created: ./docker-diagnosis-reports"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:28.298Z",
+        "level": "info",
+        "message": "Launching Puppeteer browser..."
+      },
+      {
+        "timestamp": "2025-07-12T02:26:30.507Z",
+        "level": "info",
+        "message": "Browser launched with user agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/127.0.0.0 Safari/537.36"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:30.507Z",
+        "level": "info",
+        "message": "Setting up page monitoring..."
+      },
+      {
+        "timestamp": "2025-07-12T02:26:30.507Z",
+        "level": "info",
+        "message": "Navigating to target URL: http://localhost:3000/dragons/webgl-3d"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:30.530Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/dragons/webgl-3d - 200"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:30.716Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/components/dragon/GLTFErrorBoundary.tsx - 200"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:30.898Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/pages/dragons/WebGL3DPage.tsx?t=1752286203001 - 200"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:30.937Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/utils/dragonMemoryManager.ts - 200"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:30.940Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/components/dragon/DragonModelManager.tsx - 200"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:30.940Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/config/dragonModels.ts - 200"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:30.942Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/components/dragon/DragonGLTFLoader.tsx - 200"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:31.667Z",
+        "level": "info",
+        "message": "Page loaded successfully in 1159ms"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:31.788Z",
+        "level": "info",
+        "message": "Screenshot saved: 01-page-loaded-1752287191667.png"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:31.788Z",
+        "level": "info",
+        "message": "Checking WebGL context and fallback capabilities..."
+      },
+      {
+        "timestamp": "2025-07-12T02:26:31.790Z",
+        "level": "error",
+        "message": "WebGL not supported: WebGL context creation failed"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:31.790Z",
+        "level": "info",
+        "message": "Canvas2D fallback available"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:31.790Z",
+        "level": "info",
+        "message": "Checking Three.js initialization..."
+      },
+      {
+        "timestamp": "2025-07-12T02:26:33.797Z",
+        "level": "error",
+        "message": "Three.js not loaded: THREE is not defined on window object"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:33.798Z",
+        "level": "info",
+        "message": "Analyzing component rendering..."
+      },
+      {
+        "timestamp": "2025-07-12T02:26:36.800Z",
+        "level": "error",
+        "message": "No canvas, ASCII, or mock elements found"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:36.918Z",
+        "level": "info",
+        "message": "Screenshot saved: 02-component-analysis-1752287196801.png"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:36.918Z",
+        "level": "info",
+        "message": "Testing model file accessibility with ModelCacheService..."
+      },
+      {
+        "timestamp": "2025-07-12T02:26:36.919Z",
+        "level": "info",
+        "message": "ModelCacheService not available, testing direct file access"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:36.919Z",
+        "level": "info",
+        "message": "Testing accessibility of: http://localhost:3000/models/dragon_head.glb"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:36.946Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/models/dragon_head.glb - 200"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:36.946Z",
+        "level": "error",
+        "message": "Request failed: http://localhost:3000/models/dragon_head.glb - net::ERR_ABORTED"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:36.947Z",
+        "level": "error",
+        "message": "✗ /models/dragon_head.glb failed: net::ERR_ABORTED at http://localhost:3000/models/dragon_head.glb"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:36.947Z",
+        "level": "info",
+        "message": "Testing accessibility of: http://localhost:3000/models/dragon_head_optimized.glb"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:36.958Z",
+        "level": "error",
+        "message": "✗ /models/dragon_head_optimized.glb failed: net::ERR_ABORTED at http://localhost:3000/models/dragon_head_optimized.glb"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:36.958Z",
+        "level": "info",
+        "message": "Testing accessibility of: http://localhost:3000/models/dragon_head.obj"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:36.963Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/models/dragon_head_optimized.glb - 200"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:36.964Z",
+        "level": "error",
+        "message": "Request failed: http://localhost:3000/models/dragon_head_optimized.glb - net::ERR_ABORTED"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:36.971Z",
+        "level": "error",
+        "message": "✗ /models/dragon_head.obj failed: net::ERR_ABORTED at http://localhost:3000/models/dragon_head.obj"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:36.971Z",
+        "level": "info",
+        "message": "Testing accessibility of: http://localhost:3000/assets/models/dragon_head.glb"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:36.972Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/models/dragon_head.obj - 200"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:36.972Z",
+        "level": "error",
+        "message": "Request failed: http://localhost:3000/models/dragon_head.obj - net::ERR_ABORTED"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:36.988Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/assets/models/dragon_head.glb - 200"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:37.052Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/components/dragon/GLTFErrorBoundary.tsx - 200"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:37.139Z",
+        "level": "error",
+        "message": "Console error: Error handled by React Router default ErrorBoundary: JSHandle@object"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:37.139Z",
+        "level": "error",
+        "message": "Console error: Error handled by React Router default ErrorBoundary: JSHandle@object"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:38.981Z",
+        "level": "info",
+        "message": "✓ /assets/models/dragon_head.glb accessible (200)"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:38.982Z",
+        "level": "info",
+        "message": "Testing accessibility of: http://localhost:3000/public/models/dragon_head.glb"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:39.001Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/public/models/dragon_head.glb - 200"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:39.002Z",
+        "level": "error",
+        "message": "Request failed: http://localhost:3000/public/models/dragon_head.glb - net::ERR_ABORTED"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:39.003Z",
+        "level": "error",
+        "message": "✗ /public/models/dragon_head.glb failed: net::ERR_ABORTED at http://localhost:3000/public/models/dragon_head.glb"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:39.009Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/dragons/webgl-3d - 200"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:39.064Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/components/dragon/GLTFErrorBoundary.tsx - 200"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:39.160Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/pages/dragons/WebGL3DPage.tsx?t=1752286203001 - 200"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:39.165Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/utils/dragonMemoryManager.ts - 200"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:39.169Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/components/dragon/DragonModelManager.tsx - 200"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:39.180Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/config/dragonModels.ts - 200"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:39.181Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/components/dragon/DragonGLTFLoader.tsx - 200"
+      },
+      {
+        "timestamp": "2025-07-12T02:26:39.783Z",
+        "level": "info",
+        "message": "Testing loading states and timeouts..."
+      },
+      {
+        "timestamp": "2025-07-12T02:27:09.906Z",
+        "level": "info",
+        "message": "Screenshot saved: 03-loading-states-1752287229787.png"
+      },
+      {
+        "timestamp": "2025-07-12T02:27:09.906Z",
+        "level": "info",
+        "message": "Testing fallback mechanisms..."
+      },
+      {
+        "timestamp": "2025-07-12T02:27:09.985Z",
+        "level": "info",
+        "message": "Screenshot saved: 04-fallback-analysis-1752287229908.png"
+      },
+      {
+        "timestamp": "2025-07-12T02:27:09.985Z",
+        "level": "info",
+        "message": "Collecting performance metrics..."
+      },
+      {
+        "timestamp": "2025-07-12T02:27:09.986Z",
+        "level": "info",
+        "message": "DOM Content Loaded: 0ms"
+      },
+      {
+        "timestamp": "2025-07-12T02:27:09.986Z",
+        "level": "info",
+        "message": "Total Load Time: 114.7000000178814ms"
+      },
+      {
+        "timestamp": "2025-07-12T02:27:10.068Z",
+        "level": "info",
+        "message": "Screenshot saved: 05-final-state-1752287229986.png"
+      },
+      {
+        "timestamp": "2025-07-12T02:27:10.069Z",
+        "level": "info",
+        "message": "Generating diagnostic report..."
+      }
+    ],
+    "componentRendering": {
+      "dragonContainer": false,
+      "canvasElements": 0,
+      "errorBoundaryActive": false,
+      "loadingIndicators": 0,
+      "fallbackComponents": 0,
+      "dragonFallbackRenderer": false,
+      "asciiDragon": 0,
+      "mockCanvas": 0,
+      "webglFallbackManager": false,
+      "specificElements": {},
+      "reactErrors": [],
+      "documentReady": "complete",
+      "bodyVisible": true,
+      "reactDevtoolsDetected": true
+    }
+  },
+  "recommendations": [
+    {
+      "type": "medium",
+      "message": "WebGL not supported, but Canvas2D fallback is available",
+      "solution": "Dragon will render using Canvas2D fallback"
+    },
+    {
+      "type": "critical",
+      "message": "WebGL is not supported and no fallback system detected",
+      "solution": "Enable WebGL in browser or ensure fallback system is loaded"
+    },
+    {
+      "type": "critical",
+      "message": "Three.js library not loaded properly",
+      "solution": "Check bundle includes Three.js and dependencies"
+    },
+    {
+      "type": "critical",
+      "message": "No rendering elements detected - all rendering systems failed",
+      "solution": "Check if any Dragon components are mounting successfully"
+    }
+  ],
+  "screenshots": [
+    {
+      "name": "01-page-loaded",
+      "filename": "01-page-loaded-1752287191667.png",
+      "path": "docker-diagnosis-reports/01-page-loaded-1752287191667.png",
+      "timestamp": "2025-07-12T02:26:31.788Z"
+    },
+    {
+      "name": "02-component-analysis",
+      "filename": "02-component-analysis-1752287196801.png",
+      "path": "docker-diagnosis-reports/02-component-analysis-1752287196801.png",
+      "timestamp": "2025-07-12T02:26:36.918Z"
+    },
+    {
+      "name": "03-loading-states",
+      "filename": "03-loading-states-1752287229787.png",
+      "path": "docker-diagnosis-reports/03-loading-states-1752287229787.png",
+      "timestamp": "2025-07-12T02:27:09.906Z"
+    },
+    {
+      "name": "04-fallback-analysis",
+      "filename": "04-fallback-analysis-1752287229908.png",
+      "path": "docker-diagnosis-reports/04-fallback-analysis-1752287229908.png",
+      "timestamp": "2025-07-12T02:27:09.985Z"
+    },
+    {
+      "name": "05-final-state",
+      "filename": "05-final-state-1752287229986.png",
+      "path": "docker-diagnosis-reports/05-final-state-1752287229986.png",
+      "timestamp": "2025-07-12T02:27:10.068Z"
+    }
+  ],
+  "summary": {
+    "overallHealth": 40,
+    "criticalIssues": 3,
+    "highPriorityIssues": 0,
+    "mediumPriorityIssues": 1,
+    "infoItems": 0,
+    "webglSupported": false,
+    "threeJsLoaded": false,
+    "pageLoadSuccessful": true,
+    "modelsAccessible": 1,
+    "fallbackSystemWorking": false,
+    "currentRenderingMode": "unknown",
+    "asciiRenderingWorking": false,
+    "canvas2DRenderingWorking": false,
+    "modelCacheServiceAvailable": false,
+    "hasAnyRendering": false
+  },
+  "textSummary": "============================================================\\nSEIRON DRAGON 3D DIAGNOSTIC REPORT\\n============================================================\\n\\nTimestamp: 2025-07-12T02:26:28.297Z\\nTest URL: http://localhost:3000/dragons/webgl-3d\\nOverall Health Score: 40/100\\n\\nCRITICAL SYSTEMS STATUS:\\n------------------------------\\n✓ Page Load: SUCCESS\\n✓ WebGL Support: NOT SUPPORTED\\n✓ Three.js: FAILED TO LOAD\\n✓ Model Files: 1 accessible\\n✓ Fallback System: INACTIVE\\n✓ Rendering Mode: unknown\\n✓ ASCII Fallback: NOT FOUND\\n✓ Canvas2D Fallback: NOT FOUND\\n✓ ModelCacheService: UNAVAILABLE\\n✓ Any Rendering Working: NO\\n\\nISSUES AND INFORMATION:\\n------------------------------\\nCritical Issues: 3\\nHigh Priority: 0\\nMedium Priority: 1\\nInfo Items: 0\\n\\nDETAILED RECOMMENDATIONS:\\n------------------------------\\nCRITICAL (3):\\n  1. WebGL is not supported and no fallback system detected\\n     Solution: Enable WebGL in browser or ensure fallback system is loaded\\n\\n  2. Three.js library not loaded properly\\n     Solution: Check bundle includes Three.js and dependencies\\n\\n  3. No rendering elements detected - all rendering systems failed\\n     Solution: Check if any Dragon components are mounting successfully\\n\\nMEDIUM PRIORITY (1):\\n  1. WebGL not supported, but Canvas2D fallback is available\\n     Solution: Dragon will render using Canvas2D fallback\\n\\nPERFORMANCE METRICS:\\n------------------------------\\nDOM Content Loaded: 0ms\\nTotal Load Time: 114.7000000178814ms\\nDOM Interactive: 7.4000000059604645ms\\n"
+}

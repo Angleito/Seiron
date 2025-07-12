@@ -650,11 +650,11 @@ export const DRAGON_MODELS: Record<string, DragonModelConfig> = {
   // Head-only model for focused interactions
   'dragon-head': {
     id: 'dragon-head',
-    name: 'dragon_head.glb',
+    name: 'dragon_head.obj',
     displayName: 'Dragon Head',
     description: 'Focused dragon head model for close-up interactions',
-    path: '/models/dragon_head.glb',
-    format: 'glb',
+    path: '/models/dragon_head.obj',
+    format: 'obj',
     fileSize: 1536 * 1024, // 1.5MB estimate
     quality: 'high',
     type: 'head',

@@ -14,8 +14,8 @@ import { DragonLoadingAnimation } from '../../components/loading/LoadingStates'
 // New GLTF loading patterns and error boundaries
 import { DragonModelManager, useDragonModelManager } from '../../components/dragon/DragonModelManager'
 
-// New performance tracking imports
-import useModelPerformanceTracking from '../../hooks/useModelPerformanceTracking'
+// New performance tracking imports - temporarily commented out for debugging
+// import { useModelPerformanceTracking } from '../../hooks/useModelPerformanceTracking'
 import { 
   DRAGON_MODELS, 
   getRecommendedModel,
@@ -93,11 +93,11 @@ export default function WebGL3DPage() {
   })
   
   // System capabilities
-  const [capabilities] = useState<WebGLCapabilities | null>(null)
+  const [capabilities, setCapabilities] = useState<WebGLCapabilities | null>(null)
   const [deviceCapabilities] = useState<DeviceCapabilities | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [loading] = useState(true)
-  const [isInitialized] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [isInitialized, setIsInitialized] = useState(false)
   
   // Performance state
   const [performanceState, setPerformanceState] = useState<PerformanceState>({
@@ -150,7 +150,8 @@ export default function WebGL3DPage() {
   const dragonModelManager = useDragonModelManager(selectedModelId)
   
   // Initialize performance tracking hook - must be called before any conditional logic
-  const performanceTracking = useModelPerformanceTracking({
+  // Temporarily commented out for debugging
+  /* const performanceTracking = useModelPerformanceTracking({
     enabled: true,
     sampleRate: 2,
     historySize: 300,
@@ -163,7 +164,7 @@ export default function WebGL3DPage() {
     },
     modelList: Object.values(DRAGON_MODELS),
     enablePredictiveAnalysis: true
-  })
+  }) */
   
   // Enhanced auto-optimization with new performance tracking - must be called before any conditional logic
   const optimizeQualitySettings = useCallback((metrics: { fps: number; memoryUsage?: { usedJSHeapSize: number } }) => {
@@ -234,13 +235,14 @@ export default function WebGL3DPage() {
       setQualitySettings(newSettings)
       
       // Update performance tracking with quality change
-      if (performanceTracking.currentMetrics) {
+      // Temporarily commented out for debugging
+      /* if (performanceTracking.currentMetrics) {
         performanceTracking.currentMetrics.qualityLevel = newQuality
         performanceTracking.currentMetrics.adaptiveQualityActive = true
         performanceTracking.currentMetrics.qualityReductions += 1
-      }
+      } */
     }
-  }, [performanceState, qualitySettings, performanceTracking])
+  }, [performanceState, qualitySettings]) // removed performanceTracking dependency for debugging
 
   // Performance monitoring (legacy - now enhanced with new tracking) - must be called before any conditional logic
   usePerformanceMonitor({
@@ -253,11 +255,55 @@ export default function WebGL3DPage() {
         optimizeQualitySettings(metrics)
         
         // Record warning in new performance tracking system
-        performanceTracking.recordWarning()
+        // performanceTracking.recordWarning() // temporarily commented out for debugging
       }
-    }, [performanceState, performanceTracking, optimizeQualitySettings]),
+    }, [performanceState, optimizeQualitySettings]), // removed performanceTracking dependency for debugging
     warningThreshold: { fps: 30 }
   })
+
+  // Initialize WebGL capabilities and models
+  useEffect(() => {
+    const initializeWebGL = async () => {
+      try {
+        setLoading(true)
+        
+        // Initialize WebGL capabilities
+        const canvas = document.createElement('canvas')
+        const gl = canvas.getContext('webgl2') || canvas.getContext('webgl')
+        
+        if (gl) {
+          const webglCapabilities: WebGLCapabilities = {
+            webgl: !!gl,
+            webgl2: !!(canvas.getContext('webgl2')),
+            maxTextureSize: gl.getParameter(gl.MAX_TEXTURE_SIZE),
+            maxVertexUniforms: gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS),
+            maxFragmentUniforms: gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS),
+            extensions: gl.getSupportedExtensions() || [],
+            devicePixelRatio: window.devicePixelRatio || 1,
+            maxViewportDims: gl.getParameter(gl.MAX_VIEWPORT_DIMS),
+            maxRenderbufferSize: gl.getParameter(gl.MAX_RENDERBUFFER_SIZE),
+            maxCombinedTextureImageUnits: gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS)
+          }
+          
+          // Set capabilities after a brief delay to show loading
+          setTimeout(() => {
+            setCapabilities(webglCapabilities)
+            setLoading(false)
+            setIsInitialized(true)
+          }, 1500)
+        } else {
+          setError('WebGL not supported')
+          setLoading(false)
+        }
+      } catch (error) {
+        logger.error('Failed to initialize WebGL:', error)
+        setError(error instanceof Error ? error.message : 'WebGL initialization failed')
+        setLoading(false)
+      }
+    }
+    
+    initializeWebGL()
+  }, [])
 
   // Initialize recommended model and fallback chain
   useEffect(() => {
@@ -279,8 +325,10 @@ export default function WebGL3DPage() {
       }
     }
     
-    initializeModels()
-  }, [selectedModelId])
+    if (isInitialized) {
+      initializeModels()
+    }
+  }, [selectedModelId, isInitialized])
 
   // CRITICAL FIX: Comprehensive cleanup on component unmount - Fixed React Error #310
   useEffect(() => {
@@ -443,7 +491,7 @@ export default function WebGL3DPage() {
   }
 
   // Component is ready to render
-  if (!isInitialized || !capabilities || !deviceCapabilities) {
+  if (!isInitialized || !capabilities) {
     return null
   }
 
