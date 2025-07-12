@@ -248,10 +248,19 @@ const DragonMesh: React.FC<DragonMeshProps> = ({
       targetScale = baseScale * 1.05
     }
     
-    // Smooth scale transition
-    const currentScale = meshRef.current.scale.x
-    const scaleDiff = targetScale - currentScale
-    meshRef.current.scale.addScalar(scaleDiff * 0.1)
+    // CRITICAL FIX: Safe scale transition with comprehensive null checks
+    if (meshRef.current && 
+        meshRef.current.scale && 
+        typeof meshRef.current.scale.x === 'number' &&
+        typeof meshRef.current.scale.addScalar === 'function') {
+      const currentScale = meshRef.current.scale.x
+      const scaleDiff = targetScale - currentScale
+      
+      // Additional safety check for valid scale difference
+      if (isFinite(scaleDiff) && Math.abs(scaleDiff) < 10) {
+        meshRef.current.scale.addScalar(scaleDiff * 0.1)
+      }
+    }
     
   }, [voiceState, sizeConfig.scale])
   

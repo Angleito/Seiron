@@ -509,9 +509,10 @@ export class DragonMemoryManager {
             return
           }
           
-          const position = geometry.attributes.position
-          const normal = geometry.attributes.normal
-          const uv = geometry.attributes.uv
+          // CRITICAL FIX: Safe access to buffer attributes with comprehensive validation
+          const position = this.safePropertyAccess(geometry, 'attributes.position', null, `geometry ${key} position`)
+          const normal = this.safePropertyAccess(geometry, 'attributes.normal', null, `geometry ${key} normal`)
+          const uv = this.safePropertyAccess(geometry, 'attributes.uv', null, `geometry ${key} uv`)
           
           // CRITICAL FIX: Enhanced null checks with type validation for BufferAttribute
           if (position && 
