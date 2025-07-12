@@ -129,7 +129,7 @@ export default function WebGL3DPage() {
   const [dragonSize, setDragonSize] = useState<'sm' | 'md' | 'lg' | 'xl' | 'gigantic'>('lg')
   
   // Model management state (using new DragonModelManager)
-  const [selectedModelId, setSelectedModelId] = useState('seiron-primary')
+  const [selectedModelId, setSelectedModelId] = useState('seiron-animated')
   const [modelLoading, setModelLoading] = useState(false)
   const [modelError, setModelError] = useState<string | null>(null)
   const [recommendedModel, setRecommendedModel] = useState<DragonModelConfig | null>(null)

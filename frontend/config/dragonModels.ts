@@ -793,7 +793,7 @@ export function getDefaultModel(): string {
 }
 
 export function getDefaultFallback(): string {
-  return 'seiron-backup'
+  return 'seiron-animated-optimized'
 }
 
 export function getUltimateFallback(): string {

@@ -65,17 +65,51 @@ interface ModelManagerState {
   }
 }
 
-// Enhanced model configurations using validated paths
+// Enhanced model configurations using validated paths - Updated to match actual files
 const DEFAULT_MODELS: Record<string, ModelConfig> = {
+  'seiron-animated': {
+    id: 'seiron-animated',
+    path: '/models/seiron_animated.gltf',
+    displayName: 'Seiron Dragon (Animated)',
+    quality: 'ultra',
+    fallbackPath: '/models/seiron_animated_optimized.gltf',
+    preloadPriority: 'high',
+    memoryUsageMB: 128,
+    supportsAnimations: true,
+    supportsVoiceReactions: true,
+    deviceCompatibility: {
+      mobile: true,
+      desktop: true,
+      webGL1: false,
+      webGL2: true
+    }
+  },
+  'seiron-animated-optimized': {
+    id: 'seiron-animated-optimized',
+    path: '/models/seiron_animated_optimized.gltf',
+    displayName: 'Seiron Dragon (Animated Optimized)',
+    quality: 'high',
+    fallbackPath: '/models/seiron_optimized.glb',
+    preloadPriority: 'high',
+    memoryUsageMB: 64,
+    supportsAnimations: true,
+    supportsVoiceReactions: true,
+    deviceCompatibility: {
+      mobile: true,
+      desktop: true,
+      webGL1: true,
+      webGL2: true
+    }
+  },
   'seiron-primary': {
     id: 'seiron-primary',
     path: '/models/seiron.glb',
     displayName: 'Seiron Dragon (Primary)',
     quality: 'high',
     fallbackPath: '/models/seiron_optimized.glb',
-    preloadPriority: 'high',
+    preloadPriority: 'medium',
     memoryUsageMB: 64,
-    supportsAnimations: true,
+    supportsAnimations: false,
     supportsVoiceReactions: true,
     deviceCompatibility: {
       mobile: true,
@@ -92,41 +126,7 @@ const DEFAULT_MODELS: Record<string, ModelConfig> = {
     fallbackPath: '/models/dragon_head_optimized.glb',
     preloadPriority: 'medium',
     memoryUsageMB: 32,
-    supportsAnimations: true,
-    supportsVoiceReactions: true,
-    deviceCompatibility: {
-      mobile: true,
-      desktop: true,
-      webGL1: true,
-      webGL2: true
-    }
-  },
-  'seiron-animated': {
-    id: 'seiron-animated',
-    path: '/models/seiron_animated.gltf',
-    displayName: 'Seiron Dragon (Animated)',
-    quality: 'ultra',
-    fallbackPath: '/models/seiron_animated_optimized.gltf',
-    preloadPriority: 'low',
-    memoryUsageMB: 128,
-    supportsAnimations: true,
-    supportsVoiceReactions: true,
-    deviceCompatibility: {
-      mobile: false,
-      desktop: true,
-      webGL1: false,
-      webGL2: true
-    }
-  },
-  'seiron-animated-optimized': {
-    id: 'seiron-animated-optimized',
-    path: '/models/seiron_animated_optimized.gltf',
-    displayName: 'Seiron Dragon (Animated Optimized)',
-    quality: 'high',
-    fallbackPath: '/models/seiron_optimized.glb',
-    preloadPriority: 'medium',
-    memoryUsageMB: 64,
-    supportsAnimations: true,
+    supportsAnimations: false,
     supportsVoiceReactions: true,
     deviceCompatibility: {
       mobile: true,
@@ -141,9 +141,9 @@ const DEFAULT_MODELS: Record<string, ModelConfig> = {
     displayName: 'Dragon Head (Detailed)',
     quality: 'high',
     fallbackPath: '/models/dragon_head_optimized.glb',
-    preloadPriority: 'medium',
+    preloadPriority: 'low',
     memoryUsageMB: 48,
-    supportsAnimations: true,
+    supportsAnimations: false,
     supportsVoiceReactions: true,
     deviceCompatibility: {
       mobile: true,
@@ -157,9 +157,10 @@ const DEFAULT_MODELS: Record<string, ModelConfig> = {
     path: '/models/dragon_head_optimized.glb',
     displayName: 'Dragon Head (Optimized)',
     quality: 'medium',
+    fallbackPath: '/models/seiron_optimized.glb',
     preloadPriority: 'high',
     memoryUsageMB: 24,
-    supportsAnimations: true,
+    supportsAnimations: false,
     supportsVoiceReactions: true,
     deviceCompatibility: {
       mobile: true,
@@ -480,9 +481,9 @@ const useModelManager = (initialModelId: string, options: {
       }
     }
     
-    // Ultimate fallback to primary model
-    if (!fallbackModelId && fromModelId !== 'seiron-primary') {
-      fallbackModelId = 'seiron-primary'
+    // Ultimate fallback to optimized model
+    if (!fallbackModelId && fromModelId !== 'seiron-optimized') {
+      fallbackModelId = 'seiron-optimized'
     }
     
     if (fallbackModelId) {

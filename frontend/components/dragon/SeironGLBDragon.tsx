@@ -957,7 +957,7 @@ const SeironGLBDragonWithModelManager: React.FC<SeironGLBDragonProps & {
   onModelSwitch?: (from: any, to: any) => void
 }> = ({
   enableModelManager = false,
-  initialModelId = 'seiron-primary',
+  initialModelId = 'seiron-animated',
   onModelSwitch,
   ...props
 }) => {
