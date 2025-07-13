@@ -115,11 +115,5 @@
   ],
   "env": {
     "NODE_ENV": "production"
-  },
-  "includeFiles": [
-    "public/models/**/*.glb",
-    "public/models/**/*.gltf",
-    "public/models/**/*.bin",
-    "public/models/textures/**/*"
-  ]
+  }
 }
