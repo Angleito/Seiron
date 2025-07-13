@@ -1,7 +1,10 @@
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import React, { Suspense } from 'react'
+import React, { Suspense, lazy } from 'react'
 import DragonHead3D from '@/components/effects/DragonHead3D'
+
+// Lazy load the StormLightningEffect component
+const StormLightningEffect = lazy(() => import('@/components/effects/StormLightningEffect'))
 
 
 // Enhanced DBZ Feature Card Component
@@ -127,6 +130,13 @@ export default function HomePage() {
             <div className="lightning-bolt-2"></div>
             <div className="lightning-bolt-3"></div>
           </div>
+          
+          {/* Enhanced Lightning Effect */}
+          {summoningPhase === 'lightning' && (
+            <Suspense fallback={null}>
+              <StormLightningEffect />
+            </Suspense>
+          )}
           
           {/* Screen Flash Overlay */}
           <div className="screen-flash"></div>

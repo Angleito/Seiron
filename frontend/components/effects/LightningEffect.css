@@ -1,0 +1,211 @@
+/* Lightning Effect - Dramatic Storm Animation */
+.bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(0, 4, 40, 0.5) 0%, rgba(0, 78, 146, 0.5) 100%);
+  z-index: 1;
+  opacity: 0.7;
+  mix-blend-mode: multiply;
+}
+
+/* Rain Effect */
+.rain {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+}
+
+.rain:before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: white;
+  animation: rain 0.4s linear infinite;
+  opacity: 0.3;
+}
+
+@keyframes rain {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 20% 100%;
+  }
+}
+
+.rain:before {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 2px,
+    rgba(255, 255, 255, 0.1) 2px,
+    rgba(255, 255, 255, 0.1) 3px,
+    transparent 3px,
+    transparent 5px
+  );
+}
+
+/* Lightning */
+.lightning {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+}
+
+.lightning::before,
+.lightning::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 150px;
+  height: 100%;
+  background: linear-gradient(to bottom, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0) 45%, 
+    rgba(255, 255, 255, 0.8) 50%, 
+    rgba(255, 255, 255, 0) 55%, 
+    transparent 100%
+  );
+  opacity: 0;
+  filter: blur(2px);
+  transform: scaleX(0.2);
+}
+
+.lightning::before {
+  left: 20%;
+  animation: lightning1 0.8s linear infinite;
+}
+
+.lightning::after {
+  right: 20%;
+  animation: lightning2 1s linear infinite;
+  animation-delay: 0.4s;
+}
+
+/* Flash Effect */
+.flashit {
+  animation: flashit 0.8s linear infinite;
+}
+
+@keyframes lightning1 {
+  0%, 70%, 100% {
+    opacity: 0;
+    transform: scaleX(0.2) translateY(-100%);
+  }
+  71% {
+    opacity: 1;
+    transform: scaleX(1) translateY(0%);
+  }
+  73% {
+    opacity: 0.5;
+    transform: scaleX(0.8) translateY(0%);
+  }
+  75% {
+    opacity: 1;
+    transform: scaleX(1.2) translateY(0%);
+  }
+  78% {
+    opacity: 0;
+    transform: scaleX(0.6) translateY(100%);
+  }
+}
+
+@keyframes lightning2 {
+  0%, 60%, 100% {
+    opacity: 0;
+    transform: scaleX(0.2) translateY(-100%);
+  }
+  61% {
+    opacity: 1;
+    transform: scaleX(1) translateY(0%);
+  }
+  63% {
+    opacity: 0.5;
+    transform: scaleX(0.8) translateY(0%);
+  }
+  65% {
+    opacity: 1;
+    transform: scaleX(1.2) translateY(0%);
+  }
+  68% {
+    opacity: 0;
+    transform: scaleX(0.6) translateY(100%);
+  }
+}
+
+@keyframes flashit {
+  0%, 60%, 100% {
+    background: transparent;
+  }
+  61% {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  63% {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  65% {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  68% {
+    background: transparent;
+  }
+}
+
+/* Additional Visual Lightning Bolts */
+.lightning::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  left: 30%;
+  width: 2px;
+  height: 120%;
+  background: linear-gradient(to bottom,
+    transparent 0%,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 1) 50%,
+    rgba(255, 255, 255, 0) 60%,
+    transparent 100%
+  );
+  transform: rotate(15deg);
+  box-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff;
+}
+
+.lightning::after {
+  content: '';
+  position: absolute;
+  top: -10%;
+  right: 25%;
+  width: 3px;
+  height: 120%;
+  background: linear-gradient(to bottom,
+    transparent 0%,
+    rgba(255, 255, 255, 0) 30%,
+    rgba(255, 255, 255, 1) 45%,
+    rgba(255, 255, 255, 1) 55%,
+    rgba(255, 255, 255, 0) 70%,
+    transparent 100%
+  );
+  transform: rotate(-10deg);
+  box-shadow: 0 0 15px #fff, 0 0 25px #fff, 0 0 35px #fff;
+}
+
+/* Make sure flash effect covers the whole screen */
+.flashit::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 100;
+}

@@ -1,0 +1,364 @@
+/* Storm Lightning Effect Styles */
+.storm-lightning-effect-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 60;
+}
+
+/* Background storm effect */
+.storm-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom,
+    rgba(13, 13, 13, 0.3) 0%,
+    rgba(13, 13, 13, 0.5) 50%,
+    rgba(0, 0, 0, 0.7) 100%
+  );
+  animation: storm-bg-pulse 2s ease-in-out infinite;
+}
+
+@keyframes storm-bg-pulse {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Rain effect */
+.storm-rain {
+  position: absolute;
+  top: -10%;
+  left: 0;
+  width: 100%;
+  height: 110%;
+  background-image: 
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, 0.05) 2px,
+      rgba(255, 255, 255, 0.05) 4px
+    );
+  animation: storm-rain-fall 0.3s linear infinite;
+  opacity: 0.5;
+}
+
+@keyframes storm-rain-fall {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(10px);
+  }
+}
+
+/* Lightning strikes */
+.storm-lightning {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Multiple lightning bolts */
+.storm-lightning::before,
+.storm-lightning::after,
+.storm-lightning::before::before {
+  content: '';
+  position: absolute;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(255, 255, 255, 0) 5%,
+    rgba(255, 255, 255, 1) 15%,
+    rgba(136, 221, 255, 1) 30%,
+    rgba(0, 170, 255, 1) 45%,
+    rgba(255, 255, 255, 1) 60%,
+    rgba(136, 221, 255, 0.7) 75%,
+    rgba(0, 170, 255, 0.3) 90%,
+    transparent 100%
+  );
+  opacity: 0;
+  filter: blur(1px);
+  box-shadow: 
+    0 0 10px rgba(255, 255, 255, 0.8),
+    0 0 20px rgba(136, 221, 255, 0.6),
+    0 0 30px rgba(0, 170, 255, 0.4);
+}
+
+/* First lightning bolt */
+.storm-lightning::before {
+  top: -10%;
+  left: 25%;
+  width: 3px;
+  height: 70%;
+  transform: rotate(5deg) scaleX(1.5);
+  animation: storm-strike-1 2s ease-in-out infinite;
+}
+
+/* Second lightning bolt */
+.storm-lightning::after {
+  top: -5%;
+  right: 30%;
+  width: 2px;
+  height: 60%;
+  transform: rotate(-8deg);
+  animation: storm-strike-2 2.5s ease-in-out infinite;
+  animation-delay: 0.3s;
+}
+
+/* Third lightning bolt */
+.storm-lightning {
+  position: relative;
+}
+
+.storm-lightning > .bolt-3 {
+  position: absolute;
+  top: -15%;
+  left: 55%;
+  width: 4px;
+  height: 80%;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(255, 255, 255, 1) 20%,
+    rgba(0, 170, 255, 0.8) 50%,
+    transparent 100%
+  );
+  transform: rotate(12deg);
+  opacity: 0;
+  animation: storm-strike-3 3s ease-in-out infinite;
+  animation-delay: 0.6s;
+  filter: blur(0.5px);
+}
+
+/* Flash animation class */
+.flashit {
+  animation: storm-flash-screen 2s ease-in-out infinite;
+}
+
+/* Lightning strike animations */
+@keyframes storm-strike-1 {
+  0%, 94%, 100% {
+    opacity: 0;
+    transform: translateY(-100%) rotate(5deg) scaleX(1.5) scaleY(0);
+  }
+  95% {
+    opacity: 1;
+    transform: translateY(0) rotate(5deg) scaleX(1.5) scaleY(1);
+  }
+  96% {
+    opacity: 0.8;
+    transform: translateY(0) rotate(5deg) scaleX(1.5) scaleY(0.9);
+  }
+  97% {
+    opacity: 1;
+    transform: translateY(0) rotate(5deg) scaleX(1.8) scaleY(1.1);
+  }
+  98% {
+    opacity: 0.6;
+    transform: translateY(0) rotate(5deg) scaleX(1.5) scaleY(0.95);
+  }
+  99% {
+    opacity: 0;
+    transform: translateY(0) rotate(5deg) scaleX(1.5) scaleY(0.8);
+  }
+}
+
+@keyframes storm-strike-2 {
+  0%, 89%, 100% {
+    opacity: 0;
+    transform: translateY(-100%) rotate(-8deg) scaleY(0);
+  }
+  90% {
+    opacity: 1;
+    transform: translateY(0) rotate(-8deg) scaleY(1);
+  }
+  91% {
+    opacity: 0.9;
+    transform: translateY(0) rotate(-8deg) scaleY(0.95);
+  }
+  92% {
+    opacity: 1;
+    transform: translateY(0) rotate(-8deg) scaleY(1.15);
+  }
+  93% {
+    opacity: 0.5;
+    transform: translateY(0) rotate(-8deg) scaleY(0.9);
+  }
+  94% {
+    opacity: 0;
+    transform: translateY(0) rotate(-8deg) scaleY(0.7);
+  }
+}
+
+@keyframes storm-strike-3 {
+  0%, 84%, 100% {
+    opacity: 0;
+    transform: translateY(-100%) rotate(12deg) scaleY(0);
+  }
+  85% {
+    opacity: 1;
+    transform: translateY(0) rotate(12deg) scaleY(1);
+  }
+  86% {
+    opacity: 0.7;
+    transform: translateY(0) rotate(12deg) scaleY(0.85);
+  }
+  87% {
+    opacity: 1;
+    transform: translateY(0) rotate(12deg) scaleY(1.2);
+  }
+  88% {
+    opacity: 0.4;
+    transform: translateY(0) rotate(12deg) scaleY(0.8);
+  }
+  89% {
+    opacity: 0;
+    transform: translateY(0) rotate(12deg) scaleY(0.6);
+  }
+}
+
+/* Screen flash effect */
+@keyframes storm-flash-screen {
+  0%, 93%, 100% {
+    background-color: transparent;
+  }
+  94% {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  95% {
+    background-color: rgba(136, 221, 255, 0.1);
+  }
+  96% {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+  97% {
+    background-color: transparent;
+  }
+}
+
+/* Additional storm effects */
+.storm-lightning-effect-container::before,
+.storm-lightning-effect-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Lightning glow effect 1 */
+.storm-lightning-effect-container::before {
+  background: radial-gradient(
+    ellipse at 25% 20%,
+    rgba(136, 221, 255, 0) 0%,
+    rgba(136, 221, 255, 0) 60%,
+    rgba(136, 221, 255, 0.15) 61%,
+    rgba(136, 221, 255, 0) 62%,
+    rgba(136, 221, 255, 0) 100%
+  );
+  animation: storm-glow-1 2s ease-in-out infinite;
+  opacity: 0;
+}
+
+/* Lightning glow effect 2 */
+.storm-lightning-effect-container::after {
+  background: radial-gradient(
+    ellipse at 75% 15%,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0) 55%,
+    rgba(255, 255, 255, 0.25) 56%,
+    rgba(255, 255, 255, 0) 57%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: storm-glow-2 2.5s ease-in-out infinite;
+  animation-delay: 0.3s;
+  opacity: 0;
+}
+
+@keyframes storm-glow-1 {
+  0%, 93%, 100% {
+    opacity: 0;
+  }
+  94%, 97% {
+    opacity: 1;
+  }
+}
+
+@keyframes storm-glow-2 {
+  0%, 88%, 100% {
+    opacity: 0;
+  }
+  89%, 92% {
+    opacity: 1;
+  }
+}
+
+/* Add the third bolt element */
+.storm-lightning::after + .bolt-3 {
+  content: '';
+  position: absolute;
+  top: -15%;
+  left: 55%;
+  width: 4px;
+  height: 80%;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(255, 255, 255, 1) 20%,
+    rgba(0, 170, 255, 0.8) 50%,
+    transparent 100%
+  );
+  transform: rotate(12deg);
+  opacity: 0;
+  animation: storm-strike-3 3s ease-in-out infinite;
+  animation-delay: 0.6s;
+  filter: blur(0.5px);
+  box-shadow: 
+    0 0 15px rgba(255, 255, 255, 0.9),
+    0 0 25px rgba(0, 170, 255, 0.6);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .storm-lightning::before,
+  .storm-lightning::after {
+    width: 2px;
+  }
+  
+  .storm-rain {
+    opacity: 0.3;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .storm-rain,
+  .storm-lightning::before,
+  .storm-lightning::after,
+  .storm-lightning > .bolt-3,
+  .flashit,
+  .storm-lightning-effect-container::before,
+  .storm-lightning-effect-container::after {
+    animation: none !important;
+  }
+  
+  .storm-bg {
+    animation: none !important;
+    opacity: 0.5;
+  }
+}
