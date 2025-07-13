@@ -91,15 +91,15 @@ export default function HomePage() {
       setSummoningPhase('lightning')
     }, 2000))
     
-    // Phase 3: Lightning (2000ms-4000ms)
+    // Phase 3: Lightning (2000ms-7000ms) - Extended to 5 seconds
     timeouts.push(setTimeout(() => {
       setSummoningPhase('arrival')
-    }, 4000))
+    }, 7000))
     
-    // Phase 4: Final arrival and dragon head spawn (4000ms-7000ms)
+    // Phase 4: Final arrival and dragon head spawn (7000ms-10000ms)
     timeouts.push(setTimeout(() => {
       navigate('/chat')
-    }, 7000))
+    }, 10000))
     
     // Cleanup function in case component unmounts
     return () => {
