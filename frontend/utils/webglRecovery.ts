@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import * as THREE from 'three';
+import React from 'react';
 import { webglDiagnostics } from './webglDiagnostics';
 
 export interface WebGLRecoveryConfig {
@@ -2275,8 +2276,6 @@ export function useWebGLRecovery(config?: WebGLRecoveryConfig) {
     clearNotifications
   };
 }
-
-import React from 'react';
 
 // Export singleton instance for global usage
 export const webGLRecoveryManager = new WebGLRecoveryManager();

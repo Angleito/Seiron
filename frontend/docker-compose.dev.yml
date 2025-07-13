@@ -1,18 +1,21 @@
 version: '3.8'
 
 services:
-  frontend:
+  frontend-dev:
     build:
       context: .
       dockerfile: Dockerfile.dev
+    container_name: seiron-frontend-dev
     ports:
-      - "3000:3000"
+      - "3000:3000"      # Vite dev server
+      - "24678:24678"    # Vite HMR websocket
     volumes:
       - .:/app
       - /app/node_modules
     environment:
       - NODE_ENV=development
-      - VITE_HOST=0.0.0.0
+      - VITE_HMR_PORT=24678
+      - VITE_HMR_HOST=localhost
+    command: npm run dev -- --host 0.0.0.0
     stdin_open: true
     tty: true
-    restart: unless-stopped
