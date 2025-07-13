@@ -106,8 +106,8 @@ export function DragonParticles({
       const spiralRadius = distance + Math.sin(angle) * 0.2
       
       // Update position with swirl
-      (positions.array as Float32Array)[i3] = Math.cos(angle + time) * spiralRadius * Math.sin(i * 0.1 + time * 0.2);
-      (positions.array as Float32Array)[i3 + 1] = y + Math.sin(time * 2 + i * 0.1) * 0.1;
+      (positions.array as Float32Array)[i3] = Math.cos(angle + time) * spiralRadius * Math.sin(i * 0.1 + time * 0.2)
+      (positions.array as Float32Array)[i3 + 1] = y + Math.sin(time * 2 + i * 0.1) * 0.1
       (positions.array as Float32Array)[i3 + 2] = Math.sin(angle + time) * spiralRadius * Math.cos(i * 0.1 + time * 0.2)
       
       // Pulsing size based on lightning
