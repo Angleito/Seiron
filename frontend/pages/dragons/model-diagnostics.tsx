@@ -7,10 +7,13 @@ import { getAllModelIds, getModelConfig, DragonModelConfig } from '../../config/
 import { logger } from '@lib/logger';
 
 // Dynamically import DragonModelManager to avoid SSR issues
+// Temporarily commented out due to build errors
+/*
 const DragonModelManager = dynamic(
   () => import('../../components/dragon/DragonModelManager').then(mod => mod.DragonModelManager),
   { ssr: false }
 );
+*/
 
 // Types
 interface ModelLoadTest {

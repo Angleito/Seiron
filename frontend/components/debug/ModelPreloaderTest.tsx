@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { ModelPreloader, DEFAULT_MODELS } from '../dragon/DragonModelManager'
+// import { ModelPreloader, DEFAULT_MODELS } from '../dragon/DragonModelManager'
 import { 
   exportModelManifest, 
   getModelManifest, 

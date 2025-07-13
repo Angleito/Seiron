@@ -12,7 +12,7 @@ import { useWebGLRecovery } from '../../utils/webglRecovery'
 import { DragonLoadingAnimation } from '../../components/loading/LoadingStates'
 
 // New GLTF loading patterns and error boundaries
-import { DragonModelManager, useDragonModelManager } from '../../components/dragon/DragonModelManager'
+// import { DragonModelManager, useDragonModelManager } from '../../components/dragon/DragonModelManager'
 
 // New performance tracking imports - temporarily commented out for debugging
 // import { useModelPerformanceTracking } from '../../hooks/useModelPerformanceTracking'
