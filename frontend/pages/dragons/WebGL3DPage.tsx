@@ -12,7 +12,7 @@ import { useWebGLRecovery } from '../../utils/webglRecovery'
 import { DragonLoadingAnimation } from '../../components/loading/LoadingStates'
 
 // New GLTF loading patterns and error boundaries
-// import { DragonModelManager, useDragonModelManager } from '../../components/dragon/DragonModelManager'
+import { DragonModelManager, useDragonModelManager } from '../../components/dragon/DragonModelManager'
 
 // New performance tracking imports - temporarily commented out for debugging
 // import { useModelPerformanceTracking } from '../../hooks/useModelPerformanceTracking'
@@ -165,7 +165,7 @@ export default function WebGL3DPage({ modelPath }: { modelPath?: string }) {
   })
   
   // Model recommendation engine and dragon model manager - must be called before any conditional logic
-  // const dragonModelManager = useDragonModelManager(selectedModelId)
+  const dragonModelManager = useDragonModelManager(selectedModelId)
   
   // Initialize performance tracking hook - must be called before any conditional logic
   // Temporarily commented out for debugging
@@ -693,7 +693,7 @@ export default function WebGL3DPage({ modelPath }: { modelPath?: string }) {
                           setSelectedModelId(model.id)
                           setModelLoading(true)
                           setModelError(null)
-                          // dragonModelManager.switchModel(model.id, 'user') // temporarily disabled
+                          dragonModelManager.switchModel(model.id, 'user')
                         }}
                         className={`p-3 rounded-lg border transition-colors ${
                           selectedModelId === model.id
@@ -754,9 +754,33 @@ export default function WebGL3DPage({ modelPath }: { modelPath?: string }) {
                   <h4 className="text-lg font-semibold text-green-400 mb-3">3D Dragon Renderer</h4>
                   <div className="relative h-96 bg-black/30 rounded-lg overflow-hidden">
                     {selectedModelId && (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        DragonModelManager temporarily disabled
-                      </div>
+                      <DragonModelManager
+                        initialModelId={selectedModelId}
+                        voiceState={voiceState}
+                        size={dragonSize}
+                        enableAnimations={qualitySettings.animations}
+                        className="w-full h-full"
+                        enablePreloading={true}
+                        enableAutoFallback={true}
+                        performanceThreshold={30}
+                        onModelSwitch={(from, to) => {
+                          console.log(`Switched from ${from.displayName} to ${to.displayName}`)
+                        }}
+                        onLoadProgress={(progress, modelId) => {
+                          console.log(`Loading ${modelId}: ${progress}%`)
+                          if (progress === 100) {
+                            setModelLoading(false)
+                          }
+                        }}
+                        onError={(error, modelId) => {
+                          console.error(`Error loading model ${modelId}:`, error)
+                          setModelError(error.message)
+                          setModelLoading(false)
+                        }}
+                        onFallback={(fromModelId, toModelId) => {
+                          console.log(`Falling back from ${fromModelId} to ${toModelId}`)
+                        }}
+                      />
                     )}
                     
                     {/* Overlay Controls */}

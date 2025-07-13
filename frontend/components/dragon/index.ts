@@ -13,9 +13,8 @@ export { DragonFallbackTest } from './DragonFallbackTest'
 // Enhanced GLTF loading components
 export { DragonGLTFLoader } from './DragonGLTFLoader'
 export { GLTFErrorBoundary, DragonGLTFErrorBoundary } from './GLTFErrorBoundary'
-// Temporarily commented out due to TypeScript errors
-// export { DragonModelManager, DEFAULT_MODELS } from './DragonModelManager'
-// export type { ModelConfig, ModelSwitchRequest } from './DragonModelManager'
+export { DragonModelManager, DEFAULT_MODELS, useDragonModelManager } from './DragonModelManager'
+export type { ModelConfig, ModelSwitchRequest } from './DragonModelManager'
 
 // Re-export for backwards compatibility
 export { DragonRenderer as default } from './DragonRenderer'

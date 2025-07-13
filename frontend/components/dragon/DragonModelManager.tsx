@@ -296,6 +296,13 @@ class ModelPreloader {
     }
   }
   
+  /**
+   * Public method to validate a model path
+   */
+  async validateModelPath(path: string) {
+    return this.validator.validateModel(path)
+  }
+  
   async preloadModel(model: ModelConfig): Promise<void> {
     if (this.preloadedModels.has(model.id)) {
       return
@@ -519,6 +526,7 @@ class ModelPreloader {
     // Load models progressively from start to target quality
     for (let i = startIndex; i <= targetIndex; i++) {
       const quality = qualityOrder[i]
+      if (!quality) continue // Type guard for TypeScript
       const model = Object.values(DEFAULT_MODELS).find(m => m.id === modelId && m.quality === quality)
       
       if (model) {
@@ -712,22 +720,25 @@ class ModelPreloader {
     if (validModels.length > 0) {
       logger.info('✅ Available models:', validModels.map(([modelId]) => {
         const model = DEFAULT_MODELS[modelId]
-        return {
+        return model ? {
           id: modelId,
           displayName: model.displayName,
           quality: model.quality,
           memoryMB: model.memoryUsageMB,
           animations: model.supportsAnimations
-        }
+        } : { id: modelId }
       }))
     }
     
     // Warn about invalid models
     if (invalidModels.length > 0) {
-      logger.warn('❌ Unavailable models:', invalidModels.map(([modelId]) => ({
-        id: modelId,
-        path: DEFAULT_MODELS[modelId].path
-      })))
+      logger.warn('❌ Unavailable models:', invalidModels.map(([modelId]) => {
+        const model = DEFAULT_MODELS[modelId]
+        return {
+          id: modelId,
+          path: model?.path || 'unknown'
+        }
+      }))
     }
     
     // Create fallback chains for all models
@@ -907,7 +918,7 @@ const useModelManager = (initialModelId: string, options: {
       
       try {
         // Quick validation check
-        const validation = await preloader.validator.validateModel(candidate.path)
+        const validation = await preloader.validateModelPath(candidate.path)
         if (validation.exists) {
           logger.info(`Fallback successful: ${fromModelId} → ${candidateId}`, { 
             reason, 
@@ -1033,13 +1044,15 @@ export const DragonModelManager: React.FC<DragonModelManagerProps> = ({
         logger.info(`Network/CORS error detected for ${state.currentModelId}, validating model availability`)
         
         try {
-          const validation = await preloader.validator.validateModel(currentModel.path)
-          if (!validation.exists) {
-            logger.warn(`Model validation failed after network error: ${validation.error}`)
-            await handleFallback(state.currentModelId, `Network error + validation failed: ${error.message}`)
-          } else {
-            logger.info(`Model exists but had temporary network issue, retrying...`)
-            // Could implement retry logic here if needed
+          if (currentModel) {
+            const validation = await preloader.validateModelPath(currentModel.path)
+            if (!validation.exists) {
+              logger.warn(`Model validation failed after network error: ${validation.error}`)
+              await handleFallback(state.currentModelId, `Network error + validation failed: ${error.message}`)
+            } else {
+              logger.info(`Model exists but had temporary network issue, retrying...`)
+              // Could implement retry logic here if needed
+            }
           }
         } catch (validationError) {
           logger.error(`Validation failed for ${state.currentModelId}:`, validationError)
