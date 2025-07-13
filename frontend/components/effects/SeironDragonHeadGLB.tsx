@@ -2,8 +2,7 @@
 
 import React, { useRef, useEffect, useState, Suspense } from 'react'
 import { useFrame, useLoader } from '@react-three/fiber'
-import { GLTFLoader } from 'three-stdlib'
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
+import { GLTFLoader, DRACOLoader } from 'three-stdlib'
 import * as THREE from 'three'
 import { useMouseTracking } from '@/hooks/useMouseTracking'
 import { Html } from '@react-three/drei'
