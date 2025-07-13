@@ -13,6 +13,12 @@ const StormLightningEffect: React.FC = () => {
         <div className="bolt-6"></div>
         <div className="bolt-7"></div>
         <div className="bolt-8"></div>
+        <div className="bolt-9"></div>
+        <div className="bolt-10"></div>
+        <div className="bolt-11"></div>
+        <div className="bolt-12"></div>
+        <div className="bolt-13"></div>
+        <div className="bolt-14"></div>
       </div>
     </div>
   )

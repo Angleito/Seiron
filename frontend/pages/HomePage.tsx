@@ -127,6 +127,12 @@ export default function HomePage() {
             <div className="lightning-bolt-1"></div>
             <div className="lightning-bolt-2"></div>
             <div className="lightning-bolt-3"></div>
+            <div className="lightning-bolt-4"></div>
+            <div className="lightning-bolt-5"></div>
+            <div className="lightning-bolt-6"></div>
+            <div className="lightning-bolt-7"></div>
+            <div className="lightning-bolt-8"></div>
+            <div className="lightning-bolt-9"></div>
           </div>
           
           {/* Enhanced Lightning Effect */}
