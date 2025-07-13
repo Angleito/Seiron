@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useEffect, useState, Suspense } from 'react'
+import React, { useRef, useEffect, useState, Suspense, useCallback } from 'react'
 import { useFrame, useLoader } from '@react-three/fiber'
 import { GLTFLoader, DRACOLoader } from 'three-stdlib'
 import * as THREE from 'three'
@@ -12,11 +12,13 @@ interface SeironDragonHeadGLBProps {
   lightningActive?: boolean
   intensity?: number
   onLoadError?: (error: Error) => void
+  onError?: (error: Error) => void
+  modelUrl?: string
 }
 
 // Error boundary for model loading
 class ModelErrorBoundary extends React.Component<
-  { children: React.ReactNode; fallback?: React.ReactNode },
+  { children: React.ReactNode; fallback?: React.ReactNode; onError?: () => void },
   { hasError: boolean; error?: Error }
 > {
   constructor(props: any) {
@@ -31,6 +33,7 @@ class ModelErrorBoundary extends React.Component<
 
   override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('Model loading error details:', { error, errorInfo })
+    this.props.onError?.()
   }
 
   override render() {
@@ -65,19 +68,18 @@ function LoadingFallback() {
   )
 }
 
-// Inner component that actually loads the model
-function SeironDragonHeadGLBInner({
+// Inner component that actually loads the model - memoized to prevent infinite re-renders
+const SeironDragonHeadGLBInner = React.memo(function SeironDragonHeadGLBInner({
   enableEyeTracking = true,
   lightningActive = false,
   intensity = 1,
-  onLoadError
+  onLoadError,
+  modelUrl = '/models/seiron_animated.gltf'
 }: SeironDragonHeadGLBProps) {
   const groupRef = useRef<THREE.Group>(null)
   const modelRef = useRef<THREE.Group>(null)
   const initialSetupDone = useRef(false)
   
-  // Load the GLB model - simplified without cache busting
-  const modelUrl = `/models/dragon_head_optimized.glb`
   console.log('Attempting to load model from:', modelUrl)
   console.log('Full URL would be:', window.location.origin + modelUrl)
   
@@ -95,11 +97,7 @@ function SeironDragonHeadGLBInner({
   const gltf = useLoader(
     GLTFLoader, 
     modelUrl,
-    (loader) => {  // Configure DRACOLoader for decompression
-      const draco = new DRACOLoader()
-      draco.setDecoderPath('/draco/')  // Path to decoder files in public/draco/
-      loader.setDRACOLoader(draco)
-    },
+    undefined, // No DRACO loader for standard GLTF
     (progress) => {  // Progress handler
       console.log('Loading progress event:', progress)
       if (progress && typeof progress === 'object' && 'loaded' in progress && 'total' in progress) {
@@ -215,7 +213,7 @@ function SeironDragonHeadGLBInner({
 
 
   return (
-    <group ref={groupRef} position={[0, 1, -2]} scale={0}>
+    <group ref={groupRef} position={[0, -10, -32]} scale={0}>
       <group ref={modelRef}>
         {/* Model will be added here programmatically */}
       </group>
@@ -247,20 +245,35 @@ function SeironDragonHeadGLBInner({
       />
     </group>
   )
-}
+})
 
-// Main component with error boundary and suspense
-export function SeironDragonHeadGLB(props: SeironDragonHeadGLBProps) {
-  useEffect(() => {
-    // Log component mount and model path
-    console.log('SeironDragonHeadGLB mounted')
-    console.log('Model path:', '/models/dragon_head_optimized.glb')
-    console.log('Current URL:', window.location.href)
-    console.log('Base URL:', document.baseURI)
-  }, [])
+// Error recovery wrapper component
+function SeironDragonHeadGLBWithFallback(props: SeironDragonHeadGLBProps) {
+  const [currentModelIndex, setCurrentModelIndex] = useState(0)
+  const [hasError, setHasError] = useState(false)
+  
+  const modelFallbacks = [
+    '/models/seiron_animated.gltf',
+    '/models/seiron_animated_optimized.gltf', 
+    '/models/seiron.glb',
+    '/models/dragon_head.glb'
+  ]
 
-  return (
-    <ModelErrorBoundary fallback={
+  const handleError = useCallback(() => {
+    const nextIndex = currentModelIndex + 1
+    if (nextIndex < modelFallbacks.length) {
+      console.log(`Model failed, trying fallback: ${modelFallbacks[nextIndex]}`)
+      setCurrentModelIndex(nextIndex)
+      setHasError(false) // Reset error state to try again
+    } else {
+      console.error('All model fallbacks failed')
+      setHasError(true)
+      props.onError?.(new Error('All model loading attempts failed'))
+    }
+  }, [currentModelIndex, modelFallbacks, props])
+
+  if (hasError) {
+    return (
       <Html center>
         <div style={{ 
           color: 'white', 
@@ -269,13 +282,46 @@ export function SeironDragonHeadGLB(props: SeironDragonHeadGLBProps) {
           padding: '16px',
           borderRadius: '8px'
         }}>
-          Model loading error
+          All models failed to load
         </div>
       </Html>
-    }>
+    )
+  }
+
+  return (
+    <ModelErrorBoundary fallback={
+      <Html center>
+        <div style={{ 
+          color: 'white', 
+          fontSize: '14px',
+          background: 'rgba(255,165,0,0.8)',
+          padding: '16px',
+          borderRadius: '8px'
+        }}>
+          Loading fallback model...
+        </div>
+      </Html>
+    } onError={handleError}>
       <Suspense fallback={<LoadingFallback />}>
-        <SeironDragonHeadGLBInner {...props} />
+        <SeironDragonHeadGLBInner 
+          {...props} 
+          key={`model-${currentModelIndex}`}
+          modelUrl={modelFallbacks[currentModelIndex]}
+        />
       </Suspense>
     </ModelErrorBoundary>
   )
+}
+
+// Main component with error boundary and suspense
+export function SeironDragonHeadGLB(props: SeironDragonHeadGLBProps) {
+  useEffect(() => {
+    // Log component mount and model path
+    console.log('SeironDragonHeadGLB mounted')
+    console.log('Model path:', '/models/seiron_animated.gltf')
+    console.log('Current URL:', window.location.href)
+    console.log('Base URL:', document.baseURI)
+  }, [])
+
+  return <SeironDragonHeadGLBWithFallback {...props} />
 }
