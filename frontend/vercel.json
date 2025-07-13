@@ -12,11 +12,11 @@
   },
   "rewrites": [
     {
-      "source": "/models/(.*)",
-      "destination": "/models/$1"
+      "source": "/models/:path*",
+      "destination": "/models/:path*"
     },
     {
-      "source": "/((?!api|assets|images|models|fonts|favicon.ico|seiron.png|test.html|debug-config.html|debug-models.html|test-static.txt).*)",
+      "source": "/((?!api|assets|images|models|fonts|favicon.ico|seiron.png|test.html|debug-config.html|debug-models.html|test-static.txt|test-model-loading.html).*)",
       "destination": "/index.html"
     }
   ],
@@ -115,5 +115,11 @@
   ],
   "env": {
     "NODE_ENV": "production"
-  }
+  },
+  "includeFiles": [
+    "public/models/**/*.glb",
+    "public/models/**/*.gltf",
+    "public/models/**/*.bin",
+    "public/models/textures/**/*"
+  ]
 }

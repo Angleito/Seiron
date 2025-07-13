@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Loading Test - Seiron</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        h1 { color: #ff6600; }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .status { margin: 10px 0; }
+        .success { color: #4caf50; }
+        .error { color: #f44336; }
+        .info { color: #2196f3; }
+        .warning { color: #ff9800; }
+        pre {
+            background: #333;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        #canvas-container {
+            width: 100%;
+            height: 400px;
+            background: #000;
+            border: 2px solid #ff6600;
+            margin: 20px 0;
+            position: relative;
+        }
+        #log {
+            background: #111;
+            padding: 15px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Seiron Model Loading Test</h1>
+    
+    <div class="test-section">
+        <h2>Environment Information</h2>
+        <div id="env-info"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Model Loading Tests</h2>
+        <div id="test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Three.js Model Loading</h2>
+        <div id="canvas-container"></div>
+        <button onclick="loadWithThreeJS()">Load Model with Three.js</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Debug Log</h2>
+        <div id="log"></div>
+    </div>
+
+    <script src="https://unpkg.com/three@0.157.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.157.0/examples/js/loaders/GLTFLoader.js"></script>
+    
+    <script>
+        const log = (message, type = 'info') => {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toISOString();
+            const entry = document.createElement('div');
+            entry.className = type;
+            entry.innerHTML = `[${timestamp}] ${message}`;
+            logDiv.appendChild(entry);
+            console.log(`[${type}] ${message}`);
+        };
+
+        // Environment info
+        function showEnvironmentInfo() {
+            const info = {
+                'Current URL': window.location.href,
+                'Origin': window.location.origin,
+                'Protocol': window.location.protocol,
+                'Host': window.location.host,
+                'Pathname': window.location.pathname,
+                'User Agent': navigator.userAgent,
+                'Online': navigator.onLine ? 'Yes' : 'No'
+            };
+            
+            const envDiv = document.getElementById('env-info');
+            for (const [key, value] of Object.entries(info)) {
+                envDiv.innerHTML += `<div class="status"><strong>${key}:</strong> ${value}</div>`;
+            }
+        }
+
+        // Test model loading with different methods
+        async function runTests() {
+            const resultsDiv = document.getElementById('test-results');
+            const models = [
+                '/models/seiron_head.glb',
+                '/models/seiron.glb',
+                '/models/dragon_head.glb'
+            ];
+
+            for (const modelPath of models) {
+                log(`Testing model: ${modelPath}`);
+                
+                try {
+                    // Test 1: Basic fetch
+                    const fetchStart = Date.now();
+                    const response = await fetch(modelPath);
+                    const fetchTime = Date.now() - fetchStart;
+                    
+                    if (response.ok) {
+                        const size = response.headers.get('content-length');
+                        const type = response.headers.get('content-type');
+                        resultsDiv.innerHTML += `
+                            <div class="status success">
+                                ✓ ${modelPath} - Status: ${response.status}, Size: ${size} bytes, Type: ${type}, Time: ${fetchTime}ms
+                            </div>`;
+                        log(`Successfully fetched ${modelPath} (${size} bytes) in ${fetchTime}ms`, 'success');
+                        
+                        // Test 2: Verify content
+                        const blob = await response.blob();
+                        if (blob.size > 0) {
+                            log(`Blob size verified: ${blob.size} bytes`, 'success');
+                        } else {
+                            log(`Warning: Blob size is 0`, 'warning');
+                        }
+                    } else {
+                        resultsDiv.innerHTML += `
+                            <div class="status error">
+                                ✗ ${modelPath} - Status: ${response.status} ${response.statusText}
+                            </div>`;
+                        log(`Failed to fetch ${modelPath}: ${response.status} ${response.statusText}`, 'error');
+                    }
+                } catch (error) {
+                    resultsDiv.innerHTML += `
+                        <div class="status error">
+                            ✗ ${modelPath} - Error: ${error.message}
+                        </div>`;
+                    log(`Error testing ${modelPath}: ${error.message}`, 'error');
+                }
+            }
+
+            // Test absolute URL
+            const absoluteUrl = `${window.location.origin}/models/seiron_head.glb`;
+            log(`Testing absolute URL: ${absoluteUrl}`);
+            try {
+                const response = await fetch(absoluteUrl);
+                if (response.ok) {
+                    log(`Absolute URL fetch successful`, 'success');
+                } else {
+                    log(`Absolute URL fetch failed: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`Absolute URL fetch error: ${error.message}`, 'error');
+            }
+        }
+
+        // Three.js loading test
+        function loadWithThreeJS() {
+            const container = document.getElementById('canvas-container');
+            container.innerHTML = ''; // Clear previous content
+
+            log('Initializing Three.js scene...');
+            
+            // Scene setup
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            directionalLight.position.set(0, 1, 1);
+            scene.add(directionalLight);
+
+            camera.position.z = 5;
+
+            // Load model
+            const loader = new THREE.GLTFLoader();
+            const modelPath = '/models/seiron_head.glb';
+            
+            log(`Loading model with Three.js GLTFLoader: ${modelPath}`);
+            
+            loader.load(
+                modelPath,
+                (gltf) => {
+                    log('Model loaded successfully!', 'success');
+                    log(`Scene children: ${gltf.scene.children.length}`, 'info');
+                    
+                    scene.add(gltf.scene);
+                    
+                    // Animation loop
+                    function animate() {
+                        requestAnimationFrame(animate);
+                        gltf.scene.rotation.y += 0.01;
+                        renderer.render(scene, camera);
+                    }
+                    animate();
+                },
+                (progress) => {
+                    const percent = (progress.loaded / progress.total * 100).toFixed(2);
+                    log(`Loading progress: ${percent}%`);
+                },
+                (error) => {
+                    log(`Three.js loading error: ${error.message || error}`, 'error');
+                    console.error('Full error:', error);
+                }
+            );
+        }
+
+        // Run tests on load
+        window.onload = () => {
+            showEnvironmentInfo();
+            runTests();
+        };
+    </script>
+</body>
+</html>

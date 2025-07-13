@@ -1,6 +1,5 @@
+import React, { Suspense, lazy, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
-import React, { Suspense, lazy } from 'react'
 import DragonHead3D from '@/components/effects/DragonHead3D'
 
 // Lazy load the StormLightningEffect component
@@ -44,14 +43,12 @@ type SummoningPhase = 'idle' | 'darkening' | 'storm' | 'lightning' | 'arrival'
 
 export default function HomePage() {
   const [powerLevel, setPowerLevel] = useState(0)
-  const [isLoaded, setIsLoaded] = useState(false)
   const [isSummoning, setIsSummoning] = useState(false)
   const [summoningPhase, setSummoningPhase] = useState<SummoningPhase>('idle')
   const navigate = useNavigate()
 
   useEffect(() => {
     // Animate power level on mount
-    setIsLoaded(true)
     const targetPower = 32.2
     const increment = targetPower / 30
     let currentPower = 0
@@ -79,7 +76,7 @@ export default function HomePage() {
     setSummoningPhase('darkening')
     
     // Animation sequence with proper timing
-    const timeouts: NodeJS.Timeout[] = []
+    const timeouts: ReturnType<typeof setTimeout>[] = []
     
     // Phase 1: Darkening (0-500ms)
     timeouts.push(setTimeout(() => {
@@ -251,8 +248,8 @@ export default function HomePage() {
             <button
               onClick={handleSummon}
               className="dbz-button-primary text-xl px-12 py-4 mb-4 dbz-screen-shake-on-hover"
-              onMouseEnter={(e) => e.currentTarget.classList.add('dbz-screen-shake')}
-              onAnimationEnd={(e) => e.currentTarget.classList.remove('dbz-screen-shake')}
+              onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => e.currentTarget.classList.add('dbz-screen-shake')}
+              onAnimationEnd={(e: React.AnimationEvent<HTMLButtonElement>) => e.currentTarget.classList.remove('dbz-screen-shake')}
             >
               🚀 START YOUR JOURNEY
             </button>

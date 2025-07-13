@@ -1,29 +1,109 @@
 'use client'
 
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState, Suspense } from 'react'
 import { useFrame, useLoader } from '@react-three/fiber'
 import { GLTFLoader } from 'three-stdlib'
 import * as THREE from 'three'
 import { useMouseTracking } from '@/hooks/useMouseTracking'
+import { Html } from '@react-three/drei'
+import { FallbackDragonHead } from './FallbackDragonHead'
 
 interface SeironDragonHeadGLBProps {
   enableEyeTracking?: boolean
   lightningActive?: boolean
   intensity?: number
+  onLoadError?: (error: Error) => void
 }
 
-// Seiron Dragon Head using actual GLB model
-export function SeironDragonHeadGLB({
+// Error boundary for model loading
+class ModelErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallback?: React.ReactNode },
+  { hasError: boolean; error?: Error }
+> {
+  constructor(props: any) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    console.error('Model loading error caught by boundary:', error)
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Model loading error details:', { error, errorInfo })
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || <Html><div>Failed to load 3D model</div></Html>
+    }
+    return this.props.children
+  }
+}
+
+// Loading component
+function LoadingFallback() {
+  return (
+    <>
+      {/* Simple loading indicator */}
+      <mesh>
+        <boxGeometry args={[0.5, 0.5, 0.5]} />
+        <meshStandardMaterial color="#ff6600" emissive="#ff3300" emissiveIntensity={0.5} />
+      </mesh>
+      <Html center>
+        <div style={{ 
+          color: 'white', 
+          fontSize: '12px',
+          background: 'rgba(0,0,0,0.7)',
+          padding: '8px 16px',
+          borderRadius: '4px'
+        }}>
+          Summoning dragon...
+        </div>
+      </Html>
+    </>
+  )
+}
+
+// Inner component that actually loads the model
+function SeironDragonHeadGLBInner({
   enableEyeTracking = true,
   lightningActive = false,
-  intensity = 1
+  intensity = 1,
+  onLoadError
 }: SeironDragonHeadGLBProps) {
   const groupRef = useRef<THREE.Group>(null)
   const modelRef = useRef<THREE.Group>(null)
   const initialSetupDone = useRef(false)
+  const [loadError, setLoadError] = useState<Error | null>(null)
   
-  // Load the GLB model
-  const gltf = useLoader(GLTFLoader, '/models/seiron_head.glb')
+  // Load the GLB model with error handling
+  let gltf
+  try {
+    // Add timestamp to URL to bypass cache issues
+    const modelUrl = `/models/seiron_head.glb?t=${Date.now()}`
+    console.log('Attempting to load model from:', modelUrl)
+    
+    gltf = useLoader(
+      GLTFLoader, 
+      modelUrl,
+      undefined,
+      (error) => {
+        console.error('GLTFLoader error:', error)
+        const err = new Error(`Failed to load model: ${error}`)
+        setLoadError(err)
+        onLoadError?.(err)
+      }
+    )
+    
+    console.log('Model loaded successfully:', gltf)
+  } catch (error) {
+    console.error('Error in useLoader:', error)
+    const err = error instanceof Error ? error : new Error('Unknown loading error')
+    setLoadError(err)
+    onLoadError?.(err)
+  }
   
   // Mouse tracking for eye movement
   const { mousePosition, isMouseActive } = useMouseTracking(undefined, {
@@ -127,6 +207,25 @@ export function SeironDragonHeadGLB({
     }
   })
 
+  // Show error if model failed to load - use fallback
+  if (loadError) {
+    console.warn('Using fallback dragon head due to model loading error:', loadError)
+    return (
+      <>
+        <FallbackDragonHead 
+          enableEyeTracking={enableEyeTracking}
+          lightningActive={lightningActive}
+          intensity={intensity}
+        />
+        <Html center position={[0, -3, 0]}>
+          <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '10px', textAlign: 'center' }}>
+            <p>Using fallback model</p>
+          </div>
+        </Html>
+      </>
+    )
+  }
+
   return (
     <group ref={groupRef} position={[0, 1, -2]} scale={0}>
       <group ref={modelRef}>
@@ -159,5 +258,30 @@ export function SeironDragonHeadGLB({
         castShadow
       />
     </group>
+  )
+}
+
+// Main component with error boundary and suspense
+export function SeironDragonHeadGLB(props: SeironDragonHeadGLBProps) {
+  useEffect(() => {
+    // Log component mount and model path
+    console.log('SeironDragonHeadGLB mounted')
+    console.log('Model path:', '/models/seiron_head.glb')
+    console.log('Current URL:', window.location.href)
+    console.log('Base URL:', document.baseURI)
+  }, [])
+
+  return (
+    <ModelErrorBoundary fallback={
+      <FallbackDragonHead 
+        enableEyeTracking={props.enableEyeTracking}
+        lightningActive={props.lightningActive}
+        intensity={props.intensity}
+      />
+    }>
+      <Suspense fallback={<LoadingFallback />}>
+        <SeironDragonHeadGLBInner {...props} />
+      </Suspense>
+    </ModelErrorBoundary>
   )
 }

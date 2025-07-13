@@ -20,7 +20,9 @@ const OPTIONAL_MODELS = [
   'seiron_animated.gltf',    // May have deployment issues
   'seiron_animated_lod_high.gltf',     // High-quality LOD model
   'dragon_head.glb',                   // Dragon head model
-  'dragon_head_optimized.glb'          // Optimized dragon head
+  'dragon_head_optimized.glb',         // Optimized dragon head
+  'seiron_head.glb',                   // Seiron head model
+  'seiron_optimized.glb'               // Optimized seiron model
 ];
 
 // Required texture files
