@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useState, Suspense } from 'react'
 import { useFrame, useLoader } from '@react-three/fiber'
 import { GLTFLoader } from 'three-stdlib'
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
 import * as THREE from 'three'
 import { useMouseTracking } from '@/hooks/useMouseTracking'
 import { Html } from '@react-three/drei'
@@ -95,38 +96,17 @@ function SeironDragonHeadGLBInner({
   const gltf = useLoader(
     GLTFLoader, 
     modelUrl,
-    (progress) => {
+    (loader) => {  // Configure DRACOLoader for decompression
+      const draco = new DRACOLoader()
+      draco.setDecoderPath('/draco/')  // Path to decoder files in public/draco/
+      loader.setDRACOLoader(draco)
+    },
+    (progress) => {  // Progress handler
       console.log('Loading progress event:', progress)
       if (progress && typeof progress === 'object' && 'loaded' in progress && 'total' in progress) {
         const percentage = ((progress as any).loaded / (progress as any).total * 100).toFixed(1)
         console.log('Loading progress:', percentage + '%')
       }
-    },
-    (error) => {
-      console.error('GLTFLoader error in onError callback:', error)
-      console.error('Error type:', typeof error)
-      
-      // Handle different error types
-      let errorMessage = 'Unknown error'
-      if (error instanceof Error) {
-        errorMessage = error.message
-        console.error('Error message:', error.message)
-        console.error('Error stack:', error.stack)
-      } else if (error instanceof ProgressEvent) {
-        errorMessage = `Failed to load resource: ${error.type}`
-        console.error('ProgressEvent type:', error.type)
-        console.error('ProgressEvent target:', error.target)
-      } else if (typeof error === 'string') {
-        errorMessage = error
-      } else {
-        errorMessage = String(error)
-      }
-      
-      const err = new Error(`Failed to load dragon model from ${modelUrl}: ${errorMessage}`)
-      onLoadError?.(err)
-      
-      // Don't throw here - let the error boundary handle it
-      return
     }
   )
   
