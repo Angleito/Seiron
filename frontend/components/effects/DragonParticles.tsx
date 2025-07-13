@@ -85,16 +85,18 @@ export function DragonParticles({
     particlesRef.current.rotation.y = time * 0.1
     
     // Update particle positions for swirling effect
-    const positions = particlesRef.current.geometry.attributes.position
-    const sizes = particlesRef.current.geometry.attributes.size
+    const positions = particlesRef.current.geometry.attributes.position as THREE.BufferAttribute
+    const sizes = particlesRef.current.geometry.attributes.size as THREE.BufferAttribute
+    
+    if (!positions || !sizes) return
     
     for (let i = 0; i < count; i++) {
       const i3 = i * 3
       
       // Get current position
-      const x = positions.array[i3]
-      const y = positions.array[i3 + 1]
-      const z = positions.array[i3 + 2]
+      const x = positions.array[i3] as number
+      const y = positions.array[i3 + 1] as number
+      const z = positions.array[i3 + 2] as number
       
       // Calculate distance from center
       const distance = Math.sqrt(x * x + y * y + z * z)
@@ -104,15 +106,15 @@ export function DragonParticles({
       const spiralRadius = distance + Math.sin(angle) * 0.2
       
       // Update position with swirl
-      positions.array[i3] = Math.cos(angle + time) * spiralRadius * Math.sin(i * 0.1 + time * 0.2)
-      positions.array[i3 + 1] = y + Math.sin(time * 2 + i * 0.1) * 0.1
-      positions.array[i3 + 2] = Math.sin(angle + time) * spiralRadius * Math.cos(i * 0.1 + time * 0.2)
+      (positions.array as Float32Array)[i3] = Math.cos(angle + time) * spiralRadius * Math.sin(i * 0.1 + time * 0.2);
+      (positions.array as Float32Array)[i3 + 1] = y + Math.sin(time * 2 + i * 0.1) * 0.1;
+      (positions.array as Float32Array)[i3 + 2] = Math.sin(angle + time) * spiralRadius * Math.cos(i * 0.1 + time * 0.2)
       
       // Pulsing size based on lightning
       if (lightningActive) {
-        sizes.array[i] = (Math.random() * 0.15 + 0.1) * (1 + Math.sin(time * 10) * 0.5)
+        (sizes.array as Float32Array)[i] = (Math.random() * 0.15 + 0.1) * (1 + Math.sin(time * 10) * 0.5)
       } else {
-        sizes.array[i] = (Math.random() * 0.1 + 0.05) * intensity
+        (sizes.array as Float32Array)[i] = (Math.random() * 0.1 + 0.05) * intensity
       }
     }
     
