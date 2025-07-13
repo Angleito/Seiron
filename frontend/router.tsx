@@ -13,8 +13,6 @@ import {
 
 // Lazy load pages for code splitting
 const HomePage = lazy(() => import('./pages/HomePage'))
-const HomePage3D = lazy(() => import('./src/pages/HomePage3D'))
-const SimpleHomePage = lazy(() => import('./src/pages/SimpleHomePage'))
 const DemoPage = lazy(() => import('./pages/DemoPage'))
 const VoiceTestPage = lazy(() => import('./pages/VoiceTestPage'))
 const AgentTestPage = lazy(() => import('./pages/AgentTestPage'))
@@ -131,22 +129,6 @@ export const router = createBrowserRouter([
         element: (
           <PageLoader pageName="Home">
             <HomePage />
-          </PageLoader>
-        ),
-      },
-      {
-        path: 'simple',
-        element: (
-          <PageLoader pageName="Simple Home">
-            <SimpleHomePage />
-          </PageLoader>
-        ),
-      },
-      {
-        path: '3d',
-        element: (
-          <PageLoader pageName="3D Dragon">
-            <HomePage3D />
           </PageLoader>
         ),
       },

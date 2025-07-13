@@ -30,11 +30,11 @@ class ModelErrorBoundary extends React.Component<
     return { hasError: true, error }
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('Model loading error details:', { error, errorInfo })
   }
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       return this.props.fallback || <Html><div>Failed to load 3D model</div></Html>
     }
@@ -79,7 +79,7 @@ function SeironDragonHeadGLBInner({
   const [loadError, setLoadError] = useState<Error | null>(null)
   
   // Load the GLB model with error handling
-  let gltf
+  let gltf: any = null
   try {
     // Add timestamp to URL to bypass cache issues
     const modelUrl = `/models/seiron_head.glb?t=${Date.now()}`
