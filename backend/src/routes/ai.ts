@@ -1,7 +1,9 @@
 import { Router, Request, Response } from 'express';
-import { body, validationResult } from 'express-validator';
+import { body, query, validationResult } from 'express-validator';
 import { pipe } from 'fp-ts/function';
 import * as TE from 'fp-ts/TaskEither';
+import * as E from 'fp-ts/Either';
+import { cacheService } from '../utils/cache';
 
 const router = Router();
 
@@ -187,6 +189,183 @@ Focus on actionable insights for portfolio management.`;
   }
 
   res.json(result);
+});
+
+/**
+ * GET /api/ai/memory/load
+ * Load AI memory for a user session
+ */
+router.get('/memory/load', [
+  query('userId').notEmpty().withMessage('User ID is required'),
+  query('sessionId').notEmpty().withMessage('Session ID is required')
+], async (req: Request, res: Response) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { userId, sessionId } = req.query;
+  const memoryKey = cacheService.generateKey('ai_memory', userId as string, sessionId as string);
+
+  const result = await pipe(
+    cacheService.get<any>(memoryKey),
+    TE.map(memory => {
+      if (!memory) {
+        // Return empty memory structure if none exists
+        return {
+          userId,
+          sessionId,
+          contexts: [],
+          preferences: {},
+          lastUpdated: new Date().toISOString()
+        };
+      }
+      return memory;
+    })
+  )();
+
+  if (E.isLeft(result)) {
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Failed to load memory',
+      details: result.left.message 
+    });
+  }
+
+  res.json({ success: true, data: result.right });
+});
+
+/**
+ * POST /api/ai/memory/save
+ * Save AI memory for a user session
+ */
+router.post('/memory/save', [
+  body('userId').notEmpty().withMessage('User ID is required'),
+  body('sessionId').notEmpty().withMessage('Session ID is required'),
+  body('memory').isObject().withMessage('Memory data is required')
+], async (req: Request, res: Response) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { userId, sessionId, memory } = req.body;
+  const memoryKey = cacheService.generateKey('ai_memory', userId, sessionId);
+  
+  // Add timestamp to memory
+  const memoryWithTimestamp = {
+    ...memory,
+    lastUpdated: new Date().toISOString()
+  };
+
+  // Save with 7 days TTL
+  const result = await cacheService.set(memoryKey, memoryWithTimestamp, 604800)();
+
+  if (E.isLeft(result)) {
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Failed to save memory',
+      details: result.left.message 
+    });
+  }
+
+  res.json({ success: true, message: 'Memory saved successfully' });
+});
+
+/**
+ * PUT /api/ai/memory/update
+ * Update specific fields in AI memory
+ */
+router.put('/memory/update', [
+  body('userId').notEmpty().withMessage('User ID is required'),
+  body('sessionId').notEmpty().withMessage('Session ID is required'),
+  body('updates').isObject().withMessage('Updates are required')
+], async (req: Request, res: Response) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { userId, sessionId, updates } = req.body;
+  const memoryKey = cacheService.generateKey('ai_memory', userId, sessionId);
+
+  const result = await pipe(
+    cacheService.get<any>(memoryKey),
+    TE.chain(existingMemory => {
+      const updatedMemory = {
+        ...(existingMemory || { userId, sessionId, contexts: [], preferences: {} }),
+        ...updates,
+        lastUpdated: new Date().toISOString()
+      };
+      return cacheService.set(memoryKey, updatedMemory, 604800);
+    })
+  )();
+
+  if (E.isLeft(result)) {
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Failed to update memory',
+      details: result.left.message 
+    });
+  }
+
+  res.json({ success: true, message: 'Memory updated successfully' });
+});
+
+/**
+ * DELETE /api/ai/memory/delete
+ * Delete AI memory for a user session
+ */
+router.delete('/memory/delete', [
+  body('userId').notEmpty().withMessage('User ID is required'),
+  body('sessionId').notEmpty().withMessage('Session ID is required')
+], async (req: Request, res: Response) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { userId, sessionId } = req.body;
+  const memoryKey = cacheService.generateKey('ai_memory', userId, sessionId);
+
+  const result = await cacheService.del(memoryKey)();
+
+  if (E.isLeft(result)) {
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Failed to delete memory',
+      details: result.left.message 
+    });
+  }
+
+  res.json({ success: true, message: 'Memory deleted successfully' });
+});
+
+/**
+ * POST /api/ai/memory/search
+ * Search through AI memories
+ */
+router.post('/memory/search', [
+  body('userId').notEmpty().withMessage('User ID is required'),
+  body('query').notEmpty().withMessage('Search query is required')
+], async (req: Request, res: Response) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { userId, query: searchQuery } = req.body;
+  
+  // For now, return a simple response
+  // In a production system, this would search across all user sessions
+  res.json({ 
+    success: true, 
+    data: {
+      results: [],
+      query: searchQuery,
+      message: 'Memory search functionality is being implemented'
+    }
+  });
 });
 
 export { router as aiRouter };
