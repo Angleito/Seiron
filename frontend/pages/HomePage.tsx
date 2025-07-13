@@ -123,6 +123,7 @@ export default function HomePage() {
       {isSummoning && (
         <div className={`summoning-overlay active summoning-${summoningPhase}`}>
           <div className="background-transition"></div>
+          <div className="background-transition-overlay"></div>
           
           {/* Lightning Effects */}
           <div className="lightning-container">

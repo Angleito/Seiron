@@ -37,7 +37,19 @@
 
 @keyframes background-darken {
   0% {
-    background: var(--dbz-space-gradient);
+    background: linear-gradient(135deg, #000428 0%, #004e92 100%);
+  }
+  30% {
+    background: linear-gradient(135deg, #000428 0%, #003366 100%);
+  }
+  50% {
+    background: linear-gradient(135deg, #0a0012 0%, #2a0033 100%);
+  }
+  70% {
+    background: linear-gradient(135deg, #140014 0%, #3a0022 100%);
+  }
+  85% {
+    background: linear-gradient(135deg, #1a0000 0%, #3a0011 100%);
   }
   100% {
     background: linear-gradient(135deg, var(--storm-dark) 0%, var(--storm-crimson) 30%, #220000 100%);
@@ -50,7 +62,34 @@
   left: 0;
   width: 100%;
   height: 100%;
-  animation: background-darken 2s ease-in-out forwards;
+  animation: background-darken 4s ease-in-out forwards;
+}
+
+/* Additional overlay for smoother color transition */
+.background-transition-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, transparent 0%, rgba(26, 0, 0, 0) 100%);
+  animation: overlay-darken 4s ease-in-out forwards;
+  mix-blend-mode: multiply;
+}
+
+@keyframes overlay-darken {
+  0% {
+    background: linear-gradient(135deg, transparent 0%, rgba(26, 0, 0, 0) 100%);
+    opacity: 0;
+  }
+  50% {
+    background: linear-gradient(135deg, rgba(26, 0, 0, 0.3) 0%, rgba(74, 0, 0, 0.3) 100%);
+    opacity: 0.5;
+  }
+  100% {
+    background: linear-gradient(135deg, rgba(26, 0, 0, 0.6) 0%, rgba(74, 0, 0, 0.6) 100%);
+    opacity: 1;
+  }
 }
 
 /* ========================================
@@ -250,11 +289,16 @@
    ======================================== */
 
 .summoning-darkening .background-transition {
-  animation-duration: 1s;
+  animation-duration: 4s;
+  animation-timing-function: ease-out;
 }
 
 .summoning-storm .background-transition {
-  animation-duration: 1.5s;
+  animation-play-state: running;
+}
+
+.summoning-lightning .background-transition {
+  animation-play-state: running;
 }
 
 .summoning-lightning .lightning-container {
