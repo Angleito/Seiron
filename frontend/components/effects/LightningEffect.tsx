@@ -109,11 +109,15 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
     const primaryBranchPoints = [0.3, 0.5, 0.7] // Top, middle, bottom thirds
     
     for (let i = 0; i < numBranches; i++) {
-      const progressPoint = primaryBranchPoints[i % primaryBranchPoints.length] + (Math.random() - 0.5) * 0.1
+      const branchPointIndex = i % primaryBranchPoints.length
+      const baseBranchPoint = primaryBranchPoints[branchPointIndex]
+      if (!baseBranchPoint) continue
+      
+      const progressPoint = baseBranchPoint + (Math.random() - 0.5) * 0.1
       const branchIndex = Math.floor(mainPath.length * progressPoint)
       const branchStart = mainPath[branchIndex]
       
-      if (branchStart) {
+      if (branchStart && branchIndex >= 0 && branchIndex < mainPath.length) {
         // Realistic branching with physics-based angles
         const branchLength = 6 + Math.random() * 12
         const baseAngle = Math.PI * 0.15 + Math.random() * Math.PI * 0.2 // 27-63 degrees
@@ -134,21 +138,25 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
         
         // Add secondary micro-branches (fractal pattern)
         if (Math.random() > 0.6 && branchPath.length > 5) {
-          const microBranchStart = branchPath[Math.floor(branchPath.length * 0.6)]
-          const microLength = 3 + Math.random() * 6
-          const microAngle = angle + (Math.random() - 0.5) * Math.PI * 0.3
+          const microBranchIndex = Math.floor(branchPath.length * 0.6)
+          const microBranchStart = branchPath[microBranchIndex]
           
-          const microEndX = microBranchStart.x + Math.cos(microAngle) * microLength
-          const microEndY = microBranchStart.y + Math.sin(Math.abs(microAngle)) * microLength * 0.6
-          
-          const microSegments = 4 + Math.floor(Math.random() * 4)
-          const microPath = generateJaggedPath(microBranchStart.x, microBranchStart.y, microEndX, microEndY, microSegments)
-          
-          branches.push({
-            points: microPath,
-            width: 0.05 + Math.random() * 0.08, // Extremely thin micro-branches
-            opacity: 0.3 + Math.random() * 0.3
-          })
+          if (microBranchStart && microBranchIndex < branchPath.length) {
+            const microLength = 3 + Math.random() * 6
+            const microAngle = angle + (Math.random() - 0.5) * Math.PI * 0.3
+            
+            const microEndX = microBranchStart.x + Math.cos(microAngle) * microLength
+            const microEndY = microBranchStart.y + Math.sin(Math.abs(microAngle)) * microLength * 0.6
+            
+            const microSegments = 4 + Math.floor(Math.random() * 4)
+            const microPath = generateJaggedPath(microBranchStart.x, microBranchStart.y, microEndX, microEndY, microSegments)
+            
+            branches.push({
+              points: microPath,
+              width: 0.05 + Math.random() * 0.08, // Extremely thin micro-branches
+              opacity: 0.3 + Math.random() * 0.3
+            })
+          }
         }
       }
     }
