@@ -105,10 +105,24 @@ function SeironDragonHeadGLBInner({
     (error) => {
       console.error('GLTFLoader error in onError callback:', error)
       console.error('Error type:', typeof error)
-      console.error('Error message:', error?.message || 'No message')
-      console.error('Error stack:', error?.stack || 'No stack')
       
-      const err = new Error(`Failed to load dragon model from ${modelUrl}: ${error?.message || error}`)
+      // Handle different error types
+      let errorMessage = 'Unknown error'
+      if (error instanceof Error) {
+        errorMessage = error.message
+        console.error('Error message:', error.message)
+        console.error('Error stack:', error.stack)
+      } else if (error instanceof ProgressEvent) {
+        errorMessage = `Failed to load resource: ${error.type}`
+        console.error('ProgressEvent type:', error.type)
+        console.error('ProgressEvent target:', error.target)
+      } else if (typeof error === 'string') {
+        errorMessage = error
+      } else {
+        errorMessage = String(error)
+      }
+      
+      const err = new Error(`Failed to load dragon model from ${modelUrl}: ${errorMessage}`)
       onLoadError?.(err)
       
       // Don't throw here - let the error boundary handle it
