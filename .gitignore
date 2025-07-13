@@ -143,6 +143,31 @@ pnpm-lock.yaml
 *.bak
 *.backup
 *.orig
+*.backup.*
+*.debug.*
+
+# Diagnostic files
+*-diagnostic-report-*.json
+*-diagnosis-*.png
+*-diagnosis-*.json
+*-diagnosis-*.txt
+screenshot-*.png
+diagnostic-screenshots/
+*/docker-diagnosis-reports/
+*/test-diagnosis-reports/
+
+# Test/debug files
+test-*.html
+debug-*.html
+
+# Archives
+*.zip
+*.tar.gz
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
 
 # Monitoring and metrics
 .prometheus/
