@@ -75,26 +75,44 @@ function SeironDragonHeadGLBInner({
   const groupRef = useRef<THREE.Group>(null)
   const modelRef = useRef<THREE.Group>(null)
   const initialSetupDone = useRef(false)
-  const [loadError, setLoadError] = useState<Error | null>(null)
   
-  // Load the GLB model
-  const modelUrl = `/models/dragon_head_optimized.glb?t=${Date.now()}`
+  // Load the GLB model - simplified without cache busting
+  const modelUrl = `/models/dragon_head_optimized.glb`
   console.log('Attempting to load model from:', modelUrl)
+  console.log('Full URL would be:', window.location.origin + modelUrl)
+  
+  // Add error boundary logging
+  useEffect(() => {
+    console.log('SeironDragonHeadGLBInner component mounted')
+    console.log('Available models:', [
+      'dragon_head_optimized.glb',
+      'seiron_optimized.glb', 
+      'dragon_head.glb',
+      'seiron_head.glb'
+    ])
+  }, [])
   
   const gltf = useLoader(
     GLTFLoader, 
     modelUrl,
     (progress) => {
+      console.log('Loading progress event:', progress)
       if (progress && typeof progress === 'object' && 'loaded' in progress && 'total' in progress) {
         const percentage = ((progress as any).loaded / (progress as any).total * 100).toFixed(1)
         console.log('Loading progress:', percentage + '%')
       }
     },
     (error) => {
-      console.error('GLTFLoader error:', error)
-      const err = new Error(`Failed to load model: ${error}`)
-      setLoadError(err)
+      console.error('GLTFLoader error in onError callback:', error)
+      console.error('Error type:', typeof error)
+      console.error('Error message:', error?.message || 'No message')
+      console.error('Error stack:', error?.stack || 'No stack')
+      
+      const err = new Error(`Failed to load dragon model from ${modelUrl}: ${error?.message || error}`)
       onLoadError?.(err)
+      
+      // Don't throw here - let the error boundary handle it
+      return
     }
   )
   
@@ -202,25 +220,6 @@ function SeironDragonHeadGLBInner({
     }
   })
 
-  // Show error if model failed to load
-  if (loadError) {
-    console.error('Failed to load GLB model:', loadError)
-    return (
-      <Html center>
-        <div style={{ 
-          color: 'white', 
-          fontSize: '14px',
-          background: 'rgba(255,0,0,0.8)',
-          padding: '16px',
-          borderRadius: '8px',
-          textAlign: 'center'
-        }}>
-          <p>Failed to load dragon model</p>
-          <p style={{ fontSize: '12px', marginTop: '8px' }}>{loadError.message}</p>
-        </div>
-      </Html>
-    )
-  }
 
   return (
     <group ref={groupRef} position={[0, 1, -2]} scale={0}>
