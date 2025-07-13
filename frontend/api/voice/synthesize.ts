@@ -69,7 +69,7 @@ const ratelimit = redis
 
 // Helper function to set CORS headers
 function setCorsHeaders(res: VercelResponse, origin: string | undefined) {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0] || '*'
   
   res.setHeader('Access-Control-Allow-Origin', allowedOrigin)
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
@@ -83,7 +83,7 @@ function getClientIp(req: VercelRequest): string {
   
   if (typeof forwardedFor === 'string') {
     // Parse first IP from comma-separated list
-    return forwardedFor.split(',')[0].trim()
+    return forwardedFor.split(',')[0]?.trim() || '127.0.0.1'
   }
   
   return (req.headers['x-real-ip'] as string) || 
