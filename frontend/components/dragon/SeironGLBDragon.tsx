@@ -9,7 +9,7 @@ import { useWebGLRecovery } from '../../utils/webglRecovery'
 import { WebGLErrorBoundary } from '../error-boundaries/WebGLErrorBoundary'
 import { DragonGLTFLoader } from './DragonGLTFLoader'
 import { DragonGLTFErrorBoundary } from './GLTFErrorBoundary'
-import { DragonModelManager } from './DragonModelManager'
+// import { DragonModelManager } from './DragonModelManager'
 
 // Debug logging for dragon initialization
 console.log('🐉 SeironGLBDragon component loading...')
@@ -951,6 +951,8 @@ const SeironGLBDragonWithWebGLErrorBoundary: React.FC<SeironGLBDragonProps> = (p
 }
 
 // Enhanced component using DragonModelManager for advanced model switching
+// Temporarily commented out due to TypeScript build errors
+/*
 const SeironGLBDragonWithModelManager: React.FC<SeironGLBDragonProps & {
   enableModelManager?: boolean
   initialModelId?: string
@@ -1020,6 +1022,7 @@ const SeironGLBDragonWithModelManager: React.FC<SeironGLBDragonProps & {
     </div>
   )
 }
+*/
 
 // Preload the optimized GLTF models only once
 if (typeof window !== 'undefined') {
@@ -1037,6 +1040,6 @@ export {
   SeironGLBDragon, 
   SeironGLBDragonWithCanvas,
   SeironGLBDragonWithErrorBoundary, 
-  SeironGLBDragonWithWebGLErrorBoundary,
-  SeironGLBDragonWithModelManager
+  SeironGLBDragonWithWebGLErrorBoundary
+  // SeironGLBDragonWithModelManager - commented out due to build errors
 }
