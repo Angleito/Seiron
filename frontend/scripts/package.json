@@ -1,0 +1,24 @@
+{
+  "name": "model-validation-scripts",
+  "version": "1.0.0",
+  "description": "3D model validation scripts for GLTF/GLB files",
+  "main": "validate-models.js",
+  "scripts": {
+    "validate": "node validate-models.js",
+    "install-deps": "npm install"
+  },
+  "dependencies": {
+    "canvas": "^2.11.2",
+    "gl": "^6.0.2"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "gltf",
+    "glb",
+    "3d",
+    "validation",
+    "webgl"
+  ],
+  "author": "",
+  "license": "MIT"
+}

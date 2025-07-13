@@ -10,7 +10,7 @@ import type {
   TokenInfo,
   ReadonlyRecord,
   Either
-} from '../types/index.js';
+} from '../types/index';
 
 /**
  * Chat message types

@@ -79,7 +79,7 @@ export async function waitForTransaction(
   while (Date.now() - startTime < timeout) {
     try {
       const receipt = await provider.getTransactionReceipt(txHash);
-      if (receipt && receipt.confirmations >= confirmations) {
+      if (receipt && (await receipt.confirmations()) >= confirmations) {
         return receipt;
       }
     } catch (error) {

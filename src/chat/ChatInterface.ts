@@ -8,8 +8,8 @@ import type {
   Result,
   ReadonlyRecord,
   Either
-} from '../types/index.js';
-import { pipe, compose, EitherM, Maybe } from '../types/index.js';
+} from '../types/index';
+import { pipe, compose, EitherM, Maybe } from '../types/index';
 import type {
   ChatMessage,
   ChatSession,
@@ -19,25 +19,28 @@ import type {
   ExecutionResult,
   SessionContext,
   UserPreferences,
-  ResponseData
-} from './types.js';
+  ResponseData,
+  PositionData,
+  RateData,
+  PortfolioData
+} from './types';
 import { 
   parseMessage, 
   validateCommand,
   getSuggestions 
-} from './parser.js';
+} from './parser';
 import { 
   executeLendingCommand,
   getLendingHelp 
-} from './commands/LendingCommands.js';
+} from './commands/LendingCommands';
 import { 
   executeLiquidityCommand,
   getLiquidityHelp 
-} from './commands/LiquidityCommands.js';
+} from './commands/LiquidityCommands';
 import { 
   executeInfoCommand,
   getInfoHelp 
-} from './commands/InfoCommands.js';
+} from './commands/InfoCommands';
 
 /**
  * Chat interface configuration
@@ -99,18 +102,16 @@ export async function processMessage(
   // Parse and validate command
   const parsedCommand = pipe(
     parseMessage(message),
-    EitherM.chain(validateCommand)
+    (either) => EitherM.flatMap(either, validateCommand)
   );
   
   // Generate response based on parsing result
-  const response = await pipe(
+  const response = await EitherM.fold(
     parsedCommand,
-    EitherM.fold(
-      // Handle parse error
-      async (error) => generateErrorResponse(error, message),
-      // Execute valid command
-      async (command) => executeCommand(command, updatedSession.context)
-    )
+    // Handle parse error
+    async (error) => generateErrorResponse(error, message),
+    // Execute valid command
+    async (command) => executeCommand(command, updatedSession.context)
   );
   
   // Add assistant response to session
@@ -212,12 +213,24 @@ function formatExecutionResult(
       };
       
     case 'show_positions':
+      return {
+        type: 'data',
+        content: result.message,
+        data: result.data ? formatPositionResponseData(result.data) : undefined
+      };
+      
     case 'check_rates':
+      return {
+        type: 'data',
+        content: result.message,
+        data: result.data ? formatRateResponseData(result.data) : undefined
+      };
+      
     case 'portfolio_status':
       return {
         type: 'data',
         content: result.message,
-        data: result.data as ResponseData
+        data: result.data ? formatPortfolioResponseData(result.data) : undefined
       };
       
     default:
@@ -226,6 +239,41 @@ function formatExecutionResult(
         content: result.message
       };
   }
+}
+
+/**
+ * Format position data from execution result
+ */
+function formatPositionResponseData(data: ReadonlyRecord<string, unknown>): PositionData {
+  return {
+    type: 'position',
+    positions: (data.positions as any[]) || []
+  };
+}
+
+/**
+ * Format rate data from execution result
+ */
+function formatRateResponseData(data: ReadonlyRecord<string, unknown>): RateData {
+  return {
+    type: 'rates',
+    rates: (data.rates as any[]) || []
+  };
+}
+
+/**
+ * Format portfolio data from execution result
+ */
+function formatPortfolioResponseData(data: ReadonlyRecord<string, unknown>): PortfolioData {
+  return {
+    type: 'portfolio',
+    totalValue: data.totalValue as string || '0',
+    suppliedValue: data.suppliedValue as string || '0',
+    borrowedValue: data.borrowedValue as string || '0',
+    liquidityValue: data.liquidityValue as string || '0',
+    healthFactor: data.healthFactor as number,
+    netAPY: data.netAPY as number || 0
+  };
 }
 
 /**

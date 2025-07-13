@@ -8,8 +8,8 @@ import type {
   Result,
   ReadonlyRecord,
   NonEmptyArray
-} from '../types/index.js';
-import { Maybe, EitherM, pipe } from '../types/index.js';
+} from '../types/index';
+import { Maybe, EitherM, pipe } from '../types/index';
 import type {
   Command,
   CommandType,
@@ -21,7 +21,7 @@ import type {
   LendingCommand,
   LiquidityCommand,
   InfoCommand
-} from './types.js';
+} from './types';
 
 /**
  * Token normalization mappings
@@ -388,61 +388,59 @@ export function parseMessage(message: string): ParsedCommand {
   
   const paramsOption = pattern.extractor(match);
   
-  return pipe(
+  return Maybe.fold(
     paramsOption,
-    Maybe.fold(
-      () => EitherM.left<ParseError, Command>({
-        code: 'MISSING_PARAMS',
-        message: 'Missing required parameters for command'
-      }),
-      params => {
-        // Build command based on intent
-        const baseCommand = {
-          type: intent.primary,
-          raw: message,
-          confidence: intent.confidence
-        };
-        
-        switch (intent.primary) {
-          case 'supply':
-          case 'withdraw':
-          case 'borrow':
-          case 'repay':
-            return EitherM.right<ParseError, Command>({
-              ...baseCommand,
-              category: 'lending',
-              type: intent.primary,
-              params: params as any
-            } as LendingCommand);
-            
-          case 'add_liquidity':
-          case 'remove_liquidity':
-          case 'adjust_range':
-            return EitherM.right<ParseError, Command>({
-              ...baseCommand,
-              category: 'liquidity',
-              type: intent.primary,
-              params: params as any
-            } as LiquidityCommand);
-            
-          case 'show_positions':
-          case 'check_rates':
-          case 'portfolio_status':
-            return EitherM.right<ParseError, Command>({
-              ...baseCommand,
-              category: 'info',
-              type: intent.primary,
-              params: params as any
-            } as InfoCommand);
-            
-          default:
-            return EitherM.left<ParseError, Command>({
-              code: 'PARSE_ERROR',
-              message: 'Unknown command type'
-            });
-        }
+    () => EitherM.left<ParseError, Command>({
+      code: 'MISSING_PARAMS',
+      message: 'Missing required parameters for command'
+    }),
+    params => {
+      // Build command based on intent
+      const baseCommand = {
+        type: intent.primary,
+        raw: message,
+        confidence: intent.confidence
+      };
+      
+      switch (intent.primary) {
+        case 'supply':
+        case 'withdraw':
+        case 'borrow':
+        case 'repay':
+          return EitherM.right<ParseError, Command>({
+            ...baseCommand,
+            category: 'lending',
+            type: intent.primary,
+            params: params as any
+          } as LendingCommand);
+          
+        case 'add_liquidity':
+        case 'remove_liquidity':
+        case 'adjust_range':
+          return EitherM.right<ParseError, Command>({
+            ...baseCommand,
+            category: 'liquidity',
+            type: intent.primary,
+            params: params as any
+          } as LiquidityCommand);
+          
+        case 'show_positions':
+        case 'check_rates':
+        case 'portfolio_status':
+          return EitherM.right<ParseError, Command>({
+            ...baseCommand,
+            category: 'info',
+            type: intent.primary,
+            params: params as any
+          } as InfoCommand);
+          
+        default:
+          return EitherM.left<ParseError, Command>({
+            code: 'PARSE_ERROR',
+            message: 'Unknown command type'
+          });
       }
-    )
+    }
   );
 }
 

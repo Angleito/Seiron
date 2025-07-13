@@ -201,7 +201,7 @@ async function executeAddLiquidity(
       lpTokens: lpTokens.toFixed(6),
       estimatedAPY: (apy * 100).toFixed(2) + '%',
       poolFee: (pool.fee / 10000).toFixed(2) + '%'
-    }
+    } as ReadonlyRecord<string, unknown>
   };
 }
 
@@ -272,7 +272,7 @@ async function executeRemoveLiquidity(
       percentage: percentage.toFixed(0) + '%',
       rewards: rewards.toFixed(2) + ' USD',
       remainingLP: ((100 - percentage) * position.lpTokens / 100).toFixed(6)
-    }
+    } as ReadonlyRecord<string, unknown>
   };
 }
 
@@ -349,7 +349,7 @@ async function executeAdjustRange(
       newRange: `${params.rangeMin} - ${params.rangeMax}`,
       currentPrice: currentPrice.toFixed(4),
       capitalEfficiency: (efficiency * 100).toFixed(0) + '%'
-    }
+    } as ReadonlyRecord<string, unknown>
   };
 }
 

@@ -135,7 +135,7 @@ async function executeSupply(
       token,
       apy: (apy * 100).toFixed(2) + '%',
       estimatedYearlyEarnings: (parseFloat(amount) * apy).toFixed(2) + ' ' + token
-    }
+    } as ReadonlyRecord<string, unknown>
   };
 }
 
@@ -183,7 +183,7 @@ async function executeWithdraw(
       token,
       remainingSupplied: (supplied - parseFloat(amount)).toFixed(2) + ' ' + token,
       healthFactor: healthCheck.newHealth.toFixed(2)
-    }
+    } as ReadonlyRecord<string, unknown>
   };
 }
 
@@ -228,7 +228,7 @@ async function executeBorrow(
       borrowAPY: (apy * 100).toFixed(2) + '%',
       yearlyInterest: (parseFloat(amount) * apy).toFixed(2) + ' ' + token,
       healthFactor: ((borrowLimit / (currentBorrow + borrowValue)) * 1.5).toFixed(2)
-    }
+    } as ReadonlyRecord<string, unknown>
   };
 }
 
@@ -271,7 +271,7 @@ async function executeRepay(
       token,
       remainingDebt: (borrowed - repayAmount).toFixed(2) + ' ' + token,
       interestSaved: interestSaved.toFixed(2) + ' ' + token + ' per year'
-    }
+    } as ReadonlyRecord<string, unknown>
   };
 }
 

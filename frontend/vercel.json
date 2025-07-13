@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm run build && cp -r public/models dist/",
+  "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "framework": "vite",
@@ -66,11 +66,15 @@
       "headers": [
         {
           "key": "Content-Type",
-          "value": "application/octet-stream"
+          "value": "model/gltf-binary"
         },
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        },
+        {
+          "key": "Accept-Ranges",
+          "value": "bytes"
         }
       ]
     },
@@ -79,11 +83,15 @@
       "headers": [
         {
           "key": "Content-Type",
-          "value": "application/json"
+          "value": "model/gltf+json"
         },
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        },
+        {
+          "key": "Accept-Ranges",
+          "value": "bytes"
         }
       ]
     },
@@ -97,6 +105,10 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        },
+        {
+          "key": "Accept-Ranges",
+          "value": "bytes"
         }
       ]
     }

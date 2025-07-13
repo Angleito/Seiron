@@ -647,7 +647,7 @@ export class ToolIntegrationEngine extends EventEmitter {
             const result = await sakTool.execute(context.parameters);
             return {
               success: true,
-              data: result,
+              data: result as ReadonlyRecord<string, unknown>,
               metadata: {
                 executionId: context.id,
                 toolName: context.toolName,

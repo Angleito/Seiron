@@ -9,7 +9,7 @@ import type {
   Option,
   ReadonlyRecord
 } from '../../types/index.js';
-import { EitherM, Maybe, pipe } from '../../types/index.js';
+import { EitherM, Maybe, pipe } from '../../types/index';
 import type {
   InfoCommand,
   ExecutionResult,
@@ -18,8 +18,8 @@ import type {
   RateData,
   PortfolioData
 } from '../types.js';
-import { getLendingRates } from './LendingCommands.js';
-import { getLiquidityPositions } from './LiquidityCommands.js';
+import { getLendingRates } from './LendingCommands';
+import { getLiquidityPositions } from './LiquidityCommands';
 
 /**
  * Execute info command
@@ -91,7 +91,7 @@ async function executeShowPositions(
       data: {
         type: 'position',
         positions: []
-      }
+      } as ReadonlyRecord<string, unknown>
     };
   }
   
@@ -108,7 +108,7 @@ async function executeShowPositions(
   return {
     success: true,
     message: `Found ${filteredPositions.length} position${filteredPositions.length > 1 ? 's' : ''} worth $${totalValue.toFixed(2)}`,
-    data: positionData
+    data: positionData as ReadonlyRecord<string, unknown>
   };
 }
 
@@ -145,7 +145,7 @@ async function executeCheckRates(
       data: {
         type: 'rates',
         rates: []
-      }
+      } as ReadonlyRecord<string, unknown>
     };
   }
   
@@ -176,7 +176,7 @@ async function executeCheckRates(
   return {
     success: true,
     message,
-    data: responseData
+    data: responseData as ReadonlyRecord<string, unknown>
   };
 }
 
@@ -251,7 +251,7 @@ async function executePortfolioStatus(
   return {
     success: true,
     message,
-    data: portfolioData
+    data: portfolioData as ReadonlyRecord<string, unknown>
   };
 }
 
@@ -358,7 +358,7 @@ async function getLiquidityAPYs(token?: string): Promise<Array<{
 }
 
 function calculateWeightedAPY(
-  positions: Array<{ value: string; apy: number }>
+  positions: ReadonlyArray<{ value: string; apy: number }>
 ): number {
   if (positions.length === 0) return 0;
   

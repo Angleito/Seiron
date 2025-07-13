@@ -1,0 +1,2497 @@
+{
+  "timestamp": "2025-07-12T18:19:11.488Z",
+  "testUrl": "http://localhost:3000/dragons/webgl-3d",
+  "configuration": {
+    "enableScreenshots": true,
+    "headless": true,
+    "testModelSwitching": true,
+    "performanceProfile": true,
+    "stressTest": true
+  },
+  "environment": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/127.0.0.0 Safari/537.36",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "platform": "darwin",
+    "nodeVersion": "v22.16.0"
+  },
+  "diagnostics": {
+    "pageLoad": {
+      "success": true,
+      "status": 200,
+      "statusText": "OK",
+      "loadTime": 1182,
+      "finalUrl": "http://localhost:3000/dragons/webgl-3d",
+      "headers": {
+        "cache-control": "public, max-age=31536000",
+        "connection": "keep-alive",
+        "content-length": "2085",
+        "content-type": "text/html",
+        "date": "Sat, 12 Jul 2025 18:19:12 GMT",
+        "etag": "W/\"825-WwLuDlraRyiNOwZ5LhjjqFt1bek\"",
+        "keep-alive": "timeout=5",
+        "vary": "Origin"
+      }
+    },
+    "webglContext": {},
+    "threeJsInit": {},
+    "modelLoading": {},
+    "modelSwitching": {
+      "available": false,
+      "error": "this.page.waitForTimeout is not a function",
+      "reason": "Failed to test model switching functionality"
+    },
+    "networkRequests": {
+      "modelFiles": [
+        {
+          "url": "http://localhost:3000/dragons/webgl-3d",
+          "method": "GET",
+          "headers": {
+            "accept-language": "en-US",
+            "upgrade-insecure-requests": "1",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/127.0.0.0 Safari/537.36",
+            "sec-ch-ua": "\"Chromium\";v=\"127\", \"Not)A;Brand\";v=\"99\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"macOS\""
+          },
+          "timestamp": 1752344352011,
+          "resourceType": "document",
+          "status": 200,
+          "statusText": "OK",
+          "responseHeaders": {
+            "cache-control": "public, max-age=31536000",
+            "connection": "keep-alive",
+            "content-length": "2085",
+            "content-type": "text/html",
+            "date": "Sat, 12 Jul 2025 18:19:12 GMT",
+            "etag": "W/\"825-WwLuDlraRyiNOwZ5LhjjqFt1bek\"",
+            "keep-alive": "timeout=5",
+            "vary": "Origin"
+          },
+          "responseTime": 29,
+          "contentType": "text/html",
+          "contentLength": "2085",
+          "fromCache": false,
+          "fromServiceWorker": false
+        },
+        {
+          "url": "http://localhost:3000/components/dragon/GLTFErrorBoundary.tsx",
+          "method": "GET",
+          "headers": {
+            "sec-ch-ua": "\"Chromium\";v=\"127\", \"Not)A;Brand\";v=\"99\"",
+            "referer": "http://localhost:3000/components/error-boundaries/index.ts",
+            "origin": "http://localhost:3000",
+            "accept-language": "en-US",
+            "sec-ch-ua-mobile": "?0",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/127.0.0.0 Safari/537.36",
+            "sec-ch-ua-platform": "\"macOS\""
+          },
+          "timestamp": 1752344352211,
+          "resourceType": "script",
+          "status": 200,
+          "statusText": "OK",
+          "responseHeaders": {
+            "access-control-allow-origin": "http://localhost:3000",
+            "cache-control": "public, max-age=31536000",
+            "connection": "keep-alive",
+            "content-length": "138818",
+            "content-type": "text/javascript",
+            "date": "Sat, 12 Jul 2025 18:19:12 GMT",
+            "etag": "W/\"b5fb-i+ymfxSkEnoLtcyZlzEREN6Cwgg\"",
+            "keep-alive": "timeout=5",
+            "vary": "Origin"
+          },
+          "responseTime": 34,
+          "contentType": "text/javascript",
+          "contentLength": "138818",
+          "fromCache": false,
+          "fromServiceWorker": false
+        },
+        {
+          "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+          "method": "GET",
+          "headers": {
+            "sec-ch-ua": "\"Chromium\";v=\"127\", \"Not)A;Brand\";v=\"99\"",
+            "referer": "http://localhost:3000/router.tsx",
+            "origin": "http://localhost:3000",
+            "accept-language": "en-US",
+            "sec-ch-ua-mobile": "?0",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/127.0.0.0 Safari/537.36",
+            "sec-ch-ua-platform": "\"macOS\""
+          },
+          "timestamp": 1752344352440,
+          "resourceType": "script",
+          "status": 200,
+          "statusText": "OK",
+          "responseHeaders": {
+            "access-control-allow-origin": "http://localhost:3000",
+            "cache-control": "public, max-age=31536000",
+            "connection": "keep-alive",
+            "content-length": "125486",
+            "content-type": "text/javascript",
+            "date": "Sat, 12 Jul 2025 18:19:12 GMT",
+            "etag": "W/\"c8a3-iG+/5qMBEyTPdUiiPr7ZRHDp2HY\"",
+            "keep-alive": "timeout=5",
+            "vary": "Origin"
+          },
+          "responseTime": 13,
+          "contentType": "text/javascript",
+          "contentLength": "125486",
+          "fromCache": false,
+          "fromServiceWorker": false
+        },
+        {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "method": "GET",
+          "headers": {
+            "sec-ch-ua": "\"Chromium\";v=\"127\", \"Not)A;Brand\";v=\"99\"",
+            "referer": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+            "origin": "http://localhost:3000",
+            "accept-language": "en-US",
+            "sec-ch-ua-mobile": "?0",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/127.0.0.0 Safari/537.36",
+            "sec-ch-ua-platform": "\"macOS\""
+          },
+          "timestamp": 1752344352454,
+          "resourceType": "script",
+          "status": 200,
+          "statusText": "OK",
+          "responseHeaders": {
+            "access-control-allow-origin": "http://localhost:3000",
+            "cache-control": "public, max-age=31536000",
+            "connection": "keep-alive",
+            "content-length": "58101",
+            "content-type": "text/javascript",
+            "date": "Sat, 12 Jul 2025 18:19:12 GMT",
+            "etag": "W/\"420a-r0KlXP4gVRCb5nWBkVuWvaSrtLE\"",
+            "keep-alive": "timeout=5",
+            "vary": "Origin"
+          },
+          "responseTime": 3,
+          "contentType": "text/javascript",
+          "contentLength": "58101",
+          "fromCache": false,
+          "fromServiceWorker": false
+        },
+        {
+          "url": "http://localhost:3000/components/dragon/DragonModelManager.tsx",
+          "method": "GET",
+          "headers": {
+            "sec-ch-ua": "\"Chromium\";v=\"127\", \"Not)A;Brand\";v=\"99\"",
+            "referer": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+            "origin": "http://localhost:3000",
+            "accept-language": "en-US",
+            "sec-ch-ua-mobile": "?0",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/127.0.0.0 Safari/537.36",
+            "sec-ch-ua-platform": "\"macOS\""
+          },
+          "timestamp": 1752344352455,
+          "resourceType": "script",
+          "status": 200,
+          "statusText": "OK",
+          "responseHeaders": {
+            "access-control-allow-origin": "http://localhost:3000",
+            "cache-control": "public, max-age=31536000",
+            "connection": "keep-alive",
+            "content-length": "73708",
+            "content-type": "text/javascript",
+            "date": "Sat, 12 Jul 2025 18:19:12 GMT",
+            "etag": "W/\"5ecd-Uys3NAamJauaCnRmDH2vNanY6Kg\"",
+            "keep-alive": "timeout=5",
+            "vary": "Origin"
+          },
+          "responseTime": 12,
+          "contentType": "text/javascript",
+          "contentLength": "73708",
+          "fromCache": false,
+          "fromServiceWorker": false
+        },
+        {
+          "url": "http://localhost:3000/config/dragonModels.ts",
+          "method": "GET",
+          "headers": {
+            "sec-ch-ua": "\"Chromium\";v=\"127\", \"Not)A;Brand\";v=\"99\"",
+            "referer": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+            "origin": "http://localhost:3000",
+            "accept-language": "en-US",
+            "sec-ch-ua-mobile": "?0",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/127.0.0.0 Safari/537.36",
+            "sec-ch-ua-platform": "\"macOS\""
+          },
+          "timestamp": 1752344352455,
+          "resourceType": "script",
+          "status": 200,
+          "statusText": "OK",
+          "responseHeaders": {
+            "access-control-allow-origin": "http://localhost:3000",
+            "cache-control": "public, max-age=31536000",
+            "connection": "keep-alive",
+            "content-length": "63690",
+            "content-type": "text/javascript",
+            "date": "Sat, 12 Jul 2025 18:19:12 GMT",
+            "etag": "W/\"430b-oHlPkuDYNrm7Bfe2gMNE7T3VqQU\"",
+            "keep-alive": "timeout=5",
+            "vary": "Origin"
+          },
+          "responseTime": 63,
+          "contentType": "text/javascript",
+          "contentLength": "63690",
+          "fromCache": false,
+          "fromServiceWorker": false
+        },
+        {
+          "url": "http://localhost:3000/utils/modelExistenceValidator.ts",
+          "method": "GET",
+          "headers": {
+            "sec-ch-ua": "\"Chromium\";v=\"127\", \"Not)A;Brand\";v=\"99\"",
+            "referer": "http://localhost:3000/components/dragon/DragonModelManager.tsx",
+            "origin": "http://localhost:3000",
+            "accept-language": "en-US",
+            "sec-ch-ua-mobile": "?0",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/127.0.0.0 Safari/537.36",
+            "sec-ch-ua-platform": "\"macOS\""
+          },
+          "timestamp": 1752344352469,
+          "resourceType": "script",
+          "status": 200,
+          "statusText": "OK",
+          "responseHeaders": {
+            "access-control-allow-origin": "http://localhost:3000",
+            "cache-control": "public, max-age=31536000",
+            "connection": "keep-alive",
+            "content-length": "38990",
+            "content-type": "text/javascript",
+            "date": "Sat, 12 Jul 2025 18:19:12 GMT",
+            "etag": "W/\"2b93-2wP6fw/0KtvoTNSsO4HiJMLGbg0\"",
+            "keep-alive": "timeout=5",
+            "vary": "Origin"
+          },
+          "responseTime": 50,
+          "contentType": "text/javascript",
+          "contentLength": "38990",
+          "fromCache": false,
+          "fromServiceWorker": false
+        },
+        {
+          "url": "http://localhost:3000/components/dragon/DragonGLTFLoader.tsx",
+          "method": "GET",
+          "headers": {
+            "sec-ch-ua": "\"Chromium\";v=\"127\", \"Not)A;Brand\";v=\"99\"",
+            "referer": "http://localhost:3000/components/dragon/DragonModelManager.tsx",
+            "origin": "http://localhost:3000",
+            "accept-language": "en-US",
+            "sec-ch-ua-mobile": "?0",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/127.0.0.0 Safari/537.36",
+            "sec-ch-ua-platform": "\"macOS\""
+          },
+          "timestamp": 1752344352468,
+          "resourceType": "script",
+          "status": 200,
+          "statusText": "OK",
+          "responseHeaders": {
+            "access-control-allow-origin": "http://localhost:3000",
+            "cache-control": "public, max-age=31536000",
+            "connection": "keep-alive",
+            "content-length": "46512",
+            "content-type": "text/javascript",
+            "date": "Sat, 12 Jul 2025 18:19:12 GMT",
+            "etag": "W/\"3b5d-D+k/+LXvgAsHwoHzB5qFBbiN634\"",
+            "keep-alive": "timeout=5",
+            "vary": "Origin"
+          },
+          "responseTime": 53,
+          "contentType": "text/javascript",
+          "contentLength": "46512",
+          "fromCache": false,
+          "fromServiceWorker": false
+        }
+      ],
+      "textureFiles": [],
+      "failed": [],
+      "timing": {
+        "model": {
+          "requests": 8,
+          "totalTime": 257,
+          "minTime": 3,
+          "maxTime": 63,
+          "avgTime": 32.125
+        },
+        "other": {
+          "requests": 97,
+          "totalTime": 5354,
+          "minTime": 0,
+          "maxTime": 142,
+          "avgTime": 55.1958762886598
+        }
+      }
+    },
+    "performanceProfile": {
+      "memoryUsage": [],
+      "renderingMetrics": [],
+      "frameRates": []
+    },
+    "fallbackBehavior": {},
+    "errorAnalysis": {
+      "jsErrors": [],
+      "consoleMessages": [
+        {
+          "type": "log",
+          "text": "🟠 HTML Script executing...",
+          "timestamp": "2025-07-12T18:19:12.045Z",
+          "location": {
+            "url": "http://localhost:3000/dragons/webgl-3d",
+            "lineNumber": 33,
+            "columnNumber": 14
+          },
+          "args": 1
+        },
+        {
+          "type": "debug",
+          "text": "[vite] connecting...",
+          "timestamp": "2025-07-12T18:19:12.146Z",
+          "location": {
+            "url": "http://localhost:3000/@vite/client",
+            "lineNumber": 788,
+            "columnNumber": 8
+          },
+          "args": 1
+        },
+        {
+          "type": "debug",
+          "text": "[vite] connected.",
+          "timestamp": "2025-07-12T18:19:12.184Z",
+          "location": {
+            "url": "http://localhost:3000/@vite/client",
+            "lineNumber": 911,
+            "columnNumber": 14
+          },
+          "args": 1
+        },
+        {
+          "type": "info",
+          "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+          "timestamp": "2025-07-12T18:19:12.283Z",
+          "location": {
+            "url": "http://localhost:3000/node_modules/.vite/deps/chunk-QO2SV6KV.js?v=0f3262ae",
+            "lineNumber": 21608,
+            "columnNumber": 24
+          },
+          "args": 2
+        },
+        {
+          "type": "warn",
+          "text": "Module \"buffer\" has been externalized for browser compatibility. Cannot access \"buffer.Buffer\" in client code. See https://vite.dev/guide/troubleshooting.html#module-externalized-for-browser-compatibility for more details.",
+          "timestamp": "2025-07-12T18:19:12.347Z",
+          "location": {
+            "url": "http://localhost:3000/node_modules/.vite/deps/chunk-LKQADTO2.js?v=0f3262ae",
+            "lineNumber": 10,
+            "columnNumber": 18
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "🔐 Privy Configuration Status:",
+          "timestamp": "2025-07-12T18:19:12.401Z",
+          "location": {
+            "url": "http://localhost:3000/config/privy.ts",
+            "lineNumber": 32,
+            "columnNumber": 8
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "- App ID present: false",
+          "timestamp": "2025-07-12T18:19:12.401Z",
+          "location": {
+            "url": "http://localhost:3000/config/privy.ts",
+            "lineNumber": 33,
+            "columnNumber": 8
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "- App ID length: 0",
+          "timestamp": "2025-07-12T18:19:12.401Z",
+          "location": {
+            "url": "http://localhost:3000/config/privy.ts",
+            "lineNumber": 34,
+            "columnNumber": 8
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "- Environment: development",
+          "timestamp": "2025-07-12T18:19:12.401Z",
+          "location": {
+            "url": "http://localhost:3000/config/privy.ts",
+            "lineNumber": 35,
+            "columnNumber": 8
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "- Client ID present: false",
+          "timestamp": "2025-07-12T18:19:12.401Z",
+          "location": {
+            "url": "http://localhost:3000/config/privy.ts",
+            "lineNumber": 36,
+            "columnNumber": 8
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "- Configuration valid: false",
+          "timestamp": "2025-07-12T18:19:12.401Z",
+          "location": {
+            "url": "http://localhost:3000/config/privy.ts",
+            "lineNumber": 37,
+            "columnNumber": 8
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "🔗 Wallet Compatibility for Sei Network:",
+          "timestamp": "2025-07-12T18:19:12.401Z",
+          "location": {
+            "url": "http://localhost:3000/config/privy.ts",
+            "lineNumber": 45,
+            "columnNumber": 8
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "- Supported wallets: JSHandle@array",
+          "timestamp": "2025-07-12T18:19:12.402Z",
+          "location": {
+            "url": "http://localhost:3000/config/privy.ts",
+            "lineNumber": 46,
+            "columnNumber": 8
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "- Supported login methods: JSHandle@array",
+          "timestamp": "2025-07-12T18:19:12.402Z",
+          "location": {
+            "url": "http://localhost:3000/config/privy.ts",
+            "lineNumber": 47,
+            "columnNumber": 8
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "- Embedded wallets disabled: true",
+          "timestamp": "2025-07-12T18:19:12.402Z",
+          "location": {
+            "url": "http://localhost:3000/config/privy.ts",
+            "lineNumber": 48,
+            "columnNumber": 8
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "- Coinbase Smart Wallet excluded: true",
+          "timestamp": "2025-07-12T18:19:12.402Z",
+          "location": {
+            "url": "http://localhost:3000/config/privy.ts",
+            "lineNumber": 49,
+            "columnNumber": 8
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "🔗 Supported wallets for Sei Network: JSHandle@array",
+          "timestamp": "2025-07-12T18:19:12.402Z",
+          "location": {
+            "url": "http://localhost:3000/config/wagmi.ts",
+            "lineNumber": 28,
+            "columnNumber": 8
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "✅ MetaMask connector added (supported on Sei Network)",
+          "timestamp": "2025-07-12T18:19:12.402Z",
+          "location": {
+            "url": "http://localhost:3000/config/wagmi.ts",
+            "lineNumber": 32,
+            "columnNumber": 10
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "✅ Injected connector added (supported on Sei Network)",
+          "timestamp": "2025-07-12T18:19:12.402Z",
+          "location": {
+            "url": "http://localhost:3000/config/wagmi.ts",
+            "lineNumber": 38,
+            "columnNumber": 10
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "🔗 Final connector configuration:",
+          "timestamp": "2025-07-12T18:19:12.403Z",
+          "location": {
+            "url": "http://localhost:3000/config/wagmi.ts",
+            "lineNumber": 42,
+            "columnNumber": 8
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "- Total connectors: 2",
+          "timestamp": "2025-07-12T18:19:12.403Z",
+          "location": {
+            "url": "http://localhost:3000/config/wagmi.ts",
+            "lineNumber": 43,
+            "columnNumber": 8
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "- Connector types: JSHandle@array",
+          "timestamp": "2025-07-12T18:19:12.403Z",
+          "location": {
+            "url": "http://localhost:3000/config/wagmi.ts",
+            "lineNumber": 44,
+            "columnNumber": 8
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "🔗 Simplified Wagmi Configuration (No WalletConnect):",
+          "timestamp": "2025-07-12T18:19:12.405Z",
+          "location": {
+            "url": "http://localhost:3000/config/wagmi.ts",
+            "lineNumber": 77,
+            "columnNumber": 8
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "- Chains: JSHandle@array",
+          "timestamp": "2025-07-12T18:19:12.405Z",
+          "location": {
+            "url": "http://localhost:3000/config/wagmi.ts",
+            "lineNumber": 78,
+            "columnNumber": 8
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "- Connectors: JSHandle@array",
+          "timestamp": "2025-07-12T18:19:12.405Z",
+          "location": {
+            "url": "http://localhost:3000/config/wagmi.ts",
+            "lineNumber": 79,
+            "columnNumber": 8
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "- Sei Network supported wallets: JSHandle@array",
+          "timestamp": "2025-07-12T18:19:12.405Z",
+          "location": {
+            "url": "http://localhost:3000/config/wagmi.ts",
+            "lineNumber": 80,
+            "columnNumber": 8
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "- Ethereum supported wallets: JSHandle@array",
+          "timestamp": "2025-07-12T18:19:12.405Z",
+          "location": {
+            "url": "http://localhost:3000/config/wagmi.ts",
+            "lineNumber": 81,
+            "columnNumber": 8
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "🚀 Seiron App Initializing...",
+          "timestamp": "2025-07-12T18:19:12.408Z",
+          "location": {
+            "url": "http://localhost:3000/main.tsx",
+            "lineNumber": 14,
+            "columnNumber": 8
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "Environment: development",
+          "timestamp": "2025-07-12T18:19:12.408Z",
+          "location": {
+            "url": "http://localhost:3000/main.tsx",
+            "lineNumber": 15,
+            "columnNumber": 8
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "Base URL: /",
+          "timestamp": "2025-07-12T18:19:12.408Z",
+          "location": {
+            "url": "http://localhost:3000/main.tsx",
+            "lineNumber": 16,
+            "columnNumber": 8
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "Dev mode: true",
+          "timestamp": "2025-07-12T18:19:12.408Z",
+          "location": {
+            "url": "http://localhost:3000/main.tsx",
+            "lineNumber": 17,
+            "columnNumber": 8
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "Prod mode: false",
+          "timestamp": "2025-07-12T18:19:12.408Z",
+          "location": {
+            "url": "http://localhost:3000/main.tsx",
+            "lineNumber": 18,
+            "columnNumber": 8
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "[2025-07-12T18:19:12.407Z] [Seiron] [DEBUG] 🔍 Environment Validation Starting...",
+          "timestamp": "2025-07-12T18:19:12.408Z",
+          "location": {
+            "url": "http://localhost:3000/lib/logger.ts",
+            "lineNumber": 75,
+            "columnNumber": 16
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[2025-07-12T18:19:12.407Z] [Seiron] [DEBUG] Environment Status: JSHandle@object",
+          "timestamp": "2025-07-12T18:19:12.408Z",
+          "location": {
+            "url": "http://localhost:3000/lib/logger.ts",
+            "lineNumber": 75,
+            "columnNumber": 16
+          },
+          "args": 2
+        },
+        {
+          "type": "warn",
+          "text": "[2025-07-12T18:19:12.408Z] [Seiron] [WARN] Missing required environment variables: JSHandle@array",
+          "timestamp": "2025-07-12T18:19:12.408Z",
+          "location": {
+            "url": "http://localhost:3000/lib/logger.ts",
+            "lineNumber": 109,
+            "columnNumber": 14
+          },
+          "args": 2
+        },
+        {
+          "type": "info",
+          "text": "[2025-07-12T18:19:12.408Z] [Seiron] [INFO] ℹ️ VITE_WALLETCONNECT_PROJECT_ID not configured - WalletConnect will not be available",
+          "timestamp": "2025-07-12T18:19:12.408Z",
+          "location": {
+            "url": "http://localhost:3000/lib/logger.ts",
+            "lineNumber": 92,
+            "columnNumber": 16
+          },
+          "args": 1
+        },
+        {
+          "type": "info",
+          "text": "[2025-07-12T18:19:12.408Z] [Seiron] [INFO] ℹ️ VITE_ELEVENLABS_API_KEY not configured - Voice features will be disabled",
+          "timestamp": "2025-07-12T18:19:12.408Z",
+          "location": {
+            "url": "http://localhost:3000/lib/logger.ts",
+            "lineNumber": 92,
+            "columnNumber": 16
+          },
+          "args": 1
+        },
+        {
+          "type": "info",
+          "text": "[2025-07-12T18:19:12.408Z] [Seiron] [INFO] ℹ️ VITE_ELEVENLABS_VOICE_ID not configured - Default voice will be used",
+          "timestamp": "2025-07-12T18:19:12.409Z",
+          "location": {
+            "url": "http://localhost:3000/lib/logger.ts",
+            "lineNumber": 92,
+            "columnNumber": 16
+          },
+          "args": 1
+        },
+        {
+          "type": "warn",
+          "text": "[2025-07-12T18:19:12.408Z] [Seiron] [WARN] ⚠️ Privy authentication not configured in development",
+          "timestamp": "2025-07-12T18:19:12.409Z",
+          "location": {
+            "url": "http://localhost:3000/lib/logger.ts",
+            "lineNumber": 109,
+            "columnNumber": 14
+          },
+          "args": 1
+        },
+        {
+          "type": "info",
+          "text": "[2025-07-12T18:19:12.408Z] [Seiron] [INFO] ℹ️ WalletConnect not configured (optional feature)",
+          "timestamp": "2025-07-12T18:19:12.409Z",
+          "location": {
+            "url": "http://localhost:3000/lib/logger.ts",
+            "lineNumber": 92,
+            "columnNumber": 16
+          },
+          "args": 1
+        },
+        {
+          "type": "info",
+          "text": "[2025-07-12T18:19:12.408Z] [Seiron] [INFO] ℹ️ Voice features not configured (optional feature)",
+          "timestamp": "2025-07-12T18:19:12.409Z",
+          "location": {
+            "url": "http://localhost:3000/lib/logger.ts",
+            "lineNumber": 92,
+            "columnNumber": 16
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[2025-07-12T18:19:12.408Z] [Seiron] [DEBUG] ✅ Environment Validation Complete",
+          "timestamp": "2025-07-12T18:19:12.409Z",
+          "location": {
+            "url": "http://localhost:3000/lib/logger.ts",
+            "lineNumber": 75,
+            "columnNumber": 16
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "🏗️ Creating React root...",
+          "timestamp": "2025-07-12T18:19:12.409Z",
+          "location": {
+            "url": "http://localhost:3000/main.tsx",
+            "lineNumber": 43,
+            "columnNumber": 10
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "🔍 App configuration check:",
+          "timestamp": "2025-07-12T18:19:12.409Z",
+          "location": {
+            "url": "http://localhost:3000/main.tsx",
+            "lineNumber": 49,
+            "columnNumber": 10
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "- Has Privy config: false",
+          "timestamp": "2025-07-12T18:19:12.409Z",
+          "location": {
+            "url": "http://localhost:3000/main.tsx",
+            "lineNumber": 50,
+            "columnNumber": 10
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "- Production mode: false",
+          "timestamp": "2025-07-12T18:19:12.409Z",
+          "location": {
+            "url": "http://localhost:3000/main.tsx",
+            "lineNumber": 51,
+            "columnNumber": 10
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "- Will use authentication: false",
+          "timestamp": "2025-07-12T18:19:12.409Z",
+          "location": {
+            "url": "http://localhost:3000/main.tsx",
+            "lineNumber": 52,
+            "columnNumber": 10
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "🎨 Rendering app with routing but without authentication...",
+          "timestamp": "2025-07-12T18:19:12.409Z",
+          "location": {
+            "url": "http://localhost:3000/main.tsx",
+            "lineNumber": 94,
+            "columnNumber": 12
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "✅ App render complete",
+          "timestamp": "2025-07-12T18:19:12.410Z",
+          "location": {
+            "url": "http://localhost:3000/main.tsx",
+            "lineNumber": 121,
+            "columnNumber": 10
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "🎯 RootLayout rendering",
+          "timestamp": "2025-07-12T18:19:12.432Z",
+          "location": {
+            "url": "http://localhost:3000/components/layouts/RootLayout.tsx",
+            "lineNumber": 21,
+            "columnNumber": 10
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "Window location: /dragons/webgl-3d",
+          "timestamp": "2025-07-12T18:19:12.432Z",
+          "location": {
+            "url": "http://localhost:3000/components/layouts/RootLayout.tsx",
+            "lineNumber": 22,
+            "columnNumber": 10
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "🎯 RootLayout rendering",
+          "timestamp": "2025-07-12T18:19:12.432Z",
+          "location": {
+            "url": "http://localhost:3000/components/layouts/RootLayout.tsx",
+            "lineNumber": 21,
+            "columnNumber": 10
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "Window location: /dragons/webgl-3d",
+          "timestamp": "2025-07-12T18:19:12.432Z",
+          "location": {
+            "url": "http://localhost:3000/components/layouts/RootLayout.tsx",
+            "lineNumber": 22,
+            "columnNumber": 10
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "[2025-07-12T18:19:12.438Z] [Seiron] [DEBUG] GLTF Error Boundary mounted JSHandle@object",
+          "timestamp": "2025-07-12T18:19:12.440Z",
+          "location": {
+            "url": "http://localhost:3000/lib/logger.ts",
+            "lineNumber": 75,
+            "columnNumber": 16
+          },
+          "args": 2
+        },
+        {
+          "type": "warn",
+          "text": "⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.",
+          "timestamp": "2025-07-12T18:19:12.452Z",
+          "location": {
+            "url": "http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=0f3262ae",
+            "lineNumber": 4392,
+            "columnNumber": 12
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[2025-07-12T18:19:12.445Z] [Seiron] [DEBUG] GLTF Error Boundary unmounting JSHandle@object",
+          "timestamp": "2025-07-12T18:19:12.453Z",
+          "location": {
+            "url": "http://localhost:3000/lib/logger.ts",
+            "lineNumber": 75,
+            "columnNumber": 16
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "[2025-07-12T18:19:12.445Z] [Seiron] [DEBUG] GLTF Error Boundary mounted JSHandle@object",
+          "timestamp": "2025-07-12T18:19:12.453Z",
+          "location": {
+            "url": "http://localhost:3000/lib/logger.ts",
+            "lineNumber": 75,
+            "columnNumber": 16
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Stopped preventive monitoring",
+          "timestamp": "2025-07-12T18:19:12.664Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 1078,
+            "columnNumber": 12
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Starting optimized memory cleanup",
+          "timestamp": "2025-07-12T18:19:12.664Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 921,
+            "columnNumber": 14
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Cleaned up failed context resources",
+          "timestamp": "2025-07-12T18:19:12.664Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 859,
+            "columnNumber": 14
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+          "timestamp": "2025-07-12T18:19:12.664Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 1526,
+            "columnNumber": 12
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Stopped preventive monitoring",
+          "timestamp": "2025-07-12T18:19:12.664Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 1078,
+            "columnNumber": 12
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Starting optimized memory cleanup",
+          "timestamp": "2025-07-12T18:19:12.664Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 921,
+            "columnNumber": 14
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Cleaned up failed context resources",
+          "timestamp": "2025-07-12T18:19:12.664Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 859,
+            "columnNumber": 14
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+          "timestamp": "2025-07-12T18:19:12.664Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 1526,
+            "columnNumber": 12
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "🧹 WebGL3DPage unmounting - comprehensive cleanup",
+          "timestamp": "2025-07-12T18:19:12.664Z",
+          "location": {
+            "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+            "lineNumber": 239,
+            "columnNumber": 16
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "Performance tracking cleanup skipped (temporarily disabled)",
+          "timestamp": "2025-07-12T18:19:12.664Z",
+          "location": {
+            "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+            "lineNumber": 249,
+            "columnNumber": 18
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "🧹 DragonMemoryManager disposing all resources",
+          "timestamp": "2025-07-12T18:19:12.664Z",
+          "location": {
+            "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+            "lineNumber": 288,
+            "columnNumber": 12
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "Before disposal: JSHandle@object",
+          "timestamp": "2025-07-12T18:19:12.664Z",
+          "location": {
+            "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+            "lineNumber": 299,
+            "columnNumber": 12
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "🧹 DragonMemoryManager disposal complete",
+          "timestamp": "2025-07-12T18:19:12.664Z",
+          "location": {
+            "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+            "lineNumber": 348,
+            "columnNumber": 14
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "🧹 WebGL3DPage cleanup complete",
+          "timestamp": "2025-07-12T18:19:12.664Z",
+          "location": {
+            "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+            "lineNumber": 313,
+            "columnNumber": 16
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "🧹 All model disposals completed",
+          "timestamp": "2025-07-12T18:19:12.665Z",
+          "location": {
+            "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+            "lineNumber": 314,
+            "columnNumber": 16
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Stopped preventive monitoring",
+          "timestamp": "2025-07-12T18:19:12.668Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 1078,
+            "columnNumber": 12
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Starting optimized memory cleanup",
+          "timestamp": "2025-07-12T18:19:12.668Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 921,
+            "columnNumber": 14
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Cleaned up failed context resources",
+          "timestamp": "2025-07-12T18:19:12.668Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 859,
+            "columnNumber": 14
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+          "timestamp": "2025-07-12T18:19:12.668Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 1526,
+            "columnNumber": 12
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Stopped preventive monitoring",
+          "timestamp": "2025-07-12T18:19:12.668Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 1078,
+            "columnNumber": 12
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Starting optimized memory cleanup",
+          "timestamp": "2025-07-12T18:19:12.668Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 921,
+            "columnNumber": 14
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Cleaned up failed context resources",
+          "timestamp": "2025-07-12T18:19:12.668Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 859,
+            "columnNumber": 14
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+          "timestamp": "2025-07-12T18:19:12.668Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 1526,
+            "columnNumber": 12
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Memory cleanup completed in 0.3ms (no significant memory freed)",
+          "timestamp": "2025-07-12T18:19:12.768Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 961,
+            "columnNumber": 20
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Memory cleanup completed in 0.0ms (no significant memory freed)",
+          "timestamp": "2025-07-12T18:19:12.768Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 961,
+            "columnNumber": 20
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+          "timestamp": "2025-07-12T18:19:12.768Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 961,
+            "columnNumber": 20
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+          "timestamp": "2025-07-12T18:19:12.774Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 961,
+            "columnNumber": 20
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "🧹 Unmounting React app...",
+          "timestamp": "2025-07-12T18:19:13.319Z",
+          "location": {
+            "url": "http://localhost:3000/main.tsx",
+            "lineNumber": 125,
+            "columnNumber": 12
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[2025-07-12T18:19:13.319Z] [Seiron] [DEBUG] GLTF Error Boundary unmounting JSHandle@object",
+          "timestamp": "2025-07-12T18:19:13.320Z",
+          "location": {
+            "url": "http://localhost:3000/lib/logger.ts",
+            "lineNumber": 75,
+            "columnNumber": 16
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Stopped preventive monitoring",
+          "timestamp": "2025-07-12T18:19:13.320Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 1078,
+            "columnNumber": 12
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Starting optimized memory cleanup",
+          "timestamp": "2025-07-12T18:19:13.321Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 921,
+            "columnNumber": 14
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Cleaned up failed context resources",
+          "timestamp": "2025-07-12T18:19:13.321Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 859,
+            "columnNumber": 14
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+          "timestamp": "2025-07-12T18:19:13.321Z",
+          "location": {
+            "url": "http://localhost:3000/utils/webglRecovery.ts",
+            "lineNumber": 1526,
+            "columnNumber": 12
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "🧹 WebGL3DPage unmounting - comprehensive cleanup",
+          "timestamp": "2025-07-12T18:19:13.321Z",
+          "location": {
+            "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+            "lineNumber": 239,
+            "columnNumber": 16
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "Performance tracking cleanup skipped (temporarily disabled)",
+          "timestamp": "2025-07-12T18:19:13.321Z",
+          "location": {
+            "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+            "lineNumber": 249,
+            "columnNumber": 18
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "🧹 DragonMemoryManager disposing all resources",
+          "timestamp": "2025-07-12T18:19:13.322Z",
+          "location": {
+            "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+            "lineNumber": 288,
+            "columnNumber": 12
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "Before disposal: JSHandle@object",
+          "timestamp": "2025-07-12T18:19:13.322Z",
+          "location": {
+            "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+            "lineNumber": 299,
+            "columnNumber": 12
+          },
+          "args": 2
+        },
+        {
+          "type": "log",
+          "text": "🧹 DragonMemoryManager disposal complete",
+          "timestamp": "2025-07-12T18:19:13.322Z",
+          "location": {
+            "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+            "lineNumber": 348,
+            "columnNumber": 14
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "🧹 WebGL3DPage cleanup complete",
+          "timestamp": "2025-07-12T18:19:13.322Z",
+          "location": {
+            "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+            "lineNumber": 313,
+            "columnNumber": 16
+          },
+          "args": 1
+        },
+        {
+          "type": "log",
+          "text": "🧹 All model disposals completed",
+          "timestamp": "2025-07-12T18:19:13.323Z",
+          "location": {
+            "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+            "lineNumber": 314,
+            "columnNumber": 16
+          },
+          "args": 1
+        }
+      ],
+      "networkErrors": [],
+      "categorizedErrors": {
+        "network": [
+          {
+            "type": "log",
+            "text": "🔗 Wallet Compatibility for Sei Network:",
+            "timestamp": "2025-07-12T18:19:12.401Z",
+            "location": {
+              "url": "http://localhost:3000/config/privy.ts",
+              "lineNumber": 45,
+              "columnNumber": 8
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "🔗 Supported wallets for Sei Network: JSHandle@array",
+            "timestamp": "2025-07-12T18:19:12.402Z",
+            "location": {
+              "url": "http://localhost:3000/config/wagmi.ts",
+              "lineNumber": 28,
+              "columnNumber": 8
+            },
+            "args": 2
+          },
+          {
+            "type": "log",
+            "text": "✅ MetaMask connector added (supported on Sei Network)",
+            "timestamp": "2025-07-12T18:19:12.402Z",
+            "location": {
+              "url": "http://localhost:3000/config/wagmi.ts",
+              "lineNumber": 32,
+              "columnNumber": 10
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "✅ Injected connector added (supported on Sei Network)",
+            "timestamp": "2025-07-12T18:19:12.402Z",
+            "location": {
+              "url": "http://localhost:3000/config/wagmi.ts",
+              "lineNumber": 38,
+              "columnNumber": 10
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "- Sei Network supported wallets: JSHandle@array",
+            "timestamp": "2025-07-12T18:19:12.405Z",
+            "location": {
+              "url": "http://localhost:3000/config/wagmi.ts",
+              "lineNumber": 80,
+              "columnNumber": 8
+            },
+            "args": 2
+          }
+        ],
+        "3d-rendering": [
+          {
+            "type": "log",
+            "text": "Window location: /dragons/webgl-3d",
+            "timestamp": "2025-07-12T18:19:12.432Z",
+            "location": {
+              "url": "http://localhost:3000/components/layouts/RootLayout.tsx",
+              "lineNumber": 22,
+              "columnNumber": 10
+            },
+            "args": 2
+          },
+          {
+            "type": "log",
+            "text": "Window location: /dragons/webgl-3d",
+            "timestamp": "2025-07-12T18:19:12.432Z",
+            "location": {
+              "url": "http://localhost:3000/components/layouts/RootLayout.tsx",
+              "lineNumber": 22,
+              "columnNumber": 10
+            },
+            "args": 2
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Stopped preventive monitoring",
+            "timestamp": "2025-07-12T18:19:12.664Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 1078,
+              "columnNumber": 12
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Starting optimized memory cleanup",
+            "timestamp": "2025-07-12T18:19:12.664Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 921,
+              "columnNumber": 14
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Cleaned up failed context resources",
+            "timestamp": "2025-07-12T18:19:12.664Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 859,
+              "columnNumber": 14
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+            "timestamp": "2025-07-12T18:19:12.664Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 1526,
+              "columnNumber": 12
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Stopped preventive monitoring",
+            "timestamp": "2025-07-12T18:19:12.664Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 1078,
+              "columnNumber": 12
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Starting optimized memory cleanup",
+            "timestamp": "2025-07-12T18:19:12.664Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 921,
+              "columnNumber": 14
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Cleaned up failed context resources",
+            "timestamp": "2025-07-12T18:19:12.664Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 859,
+              "columnNumber": 14
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+            "timestamp": "2025-07-12T18:19:12.664Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 1526,
+              "columnNumber": 12
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "🧹 WebGL3DPage unmounting - comprehensive cleanup",
+            "timestamp": "2025-07-12T18:19:12.664Z",
+            "location": {
+              "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+              "lineNumber": 239,
+              "columnNumber": 16
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "🧹 WebGL3DPage cleanup complete",
+            "timestamp": "2025-07-12T18:19:12.664Z",
+            "location": {
+              "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+              "lineNumber": 313,
+              "columnNumber": 16
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Stopped preventive monitoring",
+            "timestamp": "2025-07-12T18:19:12.668Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 1078,
+              "columnNumber": 12
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Starting optimized memory cleanup",
+            "timestamp": "2025-07-12T18:19:12.668Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 921,
+              "columnNumber": 14
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Cleaned up failed context resources",
+            "timestamp": "2025-07-12T18:19:12.668Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 859,
+              "columnNumber": 14
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+            "timestamp": "2025-07-12T18:19:12.668Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 1526,
+              "columnNumber": 12
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Stopped preventive monitoring",
+            "timestamp": "2025-07-12T18:19:12.668Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 1078,
+              "columnNumber": 12
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Starting optimized memory cleanup",
+            "timestamp": "2025-07-12T18:19:12.668Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 921,
+              "columnNumber": 14
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Cleaned up failed context resources",
+            "timestamp": "2025-07-12T18:19:12.668Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 859,
+              "columnNumber": 14
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+            "timestamp": "2025-07-12T18:19:12.668Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 1526,
+              "columnNumber": 12
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Memory cleanup completed in 0.3ms (no significant memory freed)",
+            "timestamp": "2025-07-12T18:19:12.768Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 961,
+              "columnNumber": 20
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Memory cleanup completed in 0.0ms (no significant memory freed)",
+            "timestamp": "2025-07-12T18:19:12.768Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 961,
+              "columnNumber": 20
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+            "timestamp": "2025-07-12T18:19:12.768Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 961,
+              "columnNumber": 20
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+            "timestamp": "2025-07-12T18:19:12.774Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 961,
+              "columnNumber": 20
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Stopped preventive monitoring",
+            "timestamp": "2025-07-12T18:19:13.320Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 1078,
+              "columnNumber": 12
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Starting optimized memory cleanup",
+            "timestamp": "2025-07-12T18:19:13.321Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 921,
+              "columnNumber": 14
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Cleaned up failed context resources",
+            "timestamp": "2025-07-12T18:19:13.321Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 859,
+              "columnNumber": 14
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+            "timestamp": "2025-07-12T18:19:13.321Z",
+            "location": {
+              "url": "http://localhost:3000/utils/webglRecovery.ts",
+              "lineNumber": 1526,
+              "columnNumber": 12
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "🧹 WebGL3DPage unmounting - comprehensive cleanup",
+            "timestamp": "2025-07-12T18:19:13.321Z",
+            "location": {
+              "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+              "lineNumber": 239,
+              "columnNumber": 16
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "🧹 WebGL3DPage cleanup complete",
+            "timestamp": "2025-07-12T18:19:13.322Z",
+            "location": {
+              "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+              "lineNumber": 313,
+              "columnNumber": 16
+            },
+            "args": 1
+          }
+        ],
+        "model-loading": [
+          {
+            "type": "log",
+            "text": "[2025-07-12T18:19:12.438Z] [Seiron] [DEBUG] GLTF Error Boundary mounted JSHandle@object",
+            "timestamp": "2025-07-12T18:19:12.440Z",
+            "location": {
+              "url": "http://localhost:3000/lib/logger.ts",
+              "lineNumber": 75,
+              "columnNumber": 16
+            },
+            "args": 2
+          },
+          {
+            "type": "log",
+            "text": "[2025-07-12T18:19:12.445Z] [Seiron] [DEBUG] GLTF Error Boundary unmounting JSHandle@object",
+            "timestamp": "2025-07-12T18:19:12.453Z",
+            "location": {
+              "url": "http://localhost:3000/lib/logger.ts",
+              "lineNumber": 75,
+              "columnNumber": 16
+            },
+            "args": 2
+          },
+          {
+            "type": "log",
+            "text": "[2025-07-12T18:19:12.445Z] [Seiron] [DEBUG] GLTF Error Boundary mounted JSHandle@object",
+            "timestamp": "2025-07-12T18:19:12.453Z",
+            "location": {
+              "url": "http://localhost:3000/lib/logger.ts",
+              "lineNumber": 75,
+              "columnNumber": 16
+            },
+            "args": 2
+          },
+          {
+            "type": "log",
+            "text": "🧹 All model disposals completed",
+            "timestamp": "2025-07-12T18:19:12.665Z",
+            "location": {
+              "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+              "lineNumber": 314,
+              "columnNumber": 16
+            },
+            "args": 1
+          },
+          {
+            "type": "log",
+            "text": "[2025-07-12T18:19:13.319Z] [Seiron] [DEBUG] GLTF Error Boundary unmounting JSHandle@object",
+            "timestamp": "2025-07-12T18:19:13.320Z",
+            "location": {
+              "url": "http://localhost:3000/lib/logger.ts",
+              "lineNumber": 75,
+              "columnNumber": 16
+            },
+            "args": 2
+          },
+          {
+            "type": "log",
+            "text": "🧹 All model disposals completed",
+            "timestamp": "2025-07-12T18:19:13.323Z",
+            "location": {
+              "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+              "lineNumber": 314,
+              "columnNumber": 16
+            },
+            "args": 1
+          }
+        ]
+      }
+    },
+    "stressTesting": {
+      "error": "this.page.waitForTimeout is not a function",
+      "completed": false
+    },
+    "crossBrowserCompat": {},
+    "logs": [
+      {
+        "timestamp": "2025-07-12T18:19:11.489Z",
+        "level": "info",
+        "message": "Output directory created: ./docker-test-results/puppeteer/enhanced"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:11.489Z",
+        "level": "info",
+        "message": "Launching enhanced Puppeteer browser..."
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.008Z",
+        "level": "info",
+        "message": "Enhanced browser launched: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/127.0.0.0 Safari/537.36"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.008Z",
+        "level": "info",
+        "message": "Setting up advanced monitoring..."
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.008Z",
+        "level": "info",
+        "message": "Navigating to enhanced target: http://localhost:3000/dragons/webgl-3d"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.040Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/dragons/webgl-3d - 200 (29ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.070Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/main.tsx - 200 (26ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.074Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/@vite/client - 200 (30ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.080Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/@react-refresh - 200 (35ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.086Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/@tanstack_react-query.js?v=0f3262ae - 200 (13ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.091Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=0f3262ae - 200 (19ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.092Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/wagmi.js?v=0f3262ae - 200 (19ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.114Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/router.tsx - 200 (40ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.120Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=0f3262ae - 200 (48ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.123Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/components/error-boundaries/RootErrorBoundary.tsx - 200 (49ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.130Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/config/privy.ts - 200 (56ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.143Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/vite/dist/client/env.mjs - 200 (68ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.146Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/utils/envValidation.ts - 200 (72ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.149Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/styles/globals.css - 200 (75ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.152Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/config/wagmi.ts - 200 (78ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.152Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=0f3262ae - 200 (79ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.153Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/react.js?v=0f3262ae - 200 (81ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.156Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-44CNIJQ4.js?v=0f3262ae - 200 (63ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.157Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-TCRMNDQ6.js?v=0f3262ae - 200 (69ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.158Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-5Y4SKFOD.js?v=0f3262ae - 200 (70ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.159Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-UZF4UHPQ.js?v=0f3262ae - 200 (71ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.161Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-4CFW2BUT.js?v=0f3262ae - 200 (72ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.162Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-6OHEM35S.js?v=0f3262ae - 200 (69ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.163Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-GGFP5NYB.js?v=0f3262ae - 200 (70ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.164Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-X5BUXP4Z.js?v=0f3262ae - 200 (71ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.164Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-YWL2QRZE.js?v=0f3262ae - 200 (71ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.170Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-6XNWDSHI.js?v=0f3262ae - 200 (77ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.172Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-GEEVCR2I.js?v=0f3262ae - 200 (78ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.175Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-OQWZSTMG.js?v=0f3262ae - 200 (81ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.176Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-ZDCKSDER.js?v=0f3262ae - 200 (82ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.178Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-6XYBD7FP.js?v=0f3262ae - 200 (84ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.184Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-QLUMSS4K.js?v=0f3262ae - 200 (91ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.186Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-QYB5DS6J.js?v=0f3262ae - 200 (92ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.187Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-JXRJCF63.js?v=0f3262ae - 200 (93ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.191Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-HUHIQS7X.js?v=0f3262ae - 200 (96ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.192Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-6WCWOOPY.js?v=0f3262ae - 200 (97ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.195Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-TAG63DWH.js?v=0f3262ae - 200 (100ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.201Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-WH6DCYPE.js?v=0f3262ae - 200 (107ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.204Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-OXML7QZZ.js?v=0f3262ae - 200 (109ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.209Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/components/layouts/RootLayout.tsx - 200 (91ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.210Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/components/error-boundaries/index.ts - 200 (91ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.211Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/components/ui/LazyLoadingBoundary.tsx - 200 (92ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.213Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/components/ui/FeatureLoadingStates.tsx - 200 (94ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.215Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/@privy-io_react-auth.js?v=0f3262ae - 200 (142ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.218Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-QO2SV6KV.js?v=0f3262ae - 200 (97ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.219Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/lib/logger.ts - 200 (89ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.220Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/lib/security/dataFilter.ts - 200 (90ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.221Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-FGCETSES.js?v=0f3262ae - 200 (100ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.221Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/utils/walletCompatibility.ts - 200 (88ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.222Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/wagmi_chains.js?v=0f3262ae - 200 (67ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.223Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/wagmi_connectors.js?v=0f3262ae - 200 (68ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.225Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/lucide-react.js?v=0f3262ae - 200 (96ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.226Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/sonner.js?v=0f3262ae - 200 (16ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.227Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/viem.js?v=0f3262ae - 200 (94ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.227Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/components/error-boundaries/ReactError310Handler.tsx - 200 (17ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.228Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/components/error-boundaries/CompositeErrorBoundary.tsx - 200 (18ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.229Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/components/error-boundaries/SuspenseErrorBoundary.tsx - 200 (19ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.232Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/components/error-boundaries/PerformanceErrorBoundary.tsx - 200 (21ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.233Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/components/ui/LocalFontProvider.tsx - 200 (23ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.234Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/utils/errorRecovery.ts - 200 (23ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.235Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/components/ui/LoadingSpinner.tsx - 200 (23ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.241Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-Q3GYPKLH.js?v=0f3262ae - 200 (24ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.242Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-LKQADTO2.js?v=0f3262ae - 200 (25ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.244Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-6WONH7DC.js?v=0f3262ae - 200 (27ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.245Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/components/dragon/GLTFErrorBoundary.tsx - 200 (34ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.252Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-XB3YLJ2Q.js?v=0f3262ae - 200 (35ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.253Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-WKPN3LTS.js?v=0f3262ae - 200 (36ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.254Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-U7P2NEEE.js?v=0f3262ae - 200 (36ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.254Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-65WYNJSY.js?v=0f3262ae - 200 (36ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.255Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-4CYEPLTL.js?v=0f3262ae - 200 (38ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.259Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-FUPOJN5U.js?v=0f3262ae - 200 (41ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.261Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-YU76MGVN.js?v=0f3262ae - 200 (43ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.261Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-RWABTHIV.js?v=0f3262ae - 200 (43ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.263Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-PVE3LOVD.js?v=0f3262ae - 200 (45ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.263Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/fp-ts_Either.js?v=0f3262ae - 200 (43ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.264Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-7PBBQRWQ.js?v=0f3262ae - 200 (46ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.265Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-ICWYOOPL.js?v=0f3262ae - 200 (0ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.266Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-2NJFDM6I.js?v=0f3262ae - 200 (1ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.266Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-4JBPBCB7.js?v=0f3262ae - 200 (1ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.266Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-4X4CGNPR.js?v=0f3262ae - 200 (44ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.266Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-TPKMXGLA.js?v=0f3262ae - 200 (1ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.441Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/fonts/GeistVF.woff - 200 (30ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.451Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/metamask-sdk-KI6IWR3C.js?v=0f3262ae - 200 (46ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.453Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/pages/dragons/WebGL3DPage.tsx - 200 (13ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.456Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/hooks/usePerformanceMonitor.ts - 200 (2ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.457Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/utils/dragonMemoryManager.ts - 200 (3ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.459Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/components/error-boundaries/DeviceCompatibilityBoundary.tsx - 200 (5ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.464Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/components/loading/LoadingStates.tsx - 200 (9ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.467Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/components/dragon/DragonModelManager.tsx - 200 (12ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.472Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-D5GHXACR.js?v=0f3262ae - 200 (18ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.515Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/utils/webglRecovery.ts - 200 (60ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.516Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/components/ui/PerformanceOverlay.tsx - 200 (59ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.517Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/three.js?v=0f3262ae - 200 (59ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.518Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/config/dragonModels.ts - 200 (63ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.519Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/utils/modelExistenceValidator.ts - 200 (50ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.522Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/components/dragon/DragonGLTFLoader.tsx - 200 (53ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.527Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/utils/webglDiagnostics.ts - 200 (3ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.528Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/events.js?v=0f3262ae - 200 (5ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.529Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/favicon.ico - 200 (74ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.532Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/utils/enhancedModelLoader.ts - 200 (63ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.558Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/fonts/GeistMonoVF.woff - 200 (106ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.566Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-7RXOBCBR.js?v=0f3262ae - 200 (42ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.576Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/@react-three_drei.js?v=0f3262ae - 200 (108ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.597Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-MAMJMQU7.js?v=0f3262ae - 200 (19ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:12.599Z",
+        "level": "info",
+        "message": "Response: http://localhost:3000/node_modules/.vite/deps/chunk-MNNAKNLY.js?v=0f3262ae - 200 (21ms)"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:13.190Z",
+        "level": "info",
+        "message": "Page loaded successfully in 1182ms"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:13.315Z",
+        "level": "info",
+        "message": "Enhanced screenshot saved: 01-enhanced-page-loaded-1752344353191.png"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:13.315Z",
+        "level": "info",
+        "message": "Testing model switching functionality..."
+      },
+      {
+        "timestamp": "2025-07-12T18:19:13.316Z",
+        "level": "error",
+        "message": "Model switching test failed: this.page.waitForTimeout is not a function"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:13.316Z",
+        "level": "info",
+        "message": "Performing stress testing..."
+      },
+      {
+        "timestamp": "2025-07-12T18:19:13.316Z",
+        "level": "info",
+        "message": "Testing for memory leaks..."
+      },
+      {
+        "timestamp": "2025-07-12T18:19:13.375Z",
+        "level": "error",
+        "message": "Stress testing failed: this.page.waitForTimeout is not a function"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:13.472Z",
+        "level": "info",
+        "message": "Enhanced screenshot saved: 99-final-enhanced-state-1752344353375.png"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:13.472Z",
+        "level": "info",
+        "message": "Generating enhanced diagnostic report..."
+      }
+    ]
+  },
+  "recommendations": [],
+  "screenshots": [
+    {
+      "name": "01-enhanced-page-loaded",
+      "filename": "01-enhanced-page-loaded-1752344353191.png",
+      "path": "docker-test-results/puppeteer/enhanced/01-enhanced-page-loaded-1752344353191.png",
+      "timestamp": "2025-07-12T18:19:13.315Z"
+    },
+    {
+      "name": "99-final-enhanced-state",
+      "filename": "99-final-enhanced-state-1752344353375.png",
+      "path": "docker-test-results/puppeteer/enhanced/99-final-enhanced-state-1752344353375.png",
+      "timestamp": "2025-07-12T18:19:13.471Z"
+    }
+  ],
+  "healthScore": 90,
+  "summary": {
+    "overallHealth": 90,
+    "pageLoadSuccessful": true,
+    "modelSwitchingAvailable": false,
+    "networkRequestsAnalyzed": 8,
+    "totalErrors": 0,
+    "performanceProfileEnabled": true,
+    "stressTestingCompleted": false,
+    "recommendations": []
+  }
+}

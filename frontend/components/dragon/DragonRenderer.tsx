@@ -208,38 +208,74 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
       setCurrentType(optimalType)
     }
     
-    // Check availability of all models
+    // Enhanced model availability check with validation
     const checkModels = async () => {
+      const { ModelExistenceValidator } = await import('../../utils/modelExistenceValidator')
+      const validator = ModelExistenceValidator.getInstance()
+      
       const modelsToCheck = [
         lowQualityModel, 
         highQualityModel, 
         '/models/seiron_animated_lod_high.gltf',
-        '/models/seiron.glb'
+        '/models/seiron.glb',
+        '/models/seiron_optimized.glb',
+        '/models/dragon_head_optimized.glb'
       ]
-      const availability: Record<string, boolean> = {}
       
-      for (const model of modelsToCheck) {
-        try {
-          const response = await fetch(model, { method: 'HEAD' })
-          availability[model] = response.ok
+      try {
+        const validationResults = await validator.validateModels(modelsToCheck)
+        const availability: Record<string, boolean> = {}
+        
+        validationResults.forEach(result => {
+          availability[result.path] = result.exists
           
-          // Additional check for file size to detect corrupted files
-          if (response.ok) {
-            const contentLength = response.headers.get('content-length')
-            if (contentLength && parseInt(contentLength) < 1000) {
-              availability[model] = false
-              logger.warn(`Model ${model} appears to be corrupted (size: ${contentLength} bytes)`)
+          if (!result.exists) {
+            logger.warn(`Model ${result.path} not available:`, {
+              error: result.error,
+              httpStatus: result.httpStatus,
+              networkErrorType: result.networkErrorType
+            })
+          } else {
+            logger.info(`Model ${result.path} available:`, {
+              fileSize: result.fileSize,
+              contentType: result.contentType,
+              loadTime: result.loadTime
+            })
+          }
+        })
+        
+        if (mountedRef.current) {
+          setModelAvailability(availability)
+          
+          // If the current model type is 'glb' but no models are available, 
+          // proactively switch to ASCII to avoid loading errors
+          const hasAnyGLBModel = Object.values(availability).some(available => available)
+          if (!hasAnyGLBModel && currentType === 'glb') {
+            logger.warn('No GLB models available, switching to ASCII dragon proactively')
+            setCurrentType('ascii')
+            
+            if (onFallback) {
+              onFallback('glb', 'ascii')
             }
           }
-        } catch (error) {
-          availability[model] = false
-          logger.warn(`Model availability check failed for ${model}:`, error)
         }
-      }
-      
-      if (mountedRef.current) {
-        setModelAvailability(availability)
-        logger.info('Model availability check:', availability)
+      } catch (error) {
+        logger.error('Enhanced model availability check failed:', error)
+        
+        // Fallback to basic availability check
+        const availability: Record<string, boolean> = {}
+        for (const model of modelsToCheck) {
+          try {
+            const response = await fetch(model, { method: 'HEAD' })
+            availability[model] = response.ok
+          } catch (fetchError) {
+            availability[model] = false
+          }
+        }
+        
+        if (mountedRef.current) {
+          setModelAvailability(availability)
+        }
       }
     }
     
@@ -308,11 +344,56 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
       onError(error, currentType)
     }
     
-    // Check for WebGL unavailability or THREE.js errors
-    const isWebGLError = error.message.includes('WebGL') || 
-                        error.message.includes('THREE is not defined') ||
-                        error.message.includes('context lost') ||
-                        error.message.includes('GL_OUT_OF_MEMORY')
+    // Enhanced error detection for faster fallback
+    const errorMessageLower = error.message.toLowerCase()
+    const isWebGLError = errorMessageLower.includes('webgl') || 
+                        errorMessageLower.includes('three is not defined') ||
+                        errorMessageLower.includes('context lost') ||
+                        errorMessageLower.includes('gl_out_of_memory')
+    
+    const is404Error = errorMessageLower.includes('404') || 
+                      errorMessageLower.includes('not found') ||
+                      errorMessageLower.includes('failed to fetch')
+    
+    const isNetworkError = errorMessageLower.includes('network') ||
+                          errorMessageLower.includes('cors') ||
+                          errorMessageLower.includes('connection')
+    
+    const isModelError = is404Error || 
+                        errorMessageLower.includes('gltf') ||
+                        errorMessageLower.includes('glb') ||
+                        errorMessageLower.includes('model')
+    
+    // Log error categorization for debugging
+    logger.warn(`Error categorization for ${currentType}:`, {
+      isWebGLError,
+      is404Error,
+      isNetworkError,
+      isModelError,
+      errorMessage
+    })
+    
+    // For 404/model errors, immediately fallback to working renderer
+    if ((is404Error || isModelError) && currentType === 'glb') {
+      logger.warn(`Model loading error detected (404/model), falling back to ASCII dragon immediately`)
+      
+      const newFallbackEntry = {
+        from: currentType,
+        to: 'ascii' as const,
+        reason: is404Error ? '404 Model Not Found' : 'Model Loading Failed'
+      }
+      
+      setFallbackHistory(prev => [...prev, newFallbackEntry])
+      
+      if (onFallback) {
+        onFallback(currentType, 'ascii')
+      }
+      
+      setCurrentType('ascii')
+      setHasError(false)
+      errorCountRef.current = 0
+      return
+    }
     
     // For WebGL/THREE.js errors, immediately fallback to ASCII
     if (isWebGLError && currentType === 'glb') {

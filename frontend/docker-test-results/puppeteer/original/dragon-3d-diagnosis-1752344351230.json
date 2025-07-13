@@ -1,0 +1,5221 @@
+{
+  "timestamp": "2025-07-12T18:18:28.851Z",
+  "testUrl": "http://localhost:3000/dragons/webgl-3d",
+  "environment": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/127.0.0.0 Safari/537.36",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "platform": "darwin",
+    "nodeVersion": "v22.16.0"
+  },
+  "diagnostics": {
+    "pageLoad": {
+      "success": true,
+      "status": 200,
+      "statusText": "OK",
+      "loadTime": 1440,
+      "finalUrl": "http://localhost:3000/dragons/webgl-3d"
+    },
+    "webglContext": {
+      "supported": false,
+      "error": "WebGL context creation failed",
+      "canvas2dSupported": true,
+      "mockWebGLAvailable": false,
+      "fallbackManagerAvailable": false,
+      "fallbackCapabilities": null
+    },
+    "threeJsInit": {
+      "loaded": false,
+      "error": "THREE is not defined on window object"
+    },
+    "modelLoading": {
+      "accessibility": [
+        {
+          "path": "/models/dragon_head.glb",
+          "url": "http://localhost:3000/models/dragon_head.glb",
+          "accessible": false,
+          "error": "net::ERR_ABORTED at http://localhost:3000/models/dragon_head.glb"
+        },
+        {
+          "path": "/models/dragon_head_optimized.glb",
+          "url": "http://localhost:3000/models/dragon_head_optimized.glb",
+          "accessible": false,
+          "error": "net::ERR_ABORTED at http://localhost:3000/models/dragon_head_optimized.glb"
+        },
+        {
+          "path": "/models/dragon_head.obj",
+          "url": "http://localhost:3000/models/dragon_head.obj",
+          "accessible": false,
+          "error": "net::ERR_ABORTED at http://localhost:3000/models/dragon_head.obj"
+        },
+        {
+          "path": "/assets/models/dragon_head.glb",
+          "url": "http://localhost:3000/assets/models/dragon_head.glb",
+          "accessible": true,
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/html",
+          "contentLength": "2085",
+          "loadTime": 0
+        },
+        {
+          "path": "/public/models/dragon_head.glb",
+          "url": "http://localhost:3000/public/models/dragon_head.glb",
+          "accessible": false,
+          "error": "net::ERR_ABORTED at http://localhost:3000/public/models/dragon_head.glb"
+        }
+      ],
+      "loadingStates": [
+        {
+          "timestamp": 1752344321929,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344322928,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344323930,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344324931,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344325932,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344326934,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344327935,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344328937,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344329937,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344330938,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344331940,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344332941,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344333942,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344334942,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344335943,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344336944,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344337944,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344338945,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344339945,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344340945,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344341947,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344342947,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344343948,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344344948,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344345949,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344346949,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344347949,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344348950,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344349951,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        },
+        {
+          "timestamp": 1752344350950,
+          "loadingElements": 0,
+          "spinnerElements": 0,
+          "canvasElements": 0,
+          "errorElements": 0,
+          "dragonElements": 1,
+          "fallbackElements": 0,
+          "mockCanvasElements": 0,
+          "asciiElements": 0
+        }
+      ]
+    },
+    "networkRequests": {
+      "modelFiles": [
+        {
+          "url": "http://localhost:3000/dragons/webgl-3d",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/html",
+          "contentLength": "2085",
+          "timestamp": "2025-07-12T18:18:31.300Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/components/dragon/GLTFErrorBoundary.tsx",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "138818",
+          "timestamp": "2025-07-12T18:18:31.538Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "125486",
+          "timestamp": "2025-07-12T18:18:31.785Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "58101",
+          "timestamp": "2025-07-12T18:18:31.875Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/config/dragonModels.ts",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "63690",
+          "timestamp": "2025-07-12T18:18:31.886Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/components/dragon/DragonModelManager.tsx",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "73708",
+          "timestamp": "2025-07-12T18:18:31.901Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/components/dragon/DragonGLTFLoader.tsx",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "46512",
+          "timestamp": "2025-07-12T18:18:31.961Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/utils/modelExistenceValidator.ts",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "38990",
+          "timestamp": "2025-07-12T18:18:31.963Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/models/dragon_head.glb",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "model/gltf-binary",
+          "contentLength": "706032",
+          "timestamp": "2025-07-12T18:18:37.933Z",
+          "isModelFile": true
+        },
+        {
+          "url": "http://localhost:3000/models/dragon_head_optimized.glb",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "model/gltf-binary",
+          "contentLength": "108536",
+          "timestamp": "2025-07-12T18:18:38.092Z",
+          "isModelFile": true
+        },
+        {
+          "url": "http://localhost:3000/models/dragon_head.obj",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "model/obj",
+          "contentLength": "2184707",
+          "timestamp": "2025-07-12T18:18:38.099Z",
+          "isModelFile": true
+        },
+        {
+          "url": "http://localhost:3000/assets/models/dragon_head.glb",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/html",
+          "contentLength": "2085",
+          "timestamp": "2025-07-12T18:18:38.123Z",
+          "isModelFile": true
+        },
+        {
+          "url": "http://localhost:3000/components/dragon/GLTFErrorBoundary.tsx",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "138818",
+          "timestamp": "2025-07-12T18:18:38.197Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/public/models/dragon_head.glb",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "model/gltf-binary",
+          "contentLength": "706032",
+          "timestamp": "2025-07-12T18:18:40.130Z",
+          "isModelFile": true
+        },
+        {
+          "url": "http://localhost:3000/dragons/webgl-3d",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/html",
+          "contentLength": "2085",
+          "timestamp": "2025-07-12T18:18:40.143Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/components/dragon/GLTFErrorBoundary.tsx",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "138818",
+          "timestamp": "2025-07-12T18:18:40.213Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "125486",
+          "timestamp": "2025-07-12T18:18:40.304Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "58101",
+          "timestamp": "2025-07-12T18:18:40.305Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/config/dragonModels.ts",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "63690",
+          "timestamp": "2025-07-12T18:18:40.321Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/components/dragon/DragonModelManager.tsx",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "73708",
+          "timestamp": "2025-07-12T18:18:40.321Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/utils/modelExistenceValidator.ts",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "38990",
+          "timestamp": "2025-07-12T18:18:40.327Z",
+          "isModelFile": false
+        },
+        {
+          "url": "http://localhost:3000/components/dragon/DragonGLTFLoader.tsx",
+          "status": 200,
+          "statusText": "OK",
+          "contentType": "text/javascript",
+          "contentLength": "46512",
+          "timestamp": "2025-07-12T18:18:40.327Z",
+          "isModelFile": false
+        }
+      ],
+      "failed": [
+        {
+          "url": "http://localhost:3000/models/dragon_head.glb",
+          "method": "GET",
+          "failure": "net::ERR_ABORTED",
+          "timestamp": "2025-07-12T18:18:37.934Z"
+        },
+        {
+          "url": "http://localhost:3000/models/dragon_head_optimized.glb",
+          "method": "GET",
+          "failure": "net::ERR_ABORTED",
+          "timestamp": "2025-07-12T18:18:38.092Z"
+        },
+        {
+          "url": "http://localhost:3000/models/dragon_head.obj",
+          "method": "GET",
+          "failure": "net::ERR_ABORTED",
+          "timestamp": "2025-07-12T18:18:38.099Z"
+        },
+        {
+          "url": "http://localhost:3000/public/models/dragon_head.glb",
+          "method": "GET",
+          "failure": "net::ERR_ABORTED",
+          "timestamp": "2025-07-12T18:18:40.131Z"
+        }
+      ]
+    },
+    "jsErrors": [],
+    "consoleMessages": [
+      {
+        "type": "log",
+        "text": "🟠 HTML Script executing...",
+        "timestamp": "2025-07-12T18:18:31.313Z",
+        "location": {
+          "url": "http://localhost:3000/dragons/webgl-3d",
+          "lineNumber": 33,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "timestamp": "2025-07-12T18:18:31.518Z",
+        "location": {
+          "url": "http://localhost:3000/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "timestamp": "2025-07-12T18:18:31.530Z",
+        "location": {
+          "url": "http://localhost:3000/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "timestamp": "2025-07-12T18:18:31.539Z",
+        "location": {
+          "url": "http://localhost:3000/node_modules/.vite/deps/chunk-QO2SV6KV.js?v=0f3262ae",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        }
+      },
+      {
+        "type": "warn",
+        "text": "Module \"buffer\" has been externalized for browser compatibility. Cannot access \"buffer.Buffer\" in client code. See https://vite.dev/guide/troubleshooting.html#module-externalized-for-browser-compatibility for more details.",
+        "timestamp": "2025-07-12T18:18:31.600Z",
+        "location": {
+          "url": "http://localhost:3000/node_modules/.vite/deps/chunk-LKQADTO2.js?v=0f3262ae",
+          "lineNumber": 10,
+          "columnNumber": 18
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔐 Privy Configuration Status:",
+        "timestamp": "2025-07-12T18:18:31.658Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 32,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- App ID present: false",
+        "timestamp": "2025-07-12T18:18:31.658Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 33,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- App ID length: 0",
+        "timestamp": "2025-07-12T18:18:31.658Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 34,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Environment: development",
+        "timestamp": "2025-07-12T18:18:31.658Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 35,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Client ID present: false",
+        "timestamp": "2025-07-12T18:18:31.659Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 36,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Configuration valid: false",
+        "timestamp": "2025-07-12T18:18:31.659Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 37,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Wallet Compatibility for Sei Network:",
+        "timestamp": "2025-07-12T18:18:31.659Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 45,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Supported wallets: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:31.659Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 46,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Supported login methods: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:31.659Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 47,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Embedded wallets disabled: true",
+        "timestamp": "2025-07-12T18:18:31.659Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 48,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Coinbase Smart Wallet excluded: true",
+        "timestamp": "2025-07-12T18:18:31.659Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 49,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Supported wallets for Sei Network: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:31.660Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 28,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "✅ MetaMask connector added (supported on Sei Network)",
+        "timestamp": "2025-07-12T18:18:31.660Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 32,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "✅ Injected connector added (supported on Sei Network)",
+        "timestamp": "2025-07-12T18:18:31.660Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 38,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Final connector configuration:",
+        "timestamp": "2025-07-12T18:18:31.660Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 42,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Total connectors: 2",
+        "timestamp": "2025-07-12T18:18:31.660Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 43,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Connector types: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:31.660Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 44,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Simplified Wagmi Configuration (No WalletConnect):",
+        "timestamp": "2025-07-12T18:18:31.662Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 77,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Chains: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:31.662Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 78,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Connectors: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:31.662Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 79,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Sei Network supported wallets: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:31.662Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 80,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Ethereum supported wallets: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:31.663Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 81,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🚀 Seiron App Initializing...",
+        "timestamp": "2025-07-12T18:18:31.664Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 14,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Environment: development",
+        "timestamp": "2025-07-12T18:18:31.664Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 15,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Base URL: /",
+        "timestamp": "2025-07-12T18:18:31.664Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 16,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Dev mode: true",
+        "timestamp": "2025-07-12T18:18:31.664Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 17,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Prod mode: false",
+        "timestamp": "2025-07-12T18:18:31.664Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 18,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T18:18:31.664Z] [Seiron] [DEBUG] 🔍 Environment Validation Starting...",
+        "timestamp": "2025-07-12T18:18:31.665Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T18:18:31.665Z] [Seiron] [DEBUG] Environment Status: JSHandle@object",
+        "timestamp": "2025-07-12T18:18:31.666Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "warn",
+        "text": "[2025-07-12T18:18:31.666Z] [Seiron] [WARN] Missing required environment variables: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:31.666Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 109,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T18:18:31.666Z] [Seiron] [INFO] ℹ️ VITE_WALLETCONNECT_PROJECT_ID not configured - WalletConnect will not be available",
+        "timestamp": "2025-07-12T18:18:31.666Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T18:18:31.666Z] [Seiron] [INFO] ℹ️ VITE_ELEVENLABS_API_KEY not configured - Voice features will be disabled",
+        "timestamp": "2025-07-12T18:18:31.666Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T18:18:31.666Z] [Seiron] [INFO] ℹ️ VITE_ELEVENLABS_VOICE_ID not configured - Default voice will be used",
+        "timestamp": "2025-07-12T18:18:31.666Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "warn",
+        "text": "[2025-07-12T18:18:31.666Z] [Seiron] [WARN] ⚠️ Privy authentication not configured in development",
+        "timestamp": "2025-07-12T18:18:31.666Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 109,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T18:18:31.666Z] [Seiron] [INFO] ℹ️ WalletConnect not configured (optional feature)",
+        "timestamp": "2025-07-12T18:18:31.666Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T18:18:31.666Z] [Seiron] [INFO] ℹ️ Voice features not configured (optional feature)",
+        "timestamp": "2025-07-12T18:18:31.667Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T18:18:31.666Z] [Seiron] [DEBUG] ✅ Environment Validation Complete",
+        "timestamp": "2025-07-12T18:18:31.667Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "🏗️ Creating React root...",
+        "timestamp": "2025-07-12T18:18:31.667Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 43,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔍 App configuration check:",
+        "timestamp": "2025-07-12T18:18:31.668Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 49,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Has Privy config: false",
+        "timestamp": "2025-07-12T18:18:31.668Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 50,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Production mode: false",
+        "timestamp": "2025-07-12T18:18:31.668Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 51,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Will use authentication: false",
+        "timestamp": "2025-07-12T18:18:31.668Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 52,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🎨 Rendering app with routing but without authentication...",
+        "timestamp": "2025-07-12T18:18:31.668Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 94,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "✅ App render complete",
+        "timestamp": "2025-07-12T18:18:31.668Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 121,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🎯 RootLayout rendering",
+        "timestamp": "2025-07-12T18:18:31.674Z",
+        "location": {
+          "url": "http://localhost:3000/components/layouts/RootLayout.tsx",
+          "lineNumber": 21,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "Window location: /dragons/webgl-3d",
+        "timestamp": "2025-07-12T18:18:31.674Z",
+        "location": {
+          "url": "http://localhost:3000/components/layouts/RootLayout.tsx",
+          "lineNumber": 22,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🎯 RootLayout rendering",
+        "timestamp": "2025-07-12T18:18:31.674Z",
+        "location": {
+          "url": "http://localhost:3000/components/layouts/RootLayout.tsx",
+          "lineNumber": 21,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "Window location: /dragons/webgl-3d",
+        "timestamp": "2025-07-12T18:18:31.674Z",
+        "location": {
+          "url": "http://localhost:3000/components/layouts/RootLayout.tsx",
+          "lineNumber": 22,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T18:18:31.679Z] [Seiron] [DEBUG] GLTF Error Boundary mounted JSHandle@object",
+        "timestamp": "2025-07-12T18:18:31.686Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "warn",
+        "text": "⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.",
+        "timestamp": "2025-07-12T18:18:31.686Z",
+        "location": {
+          "url": "http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=0f3262ae",
+          "lineNumber": 4392,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T18:18:31.681Z] [Seiron] [DEBUG] GLTF Error Boundary unmounting JSHandle@object",
+        "timestamp": "2025-07-12T18:18:31.686Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T18:18:31.681Z] [Seiron] [DEBUG] GLTF Error Boundary mounted JSHandle@object",
+        "timestamp": "2025-07-12T18:18:31.686Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:32.179Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:32.179Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:32.179Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:32.180Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:32.180Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:32.180Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:32.180Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:32.180Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 WebGL3DPage unmounting - comprehensive cleanup",
+        "timestamp": "2025-07-12T18:18:32.180Z",
+        "location": {
+          "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+          "lineNumber": 239,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "Performance tracking cleanup skipped (temporarily disabled)",
+        "timestamp": "2025-07-12T18:18:32.180Z",
+        "location": {
+          "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+          "lineNumber": 249,
+          "columnNumber": 18
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 DragonMemoryManager disposing all resources",
+        "timestamp": "2025-07-12T18:18:32.180Z",
+        "location": {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "lineNumber": 288,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "Before disposal: JSHandle@object",
+        "timestamp": "2025-07-12T18:18:32.180Z",
+        "location": {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "lineNumber": 299,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 DragonMemoryManager disposal complete",
+        "timestamp": "2025-07-12T18:18:32.180Z",
+        "location": {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "lineNumber": 348,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 WebGL3DPage cleanup complete",
+        "timestamp": "2025-07-12T18:18:32.181Z",
+        "location": {
+          "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+          "lineNumber": 313,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 All model disposals completed",
+        "timestamp": "2025-07-12T18:18:32.181Z",
+        "location": {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "lineNumber": 314,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:32.182Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:32.182Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:32.182Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:32.182Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:32.182Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:32.182Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:32.182Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:32.182Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.2ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:32.285Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.0ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:32.285Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.0ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:32.285Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:32.285Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:33.170Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:33.170Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:33.170Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:33.170Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:33.273Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:34.170Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:34.170Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:34.170Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:34.170Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:34.272Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:35.169Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:35.169Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:35.169Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:35.169Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.2ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:35.273Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:36.168Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:36.168Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:36.168Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:36.168Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:36.273Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:37.170Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:37.170Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:37.170Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:37.170Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.2ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:37.273Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 Unmounting React app...",
+        "timestamp": "2025-07-12T18:18:37.926Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 125,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T18:18:37.926Z] [Seiron] [DEBUG] GLTF Error Boundary unmounting JSHandle@object",
+        "timestamp": "2025-07-12T18:18:37.927Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:37.927Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:37.927Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:37.927Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:37.927Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 WebGL3DPage unmounting - comprehensive cleanup",
+        "timestamp": "2025-07-12T18:18:37.927Z",
+        "location": {
+          "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+          "lineNumber": 239,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "Performance tracking cleanup skipped (temporarily disabled)",
+        "timestamp": "2025-07-12T18:18:37.927Z",
+        "location": {
+          "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+          "lineNumber": 249,
+          "columnNumber": 18
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 DragonMemoryManager disposing all resources",
+        "timestamp": "2025-07-12T18:18:37.927Z",
+        "location": {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "lineNumber": 288,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "Before disposal: JSHandle@object",
+        "timestamp": "2025-07-12T18:18:37.927Z",
+        "location": {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "lineNumber": 299,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 DragonMemoryManager disposal complete",
+        "timestamp": "2025-07-12T18:18:37.928Z",
+        "location": {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "lineNumber": 348,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 WebGL3DPage cleanup complete",
+        "timestamp": "2025-07-12T18:18:37.928Z",
+        "location": {
+          "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+          "lineNumber": 313,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 All model disposals completed",
+        "timestamp": "2025-07-12T18:18:37.928Z",
+        "location": {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "lineNumber": 314,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:38.089Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "🟠 HTML Script executing...",
+        "timestamp": "2025-07-12T18:18:38.154Z",
+        "location": {
+          "url": "http://localhost:3000/assets/models/dragon_head.glb",
+          "lineNumber": 33,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "timestamp": "2025-07-12T18:18:38.175Z",
+        "location": {
+          "url": "http://localhost:3000/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "timestamp": "2025-07-12T18:18:38.179Z",
+        "location": {
+          "url": "http://localhost:3000/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "timestamp": "2025-07-12T18:18:38.222Z",
+        "location": {
+          "url": "http://localhost:3000/node_modules/.vite/deps/chunk-QO2SV6KV.js?v=0f3262ae",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        }
+      },
+      {
+        "type": "warn",
+        "text": "Module \"buffer\" has been externalized for browser compatibility. Cannot access \"buffer.Buffer\" in client code. See https://vite.dev/guide/troubleshooting.html#module-externalized-for-browser-compatibility for more details.",
+        "timestamp": "2025-07-12T18:18:38.234Z",
+        "location": {
+          "url": "http://localhost:3000/node_modules/.vite/deps/chunk-LKQADTO2.js?v=0f3262ae",
+          "lineNumber": 10,
+          "columnNumber": 18
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔐 Privy Configuration Status:",
+        "timestamp": "2025-07-12T18:18:38.269Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 32,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- App ID present: false",
+        "timestamp": "2025-07-12T18:18:38.269Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 33,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- App ID length: 0",
+        "timestamp": "2025-07-12T18:18:38.269Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 34,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Environment: development",
+        "timestamp": "2025-07-12T18:18:38.269Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 35,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Client ID present: false",
+        "timestamp": "2025-07-12T18:18:38.269Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 36,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Configuration valid: false",
+        "timestamp": "2025-07-12T18:18:38.269Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 37,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Wallet Compatibility for Sei Network:",
+        "timestamp": "2025-07-12T18:18:38.269Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 45,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Supported wallets: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:38.269Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 46,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Supported login methods: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:38.269Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 47,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Embedded wallets disabled: true",
+        "timestamp": "2025-07-12T18:18:38.269Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 48,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Coinbase Smart Wallet excluded: true",
+        "timestamp": "2025-07-12T18:18:38.269Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 49,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Supported wallets for Sei Network: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:38.269Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 28,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "✅ MetaMask connector added (supported on Sei Network)",
+        "timestamp": "2025-07-12T18:18:38.269Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 32,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "✅ Injected connector added (supported on Sei Network)",
+        "timestamp": "2025-07-12T18:18:38.269Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 38,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Final connector configuration:",
+        "timestamp": "2025-07-12T18:18:38.269Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 42,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Total connectors: 2",
+        "timestamp": "2025-07-12T18:18:38.269Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 43,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Connector types: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:38.270Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 44,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Simplified Wagmi Configuration (No WalletConnect):",
+        "timestamp": "2025-07-12T18:18:38.270Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 77,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Chains: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:38.270Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 78,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Connectors: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:38.270Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 79,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Sei Network supported wallets: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:38.270Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 80,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Ethereum supported wallets: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:38.270Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 81,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🚀 Seiron App Initializing...",
+        "timestamp": "2025-07-12T18:18:38.272Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 14,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Environment: development",
+        "timestamp": "2025-07-12T18:18:38.272Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 15,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Base URL: /",
+        "timestamp": "2025-07-12T18:18:38.272Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 16,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Dev mode: true",
+        "timestamp": "2025-07-12T18:18:38.272Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 17,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Prod mode: false",
+        "timestamp": "2025-07-12T18:18:38.272Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 18,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T18:18:38.272Z] [Seiron] [DEBUG] 🔍 Environment Validation Starting...",
+        "timestamp": "2025-07-12T18:18:38.272Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T18:18:38.272Z] [Seiron] [DEBUG] Environment Status: JSHandle@object",
+        "timestamp": "2025-07-12T18:18:38.273Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "warn",
+        "text": "[2025-07-12T18:18:38.272Z] [Seiron] [WARN] Missing required environment variables: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:38.273Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 109,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T18:18:38.272Z] [Seiron] [INFO] ℹ️ VITE_WALLETCONNECT_PROJECT_ID not configured - WalletConnect will not be available",
+        "timestamp": "2025-07-12T18:18:38.273Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T18:18:38.272Z] [Seiron] [INFO] ℹ️ VITE_ELEVENLABS_API_KEY not configured - Voice features will be disabled",
+        "timestamp": "2025-07-12T18:18:38.273Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T18:18:38.272Z] [Seiron] [INFO] ℹ️ VITE_ELEVENLABS_VOICE_ID not configured - Default voice will be used",
+        "timestamp": "2025-07-12T18:18:38.273Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "warn",
+        "text": "[2025-07-12T18:18:38.272Z] [Seiron] [WARN] ⚠️ Privy authentication not configured in development",
+        "timestamp": "2025-07-12T18:18:38.273Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 109,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T18:18:38.272Z] [Seiron] [INFO] ℹ️ WalletConnect not configured (optional feature)",
+        "timestamp": "2025-07-12T18:18:38.273Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T18:18:38.272Z] [Seiron] [INFO] ℹ️ Voice features not configured (optional feature)",
+        "timestamp": "2025-07-12T18:18:38.273Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T18:18:38.272Z] [Seiron] [DEBUG] ✅ Environment Validation Complete",
+        "timestamp": "2025-07-12T18:18:38.273Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "🏗️ Creating React root...",
+        "timestamp": "2025-07-12T18:18:38.273Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 43,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔍 App configuration check:",
+        "timestamp": "2025-07-12T18:18:38.273Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 49,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Has Privy config: false",
+        "timestamp": "2025-07-12T18:18:38.273Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 50,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Production mode: false",
+        "timestamp": "2025-07-12T18:18:38.273Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 51,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Will use authentication: false",
+        "timestamp": "2025-07-12T18:18:38.273Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 52,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🎨 Rendering app with routing but without authentication...",
+        "timestamp": "2025-07-12T18:18:38.273Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 94,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "✅ App render complete",
+        "timestamp": "2025-07-12T18:18:38.273Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 121,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "warn",
+        "text": "No routes matched location \"/assets/models/dragon_head.glb\" ",
+        "timestamp": "2025-07-12T18:18:38.291Z",
+        "location": {
+          "url": "http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=0f3262ae",
+          "lineNumber": 213,
+          "columnNumber": 48
+        }
+      },
+      {
+        "type": "warn",
+        "text": "No routes matched location \"/assets/models/dragon_head.glb\" ",
+        "timestamp": "2025-07-12T18:18:38.292Z",
+        "location": {
+          "url": "http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=0f3262ae",
+          "lineNumber": 213,
+          "columnNumber": 48
+        }
+      },
+      {
+        "type": "error",
+        "text": "Error handled by React Router default ErrorBoundary: JSHandle@object",
+        "timestamp": "2025-07-12T18:18:38.293Z",
+        "location": {
+          "url": "http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=0f3262ae",
+          "lineNumber": 4029,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "error",
+        "text": "Error handled by React Router default ErrorBoundary: JSHandle@object",
+        "timestamp": "2025-07-12T18:18:38.293Z",
+        "location": {
+          "url": "http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=0f3262ae",
+          "lineNumber": 4029,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "warn",
+        "text": "⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.",
+        "timestamp": "2025-07-12T18:18:38.294Z",
+        "location": {
+          "url": "http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=0f3262ae",
+          "lineNumber": 4392,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 Unmounting React app...",
+        "timestamp": "2025-07-12T18:18:40.118Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 125,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "🟠 HTML Script executing...",
+        "timestamp": "2025-07-12T18:18:40.185Z",
+        "location": {
+          "url": "http://localhost:3000/dragons/webgl-3d",
+          "lineNumber": 33,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "timestamp": "2025-07-12T18:18:40.197Z",
+        "location": {
+          "url": "http://localhost:3000/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "timestamp": "2025-07-12T18:18:40.214Z",
+        "location": {
+          "url": "http://localhost:3000/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "timestamp": "2025-07-12T18:18:40.218Z",
+        "location": {
+          "url": "http://localhost:3000/node_modules/.vite/deps/chunk-QO2SV6KV.js?v=0f3262ae",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        }
+      },
+      {
+        "type": "warn",
+        "text": "Module \"buffer\" has been externalized for browser compatibility. Cannot access \"buffer.Buffer\" in client code. See https://vite.dev/guide/troubleshooting.html#module-externalized-for-browser-compatibility for more details.",
+        "timestamp": "2025-07-12T18:18:40.223Z",
+        "location": {
+          "url": "http://localhost:3000/node_modules/.vite/deps/chunk-LKQADTO2.js?v=0f3262ae",
+          "lineNumber": 10,
+          "columnNumber": 18
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔐 Privy Configuration Status:",
+        "timestamp": "2025-07-12T18:18:40.254Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 32,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- App ID present: false",
+        "timestamp": "2025-07-12T18:18:40.255Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 33,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- App ID length: 0",
+        "timestamp": "2025-07-12T18:18:40.255Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 34,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Environment: development",
+        "timestamp": "2025-07-12T18:18:40.255Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 35,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Client ID present: false",
+        "timestamp": "2025-07-12T18:18:40.255Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 36,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Configuration valid: false",
+        "timestamp": "2025-07-12T18:18:40.255Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 37,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Wallet Compatibility for Sei Network:",
+        "timestamp": "2025-07-12T18:18:40.255Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 45,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Supported wallets: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:40.255Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 46,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Supported login methods: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:40.255Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 47,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Embedded wallets disabled: true",
+        "timestamp": "2025-07-12T18:18:40.255Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 48,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Coinbase Smart Wallet excluded: true",
+        "timestamp": "2025-07-12T18:18:40.255Z",
+        "location": {
+          "url": "http://localhost:3000/config/privy.ts",
+          "lineNumber": 49,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Supported wallets for Sei Network: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:40.256Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 28,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "✅ MetaMask connector added (supported on Sei Network)",
+        "timestamp": "2025-07-12T18:18:40.256Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 32,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "✅ Injected connector added (supported on Sei Network)",
+        "timestamp": "2025-07-12T18:18:40.256Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 38,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Final connector configuration:",
+        "timestamp": "2025-07-12T18:18:40.256Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 42,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Total connectors: 2",
+        "timestamp": "2025-07-12T18:18:40.257Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 43,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Connector types: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:40.257Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 44,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔗 Simplified Wagmi Configuration (No WalletConnect):",
+        "timestamp": "2025-07-12T18:18:40.257Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 77,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Chains: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:40.257Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 78,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Connectors: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:40.257Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 79,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Sei Network supported wallets: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:40.257Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 80,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Ethereum supported wallets: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:40.257Z",
+        "location": {
+          "url": "http://localhost:3000/config/wagmi.ts",
+          "lineNumber": 81,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "🚀 Seiron App Initializing...",
+        "timestamp": "2025-07-12T18:18:40.259Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 14,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Environment: development",
+        "timestamp": "2025-07-12T18:18:40.259Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 15,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Base URL: /",
+        "timestamp": "2025-07-12T18:18:40.259Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 16,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Dev mode: true",
+        "timestamp": "2025-07-12T18:18:40.259Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 17,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "Prod mode: false",
+        "timestamp": "2025-07-12T18:18:40.259Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 18,
+          "columnNumber": 8
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T18:18:40.258Z] [Seiron] [DEBUG] 🔍 Environment Validation Starting...",
+        "timestamp": "2025-07-12T18:18:40.259Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T18:18:40.258Z] [Seiron] [DEBUG] Environment Status: JSHandle@object",
+        "timestamp": "2025-07-12T18:18:40.259Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "warn",
+        "text": "[2025-07-12T18:18:40.258Z] [Seiron] [WARN] Missing required environment variables: JSHandle@array",
+        "timestamp": "2025-07-12T18:18:40.259Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 109,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T18:18:40.259Z] [Seiron] [INFO] ℹ️ VITE_WALLETCONNECT_PROJECT_ID not configured - WalletConnect will not be available",
+        "timestamp": "2025-07-12T18:18:40.259Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T18:18:40.259Z] [Seiron] [INFO] ℹ️ VITE_ELEVENLABS_API_KEY not configured - Voice features will be disabled",
+        "timestamp": "2025-07-12T18:18:40.259Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T18:18:40.259Z] [Seiron] [INFO] ℹ️ VITE_ELEVENLABS_VOICE_ID not configured - Default voice will be used",
+        "timestamp": "2025-07-12T18:18:40.259Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "warn",
+        "text": "[2025-07-12T18:18:40.259Z] [Seiron] [WARN] ⚠️ Privy authentication not configured in development",
+        "timestamp": "2025-07-12T18:18:40.259Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 109,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T18:18:40.259Z] [Seiron] [INFO] ℹ️ WalletConnect not configured (optional feature)",
+        "timestamp": "2025-07-12T18:18:40.259Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "info",
+        "text": "[2025-07-12T18:18:40.259Z] [Seiron] [INFO] ℹ️ Voice features not configured (optional feature)",
+        "timestamp": "2025-07-12T18:18:40.259Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 92,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T18:18:40.259Z] [Seiron] [DEBUG] ✅ Environment Validation Complete",
+        "timestamp": "2025-07-12T18:18:40.259Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "🏗️ Creating React root...",
+        "timestamp": "2025-07-12T18:18:40.259Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 43,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🔍 App configuration check:",
+        "timestamp": "2025-07-12T18:18:40.259Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 49,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Has Privy config: false",
+        "timestamp": "2025-07-12T18:18:40.259Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 50,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Production mode: false",
+        "timestamp": "2025-07-12T18:18:40.260Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 51,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "- Will use authentication: false",
+        "timestamp": "2025-07-12T18:18:40.260Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 52,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🎨 Rendering app with routing but without authentication...",
+        "timestamp": "2025-07-12T18:18:40.260Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 94,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "✅ App render complete",
+        "timestamp": "2025-07-12T18:18:40.260Z",
+        "location": {
+          "url": "http://localhost:3000/main.tsx",
+          "lineNumber": 121,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🎯 RootLayout rendering",
+        "timestamp": "2025-07-12T18:18:40.267Z",
+        "location": {
+          "url": "http://localhost:3000/components/layouts/RootLayout.tsx",
+          "lineNumber": 21,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "Window location: /dragons/webgl-3d",
+        "timestamp": "2025-07-12T18:18:40.272Z",
+        "location": {
+          "url": "http://localhost:3000/components/layouts/RootLayout.tsx",
+          "lineNumber": 22,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "🎯 RootLayout rendering",
+        "timestamp": "2025-07-12T18:18:40.272Z",
+        "location": {
+          "url": "http://localhost:3000/components/layouts/RootLayout.tsx",
+          "lineNumber": 21,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "Window location: /dragons/webgl-3d",
+        "timestamp": "2025-07-12T18:18:40.273Z",
+        "location": {
+          "url": "http://localhost:3000/components/layouts/RootLayout.tsx",
+          "lineNumber": 22,
+          "columnNumber": 10
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T18:18:40.268Z] [Seiron] [DEBUG] GLTF Error Boundary mounted JSHandle@object",
+        "timestamp": "2025-07-12T18:18:40.274Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "warn",
+        "text": "⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.",
+        "timestamp": "2025-07-12T18:18:40.274Z",
+        "location": {
+          "url": "http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=0f3262ae",
+          "lineNumber": 4392,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T18:18:40.269Z] [Seiron] [DEBUG] GLTF Error Boundary unmounting JSHandle@object",
+        "timestamp": "2025-07-12T18:18:40.274Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[2025-07-12T18:18:40.269Z] [Seiron] [DEBUG] GLTF Error Boundary mounted JSHandle@object",
+        "timestamp": "2025-07-12T18:18:40.274Z",
+        "location": {
+          "url": "http://localhost:3000/lib/logger.ts",
+          "lineNumber": 75,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:40.403Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:40.403Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:40.403Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:40.403Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:40.403Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:40.403Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:40.403Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:40.403Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 WebGL3DPage unmounting - comprehensive cleanup",
+        "timestamp": "2025-07-12T18:18:40.403Z",
+        "location": {
+          "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+          "lineNumber": 239,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "Performance tracking cleanup skipped (temporarily disabled)",
+        "timestamp": "2025-07-12T18:18:40.404Z",
+        "location": {
+          "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+          "lineNumber": 249,
+          "columnNumber": 18
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 DragonMemoryManager disposing all resources",
+        "timestamp": "2025-07-12T18:18:40.404Z",
+        "location": {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "lineNumber": 288,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "Before disposal: JSHandle@object",
+        "timestamp": "2025-07-12T18:18:40.404Z",
+        "location": {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "lineNumber": 299,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 DragonMemoryManager disposal complete",
+        "timestamp": "2025-07-12T18:18:40.404Z",
+        "location": {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "lineNumber": 348,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 WebGL3DPage cleanup complete",
+        "timestamp": "2025-07-12T18:18:40.404Z",
+        "location": {
+          "url": "http://localhost:3000/pages/dragons/WebGL3DPage.tsx",
+          "lineNumber": 313,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:40.404Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:40.404Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:40.404Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:40.404Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:40.405Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:40.405Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:40.405Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:40.405Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "🧹 All model disposals completed",
+        "timestamp": "2025-07-12T18:18:40.405Z",
+        "location": {
+          "url": "http://localhost:3000/utils/dragonMemoryManager.ts",
+          "lineNumber": 314,
+          "columnNumber": 16
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.2ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:40.504Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.0ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:40.504Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.0ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:40.513Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.0ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:40.513Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:41.402Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:41.403Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:41.403Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:41.403Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.0ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:41.504Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:42.402Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:42.402Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:42.402Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:42.402Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:42.504Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:43.402Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:43.403Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:43.403Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:43.403Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:43.505Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:44.404Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:44.404Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:44.404Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:44.404Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:44.506Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:45.405Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:45.405Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:45.405Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:45.405Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:45.508Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:46.406Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:46.407Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:46.407Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:46.407Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:46.509Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:47.410Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:47.410Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:47.410Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:47.410Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.2ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:47.510Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:48.410Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:48.411Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:48.411Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:48.411Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:48.512Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:49.411Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:49.412Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:49.412Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:49.412Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.2ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:49.513Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:50.412Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:50.412Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:50.412Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:50.412Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.2ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:50.514Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:51.413Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:51.413Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:51.413Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:51.413Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.2ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:51.515Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:52.415Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:52.415Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:52.415Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:52.415Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.3ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:52.516Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:53.414Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:53.414Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:53.414Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:53.414Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:53.517Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:54.416Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:54.416Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:54.416Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:54.416Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.2ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:54.518Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:55.416Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:55.416Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:55.416Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:55.416Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.0ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:55.519Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:56.417Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:56.417Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:56.417Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:56.417Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.2ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:56.519Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:57.418Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:57.418Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:57.418Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:57.418Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:57.522Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:58.419Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:58.420Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:58.420Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:58.420Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.2ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:58.521Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:18:59.419Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:18:59.420Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:18:59.420Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:18:59.420Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:18:59.522Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:19:00.419Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:19:00.419Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:19:00.419Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:19:00.419Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:19:00.522Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:19:01.421Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:19:01.422Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:19:01.422Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:19:01.422Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup: freed 48.4MB (41.2% efficiency) in 0.1ms",
+        "timestamp": "2025-07-12T18:19:01.523Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 959,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:19:02.420Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:19:02.421Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:19:02.421Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:19:02.421Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:19:02.523Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:19:03.421Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:19:03.421Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:19:03.421Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:19:03.421Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:19:03.524Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:19:04.421Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:19:04.421Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:19:04.421Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:19:04.421Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.2ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:19:04.524Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:19:05.422Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:19:05.422Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:19:05.422Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:19:05.422Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.0ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:19:05.525Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:19:06.422Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:19:06.422Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:19:06.422Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:19:06.422Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:19:06.525Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:19:07.424Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:19:07.424Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:19:07.424Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:19:07.424Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.2ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:19:07.525Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:19:08.424Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:19:08.424Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:19:08.424Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:19:08.424Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:19:08.526Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:19:09.424Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:19:09.424Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:19:09.425Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:19:09.425Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:19:09.526Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Stopped preventive monitoring",
+        "timestamp": "2025-07-12T18:19:10.425Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1078,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Starting optimized memory cleanup",
+        "timestamp": "2025-07-12T18:19:10.425Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 921,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Cleaned up failed context resources",
+        "timestamp": "2025-07-12T18:19:10.425Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 859,
+          "columnNumber": 14
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Disposed WebGL recovery manager",
+        "timestamp": "2025-07-12T18:19:10.426Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 1526,
+          "columnNumber": 12
+        }
+      },
+      {
+        "type": "log",
+        "text": "[WebGLRecovery] Memory cleanup completed in 0.1ms (no significant memory freed)",
+        "timestamp": "2025-07-12T18:19:10.527Z",
+        "location": {
+          "url": "http://localhost:3000/utils/webglRecovery.ts",
+          "lineNumber": 961,
+          "columnNumber": 20
+        }
+      }
+    ],
+    "performanceMetrics": {
+      "navigation": {
+        "domContentLoaded": 0.10000002384185791,
+        "loadComplete": 0,
+        "domInteractive": 8.5,
+        "totalLoadTime": 122.2999999821186
+      },
+      "paint": {
+        "first-paint": 37.80000001192093,
+        "first-contentful-paint": 37.80000001192093
+      },
+      "memory": {
+        "usedJSHeapSize": 61656660,
+        "totalJSHeapSize": 70002928,
+        "jsHeapSizeLimit": 4294705152
+      },
+      "resourceCount": 103,
+      "puppeteer": {
+        "Timestamp": 243493.892547,
+        "Documents": 4,
+        "Frames": 4,
+        "JSEventListeners": 168,
+        "Nodes": 119,
+        "LayoutCount": 14,
+        "RecalcStyleCount": 15,
+        "LayoutDuration": 0.010061,
+        "RecalcStyleDuration": 0.003581,
+        "ScriptDuration": 0.215012,
+        "TaskDuration": 0.62872,
+        "JSHeapUsedSize": 27603868,
+        "JSHeapTotalSize": 35586048
+      }
+    },
+    "fallbackBehavior": {
+      "fallbackElementsFound": 0,
+      "sprite2DElementsFound": 0,
+      "asciiElementsFound": 0,
+      "mockCanvasElementsFound": 0,
+      "canvas2DElementsFound": 0,
+      "dragonFallbackElementsFound": 0,
+      "webglFallbackActive": false,
+      "webglFallbackDiagnostics": null,
+      "debugInfo": "",
+      "fallbackTypes": [],
+      "currentRenderingMode": "unknown",
+      "canvas2DInfo": {
+        "totalCanvases": 0,
+        "canvas2DCanvases": 0,
+        "canvasInfo": []
+      }
+    },
+    "accessibility": {},
+    "modelCacheService": {
+      "available": false
+    },
+    "webglFallbackManager": {},
+    "logs": [
+      {
+        "timestamp": "2025-07-12T18:18:28.852Z",
+        "level": "info",
+        "message": "Output directory created: ./docker-test-results/puppeteer/original"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:28.852Z",
+        "level": "info",
+        "message": "Launching Puppeteer browser..."
+      },
+      {
+        "timestamp": "2025-07-12T18:18:31.262Z",
+        "level": "info",
+        "message": "Browser launched with user agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/127.0.0.0 Safari/537.36"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:31.262Z",
+        "level": "info",
+        "message": "Setting up page monitoring..."
+      },
+      {
+        "timestamp": "2025-07-12T18:18:31.262Z",
+        "level": "info",
+        "message": "Navigating to target URL: http://localhost:3000/dragons/webgl-3d"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:31.301Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/dragons/webgl-3d - 200"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:31.538Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/components/dragon/GLTFErrorBoundary.tsx - 200"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:31.786Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/pages/dragons/WebGL3DPage.tsx - 200"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:31.875Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/utils/dragonMemoryManager.ts - 200"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:31.886Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/config/dragonModels.ts - 200"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:31.901Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/components/dragon/DragonModelManager.tsx - 200"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:31.961Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/components/dragon/DragonGLTFLoader.tsx - 200"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:31.963Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/utils/modelExistenceValidator.ts - 200"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:32.702Z",
+        "level": "info",
+        "message": "Page loaded successfully in 1440ms"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:32.817Z",
+        "level": "info",
+        "message": "Screenshot saved: 01-page-loaded-1752344312702.png"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:32.817Z",
+        "level": "info",
+        "message": "Checking WebGL context and fallback capabilities..."
+      },
+      {
+        "timestamp": "2025-07-12T18:18:32.820Z",
+        "level": "error",
+        "message": "WebGL not supported: WebGL context creation failed"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:32.820Z",
+        "level": "info",
+        "message": "Canvas2D fallback available"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:32.820Z",
+        "level": "info",
+        "message": "Checking Three.js initialization..."
+      },
+      {
+        "timestamp": "2025-07-12T18:18:34.827Z",
+        "level": "error",
+        "message": "Three.js not loaded: THREE is not defined on window object"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:34.828Z",
+        "level": "info",
+        "message": "Analyzing component rendering..."
+      },
+      {
+        "timestamp": "2025-07-12T18:18:37.831Z",
+        "level": "error",
+        "message": "No canvas, ASCII, or mock elements found"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:37.923Z",
+        "level": "info",
+        "message": "Screenshot saved: 02-component-analysis-1752344317831.png"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:37.923Z",
+        "level": "info",
+        "message": "Testing model file accessibility with ModelCacheService..."
+      },
+      {
+        "timestamp": "2025-07-12T18:18:37.924Z",
+        "level": "info",
+        "message": "ModelCacheService not available, testing direct file access"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:37.924Z",
+        "level": "info",
+        "message": "Testing accessibility of: http://localhost:3000/models/dragon_head.glb"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:37.933Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/models/dragon_head.glb - 200"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:37.934Z",
+        "level": "error",
+        "message": "Request failed: http://localhost:3000/models/dragon_head.glb - net::ERR_ABORTED"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:37.935Z",
+        "level": "error",
+        "message": "✗ /models/dragon_head.glb failed: net::ERR_ABORTED at http://localhost:3000/models/dragon_head.glb"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:37.935Z",
+        "level": "info",
+        "message": "Testing accessibility of: http://localhost:3000/models/dragon_head_optimized.glb"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:38.088Z",
+        "level": "error",
+        "message": "✗ /models/dragon_head_optimized.glb failed: net::ERR_ABORTED at http://localhost:3000/models/dragon_head_optimized.glb"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:38.088Z",
+        "level": "info",
+        "message": "Testing accessibility of: http://localhost:3000/models/dragon_head.obj"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:38.092Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/models/dragon_head_optimized.glb - 200"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:38.092Z",
+        "level": "error",
+        "message": "Request failed: http://localhost:3000/models/dragon_head_optimized.glb - net::ERR_ABORTED"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:38.099Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/models/dragon_head.obj - 200"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:38.099Z",
+        "level": "error",
+        "message": "Request failed: http://localhost:3000/models/dragon_head.obj - net::ERR_ABORTED"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:38.100Z",
+        "level": "error",
+        "message": "✗ /models/dragon_head.obj failed: net::ERR_ABORTED at http://localhost:3000/models/dragon_head.obj"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:38.100Z",
+        "level": "info",
+        "message": "Testing accessibility of: http://localhost:3000/assets/models/dragon_head.glb"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:38.123Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/assets/models/dragon_head.glb - 200"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:38.197Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/components/dragon/GLTFErrorBoundary.tsx - 200"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:38.293Z",
+        "level": "error",
+        "message": "Console error: Error handled by React Router default ErrorBoundary: JSHandle@object"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:38.293Z",
+        "level": "error",
+        "message": "Console error: Error handled by React Router default ErrorBoundary: JSHandle@object"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:40.113Z",
+        "level": "info",
+        "message": "✓ /assets/models/dragon_head.glb accessible (200)"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:40.113Z",
+        "level": "info",
+        "message": "Testing accessibility of: http://localhost:3000/public/models/dragon_head.glb"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:40.130Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/public/models/dragon_head.glb - 200"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:40.131Z",
+        "level": "error",
+        "message": "Request failed: http://localhost:3000/public/models/dragon_head.glb - net::ERR_ABORTED"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:40.132Z",
+        "level": "error",
+        "message": "✗ /public/models/dragon_head.glb failed: net::ERR_ABORTED at http://localhost:3000/public/models/dragon_head.glb"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:40.143Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/dragons/webgl-3d - 200"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:40.213Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/components/dragon/GLTFErrorBoundary.tsx - 200"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:40.304Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/pages/dragons/WebGL3DPage.tsx - 200"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:40.306Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/utils/dragonMemoryManager.ts - 200"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:40.321Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/config/dragonModels.ts - 200"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:40.321Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/components/dragon/DragonModelManager.tsx - 200"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:40.327Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/utils/modelExistenceValidator.ts - 200"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:40.327Z",
+        "level": "info",
+        "message": "Model file response: http://localhost:3000/components/dragon/DragonGLTFLoader.tsx - 200"
+      },
+      {
+        "timestamp": "2025-07-12T18:18:40.921Z",
+        "level": "info",
+        "message": "Testing loading states and timeouts..."
+      },
+      {
+        "timestamp": "2025-07-12T18:19:11.053Z",
+        "level": "info",
+        "message": "Screenshot saved: 03-loading-states-1752344350952.png"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:11.054Z",
+        "level": "info",
+        "message": "Testing fallback mechanisms..."
+      },
+      {
+        "timestamp": "2025-07-12T18:19:11.151Z",
+        "level": "info",
+        "message": "Screenshot saved: 04-fallback-analysis-1752344351059.png"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:11.152Z",
+        "level": "info",
+        "message": "Collecting performance metrics..."
+      },
+      {
+        "timestamp": "2025-07-12T18:19:11.154Z",
+        "level": "info",
+        "message": "DOM Content Loaded: 0.10000002384185791ms"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:11.154Z",
+        "level": "info",
+        "message": "Total Load Time: 122.2999999821186ms"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:11.230Z",
+        "level": "info",
+        "message": "Screenshot saved: 05-final-state-1752344351154.png"
+      },
+      {
+        "timestamp": "2025-07-12T18:19:11.230Z",
+        "level": "info",
+        "message": "Generating diagnostic report..."
+      }
+    ],
+    "componentRendering": {
+      "dragonContainer": false,
+      "canvasElements": 0,
+      "errorBoundaryActive": false,
+      "loadingIndicators": 0,
+      "fallbackComponents": 0,
+      "dragonFallbackRenderer": false,
+      "asciiDragon": 0,
+      "mockCanvas": 0,
+      "webglFallbackManager": false,
+      "specificElements": {},
+      "reactErrors": [],
+      "documentReady": "complete",
+      "bodyVisible": true,
+      "reactDevtoolsDetected": true
+    }
+  },
+  "recommendations": [
+    {
+      "type": "medium",
+      "message": "WebGL not supported, but Canvas2D fallback is available",
+      "solution": "Dragon will render using Canvas2D fallback"
+    },
+    {
+      "type": "critical",
+      "message": "WebGL is not supported and no fallback system detected",
+      "solution": "Enable WebGL in browser or ensure fallback system is loaded"
+    },
+    {
+      "type": "critical",
+      "message": "Three.js library not loaded properly",
+      "solution": "Check bundle includes Three.js and dependencies"
+    },
+    {
+      "type": "critical",
+      "message": "No rendering elements detected - all rendering systems failed",
+      "solution": "Check if any Dragon components are mounting successfully"
+    }
+  ],
+  "screenshots": [
+    {
+      "name": "01-page-loaded",
+      "filename": "01-page-loaded-1752344312702.png",
+      "path": "docker-test-results/puppeteer/original/01-page-loaded-1752344312702.png",
+      "timestamp": "2025-07-12T18:18:32.817Z"
+    },
+    {
+      "name": "02-component-analysis",
+      "filename": "02-component-analysis-1752344317831.png",
+      "path": "docker-test-results/puppeteer/original/02-component-analysis-1752344317831.png",
+      "timestamp": "2025-07-12T18:18:37.923Z"
+    },
+    {
+      "name": "03-loading-states",
+      "filename": "03-loading-states-1752344350952.png",
+      "path": "docker-test-results/puppeteer/original/03-loading-states-1752344350952.png",
+      "timestamp": "2025-07-12T18:19:11.053Z"
+    },
+    {
+      "name": "04-fallback-analysis",
+      "filename": "04-fallback-analysis-1752344351059.png",
+      "path": "docker-test-results/puppeteer/original/04-fallback-analysis-1752344351059.png",
+      "timestamp": "2025-07-12T18:19:11.151Z"
+    },
+    {
+      "name": "05-final-state",
+      "filename": "05-final-state-1752344351154.png",
+      "path": "docker-test-results/puppeteer/original/05-final-state-1752344351154.png",
+      "timestamp": "2025-07-12T18:19:11.230Z"
+    }
+  ],
+  "summary": {
+    "overallHealth": 40,
+    "criticalIssues": 3,
+    "highPriorityIssues": 0,
+    "mediumPriorityIssues": 1,
+    "infoItems": 0,
+    "webglSupported": false,
+    "threeJsLoaded": false,
+    "pageLoadSuccessful": true,
+    "modelsAccessible": 1,
+    "fallbackSystemWorking": false,
+    "currentRenderingMode": "unknown",
+    "asciiRenderingWorking": false,
+    "canvas2DRenderingWorking": false,
+    "modelCacheServiceAvailable": false,
+    "hasAnyRendering": false
+  },
+  "textSummary": "============================================================\\nSEIRON DRAGON 3D DIAGNOSTIC REPORT\\n============================================================\\n\\nTimestamp: 2025-07-12T18:18:28.851Z\\nTest URL: http://localhost:3000/dragons/webgl-3d\\nOverall Health Score: 40/100\\n\\nCRITICAL SYSTEMS STATUS:\\n------------------------------\\n✓ Page Load: SUCCESS\\n✓ WebGL Support: NOT SUPPORTED\\n✓ Three.js: FAILED TO LOAD\\n✓ Model Files: 1 accessible\\n✓ Fallback System: INACTIVE\\n✓ Rendering Mode: unknown\\n✓ ASCII Fallback: NOT FOUND\\n✓ Canvas2D Fallback: NOT FOUND\\n✓ ModelCacheService: UNAVAILABLE\\n✓ Any Rendering Working: NO\\n\\nISSUES AND INFORMATION:\\n------------------------------\\nCritical Issues: 3\\nHigh Priority: 0\\nMedium Priority: 1\\nInfo Items: 0\\n\\nDETAILED RECOMMENDATIONS:\\n------------------------------\\nCRITICAL (3):\\n  1. WebGL is not supported and no fallback system detected\\n     Solution: Enable WebGL in browser or ensure fallback system is loaded\\n\\n  2. Three.js library not loaded properly\\n     Solution: Check bundle includes Three.js and dependencies\\n\\n  3. No rendering elements detected - all rendering systems failed\\n     Solution: Check if any Dragon components are mounting successfully\\n\\nMEDIUM PRIORITY (1):\\n  1. WebGL not supported, but Canvas2D fallback is available\\n     Solution: Dragon will render using Canvas2D fallback\\n\\nPERFORMANCE METRICS:\\n------------------------------\\nDOM Content Loaded: 0.10000002384185791ms\\nTotal Load Time: 122.2999999821186ms\\nDOM Interactive: 8.5ms\\n"
+}

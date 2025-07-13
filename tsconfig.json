@@ -8,6 +8,7 @@
     "allowSyntheticDefaultImports": true,
     "strict": false,
     "skipLibCheck": true,
+    "types": ["node", "jest"],
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
     "outDir": "./dist",
@@ -30,12 +31,8 @@
     "tsBuildInfoFile": "./dist/.tsbuildinfo"
   },
   "include": [
-    "src/index.minimal.ts",
-    "src/types/config.ts",
-    "src/types/data.ts", 
-    "src/types/utils.ts",
-    "src/utils/math.ts",
-    "src/config.ts"
+    "src/**/*.ts",
+    "src/**/*.tsx"
   ],
   "exclude": [
     "node_modules",

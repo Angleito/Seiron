@@ -29,6 +29,10 @@ export interface ModelValidationResult {
   contentType?: string
   loadTime: number
   error?: string
+  httpStatus?: number
+  networkErrorType?: 'timeout' | 'cors' | 'dns' | 'unknown'
+  detectedMimeType?: string
+  serverHeaders?: Record<string, string>
 }
 
 // Model path configuration
@@ -365,6 +369,197 @@ export class ModelExistenceValidator {
     }
   }
 
+  /**
+   * Create comprehensive diagnostic report for real-time debugging
+   */
+  async createDiagnosticReport(): Promise<{
+    timestamp: string
+    environment: {
+      userAgent: string
+      currentUrl: string
+      isProduction: boolean
+      baseUrl: string
+    }
+    modelValidation: {
+      totalModels: number
+      availableModels: number
+      failedModels: number
+      results: ModelValidationResult[]
+    }
+    networkAnalysis: {
+      commonErrors: Array<{ error: string; count: number }>
+      httpStatusCodes: Array<{ status: number; count: number }>
+      networkErrorTypes: Array<{ type: string; count: number }>
+    }
+    recommendations: Array<{
+      priority: 'high' | 'medium' | 'low'
+      category: string
+      issue: string
+      solution: string
+    }>
+    debugInfo: {
+      cacheStats: { totalEntries: number; validModels: number; invalidModels: number }
+      testedPaths: string[]
+      serverHeaders: Record<string, Record<string, string>>
+    }
+  }> {
+    const startTime = Date.now()
+    
+    // Get all model paths to test
+    const allPaths = Object.values(AVAILABLE_MODEL_PATHS).flatMap(config => 
+      [config.path, ...config.fallbackPaths]
+    )
+    const uniquePaths = [...new Set(allPaths)]
+    
+    // Validate all models
+    const validationResults = await this.validateModels(uniquePaths)
+    
+    // Analyze results
+    const availableModels = validationResults.filter(r => r.exists)
+    const failedModels = validationResults.filter(r => !r.exists)
+    
+    // Collect common errors
+    const errorCounts = new Map<string, number>()
+    const statusCounts = new Map<number, number>()
+    const networkErrorCounts = new Map<string, number>()
+    const serverHeaders: Record<string, Record<string, string>> = {}
+    
+    validationResults.forEach(result => {
+      if (result.error) {
+        errorCounts.set(result.error, (errorCounts.get(result.error) || 0) + 1)
+      }
+      if (result.httpStatus) {
+        statusCounts.set(result.httpStatus, (statusCounts.get(result.httpStatus) || 0) + 1)
+      }
+      if (result.networkErrorType) {
+        networkErrorCounts.set(result.networkErrorType, (networkErrorCounts.get(result.networkErrorType) || 0) + 1)
+      }
+      if (result.serverHeaders) {
+        serverHeaders[result.path] = result.serverHeaders
+      }
+    })
+    
+    // Generate recommendations
+    const recommendations = this.generateDiagnosticRecommendations(validationResults)
+    
+    // Environment detection
+    const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.includes('192.168')
+    const baseUrl = `${window.location.protocol}//${window.location.host}`
+    
+    return {
+      timestamp: new Date().toISOString(),
+      environment: {
+        userAgent: navigator.userAgent,
+        currentUrl: window.location.href,
+        isProduction,
+        baseUrl
+      },
+      modelValidation: {
+        totalModels: validationResults.length,
+        availableModels: availableModels.length,
+        failedModels: failedModels.length,
+        results: validationResults
+      },
+      networkAnalysis: {
+        commonErrors: Array.from(errorCounts.entries())
+          .map(([error, count]) => ({ error, count }))
+          .sort((a, b) => b.count - a.count),
+        httpStatusCodes: Array.from(statusCounts.entries())
+          .map(([status, count]) => ({ status, count }))
+          .sort((a, b) => b.count - a.count),
+        networkErrorTypes: Array.from(networkErrorCounts.entries())
+          .map(([type, count]) => ({ type, count }))
+          .sort((a, b) => b.count - a.count)
+      },
+      recommendations,
+      debugInfo: {
+        cacheStats: this.getCacheStats(),
+        testedPaths: uniquePaths,
+        serverHeaders
+      }
+    }
+  }
+
+  private generateDiagnosticRecommendations(results: ModelValidationResult[]): Array<{
+    priority: 'high' | 'medium' | 'low'
+    category: string
+    issue: string
+    solution: string
+  }> {
+    const recommendations = []
+    const failedResults = results.filter(r => !r.exists)
+    const totalResults = results.length
+    
+    // High priority: Most models failing
+    if (failedResults.length > totalResults * 0.8) {
+      recommendations.push({
+        priority: 'high' as const,
+        category: 'deployment',
+        issue: `${failedResults.length}/${totalResults} models are failing to load`,
+        solution: 'Check deployment configuration - models may not be deployed correctly or server is not serving static files from /models/ path'
+      })
+    }
+    
+    // Check for 404 errors specifically
+    const not404Errors = failedResults.filter(r => r.httpStatus === 404)
+    if (not404Errors.length > 0) {
+      recommendations.push({
+        priority: 'high' as const,
+        category: 'static-files',
+        issue: `${not404Errors.length} models returning 404 Not Found`,
+        solution: 'Verify models are copied to correct location during build. Check Vite/build configuration for static file handling.'
+      })
+    }
+    
+    // Check for CORS issues
+    const corsErrors = failedResults.filter(r => r.networkErrorType === 'cors')
+    if (corsErrors.length > 0) {
+      recommendations.push({
+        priority: 'medium' as const,
+        category: 'cors',
+        issue: `${corsErrors.length} models failing due to CORS issues`,
+        solution: 'Configure server CORS headers for model files. Add proper Access-Control-Allow-Origin headers.'
+      })
+    }
+    
+    // Check for timeout issues
+    const timeoutErrors = failedResults.filter(r => r.networkErrorType === 'timeout')
+    if (timeoutErrors.length > 0) {
+      recommendations.push({
+        priority: 'medium' as const,
+        category: 'performance',
+        issue: `${timeoutErrors.length} models timing out during load`,
+        solution: 'Consider optimizing model file sizes or increasing timeout values. Check server response times.'
+      })
+    }
+    
+    // Check for MIME type issues
+    const incorrectMimeTypes = results.filter(r => 
+      r.exists && r.contentType && !r.contentType.includes('model/') && 
+      (r.path.endsWith('.gltf') || r.path.endsWith('.glb'))
+    )
+    if (incorrectMimeTypes.length > 0) {
+      recommendations.push({
+        priority: 'low' as const,
+        category: 'mime-types',
+        issue: `${incorrectMimeTypes.length} models served with incorrect MIME types`,
+        solution: 'Configure server to serve .gltf files as model/gltf+json and .glb files as model/gltf-binary'
+      })
+    }
+    
+    // Success case
+    if (failedResults.length === 0) {
+      recommendations.push({
+        priority: 'low' as const,
+        category: 'success',
+        issue: 'All models are loading successfully',
+        solution: 'No action needed. Consider implementing preloading for better performance.'
+      })
+    }
+    
+    return recommendations
+  }
+
   private getCachedResult(path: string): ModelValidationResult | null {
     const cached = this.cache[path]
     if (!cached) return null
@@ -395,46 +590,126 @@ export class ModelExistenceValidator {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), this.REQUEST_TIMEOUT)
       
-      const response = await fetch(path, {
+      // Try HEAD request first for efficiency
+      let response = await fetch(path, {
         method: 'HEAD',
         signal: controller.signal,
         headers: {
-          'Cache-Control': 'no-cache'
+          'Cache-Control': 'no-cache',
+          'Accept': 'model/gltf-binary, model/gltf+json, application/octet-stream, */*'
         }
       })
       
       clearTimeout(timeoutId)
       
+      // Collect server headers for debugging
+      const serverHeaders: Record<string, string> = {}
+      response.headers.forEach((value, key) => {
+        serverHeaders[key] = value
+      })
+      
       if (response.ok) {
         const contentLength = response.headers.get('content-length')
         const contentType = response.headers.get('content-type')
         
+        // Detect MIME type based on file extension if server doesn't provide it
+        const detectedMimeType = this.detectMimeType(path, contentType)
+        
         return {
           exists: true,
           fileSize: contentLength ? parseInt(contentLength, 10) : undefined,
-          contentType: contentType || undefined
+          contentType: contentType || undefined,
+          detectedMimeType,
+          httpStatus: response.status,
+          serverHeaders
         }
       } else {
+        // For 404 and other errors, try with GET to see if it's a HEAD-specific issue
+        if (response.status === 404 || response.status === 405) {
+          try {
+            const getResponse = await fetch(path, {
+              method: 'GET',
+              signal: controller.signal,
+              headers: {
+                'Cache-Control': 'no-cache',
+                'Accept': 'model/gltf-binary, model/gltf+json, application/octet-stream, */*',
+                'Range': 'bytes=0-1023' // Only fetch first 1KB for testing
+              }
+            })
+            
+            if (getResponse.ok) {
+              return {
+                exists: true,
+                fileSize: parseInt(getResponse.headers.get('content-length') || '0', 10),
+                contentType: getResponse.headers.get('content-type') || undefined,
+                detectedMimeType: this.detectMimeType(path, getResponse.headers.get('content-type')),
+                httpStatus: getResponse.status,
+                serverHeaders,
+                error: 'HEAD request failed but GET succeeded (server may not support HEAD)'
+              }
+            }
+          } catch (getError) {
+            // GET also failed, original error is more relevant
+          }
+        }
+        
         return {
           exists: false,
-          error: `HTTP ${response.status}: ${response.statusText}`
+          error: `HTTP ${response.status}: ${response.statusText}`,
+          httpStatus: response.status,
+          networkErrorType: this.categorizeNetworkError(response.status),
+          serverHeaders
         }
       }
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         return {
           exists: false,
-          error: 'Request timeout'
+          error: 'Request timeout',
+          networkErrorType: 'timeout'
         }
       }
       
+      const networkErrorType = this.categorizeError(error)
+      
       return {
         exists: false,
-        error: error instanceof Error ? error.message : 'Network error'
+        error: error instanceof Error ? error.message : 'Network error',
+        networkErrorType
       }
     } finally {
       this.currentChecks--
     }
+  }
+
+  private detectMimeType(path: string, serverMimeType?: string | null): string {
+    if (serverMimeType) return serverMimeType
+    
+    if (path.endsWith('.gltf')) return 'model/gltf+json'
+    if (path.endsWith('.glb')) return 'model/gltf-binary'
+    if (path.endsWith('.bin')) return 'application/octet-stream'
+    if (path.endsWith('.obj')) return 'model/obj'
+    if (path.endsWith('.png')) return 'image/png'
+    if (path.endsWith('.jpg') || path.endsWith('.jpeg')) return 'image/jpeg'
+    
+    return 'application/octet-stream'
+  }
+
+  private categorizeNetworkError(httpStatus: number): 'timeout' | 'cors' | 'dns' | 'unknown' {
+    if (httpStatus === 404) return 'dns' // Treating 404 as path resolution issue
+    if (httpStatus === 403 || httpStatus === 401) return 'cors'
+    if (httpStatus >= 500) return 'dns' // Server errors
+    return 'unknown'
+  }
+
+  private categorizeError(error: unknown): 'timeout' | 'cors' | 'dns' | 'unknown' {
+    if (error instanceof Error) {
+      const message = error.message.toLowerCase()
+      if (message.includes('timeout') || message.includes('aborted')) return 'timeout'
+      if (message.includes('cors') || message.includes('cross-origin')) return 'cors'
+      if (message.includes('network') || message.includes('fetch')) return 'dns'
+    }
+    return 'unknown'
   }
 }
 
@@ -456,6 +731,9 @@ export const createFallbackChain = (primaryModelId: string) =>
 
 export const preloadValidations = (modelIds: string[]) => 
   ModelExistenceValidator.getInstance().preloadValidations(modelIds)
+
+export const createDiagnosticReport = () => 
+  ModelExistenceValidator.getInstance().createDiagnosticReport()
 
 // Default export for convenience
 export default ModelExistenceValidator

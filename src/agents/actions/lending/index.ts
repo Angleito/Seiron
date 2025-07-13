@@ -7,7 +7,7 @@ import { formatUnits, parseUnits } from "../common/utils";
 import { LENDING_POOL_ABI, ERC20_ABI } from "../common/abis";
 
 // Action implementations
-export { depositAction } from "./deposit";
+import { depositAction } from "./deposit";
 
 // Withdraw Action
 export const withdrawAction: Action = {
@@ -21,7 +21,7 @@ export const withdrawAction: Action = {
   handler: async (runtime, message, state) => {
     const { asset, amount } = message.content as any;
     
-    return pipe(
+    const result = await pipe(
       tryCatch(
         async () => {
           const signer = await getSigner();
@@ -56,6 +56,19 @@ export const withdrawAction: Action = {
         data: result
       }))
     )();
+    
+    if (result._tag === "Left") {
+      return {
+        success: false,
+        text: `Failed to withdraw: ${result.left.message}`,
+        error: true
+      };
+    }
+    
+    return {
+      success: true,
+      ...result.right
+    };
   }
 };
 
@@ -71,7 +84,7 @@ export const borrowAction: Action = {
   handler: async (runtime, message, state) => {
     const { asset, amount, interestRateMode = 2 } = message.content as any;
     
-    return pipe(
+    const result = await pipe(
       tryCatch(
         async () => {
           const signer = await getSigner();
@@ -118,6 +131,19 @@ export const borrowAction: Action = {
         data: result
       }))
     )();
+    
+    if (result._tag === "Left") {
+      return {
+        success: false,
+        text: `Failed to borrow: ${result.left.message}`,
+        error: true
+      };
+    }
+    
+    return {
+      success: true,
+      ...result.right
+    };
   }
 };
 
@@ -133,7 +159,7 @@ export const repayAction: Action = {
   handler: async (runtime, message, state) => {
     const { asset, amount, interestRateMode = 2 } = message.content as any;
     
-    return pipe(
+    const result = await pipe(
       tryCatch(
         async () => {
           const signer = await getSigner();
@@ -181,6 +207,19 @@ export const repayAction: Action = {
         data: result
       }))
     )();
+    
+    if (result._tag === "Left") {
+      return {
+        success: false,
+        text: `Failed to repay: ${result.left.message}`,
+        error: true
+      };
+    }
+    
+    return {
+      success: true,
+      ...result.right
+    };
   }
 };
 
@@ -191,7 +230,7 @@ export const getHealthFactorAction: Action = {
   similes: ["health factor", "liquidation risk", "position health"],
   validate: async () => true,
   handler: async (runtime, message, state) => {
-    return pipe(
+    const result = await pipe(
       tryCatch(
         async () => {
           const signer = await getSigner();
@@ -230,6 +269,19 @@ export const getHealthFactorAction: Action = {
         data: result
       }))
     )();
+    
+    if (result._tag === "Left") {
+      return {
+        success: false,
+        text: `Failed to get health factor: ${result.left.message}`,
+        error: true
+      };
+    }
+    
+    return {
+      success: true,
+      ...result.right
+    };
   }
 };
 
@@ -242,21 +294,23 @@ export const monitorPositionAction: Action = {
   handler: async (runtime, message, state) => {
     const { alertThreshold = 1.5 } = message.content as any;
     
-    return pipe(
+    const result = await pipe(
       tryCatch(
         async () => {
           const checkHealth = async () => {
-            const result = await getHealthFactorAction.handler(runtime, message, state);
-            const healthFactor = parseFloat(result.data.healthFactor);
+            const healthResult = await getHealthFactorAction.handler(runtime, message, state) as any;
+            const healthFactor = parseFloat(healthResult.data.healthFactor);
             
             if (healthFactor < alertThreshold) {
               // Send alert
-              state.emit('alert', {
-                type: 'HEALTH_FACTOR_LOW',
-                healthFactor,
-                threshold: alertThreshold,
-                message: `Health factor ${healthFactor} is below threshold ${alertThreshold}`
-              });
+              if (state.emit) {
+                state.emit('alert', {
+                  type: 'HEALTH_FACTOR_LOW',
+                  healthFactor,
+                  threshold: alertThreshold,
+                  message: `Health factor ${healthFactor} is below threshold ${alertThreshold}`
+                });
+              }
               
               // Suggest actions
               return {
@@ -265,7 +319,7 @@ export const monitorPositionAction: Action = {
                 suggestions: [
                   `Repay some debt to increase health factor`,
                   `Add more collateral`,
-                  `Current liquidation threshold: ${result.data.liquidationThreshold}%`
+                  `Current liquidation threshold: ${healthResult.data.liquidationThreshold}%`
                 ]
               };
             }
@@ -300,6 +354,19 @@ export const monitorPositionAction: Action = {
         data: result
       }))
     )();
+    
+    if (result._tag === "Left") {
+      return {
+        success: false,
+        text: `Failed to start monitoring: ${result.left.message}`,
+        error: true
+      };
+    }
+    
+    return {
+      success: true,
+      ...result.right
+    };
   }
 };
 
@@ -312,3 +379,11 @@ export const lendingActions: Action[] = [
   getHealthFactorAction,
   monitorPositionAction
 ];
+
+// Export individual actions for direct import
+export { depositAction };
+export const deposit = depositAction;
+export const withdraw = withdrawAction;
+export const borrow = borrowAction;
+export const repay = repayAction;
+export const getHealthFactor = getHealthFactorAction;

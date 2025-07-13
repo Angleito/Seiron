@@ -34,7 +34,6 @@ export interface DeFiProperty<T> {
 export interface PropertyTestConfig {
   readonly numRuns?: number;
   readonly timeout?: number;
-  readonly maxShrinks?: number;
   readonly seed?: number;
   readonly verbose?: boolean;
 }
@@ -45,7 +44,6 @@ export interface PropertyTestConfig {
 export const defaultPropertyConfig: PropertyTestConfig = {
   numRuns: 1000,
   timeout: 5000,
-  maxShrinks: 1000,
   verbose: false
 };
 
@@ -437,7 +435,6 @@ export const runPropertyTest = async <T>(
       {
         numRuns: config.numRuns,
         timeout: config.timeout,
-        maxShrinks: config.maxShrinks,
         seed: config.seed,
         verbose: config.verbose
       }

@@ -1,4 +1,4 @@
-import { Action, HandlerCallback, IAgentRuntime, Memory, State } from '@ai16z/eliza';
+import { Action, HandlerCallback, IAgentRuntime, Memory, State } from '@elizaos/core';
 
 export interface SwapParams {
   protocol?: string; // Optional - can use auto-routing or 'symphony' for Symphony protocol

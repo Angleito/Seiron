@@ -16,23 +16,8 @@
     
     <title>Seiron - Granting your wildest Sei Investing Wishes</title>
   </head>
-  <body style="background-color: purple; margin: 0; padding: 0;">
-    <!-- DEBUG: Basic visibility test -->
-    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 40px; background-color: orange; color: black; text-align: center; line-height: 40px; font-size: 20px; font-weight: bold; z-index: 99999;">
-      HTML LOADED - If you see this, basic HTML works
-    </div>
+  <body>
     <div id="root"></div>
-    <script>
-      // Immediate execution test
-      console.log('🟠 HTML Script executing...');
-      document.body.style.border = '10px solid red';
-      
-      // Add a test element
-      const testDiv = document.createElement('div');
-      testDiv.style.cssText = 'position: fixed; bottom: 0; right: 0; width: 200px; height: 100px; background: lime; color: black; padding: 10px; z-index: 99999;';
-      testDiv.innerHTML = '<strong>JS Test Element</strong><br>Script executed!';
-      document.body.appendChild(testDiv);
-    </script>
     <script type="module" src="/main.tsx"></script>
   </body>
 </html>

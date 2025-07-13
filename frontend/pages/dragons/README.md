@@ -1,18 +1,42 @@
-# 2D Sprite Dragons Demo
+# Dragons Demo Pages
 
-This directory contains the implementation of the 2D Sprite Dragons demonstration page for the Seiron project.
+This directory contains various dragon-related demonstration pages for the Seiron project, including 2D sprites, 3D WebGL models, ASCII art, and model diagnostics.
 
 ## Overview
 
-The 2D Sprite Dragons demo showcases advanced CSS-based dragon sprites with Dragon Ball Z theming, voice integration, and interactive animations. All dragons are created using pure CSS without any image files, demonstrating the power of modern CSS techniques combined with React and TypeScript.
+The dragons demo section showcases different rendering techniques and fallback systems for displaying dragon models across various devices and capabilities.
+
+## Pages
+
+### `/dragons/sprite-2d` - 2D Sprite Dragons
+Advanced CSS-based dragon sprites with Dragon Ball Z theming, voice integration, and interactive animations. All dragons are created using pure CSS without any image files.
+
+### `/dragons/webgl-3d` - 3D WebGL Dragons
+Full 3D dragon models rendered using Three.js with GLTF/GLB support, animations, and voice reactivity.
+
+### `/dragons/ascii-animated` - ASCII Art Dragons
+Animated ASCII art dragons for terminal-style display with text-based animations.
+
+### `/dragons/ascii-complex` - Complex ASCII Dragons
+Detailed ASCII art dragons with enhanced character patterns and animations.
+
+### `/dragons/model-diagnostics` - Model Diagnostics
+Comprehensive diagnostic page for testing and monitoring dragon models with:
+- Real-time model loading tests
+- WebGL capability detection
+- Performance metrics (FPS, memory usage)
+- Fallback chain visualization
+- Interactive model switching and error recovery tests
 
 ## Files Structure
 
 ### Main Components
 
-- **`Sprite2DPage.tsx`** - Main demonstration page with controls and showcase
-- **`DragonSprite2D.tsx`** - Advanced dragon sprite component with full customization
-- **`DragonSprite2DShowcase.tsx`** - Comprehensive showcase with multiple dragon types
+- **`Sprite2DPage.tsx`** - 2D sprite demonstration page with controls and showcase
+- **`WebGL3DPage.tsx`** - 3D WebGL model demonstration with Three.js integration
+- **`AsciiAnimatedPage.tsx`** - Animated ASCII art dragon demonstrations
+- **`AsciiComplexPage.tsx`** - Complex ASCII art patterns and animations
+- **`model-diagnostics.tsx`** - Model diagnostics and testing dashboard
 
 ### Supporting Files
 

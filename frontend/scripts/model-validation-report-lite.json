@@ -1,0 +1,80 @@
+{
+  "totalModels": 7,
+  "validModels": 7,
+  "missingModels": [],
+  "corruptedModels": [],
+  "invalidFormat": [],
+  "summary": {
+    "dragon_head_optimized.glb": {
+      "name": "dragon_head_optimized.glb",
+      "path": "/Users/angel/Projects/Seiron/frontend/public/models/dragon_head_optimized.glb",
+      "exists": true,
+      "size": 108536,
+      "formatValid": true,
+      "errors": [],
+      "warnings": [],
+      "status": "valid"
+    },
+    "dragon_head.glb": {
+      "name": "dragon_head.glb",
+      "path": "/Users/angel/Projects/Seiron/frontend/public/models/dragon_head.glb",
+      "exists": true,
+      "size": 706032,
+      "formatValid": true,
+      "errors": [],
+      "warnings": [],
+      "status": "valid"
+    },
+    "seiron_animated_lod_high.gltf": {
+      "name": "seiron_animated_lod_high.gltf",
+      "path": "/Users/angel/Projects/Seiron/frontend/public/models/seiron_animated_lod_high.gltf",
+      "exists": true,
+      "size": 998469,
+      "formatValid": true,
+      "errors": [],
+      "warnings": [],
+      "status": "valid"
+    },
+    "seiron_animated_optimized.gltf": {
+      "name": "seiron_animated_optimized.gltf",
+      "path": "/Users/angel/Projects/Seiron/frontend/public/models/seiron_animated_optimized.gltf",
+      "exists": true,
+      "size": 916828,
+      "formatValid": true,
+      "errors": [],
+      "warnings": [],
+      "status": "valid"
+    },
+    "seiron_animated.gltf": {
+      "name": "seiron_animated.gltf",
+      "path": "/Users/angel/Projects/Seiron/frontend/public/models/seiron_animated.gltf",
+      "exists": true,
+      "size": 1815870,
+      "formatValid": true,
+      "errors": [],
+      "warnings": [],
+      "status": "valid"
+    },
+    "seiron_optimized.glb": {
+      "name": "seiron_optimized.glb",
+      "path": "/Users/angel/Projects/Seiron/frontend/public/models/seiron_optimized.glb",
+      "exists": true,
+      "size": 166908,
+      "formatValid": true,
+      "errors": [],
+      "warnings": [],
+      "status": "valid"
+    },
+    "seiron.glb": {
+      "name": "seiron.glb",
+      "path": "/Users/angel/Projects/Seiron/frontend/public/models/seiron.glb",
+      "exists": true,
+      "size": 1881284,
+      "formatValid": true,
+      "errors": [],
+      "warnings": [],
+      "status": "valid"
+    }
+  },
+  "timestamp": "2025-07-12T20:51:43.171Z"
+}

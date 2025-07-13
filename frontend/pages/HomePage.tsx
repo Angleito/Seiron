@@ -2,184 +2,204 @@ import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import React from 'react'
 
-// Simple Error Boundary Component
-class SimpleErrorBoundary extends React.Component<
-  { children: React.ReactNode; onError?: (error: Error) => void },
-  { hasError: boolean; error?: Error }
-> {
-  constructor(props: { children: React.ReactNode; onError?: (error: Error) => void }) {
-    super(props)
-    this.state = { hasError: false }
-  }
+// Star component for Dragon Balls
+const Star = ({ filled = false }: { filled?: boolean }) => (
+  <span className={`text-2xl ${filled ? 'text-yellow-400' : 'text-gray-600'}`}>★</span>
+)
 
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error }
-  }
-
-  override componentDidCatch(error: Error, errorInfo: any) {
-    console.error('React Error #310 caught:', error, errorInfo)
-    this.props.onError?.(error)
-  }
-
-  override render() {
-    if (this.state.hasError) {
-      return (
-        <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center">
-          <div className="text-center p-8">
-            <h1 className="text-3xl font-bold mb-4">React Error #310 Detected</h1>
-            <p className="text-red-400 mb-4">{this.state.error?.message || 'Unknown error'}</p>
-            <pre className="text-sm bg-black/50 p-4 rounded mb-4 overflow-auto max-w-2xl">
-              {this.state.error?.stack}
-            </pre>
-            <button 
-              onClick={() => this.setState({ hasError: false, error: undefined })}
-              className="px-6 py-3 bg-yellow-500 text-black rounded-lg font-bold hover:bg-yellow-600 mr-4"
-            >
-              Retry
-            </button>
-            <button 
-              onClick={() => window.location.reload()}
-              className="px-6 py-3 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600"
-            >
-              Reload Page
-            </button>
-          </div>
-        </div>
-      )
-    }
-
-    return this.props.children
-  }
-}
+// Feature Card Component
+const FeatureCard = ({ 
+  title, 
+  powerLevel, 
+  subtitle, 
+  description, 
+  ctaText, 
+  onClick 
+}: { 
+  title: string
+  powerLevel: string
+  subtitle: string
+  description: string
+  ctaText: string
+  onClick: () => void
+}) => (
+  <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6 hover:border-yellow-500/30 transition-all duration-300">
+    <div className="flex justify-between items-start mb-4">
+      <h3 className="text-xl font-bold text-white">{title}</h3>
+      <span className="text-yellow-400 font-bold">{powerLevel}</span>
+    </div>
+    <h4 className="text-lg text-yellow-400 mb-2">{subtitle}</h4>
+    <p className="text-gray-400 mb-4">{description}</p>
+    <button
+      onClick={onClick}
+      className="w-full py-2 bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 rounded hover:bg-yellow-500/20 transition-all duration-300"
+    >
+      {ctaText}
+    </button>
+  </div>
+)
 
 export default function HomePage() {
+  const [powerLevel, setPowerLevel] = useState(0)
   const [isLoaded, setIsLoaded] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [activeDragonBalls, setActiveDragonBalls] = useState(0)
   const navigate = useNavigate()
 
   useEffect(() => {
-    try {
-      // Trigger loading animations
-      const timer = setTimeout(() => {
-        setIsLoaded(true)
-      }, 200)
+    // Animate power level on mount
+    setIsLoaded(true)
+    const targetPower = 32.2
+    const increment = targetPower / 30
+    let currentPower = 0
+    
+    const timer = setInterval(() => {
+      currentPower += increment
+      if (currentPower >= targetPower) {
+        setPowerLevel(targetPower)
+        clearInterval(timer)
+      } else {
+        setPowerLevel(currentPower)
+      }
+    }, 50)
 
-      return () => clearTimeout(timer)
-    } catch (err) {
-      console.error('HomePage mount error:', err)
-      setError(err instanceof Error ? err.message : 'Unknown error')
-      return undefined
+    // Animate Dragon Balls
+    const dragonBallTimer = setInterval(() => {
+      setActiveDragonBalls(prev => (prev >= 7 ? 4 : prev + 1))
+    }, 2000)
+
+    return () => {
+      clearInterval(timer)
+      clearInterval(dragonBallTimer)
     }
   }, [])
 
-  const handleNavigation = (path: string): void => {
-    try {
-      navigate(path)
-    } catch (error) {
-      console.error(`Navigation error:`, error)
-    }
+  const handleSummon = () => {
+    navigate('/chat')
   }
 
-  // Display error if any
-  if (error) {
-    return (
-      <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center">
-        <div className="text-center p-8">
-          <h1 className="text-3xl font-bold mb-4">Error Loading Home Page</h1>
-          <p className="text-red-400 mb-4">{error}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="px-6 py-3 bg-yellow-500 text-black rounded-lg font-bold hover:bg-yellow-600"
-          >
-            Reload Page
-          </button>
-        </div>
-      </div>
-    )
+  const handleAbout = () => {
+    navigate('/about')
+  }
+
+  const handleFeatureClick = (feature: string) => {
+    // Navigate to specific features or show modal
+    console.log(`Navigating to ${feature}`)
+    navigate('/chat')
   }
 
   return (
-    <SimpleErrorBoundary onError={(error) => console.error('HomePage error:', error)}>
-      <div className="relative min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
-        {/* Add simple ASCII dragon first */}
-        <div className="absolute top-20 left-20">
-          <pre className="text-green-400 text-sm font-mono leading-tight">
-{`     /\\   /\\   
-    (  o.o  )  
-     > ^ <     
-ASCII DRAGON`}
-          </pre>
-        </div>
-        
-        {/* Basic Content */}
-        <div className="relative z-50 min-h-screen flex items-center justify-center px-4">
-          <div className="text-center">
-            <h1 className="text-6xl font-black text-yellow-400 mb-8">
-              HOME PAGE LOADED
-            </h1>
-            <p className="text-2xl text-yellow-400/80 mb-8">
-              {isLoaded ? 'Page is ready!' : 'Loading...'}
-            </p>
-            <div className="flex flex-col gap-4">
-              <div className="space-y-4">
-                <button
-                  onClick={() => handleNavigation('/chat')}
-                  className="px-12 py-6 bg-gradient-to-r from-yellow-500 to-yellow-600 text-red-950 font-black rounded-xl text-xl hover:scale-105 transform transition-all duration-300 block"
-                >
-                  GO TO CHAT
-                </button>
-              
-              {/* Dragon Demo Navigation */}
-              <div className="pt-8">
-                <h2 className="text-2xl font-bold text-yellow-400 mb-4">🐉 Dragon Demonstrations</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
-                  <button
-                    onClick={() => handleNavigation('/dragons/ascii-complex')}
-                    className="px-6 py-4 bg-gradient-to-r from-green-600 to-green-700 text-white font-bold rounded-lg hover:scale-105 transform transition-all duration-300 text-left"
-                  >
-                    <div className="text-lg font-bold">Complex ASCII Dragons</div>
-                    <div className="text-sm opacity-80">Various ASCII dragon styles with theming</div>
-                  </button>
-                  
-                  <button
-                    onClick={() => handleNavigation('/dragons/ascii-animated')}
-                    className="px-6 py-4 bg-gradient-to-r from-green-600 to-green-700 text-white font-bold rounded-lg hover:scale-105 transform transition-all duration-300 text-left"
-                  >
-                    <div className="text-lg font-bold">Animated ASCII Dragons</div>
-                    <div className="text-sm opacity-80">Frame-based animations with voice reactivity</div>
-                  </button>
-                  
-                  <button
-                    onClick={() => handleNavigation('/dragons/sprite-2d')}
-                    className="px-6 py-4 bg-gradient-to-r from-orange-600 to-orange-700 text-white font-bold rounded-lg hover:scale-105 transform transition-all duration-300 text-left"
-                  >
-                    <div className="text-lg font-bold">2D Sprite Dragons</div>
-                    <div className="text-sm opacity-80">CSS and Unicode sprite animations</div>
-                  </button>
-                  
-                  <button
-                    onClick={() => handleNavigation('/dragons/webgl-3d')}
-                    className="px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold rounded-lg hover:scale-105 transform transition-all duration-300 text-left"
-                  >
-                    <div className="text-lg font-bold">3D WebGL Dragons</div>
-                    <div className="text-sm opacity-80">Hardware-accelerated 3D rendering</div>
-                  </button>
-                </div>
-              </div>
-            </div>
+    <div className="min-h-screen bg-black overflow-hidden">
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-purple-950/20 via-black to-black" />
+      
+      {/* Main container */}
+      <div className="relative z-10 min-h-screen">
+        {/* Header Section */}
+        <div className="container mx-auto px-4 py-8">
+          {/* Power Level Display */}
+          <div className="text-center mb-8">
+            <h2 className="text-yellow-400 text-sm uppercase tracking-wider mb-2">Seiron Power Level</h2>
+            <div className="flex items-center justify-center gap-4">
+              <span className="text-5xl font-bold text-white">{powerLevel.toFixed(1)}K</span>
+              <span className="px-3 py-1 bg-green-500/20 border border-green-500 rounded text-green-400 text-sm">
+                Elite
+              </span>
             </div>
           </div>
-        </div>
 
-        {/* Debug Info */}
-        <div className="fixed bottom-4 left-4 text-white text-sm bg-black/50 p-4 rounded z-50">
-          <p>Debug Info:</p>
-          <p>Loaded: {isLoaded ? 'Yes' : 'No'}</p>
-          <p>Navigate Ready: Yes</p>
-          <p>Dragon: ASCII (Simple)</p>
-          <p>Dragon Demos: 4 Available</p>
+          {/* Dragon Balls */}
+          <div className="text-center mb-12">
+            <div className="flex justify-center items-center gap-1 mb-2">
+              {[...Array(22)].map((_, i) => (
+                <Star key={i} filled={i >= 3 && i <= 6 && i <= activeDragonBalls} />
+              ))}
+            </div>
+            <p className="text-gray-400 text-sm">Hover to Activate Dragon Balls (4-7 Stars)</p>
+          </div>
+
+          {/* Hero Section */}
+          <div className="text-center mb-16">
+            <h1 className="text-7xl font-black text-white mb-4 tracking-wider">SEIRON</h1>
+            <p className="text-2xl text-yellow-400 mb-8">Become the legendary portfolio warrior</p>
+            
+            {/* Navigation */}
+            <div className="flex justify-center gap-8 mb-8">
+              <button className="text-gray-400 hover:text-yellow-400 transition-colors">Power</button>
+              <button className="text-gray-400 hover:text-yellow-400 transition-colors">Growth</button>
+              <button className="text-gray-400 hover:text-yellow-400 transition-colors">Magic</button>
+            </div>
+
+            {/* CTA Buttons */}
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={handleSummon}
+                className="px-8 py-3 bg-yellow-500 text-black font-bold rounded hover:bg-yellow-600 transition-all duration-300"
+              >
+                SUMMON
+              </button>
+              <button
+                onClick={handleAbout}
+                className="px-8 py-3 bg-transparent border border-gray-600 text-gray-400 font-bold rounded hover:border-gray-400 hover:text-white transition-all duration-300"
+              >
+                ABOUT
+              </button>
+            </div>
+          </div>
+
+          {/* Feature Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+            <FeatureCard
+              title="Elite Warrior"
+              powerLevel="9.0K"
+              subtitle="Master the Sei Battlefield"
+              description="Lightning-Fast Network Domination"
+              ctaText="Enter the Battlefield"
+              onClick={() => handleFeatureClick('elite')}
+            />
+            <FeatureCard
+              title="Super Saiyan"
+              powerLevel="15.0K"
+              subtitle="Unlock Your Saiyan Potential"
+              description="Portfolio Power Beyond Limits"
+              ctaText="Unlock Power"
+              onClick={() => handleFeatureClick('saiyan')}
+            />
+            <FeatureCard
+              title="Fusion Master"
+              powerLevel="25.0K"
+              subtitle="Energy Fusion Techniques"
+              description="Advanced DeFi Strategies"
+              ctaText="Learn Fusion"
+              onClick={() => handleFeatureClick('fusion')}
+            />
+            <FeatureCard
+              title="Legendary Saiyan"
+              powerLevel="50.0K"
+              subtitle="Power Level Rankings"
+              description="Ascend the Warrior Hierarchy"
+              ctaText="Check Rankings"
+              onClick={() => handleFeatureClick('legendary')}
+            />
+          </div>
+
+          {/* Footer Section */}
+          <div className="text-center pb-12">
+            <p className="text-gray-400 mb-4">Total Power Available: <span className="text-yellow-400 font-bold">99K+</span></p>
+            <button
+              onClick={handleSummon}
+              className="px-12 py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-black rounded-lg text-xl hover:scale-105 transform transition-all duration-300 mb-4"
+            >
+              START YOUR JOURNEY
+            </button>
+            <p className="text-gray-500 text-sm">
+              No registration required • Connect any wallet
+            </p>
+            <p className="text-gray-600 text-xs mt-2">
+              Wallet · Privy
+            </p>
+          </div>
         </div>
       </div>
-    </SimpleErrorBoundary>
+    </div>
   )
 }

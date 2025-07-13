@@ -2,7 +2,7 @@ import { Action } from "@elizaos/core";
 import { TaskEither, tryCatch, chain, map } from "fp-ts/TaskEither";
 import { pipe } from "fp-ts/function";
 import { parseEther } from "ethers";
-import { State, ModelClass } from "../../../types";
+import { State } from "@elizaos/core";
 
 interface DepositParams {
   asset: string;
@@ -25,11 +25,11 @@ export const depositAction: Action = {
   examples: [
     [
       {
-        user: "user",
+        name: "user",
         content: { text: "Deposit 1000 USDC to Yei Finance" }
       },
       {
-        user: "assistant",
+        name: "assistant",
         content: {
           text: "I'll deposit 1000 USDC to Yei Finance for you.",
           action: "DEPOSIT_LENDING"
@@ -38,11 +38,11 @@ export const depositAction: Action = {
     ],
     [
       {
-        user: "user",
+        name: "user",
         content: { text: "Supply 5 ETH to the lending pool" }
       },
       {
-        user: "assistant",
+        name: "assistant",
         content: {
           text: "Depositing 5 ETH to the lending pool.",
           action: "DEPOSIT_LENDING"
@@ -51,27 +51,42 @@ export const depositAction: Action = {
     ]
   ],
   validate: async (runtime, message) => {
-    const params = message.content as DepositParams;
-    
-    if (!params.asset || !params.amount) {
+    try {
+      const text = message.content.text;
+      if (!text) return false;
+      
+      // Parse parameters from text like "Deposit 1000 USDC to Yei Finance"
+      const match = text.match(/(?:deposit|supply|lend)\s+(\d+(?:\.\d+)?)\s+(\w+)/i);
+      if (!match) return false;
+      
+      const amount = parseFloat(match[1]);
+      const asset = match[2];
+      
+      if (isNaN(amount) || amount <= 0) {
+        return false;
+      }
+      
+      // Check if asset is supported (now includes Takara assets)
+      const supportedAssets = ["USDC", "ETH", "WETH", "DAI", "USDT", "SEI", "iSEI", "fastUSD", "uBTC"];
+      if (!supportedAssets.includes(asset.toUpperCase())) {
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
       return false;
     }
-    
-    const amount = parseFloat(params.amount);
-    if (isNaN(amount) || amount <= 0) {
-      return false;
-    }
-    
-    // Check if asset is supported (now includes Takara assets)
-    const supportedAssets = ["USDC", "ETH", "WETH", "DAI", "USDT", "SEI", "iSEI", "fastUSD", "uBTC"];
-    if (!supportedAssets.includes(params.asset.toUpperCase())) {
-      return false;
-    }
-    
-    return true;
   },
   handler: async (runtime, message, state) => {
-    const params = message.content as DepositParams;
+    // Parse parameters from text
+    const text = message.content.text;
+    const match = text.match(/(?:deposit|supply|lend)\s+(\d+(?:\.\d+)?)\s+(\w+)(?:\s+to\s+(\w+))?/i);
+    
+    const params: DepositParams = {
+      amount: match![1],
+      asset: match![2].toUpperCase(),
+      protocol: match?.[3]?.toLowerCase() as 'yei' | 'takara' | 'auto' | undefined
+    };
     
     const depositResult: TaskEither<Error, any> = pipe(
       tryCatch(
@@ -119,7 +134,7 @@ export const depositAction: Action = {
             
             // Convert amount to proper decimals
             const decimals = params.asset === "USDC" || params.asset === "USDT" ? 6 : 18;
-            const amountInWei = parseEther(params.amount).div(BigInt(10 ** (18 - decimals)));
+            const amountInWei = parseEther(params.amount) / BigInt(10 ** (18 - decimals));
             
             // Check allowance first
             const allowance = await lendingManager.checkAllowance(params.asset);
@@ -131,7 +146,7 @@ export const depositAction: Action = {
             const tx = await lendingManager.deposit(
               params.asset,
               amountInWei,
-              params.onBehalfOf || message.userId
+              params.onBehalfOf || (message as any).userId
             );
             
             // Wait for confirmation
@@ -144,7 +159,7 @@ export const depositAction: Action = {
               asset: params.asset,
               protocol: 'yei',
               apy: await lendingManager.getDepositAPY(params.asset),
-              newBalance: await lendingManager.getSupplyBalance(params.asset, message.userId)
+              newBalance: await lendingManager.getSupplyBalance(params.asset, (message as any).userId)
             };
           }
           
@@ -193,11 +208,15 @@ export const depositAction: Action = {
     
     if (result._tag === "Left") {
       return {
+        success: false,
         text: `Failed to deposit: ${result.left.message}`,
         error: true
       };
     }
     
-    return result.right;
+    return {
+      success: true,
+      ...result.right
+    };
   }
 };

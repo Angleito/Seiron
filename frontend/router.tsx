@@ -73,12 +73,20 @@ const PageLoader = ({
 const WebGL3DPageLoader = ({ 
   children, 
   pageName,
-  modelPath
+  modelPath,
+  fallbackModelPath
 }: { 
   children: React.ReactNode
   pageName?: string
   modelPath?: string
+  fallbackModelPath?: string
 }) => {
+  // Use seiron_animated.gltf as the default model path
+  const defaultModelPath = '/models/seiron_animated.gltf'
+  const defaultFallbackPath = '/models/dragon_head.glb'
+  const effectiveModelPath = modelPath || defaultModelPath
+  const effectiveFallbackPath = fallbackModelPath || defaultFallbackPath
+  
   return (
     <CompositeErrorBoundary
       enableAutoRecovery={true}
@@ -88,9 +96,17 @@ const WebGL3DPageLoader = ({
       enableSuspenseRecovery={true}
       maxRetries={3}
       retryDelay={2000}
-      modelPath={modelPath}
+      modelPath={effectiveModelPath}
+      fallbackModelPath={effectiveFallbackPath}
       onError={(error, errorInfo, errorSource) => {
         console.error(`WebGL3D Error in ${pageName}:`, { error, errorInfo, errorSource })
+        console.error(`Model path was: ${effectiveModelPath}`)
+        console.error(`Fallback path was: ${effectiveFallbackPath}`)
+        
+        // Log additional debugging info for model loading errors
+        if (errorSource === 'gltf_loading') {
+          console.error('GLTF Loading failed. Attempting fallback...')
+        }
       }}
       onRecovery={(recoveryType) => {
         console.info(`WebGL3D Recovery successful in ${pageName}: ${recoveryType}`)
@@ -221,9 +237,10 @@ export const router = createBrowserRouter([
         element: (
           <WebGL3DPageLoader 
             pageName="3D WebGL Dragons"
-            modelPath="/models/dragon.glb"
+            modelPath="/models/seiron_animated.gltf"
+            fallbackModelPath="/models/dragon_head.glb"
           >
-            <WebGL3DPage />
+            <WebGL3DPage modelPath="/models/seiron_animated.gltf" />
           </WebGL3DPageLoader>
         ),
       },

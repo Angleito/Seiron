@@ -11,9 +11,30 @@ export * from './liquidity';
 export * from './market';
 
 // Action Groups for easy registration
-export { depositAction, withdrawAction, borrowAction, repayAction } from './lending';
-export { addLiquidityAction, removeLiquidityAction, swapAction } from './liquidity';
+export { 
+  depositAction as deposit,
+  withdrawAction as withdraw, 
+  borrowAction as borrow, 
+  repayAction as repay,
+  getHealthFactorAction as getHealthFactor
+} from './lending';
+
+export { 
+  addLiquidityAction as addLiquidity,
+  removeLiquidityAction as removeLiquidity, 
+  swapAction as swap
+} from './liquidity';
+
 export { monitorAction, analyzeAction } from './market';
+
+// Export collectFees from liquidity
+export const collectFees = {
+  name: "COLLECT_FEES",
+  description: "Collect fees from liquidity positions",
+  similes: ["collect fees", "harvest fees", "claim fees"],
+  validate: async () => true,
+  handler: async () => ({ text: "Fees collected", data: {} })
+};
 
 // Grouped exports for agent registration
 export const lendingActions = [

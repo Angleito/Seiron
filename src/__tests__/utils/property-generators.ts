@@ -113,30 +113,30 @@ export const priceImpactGenerator = () => fc.float({ min: 0, max: 0.5 });
 /**
  * Gas price generator (1 - 500 gwei)
  */
-export const gasPriceGenerator = () => fc.nat({ min: 1, max: 500 })
+export const gasPriceGenerator = () => fc.integer({ min: 1, max: 500 })
   .map(gwei => BigInt(gwei * 1e9));
 
 /**
  * Gas limit generator (21,000 - 10,000,000)
  */
-export const gasLimitGenerator = () => fc.nat({ min: 21000, max: 10000000 })
+export const gasLimitGenerator = () => fc.integer({ min: 21000, max: 10000000 })
   .map(limit => BigInt(limit));
 
 /**
  * Block number generator
  */
-export const blockNumberGenerator = () => fc.nat({ min: 1, max: 20000000 })
+export const blockNumberGenerator = () => fc.integer({ min: 1, max: 20000000 })
   .map(block => BigInt(block));
 
 /**
  * Timestamp generator (recent timestamps)
  */
-export const timestampGenerator = () => fc.nat({ min: 1600000000, max: 2000000000 });
+export const timestampGenerator = () => fc.integer({ min: 1600000000, max: 2000000000 });
 
 /**
  * Deadline generator (future timestamps)
  */
-export const deadlineGenerator = () => fc.nat({ min: Math.floor(Date.now() / 1000) + 300, max: Math.floor(Date.now() / 1000) + 86400 });
+export const deadlineGenerator = () => fc.integer({ min: Math.floor(Date.now() / 1000) + 300, max: Math.floor(Date.now() / 1000) + 86400 });
 
 /**
  * Risk level generator
@@ -216,7 +216,7 @@ export const marketConditionsGenerator = () => fc.record({
   volatilityIndex: fc.float({ min: 0, max: 100 }),
   liquidityIndex: fc.float({ min: 0, max: 100 }),
   correlationMatrix: fc.array(fc.array(fc.float({ min: -1, max: 1 }), { minLength: 8, maxLength: 8 }), { minLength: 8, maxLength: 8 }),
-  fearGreedIndex: fc.nat({ min: 0, max: 100 }),
+  fearGreedIndex: fc.integer({ min: 0, max: 100 }),
   totalValueLocked: amountGenerator(),
   volume24h: amountGenerator()
 });
@@ -248,7 +248,7 @@ export const transactionParamsGenerator = () => fc.record({
   value: amountGenerator(),
   gasPrice: gasPriceGenerator(),
   gasLimit: gasLimitGenerator(),
-  nonce: fc.nat({ min: 0, max: 1000 }),
+  nonce: fc.integer({ min: 0, max: 1000 }),
   deadline: deadlineGenerator(),
   data: fc.hexaString({ minLength: 0, maxLength: 1000 }).map(hex => `0x${hex}`)
 });
@@ -321,7 +321,7 @@ export const yieldStrategyGenerator = () => fc.record({
     fc.constant('intermediate' as const),
     fc.constant('advanced' as const)
   ),
-  timeHorizon: fc.nat({ min: 1, max: 365 }), // days
+  timeHorizon: fc.integer({ min: 1, max: 365 }), // days
   autoCompounding: fc.boolean()
 });
 
@@ -337,7 +337,7 @@ export const arbitrageOpportunityGenerator = () => fc.record({
   }), { minLength: 2, maxLength: 5 }),
   profitPercent: fc.float({ min: 0.001, max: 0.1 }), // 0.1% to 10%
   gasRequired: gasLimitGenerator(),
-  timeWindow: fc.nat({ min: 1, max: 600 }), // seconds
+  timeWindow: fc.integer({ min: 1, max: 600 }), // seconds
   minimumAmount: amountGenerator(),
   maximumAmount: amountGenerator()
 });

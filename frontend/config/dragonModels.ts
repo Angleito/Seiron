@@ -501,6 +501,712 @@ export const DRAGON_MODELS: Record<string, DragonModelConfig> = {
     fallbackModels: ['dragon-2d-sprite', 'dragon-ascii'],
     alternativeModels: ['dragon-2d-sprite']
   },
+
+  // Additional optimized models based on actual files
+  'seiron-animated-optimized': {
+    id: 'seiron-animated-optimized',
+    name: 'seiron_animated_optimized.gltf',
+    displayName: 'Seiron Animated (Optimized)',
+    description: 'Optimized animated dragon for better performance',
+    path: '/models/seiron_animated_optimized.gltf',
+    format: 'gltf',
+    fileSize: 917 * 1024, // 917KB
+    quality: 'high',
+    type: 'animated',
+    version: '1.0.0',
+    lastUpdated: '2024-07-08',
+    status: 'stable',
+    maintainer: 'Seiron Team',
+    documentation: '/docs/models/seiron-animated-optimized.md',
+    changelog: '/docs/models/seiron-animated-optimized-changelog.md',
+    
+    compatibility: {
+      desktop: { supported: true, performance: 'excellent', fallbackRequired: false },
+      mobile: { supported: true, performance: 'excellent', fallbackRequired: false },
+      tablet: { supported: true, performance: 'excellent', fallbackRequired: false },
+      lowEndDevice: { supported: true, performance: 'good', fallbackRequired: false }
+    },
+    
+    performance: {
+      renderComplexity: 5,
+      memoryUsageMB: 24,
+      loadTimeMs: 1500,
+      frameTimeMs: 14,
+      vertexCount: 12000,
+      triangleCount: 24000,
+      textureMemoryMB: 8,
+      recommendedFPS: 60,
+      minDeviceMemoryMB: 128,
+      cpuIntensity: 4,
+      gpuIntensity: 5,
+      batteryImpact: 'low'
+    },
+    
+    features: {
+      hasLevelOfDetail: true,
+      hasAnimations: true,
+      hasVoiceIntegration: true,
+      hasEmotionSystem: true,
+      hasParticleEffects: true,
+      hasPhysics: false,
+      hasCollisions: false,
+      hasEnvironmentMapping: true,
+      supportsMorphing: true,
+      supportsDeformation: false,
+      hasCustomShaders: false,
+      hasProceduralTextures: false
+    },
+    
+    scaling: {
+      sm: { scale: 0.8, position: [0, -0.5, 0] },
+      md: { scale: 1.0, position: [0, -0.8, 0] },
+      lg: { scale: 1.3, position: [0, -1.0, 0] },
+      xl: { scale: 1.6, position: [0, -1.2, 0] },
+      gigantic: { scale: 2.0, position: [0, -1.5, 0] }
+    },
+    
+    animations: {
+      hasIdleAnimation: true,
+      hasVoiceReactiveAnimation: true,
+      hasEmotionAnimations: true,
+      hasSpecialEffects: true,
+      supportsMorphTargets: true,
+      supportsKeyframes: true,
+      maxConcurrentAnimations: 3,
+      animationComplexity: 7
+    },
+    
+    materials: {
+      diffuseTexture: '/models/textures/Material.002_baseColor.png',
+      normalTexture: '/models/textures/Material.002_normal.png',
+      metallicRoughnessTexture: '/models/textures/Material.002_metallicRoughness.png',
+      emissiveTexture: '/models/textures/Material.002_emissive.png',
+      hasTransparency: true,
+      supportsPBR: true,
+      materialComplexity: 6,
+      shaderRequirements: ['standard', 'pbr'],
+      textureCompressionFormat: 'basis'
+    },
+    
+    qualitySettings: {
+      low: {
+        enabled: true,
+        polygonReduction: 0.4,
+        textureSize: 512,
+        shadowQuality: 'none',
+        antialiasingLevel: 0,
+        effectsLevel: 'minimal'
+      },
+      medium: {
+        enabled: true,
+        polygonReduction: 0.2,
+        textureSize: 1024,
+        shadowQuality: 'low',
+        antialiasingLevel: 2,
+        effectsLevel: 'basic'
+      },
+      high: {
+        enabled: true,
+        polygonReduction: 0.0,
+        textureSize: 2048,
+        shadowQuality: 'medium',
+        antialiasingLevel: 4,
+        effectsLevel: 'full'
+      },
+      ultra: {
+        enabled: false,
+        polygonReduction: 0.0,
+        textureSize: 4096,
+        shadowQuality: 'high',
+        antialiasingLevel: 8,
+        effectsLevel: 'full'
+      }
+    },
+    
+    preloading: {
+      priority: 'high',
+      preloadOnHover: false,
+      preloadOnVisible: true,
+      preloadOnIdle: true,
+      preloadDependencies: [],
+      cacheStrategy: 'aggressive',
+      maxCacheSize: 32,
+      cacheEviction: 'lru'
+    },
+    
+    recommendedUseCases: [
+      'primary-display-optimized',
+      'mobile-experience',
+      'performance-mode',
+      'battery-conservation'
+    ],
+    fallbackModels: ['seiron-optimized', 'dragon-head-optimized'],
+    alternativeModels: ['seiron-backup', 'seiron-optimized']
+  },
+
+  'seiron-lod-high': {
+    id: 'seiron-lod-high',
+    name: 'seiron_animated_lod_high.gltf',
+    displayName: 'Seiron LOD High',
+    description: 'High level-of-detail animated dragon',
+    path: '/models/seiron_animated_lod_high.gltf',
+    format: 'gltf',
+    fileSize: 998 * 1024, // 998KB
+    quality: 'ultra',
+    type: 'animated',
+    version: '1.0.0',
+    lastUpdated: '2024-07-08',
+    status: 'stable',
+    maintainer: 'Seiron Team',
+    documentation: '/docs/models/seiron-lod-high.md',
+    changelog: '/docs/models/seiron-lod-high-changelog.md',
+    
+    compatibility: {
+      desktop: { supported: true, performance: 'excellent', fallbackRequired: false },
+      mobile: { supported: true, performance: 'good', fallbackRequired: false },
+      tablet: { supported: true, performance: 'good', fallbackRequired: false },
+      lowEndDevice: { supported: false, performance: 'poor', fallbackRequired: true }
+    },
+    
+    performance: {
+      renderComplexity: 8,
+      memoryUsageMB: 40,
+      loadTimeMs: 2500,
+      frameTimeMs: 18,
+      vertexCount: 25000,
+      triangleCount: 50000,
+      textureMemoryMB: 16,
+      recommendedFPS: 45,
+      minDeviceMemoryMB: 512,
+      cpuIntensity: 6,
+      gpuIntensity: 7,
+      batteryImpact: 'medium'
+    },
+    
+    features: {
+      hasLevelOfDetail: true,
+      hasAnimations: true,
+      hasVoiceIntegration: true,
+      hasEmotionSystem: true,
+      hasParticleEffects: true,
+      hasPhysics: true,
+      hasCollisions: true,
+      hasEnvironmentMapping: true,
+      supportsMorphing: true,
+      supportsDeformation: true,
+      hasCustomShaders: true,
+      hasProceduralTextures: false
+    },
+    
+    scaling: {
+      sm: { scale: 0.9, position: [0, -0.6, 0] },
+      md: { scale: 1.1, position: [0, -0.9, 0] },
+      lg: { scale: 1.4, position: [0, -1.1, 0] },
+      xl: { scale: 1.7, position: [0, -1.3, 0] },
+      gigantic: { scale: 2.1, position: [0, -1.6, 0] }
+    },
+    
+    animations: {
+      hasIdleAnimation: true,
+      hasVoiceReactiveAnimation: true,
+      hasEmotionAnimations: true,
+      hasSpecialEffects: true,
+      supportsMorphTargets: true,
+      supportsKeyframes: true,
+      maxConcurrentAnimations: 6,
+      animationComplexity: 9
+    },
+    
+    materials: {
+      diffuseTexture: '/models/textures/Material.002_baseColor.png',
+      normalTexture: '/models/textures/Material.002_normal.png',
+      metallicRoughnessTexture: '/models/textures/Material.002_metallicRoughness.png',
+      emissiveTexture: '/models/textures/Material.002_emissive.png',
+      hasTransparency: true,
+      supportsPBR: true,
+      materialComplexity: 8,
+      shaderRequirements: ['standard', 'pbr', 'custom'],
+      textureCompressionFormat: 'basis'
+    },
+    
+    qualitySettings: {
+      low: {
+        enabled: false,
+        polygonReduction: 0.6,
+        textureSize: 512,
+        shadowQuality: 'none',
+        antialiasingLevel: 0,
+        effectsLevel: 'minimal'
+      },
+      medium: {
+        enabled: true,
+        polygonReduction: 0.3,
+        textureSize: 1024,
+        shadowQuality: 'low',
+        antialiasingLevel: 2,
+        effectsLevel: 'basic'
+      },
+      high: {
+        enabled: true,
+        polygonReduction: 0.1,
+        textureSize: 2048,
+        shadowQuality: 'medium',
+        antialiasingLevel: 4,
+        effectsLevel: 'full'
+      },
+      ultra: {
+        enabled: true,
+        polygonReduction: 0.0,
+        textureSize: 4096,
+        shadowQuality: 'high',
+        antialiasingLevel: 8,
+        effectsLevel: 'full'
+      }
+    },
+    
+    preloading: {
+      priority: 'medium',
+      preloadOnHover: false,
+      preloadOnVisible: false,
+      preloadOnIdle: true,
+      preloadDependencies: [],
+      cacheStrategy: 'moderate',
+      maxCacheSize: 64,
+      cacheEviction: 'lru'
+    },
+    
+    recommendedUseCases: [
+      'desktop-experience',
+      'high-end-mobile',
+      'showcase-mode',
+      'maximum-quality'
+    ],
+    fallbackModels: ['seiron-animated', 'seiron-animated-optimized'],
+    alternativeModels: ['seiron-animated']
+  },
+
+  'seiron-optimized': {
+    id: 'seiron-optimized',
+    name: 'seiron_optimized.glb',
+    displayName: 'Seiron (Optimized)',
+    description: 'Optimized static dragon for maximum performance',
+    path: '/models/seiron_optimized.glb',
+    format: 'glb',
+    fileSize: 167 * 1024, // 167KB
+    quality: 'medium',
+    type: 'static',
+    version: '1.0.0',
+    lastUpdated: '2024-07-08',
+    status: 'stable',
+    maintainer: 'Seiron Team',
+    documentation: '/docs/models/seiron-optimized.md',
+    changelog: '/docs/models/seiron-optimized-changelog.md',
+    
+    compatibility: {
+      desktop: { supported: true, performance: 'excellent', fallbackRequired: false },
+      mobile: { supported: true, performance: 'excellent', fallbackRequired: false },
+      tablet: { supported: true, performance: 'excellent', fallbackRequired: false },
+      lowEndDevice: { supported: true, performance: 'excellent', fallbackRequired: false }
+    },
+    
+    performance: {
+      renderComplexity: 2,
+      memoryUsageMB: 8,
+      loadTimeMs: 400,
+      frameTimeMs: 8,
+      vertexCount: 4000,
+      triangleCount: 8000,
+      textureMemoryMB: 3,
+      recommendedFPS: 60,
+      minDeviceMemoryMB: 64,
+      cpuIntensity: 2,
+      gpuIntensity: 2,
+      batteryImpact: 'low'
+    },
+    
+    features: {
+      hasLevelOfDetail: false,
+      hasAnimations: false,
+      hasVoiceIntegration: true,
+      hasEmotionSystem: false,
+      hasParticleEffects: false,
+      hasPhysics: false,
+      hasCollisions: false,
+      hasEnvironmentMapping: false,
+      supportsMorphing: false,
+      supportsDeformation: false,
+      hasCustomShaders: false,
+      hasProceduralTextures: false
+    },
+    
+    scaling: {
+      sm: { scale: 0.7, position: [0, -0.4, 0] },
+      md: { scale: 0.9, position: [0, -0.7, 0] },
+      lg: { scale: 1.2, position: [0, -0.9, 0] },
+      xl: { scale: 1.5, position: [0, -1.1, 0] },
+      gigantic: { scale: 1.9, position: [0, -1.4, 0] }
+    },
+    
+    animations: {
+      hasIdleAnimation: false,
+      hasVoiceReactiveAnimation: true,
+      hasEmotionAnimations: false,
+      hasSpecialEffects: false,
+      supportsMorphTargets: false,
+      supportsKeyframes: false,
+      maxConcurrentAnimations: 1,
+      animationComplexity: 1
+    },
+    
+    materials: {
+      diffuseTexture: '/models/textures/Material.002_baseColor.png',
+      normalTexture: '/models/textures/Material.002_normal.png',
+      metallicRoughnessTexture: '/models/textures/Material.002_metallicRoughness.png',
+      emissiveTexture: '/models/textures/Material.002_emissive.png',
+      hasTransparency: false,
+      supportsPBR: true,
+      materialComplexity: 3,
+      shaderRequirements: ['standard'],
+      textureCompressionFormat: 'basis'
+    },
+    
+    qualitySettings: {
+      low: {
+        enabled: true,
+        polygonReduction: 0.2,
+        textureSize: 256,
+        shadowQuality: 'none',
+        antialiasingLevel: 0,
+        effectsLevel: 'none'
+      },
+      medium: {
+        enabled: true,
+        polygonReduction: 0.0,
+        textureSize: 512,
+        shadowQuality: 'low',
+        antialiasingLevel: 2,
+        effectsLevel: 'minimal'
+      },
+      high: {
+        enabled: true,
+        polygonReduction: 0.0,
+        textureSize: 1024,
+        shadowQuality: 'medium',
+        antialiasingLevel: 4,
+        effectsLevel: 'basic'
+      },
+      ultra: {
+        enabled: false,
+        polygonReduction: 0.0,
+        textureSize: 2048,
+        shadowQuality: 'high',
+        antialiasingLevel: 8,
+        effectsLevel: 'basic'
+      }
+    },
+    
+    preloading: {
+      priority: 'critical',
+      preloadOnHover: false,
+      preloadOnVisible: true,
+      preloadOnIdle: true,
+      preloadDependencies: [],
+      cacheStrategy: 'aggressive',
+      maxCacheSize: 16,
+      cacheEviction: 'lru'
+    },
+    
+    recommendedUseCases: [
+      'performance-mode',
+      'mobile-experience',
+      'low-end-devices',
+      'battery-conservation',
+      'emergency-fallback'
+    ],
+    fallbackModels: ['dragon-head-optimized', 'dragon-2d-sprite'],
+    alternativeModels: ['dragon-head-optimized']
+  },
+
+  'dragon-head-optimized': {
+    id: 'dragon-head-optimized',
+    name: 'dragon_head_optimized.glb',
+    displayName: 'Dragon Head (Optimized)',
+    description: 'Optimized dragon head for maximum compatibility',
+    path: '/models/dragon_head_optimized.glb',
+    format: 'glb',
+    fileSize: 109 * 1024, // 109KB
+    quality: 'low',
+    type: 'static',
+    version: '1.0.0',
+    lastUpdated: '2024-07-08',
+    status: 'stable',
+    maintainer: 'Seiron Team',
+    documentation: '/docs/models/dragon-head-optimized.md',
+    changelog: '/docs/models/dragon-head-optimized-changelog.md',
+    
+    compatibility: {
+      desktop: { supported: true, performance: 'excellent', fallbackRequired: false },
+      mobile: { supported: true, performance: 'excellent', fallbackRequired: false },
+      tablet: { supported: true, performance: 'excellent', fallbackRequired: false },
+      lowEndDevice: { supported: true, performance: 'excellent', fallbackRequired: false }
+    },
+    
+    performance: {
+      renderComplexity: 1,
+      memoryUsageMB: 4,
+      loadTimeMs: 200,
+      frameTimeMs: 6,
+      vertexCount: 2000,
+      triangleCount: 4000,
+      textureMemoryMB: 2,
+      recommendedFPS: 60,
+      minDeviceMemoryMB: 32,
+      cpuIntensity: 1,
+      gpuIntensity: 1,
+      batteryImpact: 'low'
+    },
+    
+    features: {
+      hasLevelOfDetail: false,
+      hasAnimations: false,
+      hasVoiceIntegration: true,
+      hasEmotionSystem: false,
+      hasParticleEffects: false,
+      hasPhysics: false,
+      hasCollisions: false,
+      hasEnvironmentMapping: false,
+      supportsMorphing: false,
+      supportsDeformation: false,
+      hasCustomShaders: false,
+      hasProceduralTextures: false
+    },
+    
+    scaling: {
+      sm: { scale: 0.6, position: [0, -0.3, 0] },
+      md: { scale: 0.8, position: [0, -0.5, 0] },
+      lg: { scale: 1.0, position: [0, -0.7, 0] },
+      xl: { scale: 1.3, position: [0, -0.9, 0] },
+      gigantic: { scale: 1.6, position: [0, -1.2, 0] }
+    },
+    
+    animations: {
+      hasIdleAnimation: false,
+      hasVoiceReactiveAnimation: true,
+      hasEmotionAnimations: false,
+      hasSpecialEffects: false,
+      supportsMorphTargets: false,
+      supportsKeyframes: false,
+      maxConcurrentAnimations: 1,
+      animationComplexity: 0
+    },
+    
+    materials: {
+      diffuseTexture: '/models/textures/Material.002_baseColor.png',
+      normalTexture: null,
+      metallicRoughnessTexture: null,
+      emissiveTexture: null,
+      hasTransparency: false,
+      supportsPBR: false,
+      materialComplexity: 1,
+      shaderRequirements: ['basic'],
+      textureCompressionFormat: 'none'
+    },
+    
+    qualitySettings: {
+      low: {
+        enabled: true,
+        polygonReduction: 0.0,
+        textureSize: 256,
+        shadowQuality: 'none',
+        antialiasingLevel: 0,
+        effectsLevel: 'none'
+      },
+      medium: {
+        enabled: true,
+        polygonReduction: 0.0,
+        textureSize: 512,
+        shadowQuality: 'none',
+        antialiasingLevel: 0,
+        effectsLevel: 'none'
+      },
+      high: {
+        enabled: true,
+        polygonReduction: 0.0,
+        textureSize: 1024,
+        shadowQuality: 'low',
+        antialiasingLevel: 2,
+        effectsLevel: 'minimal'
+      },
+      ultra: {
+        enabled: false,
+        polygonReduction: 0.0,
+        textureSize: 2048,
+        shadowQuality: 'low',
+        antialiasingLevel: 2,
+        effectsLevel: 'minimal'
+      }
+    },
+    
+    preloading: {
+      priority: 'critical',
+      preloadOnHover: false,
+      preloadOnVisible: true,
+      preloadOnIdle: true,
+      preloadDependencies: [],
+      cacheStrategy: 'aggressive',
+      maxCacheSize: 8,
+      cacheEviction: 'lru'
+    },
+    
+    recommendedUseCases: [
+      'ultra-low-end',
+      'emergency-fallback',
+      'minimal-mode',
+      'accessibility-mode'
+    ],
+    fallbackModels: ['dragon-2d-sprite', 'dragon-ascii'],
+    alternativeModels: ['dragon-2d-sprite']
+  },
+
+  'dragon-head': {
+    id: 'dragon-head',
+    name: 'dragon_head.glb',
+    displayName: 'Dragon Head (Detailed)',
+    description: 'Detailed dragon head model',
+    path: '/models/dragon_head.glb',
+    format: 'glb',
+    fileSize: 706 * 1024, // 706KB
+    quality: 'high',
+    type: 'static',
+    version: '1.0.0',
+    lastUpdated: '2024-07-08',
+    status: 'stable',
+    maintainer: 'Seiron Team',
+    documentation: '/docs/models/dragon-head.md',
+    changelog: '/docs/models/dragon-head-changelog.md',
+    
+    compatibility: {
+      desktop: { supported: true, performance: 'excellent', fallbackRequired: false },
+      mobile: { supported: true, performance: 'good', fallbackRequired: false },
+      tablet: { supported: true, performance: 'good', fallbackRequired: false },
+      lowEndDevice: { supported: true, performance: 'fair', fallbackRequired: false }
+    },
+    
+    performance: {
+      renderComplexity: 4,
+      memoryUsageMB: 16,
+      loadTimeMs: 800,
+      frameTimeMs: 12,
+      vertexCount: 8000,
+      triangleCount: 16000,
+      textureMemoryMB: 6,
+      recommendedFPS: 60,
+      minDeviceMemoryMB: 128,
+      cpuIntensity: 3,
+      gpuIntensity: 4,
+      batteryImpact: 'low'
+    },
+    
+    features: {
+      hasLevelOfDetail: false,
+      hasAnimations: false,
+      hasVoiceIntegration: true,
+      hasEmotionSystem: true,
+      hasParticleEffects: false,
+      hasPhysics: false,
+      hasCollisions: false,
+      hasEnvironmentMapping: true,
+      supportsMorphing: false,
+      supportsDeformation: false,
+      hasCustomShaders: false,
+      hasProceduralTextures: false
+    },
+    
+    scaling: {
+      sm: { scale: 0.7, position: [0, -0.4, 0] },
+      md: { scale: 0.9, position: [0, -0.6, 0] },
+      lg: { scale: 1.2, position: [0, -0.8, 0] },
+      xl: { scale: 1.5, position: [0, -1.0, 0] },
+      gigantic: { scale: 1.8, position: [0, -1.3, 0] }
+    },
+    
+    animations: {
+      hasIdleAnimation: false,
+      hasVoiceReactiveAnimation: true,
+      hasEmotionAnimations: true,
+      hasSpecialEffects: false,
+      supportsMorphTargets: false,
+      supportsKeyframes: false,
+      maxConcurrentAnimations: 1,
+      animationComplexity: 2
+    },
+    
+    materials: {
+      diffuseTexture: '/models/textures/Material.002_baseColor.png',
+      normalTexture: '/models/textures/Material.002_normal.png',
+      metallicRoughnessTexture: '/models/textures/Material.002_metallicRoughness.png',
+      emissiveTexture: '/models/textures/Material.002_emissive.png',
+      hasTransparency: false,
+      supportsPBR: true,
+      materialComplexity: 5,
+      shaderRequirements: ['standard', 'pbr'],
+      textureCompressionFormat: 'basis'
+    },
+    
+    qualitySettings: {
+      low: {
+        enabled: true,
+        polygonReduction: 0.3,
+        textureSize: 512,
+        shadowQuality: 'none',
+        antialiasingLevel: 0,
+        effectsLevel: 'minimal'
+      },
+      medium: {
+        enabled: true,
+        polygonReduction: 0.1,
+        textureSize: 1024,
+        shadowQuality: 'low',
+        antialiasingLevel: 2,
+        effectsLevel: 'basic'
+      },
+      high: {
+        enabled: true,
+        polygonReduction: 0.0,
+        textureSize: 2048,
+        shadowQuality: 'medium',
+        antialiasingLevel: 4,
+        effectsLevel: 'full'
+      },
+      ultra: {
+        enabled: false,
+        polygonReduction: 0.0,
+        textureSize: 4096,
+        shadowQuality: 'high',
+        antialiasingLevel: 8,
+        effectsLevel: 'full'
+      }
+    },
+    
+    preloading: {
+      priority: 'medium',
+      preloadOnHover: false,
+      preloadOnVisible: true,
+      preloadOnIdle: true,
+      preloadDependencies: [],
+      cacheStrategy: 'moderate',
+      maxCacheSize: 24,
+      cacheEviction: 'lru'
+    },
+    
+    recommendedUseCases: [
+      'detail-showcase',
+      'desktop-experience',
+      'high-quality-fallback'
+    ],
+    fallbackModels: ['dragon-head-optimized', 'seiron-optimized'],
+    alternativeModels: ['dragon-head-optimized']
+  },
   
   // 2D sprite fallback
   'dragon-2d-sprite': {
@@ -793,7 +1499,7 @@ export function getDefaultModel(): string {
 }
 
 export function getDefaultFallback(): string {
-  return 'seiron-animated-optimized'
+  return 'seiron-backup'
 }
 
 export function getUltimateFallback(): string {

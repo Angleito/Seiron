@@ -795,7 +795,7 @@ export class ErrorHandlingEngine extends EventEmitter {
             timestamp: Date.now(),
             degraded: true
           }
-        });
+        } as ExecutionResult);
       }
     });
   }

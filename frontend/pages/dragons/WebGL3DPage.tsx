@@ -80,7 +80,7 @@ interface PerformanceState {
 // Legacy models are now replaced with the new configuration system
 
 // Enhanced 3D WebGL Dragon Demo with Production Optimizations
-export default function WebGL3DPage() {
+export default function WebGL3DPage({ modelPath }: { modelPath?: string }) {
   // CRITICAL FIX: ALL HOOKS MUST BE CALLED AT THE TOP LEVEL BEFORE ANY CONDITIONAL LOGIC
   
   // Core state
