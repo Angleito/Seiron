@@ -165,7 +165,7 @@ export default function WebGL3DPage({ modelPath }: { modelPath?: string }) {
   })
   
   // Model recommendation engine and dragon model manager - must be called before any conditional logic
-  const dragonModelManager = useDragonModelManager(selectedModelId)
+  // const dragonModelManager = useDragonModelManager(selectedModelId)
   
   // Initialize performance tracking hook - must be called before any conditional logic
   // Temporarily commented out for debugging
@@ -754,28 +754,9 @@ export default function WebGL3DPage({ modelPath }: { modelPath?: string }) {
                   <h4 className="text-lg font-semibold text-green-400 mb-3">3D Dragon Renderer</h4>
                   <div className="relative h-96 bg-black/30 rounded-lg overflow-hidden">
                     {selectedModelId && (
-                      <DragonModelManager
-                        initialModelId={selectedModelId}
-                        voiceState={voiceState}
-                        size={dragonSize}
-                        enableAnimations={true}
-                        enablePreloading={true}
-                        enableAutoFallback={true}
-                        performanceThreshold={performanceState.quality === 'low' ? 20 : 30}
-                        onModelSwitch={(from, to) => {
-                          logger.info(`Model switched: ${from.displayName} → ${to.displayName}`)
-                        }}
-                        onLoadProgress={(progress, modelId) => {
-                          console.log(`Loading ${modelId}: ${progress}%`)
-                        }}
-                        onError={(error, modelId) => {
-                          setModelError(`Model ${modelId}: ${error.message}`)
-                        }}
-                        onFallback={(fromModelId, toModelId) => {
-                          console.log(`Fallback triggered: ${fromModelId} → ${toModelId}`)
-                        }}
-                        className="w-full h-full"
-                      />
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        DragonModelManager temporarily disabled
+                      </div>
                     )}
                     
                     {/* Overlay Controls */}

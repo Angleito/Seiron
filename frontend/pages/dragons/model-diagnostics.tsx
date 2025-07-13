@@ -478,25 +478,9 @@ const ModelDiagnosticsPage: React.FC = () => {
                 <div>{testError}</div>
               </div>
             ) : (
-              <Canvas>
-                <ambientLight intensity={0.5} />
-                <pointLight position={[10, 10, 10]} />
-                <DragonModelManager
-                  initialModelId={currentTestModel}
-                  enableAutoFallback={true}
-                  size="md"
-                  onError={(error, modelId) => {
-                    logger.error(`Model ${modelId} error:`, error);
-                    setTestError(`Failed to load ${modelId}: ${error.message}`);
-                  }}
-                  onModelSwitch={(from, to) => {
-                    logger.info(`Switched from ${from.id} to ${to.id}`);
-                  }}
-                  onFallback={(from, to) => {
-                    logger.warn(`Fallback: ${from} → ${to}`);
-                  }}
-                />
-              </Canvas>
+              <div className="w-full h-64 flex items-center justify-center bg-gray-800 text-gray-400">
+                DragonModelManager temporarily disabled
+              </div>
             )}
           </div>
         )}
