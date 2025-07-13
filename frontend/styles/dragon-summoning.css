@@ -166,18 +166,40 @@
 .lightning-bolt-1::before {
   content: '';
   position: absolute;
-  top: 40%;
-  left: -8px;
-  width: 2px;
-  height: 80px;
+  top: 30%;
+  left: -12px;
+  width: 6px;
+  height: 120px;
   background: linear-gradient(to bottom, 
     var(--lightning-white) 0%, 
-    transparent 30%,
-    transparent 50%, 
-    var(--lightning-blue) 80%, 
+    transparent 20%,
+    transparent 30%, 
+    var(--lightning-electric) 50%,
+    transparent 70%,
+    var(--lightning-blue) 90%, 
     transparent 100%);
-  box-shadow: 0 0 8px var(--lightning-white);
-  transform: rotate(-25deg);
+  box-shadow: 
+    0 0 12px var(--lightning-white),
+    0 0 25px var(--lightning-electric);
+  transform: rotate(-35deg);
+}
+
+.lightning-bolt-1::after {
+  content: '';
+  position: absolute;
+  top: 60%;
+  left: 15px;
+  width: 4px;
+  height: 100px;
+  background: linear-gradient(to bottom, 
+    var(--lightning-electric) 0%, 
+    transparent 25%,
+    transparent 40%, 
+    var(--lightning-white) 65%,
+    transparent 85%,
+    var(--lightning-blue) 100%);
+  box-shadow: 0 0 10px var(--lightning-white);
+  transform: rotate(28deg);
 }
 
 .lightning-bolt-2 {
@@ -205,6 +227,45 @@
   animation-delay: 2.7s;
 }
 
+.lightning-bolt-2::before {
+  content: '';
+  position: absolute;
+  top: 35%;
+  left: -14px;
+  width: 7px;
+  height: 110px;
+  background: linear-gradient(to bottom, 
+    var(--lightning-white) 0%, 
+    transparent 18%,
+    transparent 32%, 
+    var(--lightning-electric) 55%,
+    transparent 75%,
+    var(--lightning-blue) 95%, 
+    transparent 100%);
+  box-shadow: 
+    0 0 14px var(--lightning-white),
+    0 0 28px var(--lightning-electric);
+  transform: rotate(-42deg);
+}
+
+.lightning-bolt-2::after {
+  content: '';
+  position: absolute;
+  top: 65%;
+  left: 18px;
+  width: 5px;
+  height: 95px;
+  background: linear-gradient(to bottom, 
+    var(--lightning-electric) 0%, 
+    transparent 22%,
+    transparent 45%, 
+    var(--lightning-white) 70%,
+    transparent 90%,
+    var(--lightning-blue) 100%);
+  box-shadow: 0 0 12px var(--lightning-white);
+  transform: rotate(38deg);
+}
+
 .lightning-bolt-3 {
   position: absolute;
   top: 20%;
@@ -229,6 +290,45 @@
   opacity: 0;
   animation: lightning-flash-3 0.2s ease-in-out infinite;
   animation-delay: 3.6s;
+}
+
+.lightning-bolt-3::before {
+  content: '';
+  position: absolute;
+  top: 32%;
+  left: -18px;
+  width: 8px;
+  height: 130px;
+  background: linear-gradient(to bottom, 
+    var(--lightning-white) 0%, 
+    transparent 15%,
+    transparent 28%, 
+    var(--lightning-electric) 48%,
+    transparent 68%,
+    var(--lightning-blue) 88%, 
+    transparent 100%);
+  box-shadow: 
+    0 0 16px var(--lightning-white),
+    0 0 32px var(--lightning-electric);
+  transform: rotate(-40deg);
+}
+
+.lightning-bolt-3::after {
+  content: '';
+  position: absolute;
+  top: 68%;
+  left: 22px;
+  width: 6px;
+  height: 115px;
+  background: linear-gradient(to bottom, 
+    var(--lightning-electric) 0%, 
+    transparent 20%,
+    transparent 42%, 
+    var(--lightning-white) 68%,
+    transparent 88%,
+    var(--lightning-blue) 100%);
+  box-shadow: 0 0 14px var(--lightning-white);
+  transform: rotate(35deg);
 }
 
 .lightning-bolt-4 {
@@ -260,6 +360,45 @@
   animation-delay: 2.1s;
 }
 
+.lightning-bolt-4::before {
+  content: '';
+  position: absolute;
+  top: 28%;
+  left: -15px;
+  width: 7px;
+  height: 125px;
+  background: linear-gradient(to bottom, 
+    var(--lightning-white) 0%, 
+    transparent 16%,
+    transparent 30%, 
+    var(--lightning-electric) 52%,
+    transparent 72%,
+    var(--lightning-blue) 92%, 
+    transparent 100%);
+  box-shadow: 
+    0 0 15px var(--lightning-white),
+    0 0 30px var(--lightning-electric);
+  transform: rotate(-38deg);
+}
+
+.lightning-bolt-4::after {
+  content: '';
+  position: absolute;
+  top: 62%;
+  left: 19px;
+  width: 5px;
+  height: 105px;
+  background: linear-gradient(to bottom, 
+    var(--lightning-electric) 0%, 
+    transparent 24%,
+    transparent 46%, 
+    var(--lightning-white) 72%,
+    transparent 92%,
+    var(--lightning-blue) 100%);
+  box-shadow: 0 0 13px var(--lightning-white);
+  transform: rotate(32deg);
+}
+
 .lightning-bolt-5 {
   position: absolute;
   top: 8%;
@@ -284,6 +423,45 @@
   opacity: 0;
   animation: lightning-flash-5 0.35s ease-in-out infinite;
   animation-delay: 2.3s;
+}
+
+.lightning-bolt-5::before {
+  content: '';
+  position: absolute;
+  top: 30%;
+  left: -13px;
+  width: 6px;
+  height: 115px;
+  background: linear-gradient(to bottom, 
+    var(--lightning-white) 0%, 
+    transparent 18%,
+    transparent 33%, 
+    var(--lightning-electric) 55%,
+    transparent 75%,
+    var(--lightning-blue) 95%, 
+    transparent 100%);
+  box-shadow: 
+    0 0 13px var(--lightning-white),
+    0 0 26px var(--lightning-electric);
+  transform: rotate(-36deg);
+}
+
+.lightning-bolt-5::after {
+  content: '';
+  position: absolute;
+  top: 64%;
+  left: 16px;
+  width: 4px;
+  height: 98px;
+  background: linear-gradient(to bottom, 
+    var(--lightning-electric) 0%, 
+    transparent 26%,
+    transparent 48%, 
+    var(--lightning-white) 74%,
+    transparent 94%,
+    var(--lightning-blue) 100%);
+  box-shadow: 0 0 11px var(--lightning-white);
+  transform: rotate(29deg);
 }
 
 .lightning-bolt-6 {
@@ -315,6 +493,45 @@
   animation-delay: 2.5s;
 }
 
+.lightning-bolt-6::before {
+  content: '';
+  position: absolute;
+  top: 31%;
+  left: -16px;
+  width: 8px;
+  height: 135px;
+  background: linear-gradient(to bottom, 
+    var(--lightning-white) 0%, 
+    transparent 14%,
+    transparent 27%, 
+    var(--lightning-electric) 49%,
+    transparent 69%,
+    var(--lightning-blue) 89%, 
+    transparent 100%);
+  box-shadow: 
+    0 0 17px var(--lightning-white),
+    0 0 34px var(--lightning-electric);
+  transform: rotate(-41deg);
+}
+
+.lightning-bolt-6::after {
+  content: '';
+  position: absolute;
+  top: 66%;
+  left: 20px;
+  width: 6px;
+  height: 118px;
+  background: linear-gradient(to bottom, 
+    var(--lightning-electric) 0%, 
+    transparent 19%,
+    transparent 41%, 
+    var(--lightning-white) 67%,
+    transparent 87%,
+    var(--lightning-blue) 100%);
+  box-shadow: 0 0 15px var(--lightning-white);
+  transform: rotate(37deg);
+}
+
 .lightning-bolt-7 {
   position: absolute;
   top: 14%;
@@ -344,6 +561,45 @@
   animation-delay: 2.7s;
 }
 
+.lightning-bolt-7::before {
+  content: '';
+  position: absolute;
+  top: 29%;
+  left: -20px;
+  width: 9px;
+  height: 140px;
+  background: linear-gradient(to bottom, 
+    var(--lightning-white) 0%, 
+    transparent 12%,
+    transparent 25%, 
+    var(--lightning-electric) 47%,
+    transparent 67%,
+    var(--lightning-blue) 87%, 
+    transparent 100%);
+  box-shadow: 
+    0 0 19px var(--lightning-white),
+    0 0 38px var(--lightning-electric);
+  transform: rotate(-44deg);
+}
+
+.lightning-bolt-7::after {
+  content: '';
+  position: absolute;
+  top: 69%;
+  left: 25px;
+  width: 7px;
+  height: 125px;
+  background: linear-gradient(to bottom, 
+    var(--lightning-electric) 0%, 
+    transparent 17%,
+    transparent 39%, 
+    var(--lightning-white) 65%,
+    transparent 85%,
+    var(--lightning-blue) 100%);
+  box-shadow: 0 0 17px var(--lightning-white);
+  transform: rotate(40deg);
+}
+
 .lightning-bolt-8 {
   position: absolute;
   top: 16%;
@@ -368,6 +624,45 @@
   opacity: 0;
   animation: lightning-flash-8 0.32s ease-in-out infinite;
   animation-delay: 2.9s;
+}
+
+.lightning-bolt-8::before {
+  content: '';
+  position: absolute;
+  top: 33%;
+  left: -12px;
+  width: 6px;
+  height: 120px;
+  background: linear-gradient(to bottom, 
+    var(--lightning-white) 0%, 
+    transparent 19%,
+    transparent 34%, 
+    var(--lightning-electric) 56%,
+    transparent 76%,
+    var(--lightning-blue) 96%, 
+    transparent 100%);
+  box-shadow: 
+    0 0 14px var(--lightning-white),
+    0 0 28px var(--lightning-electric);
+  transform: rotate(-37deg);
+}
+
+.lightning-bolt-8::after {
+  content: '';
+  position: absolute;
+  top: 67%;
+  left: 17px;
+  width: 5px;
+  height: 108px;
+  background: linear-gradient(to bottom, 
+    var(--lightning-electric) 0%, 
+    transparent 23%,
+    transparent 44%, 
+    var(--lightning-white) 71%,
+    transparent 91%,
+    var(--lightning-blue) 100%);
+  box-shadow: 0 0 12px var(--lightning-white);
+  transform: rotate(34deg);
 }
 
 .lightning-bolt-9 {
@@ -397,6 +692,45 @@
   opacity: 0;
   animation: lightning-flash-9 0.26s ease-in-out infinite;
   animation-delay: 3.1s;
+}
+
+.lightning-bolt-9::before {
+  content: '';
+  position: absolute;
+  top: 35%;
+  left: -14px;
+  width: 7px;
+  height: 128px;
+  background: linear-gradient(to bottom, 
+    var(--lightning-white) 0%, 
+    transparent 16%,
+    transparent 29%, 
+    var(--lightning-electric) 51%,
+    transparent 71%,
+    var(--lightning-blue) 91%, 
+    transparent 100%);
+  box-shadow: 
+    0 0 16px var(--lightning-white),
+    0 0 32px var(--lightning-electric);
+  transform: rotate(-39deg);
+}
+
+.lightning-bolt-9::after {
+  content: '';
+  position: absolute;
+  top: 70%;
+  left: 19px;
+  width: 6px;
+  height: 112px;
+  background: linear-gradient(to bottom, 
+    var(--lightning-electric) 0%, 
+    transparent 21%,
+    transparent 43%, 
+    var(--lightning-white) 69%,
+    transparent 89%,
+    var(--lightning-blue) 100%);
+  box-shadow: 0 0 14px var(--lightning-white);
+  transform: rotate(36deg);
 }
 
 /* ========================================

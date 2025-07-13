@@ -61,7 +61,7 @@
   z-index: 3;
 }
 
-/* Create 14 massive lightning bolts */
+/* Create 14 massive jagged lightning bolts */
 .lightning::before,
 .lightning::after,
 .lightning > .bolt-3,
@@ -79,153 +79,439 @@
   content: '';
   position: absolute;
   top: -20%;
-  width: 300px;
-  height: 140%;
+  width: 8px;
+  height: 25%;
   background: linear-gradient(to bottom, 
     transparent 0%, 
-    rgba(255, 255, 255, 0) 10%, 
-    rgba(255, 255, 255, 1) 20%, 
-    rgba(150, 220, 255, 1) 30%,
-    rgba(255, 255, 255, 1) 40%,
-    rgba(100, 180, 255, 1) 50%,
-    rgba(255, 255, 255, 1) 60%,
-    rgba(150, 220, 255, 0.8) 70%,
-    rgba(255, 255, 255, 0.4) 85%, 
+    rgba(255, 255, 255, 1) 5%, 
+    rgba(150, 220, 255, 1) 15%,
+    rgba(255, 255, 255, 1) 25%,
+    rgba(100, 180, 255, 1) 35%,
+    rgba(255, 255, 255, 1) 45%,
+    rgba(150, 220, 255, 0.8) 55%,
+    rgba(255, 255, 255, 0.6) 65%, 
     transparent 100%
   );
   opacity: 0;
-  filter: blur(3px);
-  transform: scaleX(0.1);
+  filter: blur(1px);
+  transform: scaleX(1);
   box-shadow: 
-    0 0 30px rgba(255, 255, 255, 1),
-    0 0 60px rgba(150, 220, 255, 0.8),
-    0 0 90px rgba(100, 180, 255, 0.6),
-    0 0 120px rgba(255, 255, 255, 0.4);
+    0 0 15px rgba(255, 255, 255, 1),
+    0 0 30px rgba(150, 220, 255, 0.8),
+    0 0 45px rgba(100, 180, 255, 0.6);
+}
+
+/* Jagged lightning segment styles */
+.lightning::before::after,
+.lightning::after::after,
+.lightning > .bolt-3::after,
+.lightning > .bolt-4::after,
+.lightning > .bolt-5::after,
+.lightning > .bolt-6::after,
+.lightning > .bolt-7::after,
+.lightning > .bolt-8::after,
+.lightning > .bolt-9::after,
+.lightning > .bolt-10::after,
+.lightning > .bolt-11::after,
+.lightning > .bolt-12::after,
+.lightning > .bolt-13::after,
+.lightning > .bolt-14::after {
+  content: '';
+  position: absolute;
+  top: 20%;
+  left: -2px;
+  width: 6px;
+  height: 30%;
+  background: inherit;
+  transform: translateX(15px) rotate(25deg);
+}
+
+/* Middle jagged segments */
+.lightning::before::before,
+.lightning::after::before,
+.lightning > .bolt-3::before,
+.lightning > .bolt-4::before,
+.lightning > .bolt-5::before,
+.lightning > .bolt-6::before,
+.lightning > .bolt-7::before,
+.lightning > .bolt-8::before,
+.lightning > .bolt-9::before,
+.lightning > .bolt-10::before,
+.lightning > .bolt-11::before,
+.lightning > .bolt-12::before,
+.lightning > .bolt-13::before,
+.lightning > .bolt-14::before {
+  content: '';
+  position: absolute;
+  top: 45%;
+  left: 2px;
+  width: 5px;
+  height: 35%;
+  background: inherit;
+  transform: translateX(-12px) rotate(-20deg);
 }
 
 /* Lightning bolt 1 - Far left */
 .lightning::before {
   left: 5%;
-  width: 700px;
+  width: 12px;
+  height: 30%;
   transform: rotate(15deg);
   animation: mega-lightning1 1.2s linear infinite;
+}
+
+.lightning::before::after {
+  top: 25%;
+  left: -3px;
+  width: 8px;
+  height: 25%;
+  transform: translateX(18px) rotate(35deg);
+}
+
+.lightning::before::before {
+  top: 50%;
+  left: 4px;
+  width: 6px;
+  height: 30%;
+  transform: translateX(-15px) rotate(-25deg);
 }
 
 /* Lightning bolt 2 - Left center */
 .lightning::after {
   left: 25%;
-  width: 800px;
+  width: 10px;
+  height: 35%;
   transform: rotate(-5deg);
   animation: mega-lightning2 1.5s linear infinite;
   animation-delay: 0.2s;
 }
 
+.lightning::after::after {
+  top: 30%;
+  left: -2px;
+  width: 7px;
+  height: 28%;
+  transform: translateX(20px) rotate(28deg);
+}
+
+.lightning::after::before {
+  top: 55%;
+  left: 3px;
+  width: 5px;
+  height: 25%;
+  transform: translateX(-18px) rotate(-30deg);
+}
+
 /* Lightning bolt 3 - Center */
 .lightning > .bolt-3 {
   left: 45%;
-  width: 750px;
+  width: 14px;
+  height: 32%;
   transform: rotate(8deg);
   animation: mega-lightning3 1.8s linear infinite;
   animation-delay: 0.4s;
 }
 
+.lightning > .bolt-3::after {
+  top: 28%;
+  left: -4px;
+  width: 9px;
+  height: 30%;
+  transform: translateX(22px) rotate(32deg);
+}
+
+.lightning > .bolt-3::before {
+  top: 48%;
+  left: 5px;
+  width: 7px;
+  height: 35%;
+  transform: translateX(-20px) rotate(-28deg);
+}
+
 /* Lightning bolt 4 - Right center */
 .lightning > .bolt-4 {
   right: 35%;
-  width: 760px;
+  width: 11px;
+  height: 28%;
   transform: rotate(-12deg);
   animation: mega-lightning4 1.3s linear infinite;
   animation-delay: 0.6s;
 }
 
+.lightning > .bolt-4::after {
+  top: 22%;
+  left: -3px;
+  width: 8px;
+  height: 26%;
+  transform: translateX(19px) rotate(38deg);
+}
+
+.lightning > .bolt-4::before {
+  top: 52%;
+  left: 2px;
+  width: 6px;
+  height: 32%;
+  transform: translateX(-16px) rotate(-22deg);
+}
+
 /* Lightning bolt 5 - Far right */
 .lightning > .bolt-5 {
   right: 10%;
-  width: 680px;
+  width: 13px;
+  height: 34%;
   transform: rotate(18deg);
   animation: mega-lightning5 1.6s linear infinite;
   animation-delay: 0.8s;
 }
 
+.lightning > .bolt-5::after {
+  top: 26%;
+  left: -5px;
+  width: 8px;
+  height: 29%;
+  transform: translateX(25px) rotate(40deg);
+}
+
+.lightning > .bolt-5::before {
+  top: 58%;
+  left: 4px;
+  width: 6px;
+  height: 28%;
+  transform: translateX(-22px) rotate(-35deg);
+}
+
 /* Lightning bolt 6 - Left side branch */
 .lightning > .bolt-6 {
   left: 15%;
-  width: 640px;
+  width: 9px;
+  height: 29%;
   transform: rotate(-20deg);
   animation: mega-lightning6 1.4s linear infinite;
   animation-delay: 1s;
 }
 
+.lightning > .bolt-6::after {
+  top: 24%;
+  left: -2px;
+  width: 7px;
+  height: 27%;
+  transform: translateX(16px) rotate(33deg);
+}
+
+.lightning > .bolt-6::before {
+  top: 54%;
+  left: 3px;
+  width: 5px;
+  height: 30%;
+  transform: translateX(-14px) rotate(-26deg);
+}
+
 /* Lightning bolt 7 - Center branch */
 .lightning > .bolt-7 {
   left: 38%;
-  width: 800px;
+  width: 15px;
+  height: 36%;
   transform: rotate(3deg);
   animation: mega-lightning7 2s linear infinite;
   animation-delay: 1.2s;
 }
 
+.lightning > .bolt-7::after {
+  top: 32%;
+  left: -6px;
+  width: 10px;
+  height: 31%;
+  transform: translateX(28px) rotate(42deg);
+}
+
+.lightning > .bolt-7::before {
+  top: 60%;
+  left: 6px;
+  width: 8px;
+  height: 33%;
+  transform: translateX(-25px) rotate(-38deg);
+}
+
 /* Lightning bolt 8 - Right side branch */
 .lightning > .bolt-8 {
   right: 20%;
-  width: 720px;
+  width: 12px;
+  height: 31%;
   transform: rotate(-8deg);
   animation: mega-lightning8 1.7s linear infinite;
   animation-delay: 1.4s;
 }
 
+.lightning > .bolt-8::after {
+  top: 27%;
+  left: -4px;
+  width: 8px;
+  height: 28%;
+  transform: translateX(21px) rotate(36deg);
+}
+
+.lightning > .bolt-8::before {
+  top: 56%;
+  left: 3px;
+  width: 6px;
+  height: 31%;
+  transform: translateX(-19px) rotate(-31deg);
+}
+
 /* Lightning bolt 9 - Early left strike */
 .lightning > .bolt-9 {
   left: 8%;
-  width: 650px;
+  width: 11px;
+  height: 33%;
   transform: rotate(22deg);
   animation: mega-lightning9 1.1s linear infinite;
   animation-delay: 0s;
 }
 
+.lightning > .bolt-9::after {
+  top: 29%;
+  left: -3px;
+  width: 7px;
+  height: 26%;
+  transform: translateX(17px) rotate(45deg);
+}
+
+.lightning > .bolt-9::before {
+  top: 57%;
+  left: 4px;
+  width: 5px;
+  height: 29%;
+  transform: translateX(-15px) rotate(-40deg);
+}
+
 /* Lightning bolt 10 - Early right strike */
 .lightning > .bolt-10 {
   right: 12%;
-  width: 680px;
+  width: 13px;
+  height: 35%;
   transform: rotate(-15deg);
   animation: mega-lightning10 1.3s linear infinite;
   animation-delay: 0s;
 }
 
+.lightning > .bolt-10::after {
+  top: 31%;
+  left: -5px;
+  width: 9px;
+  height: 30%;
+  transform: translateX(24px) rotate(39deg);
+}
+
+.lightning > .bolt-10::before {
+  top: 62%;
+  left: 5px;
+  width: 7px;
+  height: 27%;
+  transform: translateX(-21px) rotate(-33deg);
+}
+
 /* Lightning bolt 11 - Early center strike */
 .lightning > .bolt-11 {
   left: 42%;
-  width: 750px;
+  width: 14px;
+  height: 37%;
   transform: rotate(5deg);
   animation: mega-lightning11 1.5s linear infinite;
   animation-delay: 0s;
 }
 
+.lightning > .bolt-11::after {
+  top: 33%;
+  left: -6px;
+  width: 9px;
+  height: 32%;
+  transform: translateX(26px) rotate(44deg);
+}
+
+.lightning > .bolt-11::before {
+  top: 64%;
+  left: 6px;
+  width: 7px;
+  height: 30%;
+  transform: translateX(-23px) rotate(-36deg);
+}
+
 /* Lightning bolt 12 - Early far left */
 .lightning > .bolt-12 {
   left: 2%;
-  width: 600px;
+  width: 10px;
+  height: 32%;
   transform: rotate(28deg);
   animation: mega-lightning12 1.4s linear infinite;
   animation-delay: 0.1s;
 }
 
+.lightning > .bolt-12::after {
+  top: 28%;
+  left: -3px;
+  width: 6px;
+  height: 27%;
+  transform: translateX(18px) rotate(48deg);
+}
+
+.lightning > .bolt-12::before {
+  top: 59%;
+  left: 4px;
+  width: 5px;
+  height: 28%;
+  transform: translateX(-16px) rotate(-42deg);
+}
+
 /* Lightning bolt 13 - Early far right */
 .lightning > .bolt-13 {
   right: 5%;
-  width: 620px;
+  width: 12px;
+  height: 34%;
   transform: rotate(-25deg);
   animation: mega-lightning13 1.6s linear infinite;
   animation-delay: 0.1s;
 }
 
+.lightning > .bolt-13::after {
+  top: 30%;
+  left: -4px;
+  width: 8px;
+  height: 29%;
+  transform: translateX(22px) rotate(41deg);
+}
+
+.lightning > .bolt-13::before {
+  top: 61%;
+  left: 5px;
+  width: 6px;
+  height: 31%;
+  transform: translateX(-20px) rotate(-37deg);
+}
+
 /* Lightning bolt 14 - Early center left */
 .lightning > .bolt-14 {
   left: 32%;
-  width: 700px;
+  width: 13px;
+  height: 36%;
   transform: rotate(-2deg);
   animation: mega-lightning14 1.2s linear infinite;
   animation-delay: 0.2s;
+}
+
+.lightning > .bolt-14::after {
+  top: 32%;
+  left: -5px;
+  width: 8px;
+  height: 31%;
+  transform: translateX(25px) rotate(43deg);
+}
+
+.lightning > .bolt-14::before {
+  top: 63%;
+  left: 5px;
+  width: 6px;
+  height: 29%;
+  transform: translateX(-22px) rotate(-34deg);
 }
 
 /* Flash Effect */
