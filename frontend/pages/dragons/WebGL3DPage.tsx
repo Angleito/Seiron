@@ -693,7 +693,7 @@ export default function WebGL3DPage({ modelPath }: { modelPath?: string }) {
                           setSelectedModelId(model.id)
                           setModelLoading(true)
                           setModelError(null)
-                          dragonModelManager.switchModel(model.id, 'user')
+                          // dragonModelManager.switchModel(model.id, 'user') // temporarily disabled
                         }}
                         className={`p-3 rounded-lg border transition-colors ${
                           selectedModelId === model.id
