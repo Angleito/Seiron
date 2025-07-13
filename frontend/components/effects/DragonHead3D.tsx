@@ -6,7 +6,7 @@ import * as THREE from 'three'
 import { useMouseTracking } from '@/hooks/useMouseTracking'
 import { useWebGLRecovery } from '../../utils/webglRecovery'
 import { useDragonModel } from '@/hooks/useDragonModel'
-import { SeironDragonHead } from './SeironDragonHead'
+import { SeironDragonHeadGLB } from './SeironDragonHeadGLB'
 import { DragonParticles } from './DragonParticles'
 
 interface DragonHead3DProps {
@@ -19,7 +19,7 @@ interface DragonHead3DProps {
   onFallback?: () => void
 }
 
-// Dragon mesh component - now using procedural Seiron head
+// Dragon mesh component - using GLB model
 function DragonHeadMesh({ 
   enableEyeTracking = true, 
   lightningActive = false,
@@ -29,9 +29,9 @@ function DragonHeadMesh({
   lightningActive: boolean
   intensity?: number
 }) {
-  // Use the new procedural Seiron dragon head
+  // Use the GLB model
   return (
-    <SeironDragonHead
+    <SeironDragonHeadGLB
       enableEyeTracking={enableEyeTracking}
       lightningActive={lightningActive}
       intensity={intensity}
