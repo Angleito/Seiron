@@ -45,6 +45,7 @@ export default function HomePage() {
   const [powerLevel, setPowerLevel] = useState(0)
   const [isSummoning, setIsSummoning] = useState(false)
   const [summoningPhase, setSummoningPhase] = useState<SummoningPhase>('idle')
+  const [dragonModelLoaded, setDragonModelLoaded] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -73,6 +74,7 @@ export default function HomePage() {
     if (isSummoning) return // Prevent multiple summons
     
     setIsSummoning(true)
+    setDragonModelLoaded(false) // Reset model loaded state
     setSummoningPhase('darkening')
     
     // Animation sequence with proper timing
@@ -93,10 +95,7 @@ export default function HomePage() {
       setSummoningPhase('arrival')
     }, 7000))
     
-    // Phase 4: Final arrival and dragon head spawn (7000ms-10000ms)
-    timeouts.push(setTimeout(() => {
-      navigate('/chat')
-    }, 10000))
+    // Phase 4: Final arrival and dragon head spawn (7000ms) - no auto navigation
     
     // Cleanup function in case component unmounts
     return () => {
@@ -111,6 +110,15 @@ export default function HomePage() {
   const handleFeatureClick = (feature: string) => {
     // Navigate to specific features or show modal
     console.log(`Navigating to ${feature}`)
+    navigate('/chat')
+  }
+
+  const handleDragonModelLoad = () => {
+    console.log('🐉 Dragon model loaded successfully!')
+    setDragonModelLoaded(true)
+  }
+
+  const handleEnterChat = () => {
     navigate('/chat')
   }
 
@@ -153,8 +161,21 @@ export default function HomePage() {
                 intensity={summoningPhase === 'arrival' ? 1 : 0}
                 enableEyeTracking={summoningPhase === 'arrival'}
                 lightningActive={summoningPhase === 'arrival'}
+                onLoad={handleDragonModelLoad}
               />
             </Suspense>
+            
+            {/* Enter Chat Button - appears after model loads */}
+            {dragonModelLoaded && (
+              <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-50">
+                <button
+                  onClick={handleEnterChat}
+                  className="dbz-button-primary text-xl px-8 py-4 animate-pulse"
+                >
+                  🐉 ENTER CHAT
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
