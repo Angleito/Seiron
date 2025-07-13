@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect } from 'react'
 import { useFrame, useLoader } from '@react-three/fiber'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import { GLTFLoader } from 'three-stdlib'
 import * as THREE from 'three'
 import { useMouseTracking } from '@/hooks/useMouseTracking'
 
@@ -48,7 +48,7 @@ export function SeironDragonHeadGLB({
       clonedScene.position.set(0, -2, -3) // Position so head is centered
       
       // Apply RED dragon materials with GOLDEN accents
-      clonedScene.traverse((child) => {
+      clonedScene.traverse((child: THREE.Object3D) => {
         if (child instanceof THREE.Mesh) {
           // Create new material for red dragon with golden accents
           const material = new THREE.MeshPhysicalMaterial({
