@@ -6,7 +6,6 @@ import { GLTFLoader } from 'three-stdlib'
 import * as THREE from 'three'
 import { useMouseTracking } from '@/hooks/useMouseTracking'
 import { Html } from '@react-three/drei'
-import { FallbackDragonHead } from './FallbackDragonHead'
 
 interface SeironDragonHeadGLBProps {
   enableEyeTracking?: boolean
@@ -78,32 +77,28 @@ function SeironDragonHeadGLBInner({
   const initialSetupDone = useRef(false)
   const [loadError, setLoadError] = useState<Error | null>(null)
   
-  // Load the GLB model with error handling
-  let gltf: any = null
-  try {
-    // Add timestamp to URL to bypass cache issues
-    const modelUrl = `/models/seiron_head.glb?t=${Date.now()}`
-    console.log('Attempting to load model from:', modelUrl)
-    
-    gltf = useLoader(
-      GLTFLoader, 
-      modelUrl,
-      undefined,
-      (error) => {
-        console.error('GLTFLoader error:', error)
-        const err = new Error(`Failed to load model: ${error}`)
-        setLoadError(err)
-        onLoadError?.(err)
+  // Load the GLB model
+  const modelUrl = `/models/dragon_head_optimized.glb?t=${Date.now()}`
+  console.log('Attempting to load model from:', modelUrl)
+  
+  const gltf = useLoader(
+    GLTFLoader, 
+    modelUrl,
+    (progress) => {
+      if (progress && typeof progress === 'object' && 'loaded' in progress && 'total' in progress) {
+        const percentage = ((progress as any).loaded / (progress as any).total * 100).toFixed(1)
+        console.log('Loading progress:', percentage + '%')
       }
-    )
-    
-    console.log('Model loaded successfully:', gltf)
-  } catch (error) {
-    console.error('Error in useLoader:', error)
-    const err = error instanceof Error ? error : new Error('Unknown loading error')
-    setLoadError(err)
-    onLoadError?.(err)
-  }
+    },
+    (error) => {
+      console.error('GLTFLoader error:', error)
+      const err = new Error(`Failed to load model: ${error}`)
+      setLoadError(err)
+      onLoadError?.(err)
+    }
+  )
+  
+  console.log('Model loaded successfully:', gltf)
   
   // Mouse tracking for eye movement
   const { mousePosition, isMouseActive } = useMouseTracking(undefined, {
@@ -207,22 +202,23 @@ function SeironDragonHeadGLBInner({
     }
   })
 
-  // Show error if model failed to load - use fallback
+  // Show error if model failed to load
   if (loadError) {
-    console.warn('Using fallback dragon head due to model loading error:', loadError)
+    console.error('Failed to load GLB model:', loadError)
     return (
-      <>
-        <FallbackDragonHead 
-          enableEyeTracking={enableEyeTracking}
-          lightningActive={lightningActive}
-          intensity={intensity}
-        />
-        <Html center position={[0, -3, 0]}>
-          <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '10px', textAlign: 'center' }}>
-            <p>Using fallback model</p>
-          </div>
-        </Html>
-      </>
+      <Html center>
+        <div style={{ 
+          color: 'white', 
+          fontSize: '14px',
+          background: 'rgba(255,0,0,0.8)',
+          padding: '16px',
+          borderRadius: '8px',
+          textAlign: 'center'
+        }}>
+          <p>Failed to load dragon model</p>
+          <p style={{ fontSize: '12px', marginTop: '8px' }}>{loadError.message}</p>
+        </div>
+      </Html>
     )
   }
 
@@ -266,18 +262,24 @@ export function SeironDragonHeadGLB(props: SeironDragonHeadGLBProps) {
   useEffect(() => {
     // Log component mount and model path
     console.log('SeironDragonHeadGLB mounted')
-    console.log('Model path:', '/models/seiron_head.glb')
+    console.log('Model path:', '/models/dragon_head_optimized.glb')
     console.log('Current URL:', window.location.href)
     console.log('Base URL:', document.baseURI)
   }, [])
 
   return (
     <ModelErrorBoundary fallback={
-      <FallbackDragonHead 
-        enableEyeTracking={props.enableEyeTracking}
-        lightningActive={props.lightningActive}
-        intensity={props.intensity}
-      />
+      <Html center>
+        <div style={{ 
+          color: 'white', 
+          fontSize: '14px',
+          background: 'rgba(255,0,0,0.8)',
+          padding: '16px',
+          borderRadius: '8px'
+        }}>
+          Model loading error
+        </div>
+      </Html>
     }>
       <Suspense fallback={<LoadingFallback />}>
         <SeironDragonHeadGLBInner {...props} />
