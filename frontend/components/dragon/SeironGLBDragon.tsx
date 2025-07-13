@@ -97,55 +97,16 @@ function DragonMesh({
     return () => console.log('🐲 DragonMesh unmounted')
   }, [])
   
-  // Try to load model with fallback - use the model path directly
-  let scene: THREE.Group
-  let animations: THREE.AnimationClip[]
+  // Check if this is a known problematic model that needs fallback
+  const problematicModels = ['seiron_animated.gltf', 'seiron_animated_lod_high.gltf']
+  const isProblematicModel = problematicModels.some(model => modelPath.includes(model))
   
-  try {
-    console.log(`🔄 Loading GLTF model from ${modelPath}...`)
-    const gltf = useGLTF(modelPath)
-    
-    // Validate the loaded model
-    if (!gltf || !gltf.scene) {
-      throw new Error(`Invalid GLTF model: ${modelPath}`)
-    }
-    
-    scene = gltf.scene
-    animations = gltf.animations || []
-    console.log('✅ GLTF model loaded successfully:', scene)
-    console.log('🎭 Available animations:', animations.map(clip => clip.name))
-  } catch (error) {
-    console.error('❌ Failed to load GLTF model:', error)
-    
-    // Check if this is a known problematic model and try fallback
-    const problematicModels = ['seiron_animated.gltf', 'seiron_animated_lod_high.gltf']
-    const isProblematicModel = problematicModels.some(model => modelPath.includes(model))
-    
-    if (isProblematicModel) {
-      console.log('🔄 Attempting to load fallback model due to known issues...')
-      try {
-        const fallbackGltf = useGLTF('/models/seiron.glb')
-        if (fallbackGltf && fallbackGltf.scene) {
-          scene = fallbackGltf.scene
-          animations = fallbackGltf.animations || []
-          console.log('✅ Fallback model loaded successfully')
-        } else {
-          throw new Error('Fallback model also failed to load')
-        }
-      } catch (fallbackError) {
-        console.error('❌ Fallback model also failed:', fallbackError)
-        if (onError) {
-          onError(fallbackError as Error)
-        }
-        throw fallbackError
-      }
-    } else {
-      if (onError) {
-        onError(error as Error)
-      }
-      throw error
-    }
-  }
+  // Always call hooks at the top level - use fallback path if needed
+  const actualModelPath = isProblematicModel ? '/models/seiron.glb' : modelPath
+  console.log(`🔄 Loading GLTF model from ${actualModelPath}...`)
+  
+  // Call useGLTF at top level - no try-catch around hooks!
+  const gltf = useGLTF(actualModelPath)
   
   // Size configurations - centered the dragon properly
   const sizeConfig = {
@@ -158,12 +119,20 @@ function DragonMesh({
 
   const currentConfig = sizeConfig[size]
 
-  // Animation mixer setup
+  // Animation mixer setup - MUST be called before any returns
   const mixerRef = useRef<THREE.AnimationMixer | null>(null)
   const actionRef = useRef<THREE.AnimationAction | null>(null)
 
   // Clone the scene to avoid conflicts
   const clonedScene = React.useMemo(() => {
+    // First check if we have valid data
+    if (!gltf || !gltf.scene) {
+      return null
+    }
+    
+    const scene = gltf.scene
+    const animations = gltf.animations || []
+    
     const cloned = scene.clone()
     
     // Calculate bounding box to center the model properly
@@ -215,7 +184,7 @@ function DragonMesh({
     }
     
     return cloned
-  }, [scene, currentConfig])
+  }, [gltf, currentConfig, size])
 
   // CRITICAL FIX: Enhanced cleanup with proper resource disposal
   useEffect(() => {
@@ -342,6 +311,25 @@ function DragonMesh({
       })
     }
   }, [meshRef.current])
+
+  // Now handle error cases AFTER all hooks have been called
+  if (!gltf || !gltf.scene || !clonedScene) {
+    console.error(`❌ Invalid GLTF model: ${actualModelPath}`)
+    if (onError) {
+      onError(new Error(`Invalid GLTF model: ${actualModelPath}`))
+    }
+    // Return error placeholder
+    return (
+      <mesh>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="#ff0000" />
+      </mesh>
+    )
+  }
+  
+  // Log successful load
+  console.log('✅ GLTF model loaded successfully:', gltf.scene)
+  console.log('🎭 Available animations:', gltf.animations?.map(clip => clip.name))
 
   return (
     <group ref={meshRef}>
