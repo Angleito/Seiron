@@ -227,17 +227,21 @@ function DragonLighting({ lightningActive = false }: { lightningActive: boolean 
 // Error boundary component for the 3D scene
 function DragonScene({ 
   enableEyeTracking, 
-  lightningActive 
+  lightningActive,
+  isLoaded = true
 }: { 
   enableEyeTracking: boolean
-  lightningActive: boolean 
+  lightningActive: boolean
+  isLoaded?: boolean
 }) {
+  // Always render components to maintain hook consistency
+  // Use isLoaded to control visibility/behavior instead
   return (
     <>
-      <DragonLighting lightningActive={lightningActive} />
+      <DragonLighting lightningActive={lightningActive && isLoaded} />
       <DragonHeadMesh 
-        enableEyeTracking={enableEyeTracking}
-        lightningActive={lightningActive}
+        enableEyeTracking={enableEyeTracking && isLoaded}
+        lightningActive={lightningActive && isLoaded}
       />
       {/* Fog for atmosphere */}
       <fog attach="fog" args={['#1a202c', 5, 25]} />
@@ -371,12 +375,11 @@ export function DragonHead3D({
         }}
       >
         <Suspense fallback={null}>
-          {isLoaded && (
-            <DragonScene 
-              enableEyeTracking={enableEyeTracking}
-              lightningActive={lightningActive}
-            />
-          )}
+          <DragonScene 
+            enableEyeTracking={enableEyeTracking}
+            lightningActive={lightningActive}
+            isLoaded={isLoaded}
+          />
         </Suspense>
       </Canvas>
     </div>
