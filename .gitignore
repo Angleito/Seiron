@@ -165,3 +165,7 @@ docker-compose.override.yml
 
 # Claude AI context file (local development only)
 CLAUDE.md
+
+# Include 3D models in frontend/public
+!frontend/public/models
+!frontend/public/models/**

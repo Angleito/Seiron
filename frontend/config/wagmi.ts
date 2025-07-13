@@ -1,4 +1,5 @@
-import { createConfig, http } from 'wagmi'
+import { createConfig } from '@privy-io/wagmi'
+import { http } from 'viem'
 import { mainnet } from 'wagmi/chains'
 import { injected, metaMask } from 'wagmi/connectors'
 import { 
