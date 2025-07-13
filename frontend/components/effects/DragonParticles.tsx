@@ -97,9 +97,9 @@ export function DragonParticles({
       const i3 = i * 3
       
       // Get current position
-      const x = posArray[i3]
-      const y = posArray[i3 + 1]
-      const z = posArray[i3 + 2]
+      const x = posArray[i3] || 0
+      const y = posArray[i3 + 1] || 0
+      const z = posArray[i3 + 2] || 0
       
       // Calculate distance from center
       const distance = Math.sqrt(x * x + y * y + z * z)
