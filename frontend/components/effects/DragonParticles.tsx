@@ -90,13 +90,16 @@ export function DragonParticles({
     
     if (!positions || !sizes) return
     
+    const posArray = positions.array as Float32Array
+    const sizeArray = sizes.array as Float32Array
+    
     for (let i = 0; i < count; i++) {
       const i3 = i * 3
       
       // Get current position
-      const x = positions.array[i3] as number
-      const y = positions.array[i3 + 1] as number
-      const z = positions.array[i3 + 2] as number
+      const x = posArray[i3]
+      const y = posArray[i3 + 1]
+      const z = posArray[i3 + 2]
       
       // Calculate distance from center
       const distance = Math.sqrt(x * x + y * y + z * z)
@@ -106,15 +109,15 @@ export function DragonParticles({
       const spiralRadius = distance + Math.sin(angle) * 0.2
       
       // Update position with swirl
-      (positions.array as Float32Array)[i3] = Math.cos(angle + time) * spiralRadius * Math.sin(i * 0.1 + time * 0.2)
-      (positions.array as Float32Array)[i3 + 1] = y + Math.sin(time * 2 + i * 0.1) * 0.1
-      (positions.array as Float32Array)[i3 + 2] = Math.sin(angle + time) * spiralRadius * Math.cos(i * 0.1 + time * 0.2)
+      posArray[i3] = Math.cos(angle + time) * spiralRadius * Math.sin(i * 0.1 + time * 0.2)
+      posArray[i3 + 1] = y + Math.sin(time * 2 + i * 0.1) * 0.1
+      posArray[i3 + 2] = Math.sin(angle + time) * spiralRadius * Math.cos(i * 0.1 + time * 0.2)
       
       // Pulsing size based on lightning
       if (lightningActive) {
-        (sizes.array as Float32Array)[i] = (Math.random() * 0.15 + 0.1) * (1 + Math.sin(time * 10) * 0.5)
+        sizeArray[i] = (Math.random() * 0.15 + 0.1) * (1 + Math.sin(time * 10) * 0.5)
       } else {
-        (sizes.array as Float32Array)[i] = (Math.random() * 0.1 + 0.05) * intensity
+        sizeArray[i] = (Math.random() * 0.1 + 0.05) * intensity
       }
     }
     
