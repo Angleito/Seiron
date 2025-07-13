@@ -54,7 +54,7 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
     intense: { maxBolts: 1, flashIntensity: 0.25, glowSize: 14, duration: 150 }
   }
 
-  const generateJaggedPath = (startX: number, startY: number, endX: number, endY: number, segments: number = 15): LightningPoint[] => {
+  const generateJaggedPath = (startX: number, startY: number, endX: number, endY: number, segments: number = 20): LightningPoint[] => {
     const points: LightningPoint[] = []
     points.push({ x: startX, y: startY })
     
@@ -63,18 +63,23 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
       const baseX = startX + (endX - startX) * progress
       const baseY = startY + (endY - startY) * progress
       
-      // More realistic lightning with primarily vertical movement and limited horizontal deviation
-      const maxHorizontalDeviation = 4 // Reduced from 8 for more realistic look
-      const maxVerticalDeviation = 1.5 // Reduced from 3 for straighter path
+      // Enhanced jagged pattern with more aggressive deviations
+      const maxHorizontalDeviation = 8 // Increased for more dramatic jaggedness
+      const maxVerticalDeviation = 4 // Increased for more erratic path
       
-      // Reduce deviation at start and end for more natural attachment points
-      const deviationFactor = Math.sin(progress * Math.PI) // Peak deviation in middle
-      const offsetX = (Math.random() - 0.5) * maxHorizontalDeviation * deviationFactor
-      const offsetY = (Math.random() - 0.5) * maxVerticalDeviation * deviationFactor
+      // Create sharper, more angular deviations
+      const sharpnessFactor = Math.pow(Math.sin(progress * Math.PI * 2), 2) // Creates multiple sharp peaks
+      const randomFactor = Math.random() > 0.7 ? 2 : 1 // 30% chance of extra sharp deviation
+      
+      const offsetX = (Math.random() - 0.5) * maxHorizontalDeviation * sharpnessFactor * randomFactor
+      const offsetY = (Math.random() - 0.5) * maxVerticalDeviation * sharpnessFactor * randomFactor
+      
+      // Add micro-jaggedness between major points
+      const microJag = i % 3 === 0 ? (Math.random() - 0.5) * 2 : 0
       
       points.push({
-        x: baseX + offsetX,
-        y: baseY + offsetY
+        x: baseX + offsetX + microJag,
+        y: baseY + offsetY + microJag * 0.5
       })
     }
     
@@ -92,37 +97,59 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
     const endX = startX + (Math.random() - 0.5) * maxHorizontalDrift
     const endY = 85 + Math.random() * 15
     
-    // Generate main lightning path with optimal segment count
-    const mainSegments = 15 + Math.floor(Math.random() * 8) // Reduced from 20-35
+    // Generate main lightning path with more segments for jaggedness
+    const mainSegments = 25 + Math.floor(Math.random() * 15) // Increased for more detailed jagged pattern
     const mainPath = generateJaggedPath(startX, startY, endX, endY, mainSegments)
     
-    // Generate fewer, more realistic branches
+    // Generate realistic fractal branches
     const branches: LightningBranch[] = []
-    const numBranches = Math.floor(Math.random() * 2) + 1 // 1-2 branches (reduced from 2-5)
+    const numBranches = Math.floor(Math.random() * 3) + 2 // 2-4 branches for more realistic pattern
+    
+    // Create primary branches from different points on main path
+    const primaryBranchPoints = [0.3, 0.5, 0.7] // Top, middle, bottom thirds
     
     for (let i = 0; i < numBranches; i++) {
-      // Pick random point along main path (avoid first and last 25%)
-      const branchIndex = Math.floor(mainPath.length * 0.25 + Math.random() * mainPath.length * 0.5)
+      const progressPoint = primaryBranchPoints[i % primaryBranchPoints.length] + (Math.random() - 0.5) * 0.1
+      const branchIndex = Math.floor(mainPath.length * progressPoint)
       const branchStart = mainPath[branchIndex]
       
       if (branchStart) {
-        // More realistic branch angles (20-45 degrees)
-        const branchLength = 8 + Math.random() * 15 // Shorter branches
-        const maxAngle = Math.PI * 0.25 // ±45 degrees (reduced from ±72)
-        const angle = (Math.random() - 0.5) * maxAngle
+        // Realistic branching with physics-based angles
+        const branchLength = 6 + Math.random() * 12
+        const baseAngle = Math.PI * 0.15 + Math.random() * Math.PI * 0.2 // 27-63 degrees
+        const angle = Math.random() > 0.5 ? baseAngle : -baseAngle // Random left/right
         
         const branchEndX = branchStart.x + Math.cos(angle) * branchLength
-        const branchEndY = branchStart.y + Math.sin(Math.abs(angle)) * branchLength + Math.random() * 5
+        const branchEndY = branchStart.y + Math.sin(Math.abs(angle)) * branchLength * 0.8 + Math.random() * 3
         
-        // Generate branch path with fewer segments
-        const branchSegments = 4 + Math.floor(Math.random() * 4) // Reduced from 8-14
+        // Generate highly jagged branch path
+        const branchSegments = 10 + Math.floor(Math.random() * 8)
         const branchPath = generateJaggedPath(branchStart.x, branchStart.y, branchEndX, branchEndY, branchSegments)
         
         branches.push({
           points: branchPath,
-          width: 0.2 + Math.random() * 0.25, // Thinner branches
-          opacity: 0.7 + Math.random() * 0.2
+          width: 0.08 + Math.random() * 0.15, // Ultra-thin branches
+          opacity: 0.5 + Math.random() * 0.4
         })
+        
+        // Add secondary micro-branches (fractal pattern)
+        if (Math.random() > 0.6 && branchPath.length > 5) {
+          const microBranchStart = branchPath[Math.floor(branchPath.length * 0.6)]
+          const microLength = 3 + Math.random() * 6
+          const microAngle = angle + (Math.random() - 0.5) * Math.PI * 0.3
+          
+          const microEndX = microBranchStart.x + Math.cos(microAngle) * microLength
+          const microEndY = microBranchStart.y + Math.sin(Math.abs(microAngle)) * microLength * 0.6
+          
+          const microSegments = 4 + Math.floor(Math.random() * 4)
+          const microPath = generateJaggedPath(microBranchStart.x, microBranchStart.y, microEndX, microEndY, microSegments)
+          
+          branches.push({
+            points: microPath,
+            width: 0.05 + Math.random() * 0.08, // Extremely thin micro-branches
+            opacity: 0.3 + Math.random() * 0.3
+          })
+        }
       }
     }
 
@@ -225,11 +252,11 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
           
           return (
             <g key={bolt.id}>
-              {/* Main lightning bolt - realistic thickness */}
+              {/* Main lightning bolt - ultra-thin realistic thickness */}
               <path
                 d={mainPathD}
                 stroke="url(#lightningGradient)"
-                strokeWidth="0.5"
+                strokeWidth="0.3"
                 fill="none"
                 opacity={bolt.opacity}
                 filter="url(#lightningGlow)"
@@ -237,11 +264,11 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
                 strokeLinejoin="round"
               />
               
-              {/* Bright core for main bolt - golden theme */}
+              {/* Bright core for main bolt - even thinner core */}
               <path
                 d={mainPathD}
                 stroke="url(#lightningCore)"
-                strokeWidth="0.2"
+                strokeWidth="0.1"
                 fill="none"
                 opacity={bolt.opacity * 0.9}
                 strokeLinecap="round"
@@ -269,7 +296,7 @@ export const LightningEffect = React.memo<LightningEffectProps>(({
                     <path
                       d={branchPathD}
                       stroke="url(#lightningCore)"
-                      strokeWidth={branch.width * 0.5}
+                      strokeWidth={branch.width * 0.4}
                       fill="none"
                       opacity={branch.opacity * bolt.opacity * 0.7}
                       strokeLinecap="round"

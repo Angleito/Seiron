@@ -79,7 +79,7 @@
   content: '';
   position: absolute;
   top: -20%;
-  width: 8px;
+  width: 3px;
   height: 25%;
   background: linear-gradient(to bottom, 
     transparent 0%, 
@@ -120,7 +120,7 @@
   position: absolute;
   top: 20%;
   left: -2px;
-  width: 6px;
+  width: 2px;
   height: 30%;
   background: inherit;
   transform: translateX(15px) rotate(25deg);
@@ -145,7 +145,7 @@
   position: absolute;
   top: 45%;
   left: 2px;
-  width: 5px;
+  width: 2px;
   height: 35%;
   background: inherit;
   transform: translateX(-12px) rotate(-20deg);
@@ -154,7 +154,7 @@
 /* Lightning bolt 1 - Far left */
 .lightning::before {
   left: 5%;
-  width: 12px;
+  width: 4px;
   height: 30%;
   transform: rotate(15deg);
   animation: mega-lightning1 1.2s linear infinite;
@@ -163,7 +163,7 @@
 .lightning::before::after {
   top: 25%;
   left: -3px;
-  width: 8px;
+  width: 3px;
   height: 25%;
   transform: translateX(18px) rotate(35deg);
 }
@@ -171,7 +171,7 @@
 .lightning::before::before {
   top: 50%;
   left: 4px;
-  width: 6px;
+  width: 2px;
   height: 30%;
   transform: translateX(-15px) rotate(-25deg);
 }
@@ -179,7 +179,7 @@
 /* Lightning bolt 2 - Left center */
 .lightning::after {
   left: 25%;
-  width: 10px;
+  width: 3px;
   height: 35%;
   transform: rotate(-5deg);
   animation: mega-lightning2 1.5s linear infinite;
@@ -189,7 +189,7 @@
 .lightning::after::after {
   top: 30%;
   left: -2px;
-  width: 7px;
+  width: 2px;
   height: 28%;
   transform: translateX(20px) rotate(28deg);
 }
@@ -197,7 +197,7 @@
 .lightning::after::before {
   top: 55%;
   left: 3px;
-  width: 5px;
+  width: 2px;
   height: 25%;
   transform: translateX(-18px) rotate(-30deg);
 }
@@ -205,7 +205,7 @@
 /* Lightning bolt 3 - Center */
 .lightning > .bolt-3 {
   left: 45%;
-  width: 14px;
+  width: 4px;
   height: 32%;
   transform: rotate(8deg);
   animation: mega-lightning3 1.8s linear infinite;
@@ -215,7 +215,7 @@
 .lightning > .bolt-3::after {
   top: 28%;
   left: -4px;
-  width: 9px;
+  width: 3px;
   height: 30%;
   transform: translateX(22px) rotate(32deg);
 }
@@ -223,7 +223,7 @@
 .lightning > .bolt-3::before {
   top: 48%;
   left: 5px;
-  width: 7px;
+  width: 2px;
   height: 35%;
   transform: translateX(-20px) rotate(-28deg);
 }
@@ -231,7 +231,7 @@
 /* Lightning bolt 4 - Right center */
 .lightning > .bolt-4 {
   right: 35%;
-  width: 11px;
+  width: 3px;
   height: 28%;
   transform: rotate(-12deg);
   animation: mega-lightning4 1.3s linear infinite;
@@ -241,7 +241,7 @@
 .lightning > .bolt-4::after {
   top: 22%;
   left: -3px;
-  width: 8px;
+  width: 2px;
   height: 26%;
   transform: translateX(19px) rotate(38deg);
 }
@@ -249,7 +249,7 @@
 .lightning > .bolt-4::before {
   top: 52%;
   left: 2px;
-  width: 6px;
+  width: 2px;
   height: 32%;
   transform: translateX(-16px) rotate(-22deg);
 }
@@ -257,7 +257,7 @@
 /* Lightning bolt 5 - Far right */
 .lightning > .bolt-5 {
   right: 10%;
-  width: 13px;
+  width: 4px;
   height: 34%;
   transform: rotate(18deg);
   animation: mega-lightning5 1.6s linear infinite;
@@ -267,7 +267,7 @@
 .lightning > .bolt-5::after {
   top: 26%;
   left: -5px;
-  width: 8px;
+  width: 3px;
   height: 29%;
   transform: translateX(25px) rotate(40deg);
 }
@@ -275,7 +275,7 @@
 .lightning > .bolt-5::before {
   top: 58%;
   left: 4px;
-  width: 6px;
+  width: 2px;
   height: 28%;
   transform: translateX(-22px) rotate(-35deg);
 }
@@ -283,7 +283,7 @@
 /* Lightning bolt 6 - Left side branch */
 .lightning > .bolt-6 {
   left: 15%;
-  width: 9px;
+  width: 3px;
   height: 29%;
   transform: rotate(-20deg);
   animation: mega-lightning6 1.4s linear infinite;
