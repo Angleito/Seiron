@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import React from 'react'
+import React, { Suspense } from 'react'
+import DragonHead3D from '@/components/effects/DragonHead3D'
 
 
 // Enhanced DBZ Feature Card Component
@@ -92,10 +93,10 @@ export default function HomePage() {
       setSummoningPhase('arrival')
     }, 4000))
     
-    // Phase 4: Final arrival and navigation (4000ms-5000ms)
+    // Phase 4: Final arrival and dragon head spawn (4000ms-7000ms)
     timeouts.push(setTimeout(() => {
       navigate('/chat')
-    }, 5000))
+    }, 7000))
     
     // Cleanup function in case component unmounts
     return () => {
@@ -120,25 +121,6 @@ export default function HomePage() {
         <div className={`summoning-overlay active summoning-${summoningPhase}`}>
           <div className="background-transition"></div>
           
-          {/* Storm Clouds Layer 1 (Base) */}
-          <div className="storm-clouds-layer-1">
-            <div className="cloud-base-1"></div>
-            <div className="cloud-base-2"></div>
-            <div className="cloud-base-3"></div>
-          </div>
-          
-          {/* Storm Clouds Layer 2 (Middle) */}
-          <div className="storm-clouds-layer-2">
-            <div className="cloud-mid-1"></div>
-            <div className="cloud-mid-2"></div>
-          </div>
-          
-          {/* Storm Clouds Layer 3 (Foreground) */}
-          <div className="storm-clouds-layer-3">
-            <div className="cloud-front-1"></div>
-            <div className="cloud-front-2"></div>
-          </div>
-          
           {/* Lightning Effects */}
           <div className="lightning-container">
             <div className="lightning-bolt-1"></div>
@@ -148,6 +130,20 @@ export default function HomePage() {
           
           {/* Screen Flash Overlay */}
           <div className="screen-flash"></div>
+          
+          {/* Dragon Head 3D Model */}
+          {summoningPhase === 'arrival' && (
+            <div className="dragon-head-container">
+              <Suspense fallback={<div style={{ color: 'white', textAlign: 'center' }}>Loading Dragon...</div>}>
+                <DragonHead3D 
+                  className="w-full h-full"
+                  intensity={1}
+                  enableEyeTracking={true}
+                  lightningActive={true}
+                />
+              </Suspense>
+            </div>
+          )}
         </div>
       )}
       
