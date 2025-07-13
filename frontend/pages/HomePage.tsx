@@ -2,10 +2,6 @@ import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import React from 'react'
 
-// Star component for Dragon Balls
-const Star = ({ filled = false }: { filled?: boolean }) => (
-  <span className={`text-2xl ${filled ? 'text-yellow-400' : 'text-gray-600'}`}>★</span>
-)
 
 // Enhanced DBZ Feature Card Component
 const FeatureCard = ({ 
@@ -40,10 +36,13 @@ const FeatureCard = ({
   </div>
 )
 
+type SummoningPhase = 'idle' | 'darkening' | 'storm' | 'lightning' | 'arrival'
+
 export default function HomePage() {
   const [powerLevel, setPowerLevel] = useState(0)
   const [isLoaded, setIsLoaded] = useState(false)
-  const [activeDragonBalls, setActiveDragonBalls] = useState(0)
+  const [isSummoning, setIsSummoning] = useState(false)
+  const [summoningPhase, setSummoningPhase] = useState<SummoningPhase>('idle')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -63,19 +62,45 @@ export default function HomePage() {
       }
     }, 50)
 
-    // Animate Dragon Balls
-    const dragonBallTimer = setInterval(() => {
-      setActiveDragonBalls(prev => (prev >= 7 ? 4 : prev + 1))
-    }, 2000)
 
     return () => {
       clearInterval(timer)
-      clearInterval(dragonBallTimer)
     }
   }, [])
 
   const handleSummon = () => {
-    navigate('/chat')
+    if (isSummoning) return // Prevent multiple summons
+    
+    setIsSummoning(true)
+    setSummoningPhase('darkening')
+    
+    // Animation sequence with proper timing
+    const timeouts: NodeJS.Timeout[] = []
+    
+    // Phase 1: Darkening (0-500ms)
+    timeouts.push(setTimeout(() => {
+      setSummoningPhase('storm')
+    }, 500))
+    
+    // Phase 2: Storm clouds (500ms-2000ms)
+    timeouts.push(setTimeout(() => {
+      setSummoningPhase('lightning')
+    }, 2000))
+    
+    // Phase 3: Lightning (2000ms-4000ms)
+    timeouts.push(setTimeout(() => {
+      setSummoningPhase('arrival')
+    }, 4000))
+    
+    // Phase 4: Final arrival and navigation (4000ms-5000ms)
+    timeouts.push(setTimeout(() => {
+      navigate('/chat')
+    }, 5000))
+    
+    // Cleanup function in case component unmounts
+    return () => {
+      timeouts.forEach(timeout => clearTimeout(timeout))
+    }
   }
 
   const handleAbout = () => {
@@ -89,6 +114,43 @@ export default function HomePage() {
   }
 
   return (
+    <>
+      {/* Dragon Summoning Overlay */}
+      {isSummoning && (
+        <div className={`summoning-overlay active summoning-${summoningPhase}`}>
+          <div className="background-transition"></div>
+          
+          {/* Storm Clouds Layer 1 (Base) */}
+          <div className="storm-clouds-layer-1">
+            <div className="cloud-base-1"></div>
+            <div className="cloud-base-2"></div>
+            <div className="cloud-base-3"></div>
+          </div>
+          
+          {/* Storm Clouds Layer 2 (Middle) */}
+          <div className="storm-clouds-layer-2">
+            <div className="cloud-mid-1"></div>
+            <div className="cloud-mid-2"></div>
+          </div>
+          
+          {/* Storm Clouds Layer 3 (Foreground) */}
+          <div className="storm-clouds-layer-3">
+            <div className="cloud-front-1"></div>
+            <div className="cloud-front-2"></div>
+          </div>
+          
+          {/* Lightning Effects */}
+          <div className="lightning-container">
+            <div className="lightning-bolt-1"></div>
+            <div className="lightning-bolt-2"></div>
+            <div className="lightning-bolt-3"></div>
+          </div>
+          
+          {/* Screen Flash Overlay */}
+          <div className="screen-flash"></div>
+        </div>
+      )}
+      
     <div className="min-h-screen dbz-bg-space overflow-hidden">
       {/* Enhanced DBZ Background with energy effects */}
       <div className="absolute inset-0">
@@ -112,15 +174,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Dragon Balls */}
-          <div className="text-center mb-12">
-            <div className="flex justify-center items-center gap-1 mb-2">
-              {[...Array(22)].map((_, i) => (
-                <Star key={i} filled={i >= 3 && i <= 6 && i <= activeDragonBalls} />
-              ))}
-            </div>
-            <p className="text-gray-400 text-sm">Hover to Activate Dragon Balls (4-7 Stars)</p>
-          </div>
 
           {/* Enhanced DBZ Hero Section */}
           <div className="text-center mb-16">
@@ -208,5 +261,6 @@ export default function HomePage() {
         </div>
       </div>
     </div>
+    </>
   )
 }

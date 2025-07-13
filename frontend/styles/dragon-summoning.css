@@ -1,0 +1,546 @@
+/* ========================================
+   DRAGON SUMMONING STORM ANIMATION
+   Pure CSS realistic storm effects
+   ======================================== */
+
+/* Storm Color Palette */
+:root {
+  --storm-crimson: #4a0000;
+  --storm-dark: #1a0000;
+  --storm-cloud-dark: #2c2c2c;
+  --storm-cloud-mid: #404040;
+  --storm-cloud-light: #555555;
+  --lightning-white: #ffffff;
+  --lightning-blue: #88ddff;
+  --lightning-electric: #00aaff;
+}
+
+/* ========================================
+   SUMMONING OVERLAY CONTAINER
+   ======================================== */
+
+.summoning-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.summoning-overlay.active {
+  pointer-events: all;
+}
+
+/* ========================================
+   BACKGROUND TRANSITION ANIMATION
+   ======================================== */
+
+@keyframes background-darken {
+  0% {
+    background: linear-gradient(135deg, #000428 0%, #004e92 100%);
+  }
+  100% {
+    background: linear-gradient(135deg, var(--storm-dark) 0%, var(--storm-crimson) 30%, #220000 100%);
+  }
+}
+
+.background-transition {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  animation: background-darken 2s ease-in-out forwards;
+}
+
+/* ========================================
+   REALISTIC STORM CLOUDS - LAYER 1 (BASE)
+   ======================================== */
+
+.storm-clouds-layer-1 {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.cloud-base-1 {
+  position: absolute;
+  width: 300px;
+  height: 150px;
+  top: 20%;
+  left: -100px;
+  border-radius: 67% 45% 78% 34% / 89% 56% 44% 23%;
+  background: radial-gradient(ellipse at 30% 20%, 
+    rgba(60,60,60,0.9) 0%, 
+    rgba(40,40,40,0.7) 40%, 
+    rgba(20,20,20,0.5) 70%,
+    transparent 100%);
+  box-shadow: 
+    20px 20px 60px rgba(0,0,0,0.8),
+    -30px 10px 80px rgba(0,0,0,0.6),
+    0px 40px 100px rgba(0,0,0,0.9),
+    inset -20px -20px 60px rgba(100,100,100,0.1);
+  filter: blur(1px) contrast(1.1);
+  animation: cloud-drift-slow 25s linear infinite;
+  will-change: transform;
+}
+
+.cloud-base-2 {
+  position: absolute;
+  width: 250px;
+  height: 120px;
+  top: 15%;
+  right: -80px;
+  border-radius: 45% 78% 66% 34% / 67% 45% 55% 33%;
+  background: radial-gradient(ellipse at 70% 30%, 
+    rgba(70,70,70,0.8) 0%, 
+    rgba(50,50,50,0.6) 35%, 
+    rgba(30,30,30,0.4) 65%,
+    transparent 100%);
+  box-shadow: 
+    -25px 15px 70px rgba(0,0,0,0.7),
+    25px 5px 90px rgba(0,0,0,0.5),
+    0px 35px 80px rgba(0,0,0,0.8),
+    inset 15px -15px 50px rgba(120,120,120,0.1);
+  filter: blur(0.8px) contrast(1.2);
+  animation: cloud-drift-slow 30s linear infinite reverse;
+  animation-delay: -5s;
+  will-change: transform;
+}
+
+.cloud-base-3 {
+  position: absolute;
+  width: 200px;
+  height: 100px;
+  top: 25%;
+  left: 30%;
+  border-radius: 89% 23% 45% 67% / 34% 78% 22% 66%;
+  background: radial-gradient(ellipse at 40% 60%, 
+    rgba(80,80,80,0.7) 0%, 
+    rgba(60,60,60,0.5) 30%, 
+    rgba(40,40,40,0.3) 60%,
+    transparent 100%);
+  box-shadow: 
+    10px 25px 50px rgba(0,0,0,0.9),
+    -15px 10px 70px rgba(0,0,0,0.6),
+    0px 30px 60px rgba(0,0,0,0.7),
+    inset -10px 10px 40px rgba(90,90,90,0.15);
+  filter: blur(1.2px) contrast(1.0);
+  animation: cloud-drift-medium 20s linear infinite;
+  animation-delay: -8s;
+  will-change: transform;
+}
+
+/* ========================================
+   STORM CLOUDS - LAYER 2 (MIDDLE)
+   ======================================== */
+
+.storm-clouds-layer-2 {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.cloud-mid-1 {
+  position: absolute;
+  width: 180px;
+  height: 90px;
+  top: 35%;
+  left: -60px;
+  border-radius: 78% 34% 89% 23% / 45% 67% 78% 45%;
+  background: radial-gradient(ellipse at 50% 40%, 
+    rgba(90,90,90,0.6) 0%, 
+    rgba(70,70,70,0.4) 25%, 
+    rgba(50,50,50,0.2) 55%,
+    transparent 100%);
+  box-shadow: 
+    15px 15px 40px rgba(0,0,0,0.6),
+    -20px 8px 60px rgba(0,0,0,0.4),
+    0px 25px 45px rgba(0,0,0,0.7),
+    inset 8px -8px 30px rgba(110,110,110,0.1);
+  filter: blur(0.5px) contrast(1.15);
+  animation: cloud-drift-medium 18s linear infinite;
+  animation-delay: -3s;
+  will-change: transform;
+}
+
+.cloud-mid-2 {
+  position: absolute;
+  width: 160px;
+  height: 80px;
+  top: 40%;
+  right: -50px;
+  border-radius: 34% 89% 23% 78% / 67% 34% 89% 23%;
+  background: radial-gradient(ellipse at 60% 30%, 
+    rgba(85,85,85,0.5) 0%, 
+    rgba(65,65,65,0.3) 30%, 
+    rgba(45,45,45,0.1) 60%,
+    transparent 100%);
+  box-shadow: 
+    -18px 12px 50px rgba(0,0,0,0.5),
+    20px 6px 55px rgba(0,0,0,0.3),
+    0px 20px 40px rgba(0,0,0,0.6),
+    inset -12px 12px 35px rgba(100,100,100,0.12);
+  filter: blur(0.3px) contrast(1.1);
+  animation: cloud-drift-fast 15s linear infinite reverse;
+  animation-delay: -7s;
+  will-change: transform;
+}
+
+/* ========================================
+   STORM CLOUDS - LAYER 3 (FOREGROUND)
+   ======================================== */
+
+.storm-clouds-layer-3 {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.cloud-front-1 {
+  position: absolute;
+  width: 120px;
+  height: 60px;
+  top: 50%;
+  left: 10%;
+  border-radius: 23% 78% 45% 67% / 89% 23% 67% 45%;
+  background: radial-gradient(ellipse at 40% 50%, 
+    rgba(100,100,100,0.4) 0%, 
+    rgba(80,80,80,0.2) 20%, 
+    rgba(60,60,60,0.1) 50%,
+    transparent 100%);
+  box-shadow: 
+    8px 10px 25px rgba(0,0,0,0.4),
+    -10px 5px 35px rgba(0,0,0,0.2),
+    0px 15px 20px rgba(0,0,0,0.5),
+    inset 5px -5px 20px rgba(120,120,120,0.1);
+  filter: blur(0.2px) contrast(1.05);
+  animation: cloud-drift-fast 12s linear infinite;
+  animation-delay: -2s;
+  will-change: transform;
+}
+
+.cloud-front-2 {
+  position: absolute;
+  width: 100px;
+  height: 50px;
+  top: 45%;
+  right: 20%;
+  border-radius: 67% 23% 78% 45% / 34% 89% 23% 67%;
+  background: radial-gradient(ellipse at 30% 70%, 
+    rgba(95,95,95,0.3) 0%, 
+    rgba(75,75,75,0.15) 25%, 
+    rgba(55,55,55,0.05) 55%,
+    transparent 100%);
+  box-shadow: 
+    -6px 8px 20px rgba(0,0,0,0.3),
+    12px 4px 30px rgba(0,0,0,0.15),
+    0px 12px 18px rgba(0,0,0,0.4),
+    inset -8px 8px 25px rgba(110,110,110,0.08);
+  filter: blur(0.1px) contrast(1.0);
+  animation: cloud-drift-medium 14s linear infinite reverse;
+  animation-delay: -6s;
+  will-change: transform;
+}
+
+/* ========================================
+   CLOUD MOVEMENT ANIMATIONS
+   ======================================== */
+
+@keyframes cloud-drift-slow {
+  0% {
+    transform: translateX(-100px) translateY(0px) scale(1) rotate(0deg);
+    opacity: 0.8;
+  }
+  25% {
+    transform: translateX(25vw) translateY(-10px) scale(1.05) rotate(1deg);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translateX(50vw) translateY(5px) scale(1) rotate(-0.5deg);
+    opacity: 0.85;
+  }
+  75% {
+    transform: translateX(75vw) translateY(-5px) scale(0.95) rotate(0.5deg);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(calc(100vw + 100px)) translateY(0px) scale(1) rotate(0deg);
+    opacity: 0.8;
+  }
+}
+
+@keyframes cloud-drift-medium {
+  0% {
+    transform: translateX(-80px) translateY(0px) scale(1) rotate(0deg);
+    opacity: 0.7;
+  }
+  30% {
+    transform: translateX(30vw) translateY(-8px) scale(1.03) rotate(0.8deg);
+    opacity: 0.8;
+  }
+  60% {
+    transform: translateX(60vw) translateY(3px) scale(0.98) rotate(-0.3deg);
+    opacity: 0.75;
+  }
+  100% {
+    transform: translateX(calc(100vw + 80px)) translateY(0px) scale(1) rotate(0deg);
+    opacity: 0.7;
+  }
+}
+
+@keyframes cloud-drift-fast {
+  0% {
+    transform: translateX(-60px) translateY(0px) scale(1) rotate(0deg);
+    opacity: 0.6;
+  }
+  40% {
+    transform: translateX(40vw) translateY(-5px) scale(1.02) rotate(0.5deg);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateX(calc(100vw + 60px)) translateY(0px) scale(1) rotate(0deg);
+    opacity: 0.6;
+  }
+}
+
+/* ========================================
+   LIGHTNING EFFECTS
+   ======================================== */
+
+.lightning-container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.lightning-bolt-1 {
+  position: absolute;
+  top: 15%;
+  left: 20%;
+  width: 3px;
+  height: 200px;
+  background: linear-gradient(to bottom, 
+    transparent 0%, 
+    var(--lightning-white) 10%, 
+    transparent 15%,
+    transparent 20%, 
+    var(--lightning-blue) 35%, 
+    transparent 40%,
+    transparent 45%, 
+    var(--lightning-white) 60%, 
+    transparent 65%,
+    transparent 70%, 
+    var(--lightning-electric) 85%, 
+    transparent 100%);
+  box-shadow: 
+    0 0 10px var(--lightning-white),
+    0 0 20px var(--lightning-blue),
+    0 0 30px var(--lightning-electric);
+  transform: rotate(15deg);
+  opacity: 0;
+  animation: lightning-flash-1 0.3s ease-in-out infinite;
+  animation-delay: 2.5s;
+}
+
+.lightning-bolt-1::before {
+  content: '';
+  position: absolute;
+  top: 40%;
+  left: -8px;
+  width: 2px;
+  height: 80px;
+  background: linear-gradient(to bottom, 
+    var(--lightning-white) 0%, 
+    transparent 30%,
+    transparent 50%, 
+    var(--lightning-blue) 80%, 
+    transparent 100%);
+  box-shadow: 0 0 8px var(--lightning-white);
+  transform: rotate(-25deg);
+}
+
+.lightning-bolt-2 {
+  position: absolute;
+  top: 10%;
+  right: 30%;
+  width: 2px;
+  height: 180px;
+  background: linear-gradient(to bottom, 
+    transparent 0%, 
+    var(--lightning-electric) 15%, 
+    transparent 25%,
+    transparent 35%, 
+    var(--lightning-white) 50%, 
+    transparent 55%,
+    transparent 65%, 
+    var(--lightning-blue) 80%, 
+    transparent 100%);
+  box-shadow: 
+    0 0 12px var(--lightning-electric),
+    0 0 25px var(--lightning-white);
+  transform: rotate(-10deg);
+  opacity: 0;
+  animation: lightning-flash-2 0.4s ease-in-out infinite;
+  animation-delay: 3.2s;
+}
+
+.lightning-bolt-3 {
+  position: absolute;
+  top: 20%;
+  left: 60%;
+  width: 4px;
+  height: 160px;
+  background: linear-gradient(to bottom, 
+    transparent 0%, 
+    var(--lightning-white) 20%, 
+    transparent 30%,
+    transparent 40%, 
+    var(--lightning-electric) 60%, 
+    transparent 70%,
+    transparent 75%, 
+    var(--lightning-white) 90%, 
+    transparent 100%);
+  box-shadow: 
+    0 0 15px var(--lightning-white),
+    0 0 30px var(--lightning-electric),
+    0 0 45px var(--lightning-blue);
+  transform: rotate(8deg);
+  opacity: 0;
+  animation: lightning-flash-3 0.2s ease-in-out infinite;
+  animation-delay: 4.1s;
+}
+
+/* ========================================
+   LIGHTNING FLASH ANIMATIONS
+   ======================================== */
+
+@keyframes lightning-flash-1 {
+  0%, 90% { opacity: 0; }
+  5%, 15% { opacity: 1; }
+  20%, 85% { opacity: 0; }
+  25%, 35% { opacity: 0.8; }
+}
+
+@keyframes lightning-flash-2 {
+  0%, 85% { opacity: 0; }
+  10%, 20% { opacity: 1; }
+  25%, 80% { opacity: 0; }
+  30%, 40% { opacity: 0.9; }
+}
+
+@keyframes lightning-flash-3 {
+  0%, 80% { opacity: 0; }
+  15%, 25% { opacity: 1; }
+  30%, 75% { opacity: 0; }
+  35%, 45% { opacity: 0.7; }
+}
+
+/* ========================================
+   SCREEN FLASH OVERLAY
+   ======================================== */
+
+.screen-flash {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, 
+    rgba(255,255,255,0.9) 0%, 
+    rgba(200,220,255,0.7) 30%, 
+    rgba(100,150,255,0.3) 60%,
+    transparent 100%);
+  opacity: 0;
+  animation: screen-thunder-flash 0.1s ease-in-out infinite;
+  animation-delay: 2.8s;
+  pointer-events: none;
+}
+
+@keyframes screen-thunder-flash {
+  0%, 95% { opacity: 0; }
+  2%, 8% { opacity: 0.6; }
+  12%, 88% { opacity: 0; }
+  15%, 25% { opacity: 0.4; }
+}
+
+/* ========================================
+   SUMMONING PHASE CLASSES
+   ======================================== */
+
+.summoning-darkening .background-transition {
+  animation-duration: 1s;
+}
+
+.summoning-storm .storm-clouds-layer-1,
+.summoning-storm .storm-clouds-layer-2,
+.summoning-storm .storm-clouds-layer-3 {
+  opacity: 1;
+}
+
+.summoning-lightning .lightning-container {
+  opacity: 1;
+}
+
+.summoning-lightning .lightning-bolt-1,
+.summoning-lightning .lightning-bolt-2,
+.summoning-lightning .lightning-bolt-3 {
+  animation-iteration-count: infinite;
+}
+
+.summoning-arrival .screen-flash {
+  animation: final-flash 1s ease-in-out forwards;
+}
+
+@keyframes final-flash {
+  0% { opacity: 0; }
+  50% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ========================================
+   REDUCED MOTION SUPPORT
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .storm-clouds-layer-1 *,
+  .storm-clouds-layer-2 *,
+  .storm-clouds-layer-3 *,
+  .lightning-container *,
+  .screen-flash {
+    animation: none !important;
+  }
+  
+  .background-transition {
+    animation-duration: 0.5s !important;
+  }
+}
+
+/* ========================================
+   MOBILE RESPONSIVE
+   ======================================== */
+
+@media (max-width: 768px) {
+  .cloud-base-1,
+  .cloud-base-2,
+  .cloud-base-3 {
+    transform: scale(0.8);
+  }
+  
+  .lightning-bolt-1,
+  .lightning-bolt-2,
+  .lightning-bolt-3 {
+    height: 120px;
+  }
+}
