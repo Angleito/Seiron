@@ -75,6 +75,15 @@
   --color-accent-hover: #ef4444;       /* Dragon red hover */
   --color-accent-muted: #fca5a5;       /* Dragon red muted */
   
+  /* DBZ-specific colors */
+  --color-dragon-dark: #000428;        /* Deep space background */
+  --color-dragon-gold: #ffd700;        /* Saiyan gold */
+  --color-dragon-energy: #00bfff;      /* Ki energy blue */
+  --color-dragon-power: #ff4500;       /* Power aura orange */
+  --color-dragon-text: #f0f0f0;        /* Light text */
+  --color-dragon-muted: #a0a0a0;       /* Muted text */
+  --color-dragon-surface: #1a1a2e;     /* Card surfaces */
+  
   /* Semantic accent colors - use sparingly */
   --color-success: #22c55e;
   --color-warning: #f59e0b;
@@ -173,6 +182,16 @@
 .bg-accent { background-color: var(--color-accent-primary); }
 .text-accent { color: var(--color-accent-primary); }
 .border-accent { border-color: var(--color-accent-primary); }
+
+/* DBZ Theme Color Classes */
+.bg-dragon-dark { background-color: var(--color-dragon-dark); }
+.bg-dragon-surface { background-color: var(--color-dragon-surface); }
+.text-dragon-gold { color: var(--color-dragon-gold); }
+.text-dragon-energy { color: var(--color-dragon-energy); }
+.text-dragon-power { color: var(--color-dragon-power); }
+.text-dragon-text { color: var(--color-dragon-text); }
+.text-dragon-muted { color: var(--color-dragon-muted); }
+.border-dragon-gold { border-color: var(--color-dragon-gold); }
 
 /* Limit accent usage to 10% */
 .accent-minimal {

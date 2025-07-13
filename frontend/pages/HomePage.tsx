@@ -7,7 +7,7 @@ const Star = ({ filled = false }: { filled?: boolean }) => (
   <span className={`text-2xl ${filled ? 'text-yellow-400' : 'text-gray-600'}`}>★</span>
 )
 
-// Feature Card Component
+// Enhanced DBZ Feature Card Component
 const FeatureCard = ({ 
   title, 
   powerLevel, 
@@ -23,16 +23,17 @@ const FeatureCard = ({
   ctaText: string
   onClick: () => void
 }) => (
-  <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6 hover:border-yellow-500/30 transition-all duration-300">
+  <div className="dbz-feature-card dbz-hover-power">
+    <div className="dbz-aura"></div>
     <div className="flex justify-between items-start mb-4">
-      <h3 className="text-xl font-bold text-white">{title}</h3>
-      <span className="text-yellow-400 font-bold">{powerLevel}</span>
+      <h3 className="dbz-feature-title text-xl">{title}</h3>
+      <span className="dbz-feature-power">{powerLevel}</span>
     </div>
-    <h4 className="text-lg text-yellow-400 mb-2">{subtitle}</h4>
-    <p className="text-gray-400 mb-4">{description}</p>
+    <h4 className="dbz-subtitle text-lg mb-2">{subtitle}</h4>
+    <p className="text-gray-300 mb-4">{description}</p>
     <button
       onClick={onClick}
-      className="w-full py-2 bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 rounded hover:bg-yellow-500/20 transition-all duration-300"
+      className="dbz-button-secondary w-full"
     >
       {ctaText}
     </button>
@@ -88,20 +89,24 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-black overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-purple-950/20 via-black to-black" />
+    <div className="min-h-screen dbz-bg-space overflow-hidden">
+      {/* Enhanced DBZ Background with energy effects */}
+      <div className="absolute inset-0">
+        <div className="dbz-energy-orb" style={{top: '10%', left: '20%', animationDelay: '0s'}}></div>
+        <div className="dbz-energy-orb" style={{top: '30%', right: '15%', animationDelay: '1s'}}></div>
+        <div className="dbz-energy-orb" style={{bottom: '20%', left: '10%', animationDelay: '2s'}}></div>
+      </div>
       
       {/* Main container */}
       <div className="relative z-10 min-h-screen">
         {/* Header Section */}
         <div className="container mx-auto px-4 py-8">
-          {/* Power Level Display */}
-          <div className="text-center mb-8">
-            <h2 className="text-yellow-400 text-sm uppercase tracking-wider mb-2">Seiron Power Level</h2>
+          {/* Enhanced DBZ Power Level Display */}
+          <div className="dbz-power-level mx-auto max-w-md mb-8">
+            <h2 className="dbz-power-label">Seiron Power Level</h2>
             <div className="flex items-center justify-center gap-4">
-              <span className="text-5xl font-bold text-white">{powerLevel.toFixed(1)}K</span>
-              <span className="px-3 py-1 bg-green-500/20 border border-green-500 rounded text-green-400 text-sm">
+              <span className="dbz-power-number">{powerLevel.toFixed(1)}K</span>
+              <span className="px-3 py-1 dbz-glow-blue bg-blue-500/20 border border-blue-400 rounded dbz-text-energy text-sm dbz-energy-pulse">
                 Elite
               </span>
             </div>
@@ -117,31 +122,31 @@ export default function HomePage() {
             <p className="text-gray-400 text-sm">Hover to Activate Dragon Balls (4-7 Stars)</p>
           </div>
 
-          {/* Hero Section */}
+          {/* Enhanced DBZ Hero Section */}
           <div className="text-center mb-16">
-            <h1 className="text-7xl font-black text-white mb-4 tracking-wider">SEIRON</h1>
-            <p className="text-2xl text-yellow-400 mb-8">Become the legendary portfolio warrior</p>
+            <h1 className="dbz-title text-7xl mb-4">SEIRON</h1>
+            <p className="dbz-subtitle text-2xl mb-8">Become the legendary portfolio warrior</p>
             
-            {/* Navigation */}
+            {/* Enhanced DBZ Navigation */}
             <div className="flex justify-center gap-8 mb-8">
-              <button className="text-gray-400 hover:text-yellow-400 transition-colors">Power</button>
-              <button className="text-gray-400 hover:text-yellow-400 transition-colors">Growth</button>
-              <button className="text-gray-400 hover:text-yellow-400 transition-colors">Magic</button>
+              <button className="text-gray-400 hover:dbz-text-saiyan transition-colors dbz-hover-power font-semibold">⚡ Power</button>
+              <button className="text-gray-400 hover:dbz-text-energy transition-colors dbz-hover-power font-semibold">📈 Growth</button>
+              <button className="text-gray-400 hover:text-purple-400 transition-colors dbz-hover-power font-semibold">✨ Magic</button>
             </div>
 
-            {/* CTA Buttons */}
+            {/* Enhanced DBZ CTA Buttons */}
             <div className="flex justify-center gap-4">
               <button
                 onClick={handleSummon}
-                className="px-8 py-3 bg-yellow-500 text-black font-bold rounded hover:bg-yellow-600 transition-all duration-300"
+                className="dbz-button-primary"
               >
-                SUMMON
+                🐉 SUMMON
               </button>
               <button
                 onClick={handleAbout}
-                className="px-8 py-3 bg-transparent border border-gray-600 text-gray-400 font-bold rounded hover:border-gray-400 hover:text-white transition-all duration-300"
+                className="dbz-button-secondary"
               >
-                ABOUT
+                ℹ️ ABOUT
               </button>
             </div>
           </div>
@@ -182,14 +187,16 @@ export default function HomePage() {
             />
           </div>
 
-          {/* Footer Section */}
+          {/* Enhanced DBZ Footer Section */}
           <div className="text-center pb-12">
-            <p className="text-gray-400 mb-4">Total Power Available: <span className="text-yellow-400 font-bold">99K+</span></p>
+            <p className="text-gray-400 mb-4">Total Power Available: <span className="dbz-power-text">99K+</span></p>
             <button
               onClick={handleSummon}
-              className="px-12 py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-black rounded-lg text-xl hover:scale-105 transform transition-all duration-300 mb-4"
+              className="dbz-button-primary text-xl px-12 py-4 mb-4 dbz-screen-shake-on-hover"
+              onMouseEnter={(e) => e.currentTarget.classList.add('dbz-screen-shake')}
+              onAnimationEnd={(e) => e.currentTarget.classList.remove('dbz-screen-shake')}
             >
-              START YOUR JOURNEY
+              🚀 START YOUR JOURNEY
             </button>
             <p className="text-gray-500 text-sm">
               No registration required • Connect any wallet

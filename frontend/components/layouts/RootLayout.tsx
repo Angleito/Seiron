@@ -9,27 +9,7 @@ export function RootLayout() {
   
   return (
     <LocalFontProvider>
-      {/* DEBUG: ALWAYS VISIBLE BAR */}
-      <div 
-        style={{ 
-          position: 'fixed', 
-          bottom: 0, 
-          left: 0, 
-          right: 0, 
-          height: '30px', 
-          backgroundColor: 'green', 
-          color: 'white', 
-          textAlign: 'center',
-          lineHeight: '30px',
-          zIndex: 10000,
-          fontSize: '14px',
-          fontWeight: 'bold'
-        }}
-      >
-        ROOT LAYOUT LOADED - PATH: {window.location.pathname}
-      </div>
-      
-      <div className="min-h-screen bg-dragon-dark text-white antialiased">
+      <div className="min-h-screen bg-dragon-dark text-white antialiased dbz-layout">
         <main>
           <Outlet />
         </main>

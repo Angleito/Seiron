@@ -1,0 +1,465 @@
+/* ========================================
+   DRAGON BALL Z THEME & ANIMATIONS
+   Enhanced styling for Seiron DBZ experience
+   ======================================== */
+
+/* DBZ Color Palette */
+:root {
+  /* Primary DBZ Colors */
+  --dbz-energy-blue: #00bfff;
+  --dbz-energy-yellow: #ffd700;
+  --dbz-energy-orange: #ff4500;
+  --dbz-energy-purple: #9932cc;
+  --dbz-saiyan-gold: #ffa500;
+  --dbz-power-red: #ff0000;
+  --dbz-ki-white: #ffffff;
+  --dbz-aura-cyan: #00ffff;
+  
+  /* Background gradients */
+  --dbz-space-gradient: linear-gradient(135deg, #000428 0%, #004e92 100%);
+  --dbz-power-gradient: linear-gradient(45deg, #ff6b35 0%, #f7931e 50%, #ffd700 100%);
+  --dbz-saiyan-gradient: linear-gradient(45deg, #ffd700 0%, #ffb347 50%, #ff8c00 100%);
+  --dbz-energy-gradient: radial-gradient(circle, rgba(0,191,255,0.3) 0%, rgba(0,191,255,0.1) 50%, transparent 100%);
+  
+  /* Shadow effects */
+  --dbz-glow-blue: 0 0 20px var(--dbz-energy-blue), 0 0 40px var(--dbz-energy-blue), 0 0 60px var(--dbz-energy-blue);
+  --dbz-glow-gold: 0 0 20px var(--dbz-saiyan-gold), 0 0 40px var(--dbz-saiyan-gold), 0 0 60px var(--dbz-saiyan-gold);
+  --dbz-glow-white: 0 0 15px var(--dbz-ki-white), 0 0 30px var(--dbz-ki-white), 0 0 45px var(--dbz-ki-white);
+}
+
+/* ========================================
+   POWER-UP ANIMATIONS
+   ======================================== */
+
+@keyframes dbz-power-up {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(255, 215, 0, 0);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: var(--dbz-glow-gold);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(255, 215, 0, 0);
+  }
+}
+
+@keyframes dbz-energy-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes dbz-ki-charge {
+  0% {
+    background: var(--dbz-energy-blue);
+    box-shadow: 0 0 10px var(--dbz-energy-blue);
+  }
+  25% {
+    background: var(--dbz-energy-yellow);
+    box-shadow: 0 0 15px var(--dbz-energy-yellow);
+  }
+  50% {
+    background: var(--dbz-energy-orange);
+    box-shadow: 0 0 20px var(--dbz-energy-orange);
+  }
+  75% {
+    background: var(--dbz-power-red);
+    box-shadow: 0 0 25px var(--dbz-power-red);
+  }
+  100% {
+    background: var(--dbz-energy-blue);
+    box-shadow: 0 0 10px var(--dbz-energy-blue);
+  }
+}
+
+@keyframes dbz-aura-flicker {
+  0%, 100% {
+    opacity: 0.8;
+    filter: brightness(1);
+  }
+  25% {
+    opacity: 1;
+    filter: brightness(1.2);
+  }
+  50% {
+    opacity: 0.9;
+    filter: brightness(1.1);
+  }
+  75% {
+    opacity: 1;
+    filter: brightness(1.3);
+  }
+}
+
+@keyframes dbz-energy-orb {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-10px) scale(1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes dbz-text-glow {
+  0%, 100% {
+    text-shadow: 
+      0 0 5px var(--dbz-saiyan-gold),
+      0 0 10px var(--dbz-saiyan-gold),
+      0 0 15px var(--dbz-saiyan-gold);
+  }
+  50% {
+    text-shadow: 
+      0 0 10px var(--dbz-saiyan-gold),
+      0 0 20px var(--dbz-saiyan-gold),
+      0 0 30px var(--dbz-saiyan-gold),
+      0 0 40px var(--dbz-saiyan-gold);
+  }
+}
+
+@keyframes dbz-screen-shake {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-2px) translateY(1px); }
+  20% { transform: translateX(2px) translateY(-1px); }
+  30% { transform: translateX(-1px) translateY(2px); }
+  40% { transform: translateX(1px) translateY(-2px); }
+  50% { transform: translateX(-2px) translateY(1px); }
+  60% { transform: translateX(2px) translateY(-1px); }
+  70% { transform: translateX(-1px) translateY(2px); }
+  80% { transform: translateX(1px) translateY(-2px); }
+  90% { transform: translateX(-1px) translateY(1px); }
+}
+
+/* ========================================
+   DBZ LAYOUT CLASSES
+   ======================================== */
+
+.dbz-layout {
+  background: var(--dbz-space-gradient);
+  position: relative;
+  overflow-x: hidden;
+}
+
+.dbz-layout::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><radialGradient id="star" cx="50%" cy="50%" r="2%"><stop offset="0%" style="stop-color:white;stop-opacity:1" /><stop offset="100%" style="stop-color:white;stop-opacity:0" /></radialGradient></defs><circle cx="20" cy="20" r="1" fill="url(%23star)"/><circle cx="80" cy="40" r="0.5" fill="url(%23star)"/><circle cx="40" cy="70" r="0.8" fill="url(%23star)"/><circle cx="90" cy="80" r="0.3" fill="url(%23star)"/><circle cx="10" cy="60" r="0.6" fill="url(%23star)"/></svg>') repeat;
+  opacity: 0.3;
+  animation: float 20s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ========================================
+   DBZ BUTTON STYLES
+   ======================================== */
+
+.dbz-button-primary {
+  background: var(--dbz-saiyan-gradient);
+  color: #000;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.dbz-button-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.5s;
+}
+
+.dbz-button-primary:hover {
+  transform: scale(1.05);
+  animation: dbz-power-up 0.6s ease-in-out;
+  box-shadow: var(--dbz-glow-gold);
+}
+
+.dbz-button-primary:hover::before {
+  left: 100%;
+}
+
+.dbz-button-secondary {
+  background: transparent;
+  color: var(--dbz-energy-blue);
+  border: 2px solid var(--dbz-energy-blue);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-radius: 8px;
+  padding: 12px 24px;
+  transition: all 0.3s ease;
+}
+
+.dbz-button-secondary:hover {
+  background: var(--dbz-energy-blue);
+  color: #000;
+  box-shadow: var(--dbz-glow-blue);
+  transform: scale(1.05);
+}
+
+/* ========================================
+   DBZ POWER LEVEL DISPLAY
+   ======================================== */
+
+.dbz-power-level {
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid var(--dbz-saiyan-gold);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.dbz-power-level::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--dbz-energy-gradient);
+  animation: dbz-aura-flicker 2s ease-in-out infinite;
+  z-index: -1;
+}
+
+.dbz-power-number {
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--dbz-saiyan-gold);
+  text-shadow: var(--dbz-glow-gold);
+  animation: dbz-text-glow 3s ease-in-out infinite;
+}
+
+.dbz-power-label {
+  color: var(--dbz-energy-blue);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+/* ========================================
+   DBZ FEATURE CARDS
+   ======================================== */
+
+.dbz-feature-card {
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.4s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.dbz-feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--dbz-power-gradient);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: -1;
+}
+
+.dbz-feature-card:hover {
+  border-color: var(--dbz-saiyan-gold);
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: var(--dbz-glow-gold);
+}
+
+.dbz-feature-card:hover::before {
+  opacity: 0.1;
+}
+
+.dbz-feature-title {
+  color: var(--dbz-saiyan-gold);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.dbz-feature-power {
+  color: var(--dbz-energy-blue);
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+/* ========================================
+   DBZ ENERGY EFFECTS
+   ======================================== */
+
+.dbz-energy-orb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--dbz-energy-blue);
+  box-shadow: var(--dbz-glow-blue);
+  animation: dbz-energy-orb 2s ease-in-out infinite;
+  position: absolute;
+}
+
+.dbz-ki-blast {
+  background: var(--dbz-energy-yellow);
+  border-radius: 50%;
+  animation: dbz-ki-charge 3s ease-in-out infinite;
+}
+
+.dbz-aura {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  background: var(--dbz-energy-gradient);
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.dbz-aura.active {
+  opacity: 1;
+  animation: dbz-aura-flicker 1.5s ease-in-out infinite;
+}
+
+/* ========================================
+   DBZ TEXT EFFECTS
+   ======================================== */
+
+.dbz-title {
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  background: var(--dbz-saiyan-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: dbz-text-glow 4s ease-in-out infinite;
+}
+
+.dbz-subtitle {
+  color: var(--dbz-energy-blue);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.dbz-power-text {
+  color: var(--dbz-saiyan-gold);
+  font-weight: 700;
+  text-shadow: 0 0 10px var(--dbz-saiyan-gold);
+}
+
+/* ========================================
+   DBZ INTERACTIVE ELEMENTS
+   ======================================== */
+
+.dbz-hover-power:hover {
+  animation: dbz-power-up 0.8s ease-in-out;
+  cursor: pointer;
+}
+
+.dbz-screen-shake {
+  animation: dbz-screen-shake 0.5s ease-in-out;
+}
+
+.dbz-energy-pulse {
+  animation: dbz-energy-pulse 2s ease-in-out infinite;
+}
+
+/* ========================================
+   DBZ RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: 768px) {
+  .dbz-power-number {
+    font-size: 2rem;
+  }
+  
+  .dbz-title {
+    letter-spacing: 2px;
+  }
+  
+  .dbz-feature-card {
+    padding: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dbz-power-level::before,
+  .dbz-energy-orb,
+  .dbz-ki-blast,
+  .dbz-aura.active {
+    animation: none;
+  }
+  
+  .dbz-button-primary:hover,
+  .dbz-feature-card:hover {
+    transform: none;
+  }
+}
+
+/* ========================================
+   DBZ UTILITY CLASSES
+   ======================================== */
+
+.dbz-bg-space {
+  background: var(--dbz-space-gradient);
+}
+
+.dbz-bg-power {
+  background: var(--dbz-power-gradient);
+}
+
+.dbz-text-saiyan {
+  color: var(--dbz-saiyan-gold);
+}
+
+.dbz-text-energy {
+  color: var(--dbz-energy-blue);
+}
+
+.dbz-glow-gold {
+  box-shadow: var(--dbz-glow-gold);
+}
+
+.dbz-glow-blue {
+  box-shadow: var(--dbz-glow-blue);
+}
+
+.dbz-glow-white {
+  box-shadow: var(--dbz-glow-white);
+}
