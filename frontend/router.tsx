@@ -96,8 +96,6 @@ const WebGL3DPageLoader = ({
       enableSuspenseRecovery={true}
       maxRetries={3}
       retryDelay={2000}
-      modelPath={effectiveModelPath}
-      fallbackModelPath={effectiveFallbackPath}
       onError={(error, errorInfo, errorSource) => {
         console.error(`WebGL3D Error in ${pageName}:`, { error, errorInfo, errorSource })
         console.error(`Model path was: ${effectiveModelPath}`)

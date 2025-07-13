@@ -73,6 +73,10 @@
     "**/*.test.tsx",
     "__tests__/**/*",
     "**/__tests__/**/*",
-    "utils/feature-preloader.ts"
+    "utils/feature-preloader.ts",
+    "components/dragon/DragonModelManager.tsx",
+    "components/dragon/EnhancedModelPreloader.tsx",
+    "e2e/**/*",
+    "scripts/**/*"
   ]
 }
