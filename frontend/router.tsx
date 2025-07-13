@@ -13,13 +13,9 @@ import {
 
 // Lazy load pages for code splitting
 const HomePage = lazy(() => import('./pages/HomePage'))
-const DemoPage = lazy(() => import('./pages/DemoPage'))
-const VoiceTestPage = lazy(() => import('./pages/VoiceTestPage'))
 const AgentTestPage = lazy(() => import('./pages/AgentTestPage'))
-const SecurityTestPage = lazy(() => import('./pages/SecurityTestPage'))
 const ChatPage = lazy(() => import('./pages/chat'))
 const AboutPage = lazy(() => import('./pages/about'))
-const DragonDebugPage = lazy(() => import('./pages/dragon-debug'))
 
 // Dragon Demo Pages
 const AsciiComplexPage = lazy(() => import('./pages/dragons/AsciiComplexPage'))
@@ -133,34 +129,10 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: 'demo',
-        element: (
-          <PageLoader pageName="Demo">
-            <DemoPage />
-          </PageLoader>
-        ),
-      },
-      {
-        path: 'voice-test',
-        element: (
-          <PageLoader pageName="Voice Test" featureType="voice">
-            <VoiceTestPage />
-          </PageLoader>
-        ),
-      },
-      {
         path: 'agent-test',
         element: (
           <PageLoader pageName="Agent Test">
             <AgentTestPage />
-          </PageLoader>
-        ),
-      },
-      {
-        path: 'security-test',
-        element: (
-          <PageLoader pageName="Security Test">
-            <SecurityTestPage />
           </PageLoader>
         ),
       },
@@ -177,14 +149,6 @@ export const router = createBrowserRouter([
         element: (
           <PageLoader pageName="About">
             <AboutPage />
-          </PageLoader>
-        ),
-      },
-      {
-        path: 'dragon-debug',
-        element: (
-          <PageLoader pageName="Dragon Debug">
-            <DragonDebugPage />
           </PageLoader>
         ),
       },
