@@ -132,18 +132,18 @@ export default function HomePage() {
           <div className="screen-flash"></div>
           
           {/* Dragon Head 3D Model */}
-          {summoningPhase === 'arrival' && (
-            <div className="dragon-head-container">
-              <Suspense fallback={<div style={{ color: 'white', textAlign: 'center' }}>Loading Dragon...</div>}>
+          <div className="dragon-head-container" style={{ display: summoningPhase === 'arrival' ? 'block' : 'none' }}>
+            <Suspense fallback={<div style={{ color: 'white', textAlign: 'center' }}>Loading Dragon...</div>}>
+              {summoningPhase === 'arrival' && (
                 <DragonHead3D 
                   className="w-full h-full"
                   intensity={1}
                   enableEyeTracking={true}
                   lightningActive={true}
                 />
-              </Suspense>
-            </div>
-          )}
+              )}
+            </Suspense>
+          </div>
         </div>
       )}
       

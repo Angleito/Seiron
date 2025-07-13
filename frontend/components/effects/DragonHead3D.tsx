@@ -233,7 +233,7 @@ function DragonScene({
   lightningActive: boolean 
 }) {
   return (
-    <Suspense fallback={null}>
+    <>
       <DragonLighting lightningActive={lightningActive} />
       <DragonHeadMesh 
         enableEyeTracking={enableEyeTracking}
@@ -241,7 +241,7 @@ function DragonScene({
       />
       {/* Fog for atmosphere */}
       <fog attach="fog" args={['#1a202c', 5, 25]} />
-    </Suspense>
+    </>
   )
 }
 
@@ -370,12 +370,14 @@ export function DragonHead3D({
           handleError(new Error('Canvas creation failed'))
         }}
       >
-        {isLoaded && (
-          <DragonScene 
-            enableEyeTracking={enableEyeTracking}
-            lightningActive={lightningActive}
-          />
-        )}
+        <Suspense fallback={null}>
+          {isLoaded && (
+            <DragonScene 
+              enableEyeTracking={enableEyeTracking}
+              lightningActive={lightningActive}
+            />
+          )}
+        </Suspense>
       </Canvas>
     </div>
   )
