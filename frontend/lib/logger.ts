@@ -31,3 +31,8 @@ export const logger = {
     }
   }
 };
+
+// Export safeError function for error boundary usage
+export const safeError = (message: string, context?: any) => {
+  logger.safe('error', message, context);
+};
