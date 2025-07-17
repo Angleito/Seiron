@@ -156,7 +156,7 @@ export class ChatPersistenceService {
           })
 
           const data = await apiClient.get<MessagesResponse>(
-            `${this.apiBaseUrl}/messages/${sessionId}?${searchParams}`
+            `${this.apiBaseUrl}/messages?sessionId=${sessionId}&${searchParams}`
           )
 
           if (!data.success) {

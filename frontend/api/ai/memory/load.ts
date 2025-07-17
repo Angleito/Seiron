@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { loadMemories } from '@/lib/conversation-memory';
-import { mockDataStore, createMockResponse, createErrorResponse } from '@/lib/mockData';
+import { VercelRequest, VercelResponse } from '@vercel/node';
+import { loadMemories } from '../../../lib/conversation-memory';
+import { mockDataStore, createMockResponse, createErrorResponse } from '../../../lib/mockData';
 import * as E from 'fp-ts/Either';
 
 const BACKEND_TIMEOUT = 5000; // 5 second timeout for backend requests
@@ -17,59 +17,59 @@ const EMPTY_RESPONSE = {
   }
 };
 
-// GET /api/ai/memory/load - Load AI memories for a user
-export async function GET(request: NextRequest) {
-  console.log('[Memory Load API] Request received');
+// Vercel Function handler
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  console.log('[Memory Load API] Request received:', req.method);
+  
+  // Only allow GET requests
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
   
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
-    const sessionId = searchParams.get('sessionId');
+    const userId = req.query.userId as string;
+    const sessionId = req.query.sessionId as string;
     
     console.log(`[Memory Load API] Parameters - userId: ${userId || 'anonymous'}, sessionId: ${sessionId || 'none'}`);
     
     // Handle anonymous users gracefully
     if (!userId || userId === 'anonymous') {
       console.log('[Memory Load API] Anonymous user detected, returning empty memories');
-      return NextResponse.json({
-        ...EMPTY_RESPONSE,
-        metadata: {
-          ...EMPTY_RESPONSE.metadata,
-          source: 'anonymous',
-          userId: 'anonymous',
-          sessionId: sessionId || null
-        }
-      }, {
-        status: 200,
-        headers: {
-          'Cache-Control': 'max-age=60',
-          'Content-Type': 'application/json',
-          'X-Data-Source': 'anonymous'
-        }
-      });
+      return res
+        .status(200)
+        .setHeader('Cache-Control', 'max-age=60')
+        .setHeader('Content-Type', 'application/json')
+        .setHeader('X-Data-Source', 'anonymous')
+        .json({
+          ...EMPTY_RESPONSE,
+          metadata: {
+            ...EMPTY_RESPONSE.metadata,
+            source: 'anonymous',
+            userId: 'anonymous',
+            sessionId: sessionId || null
+          }
+        });
     }
     
     // Validate userId format
     if (userId.length < 1 || userId.length > 100) {
       console.warn(`[Memory Load API] Invalid userId format: ${userId}`);
       // Instead of returning error, return empty data with warning
-      return NextResponse.json({
-        ...EMPTY_RESPONSE,
-        metadata: {
-          ...EMPTY_RESPONSE.metadata,
-          source: 'validation-fallback',
-          warning: 'Invalid userId format',
-          userId: userId,
-          sessionId: sessionId || null
-        }
-      }, {
-        status: 200,
-        headers: {
-          'Cache-Control': 'max-age=60',
-          'Content-Type': 'application/json',
-          'X-Data-Source': 'validation-fallback'
-        }
-      });
+      return res
+        .status(200)
+        .setHeader('Cache-Control', 'max-age=60')
+        .setHeader('Content-Type', 'application/json')
+        .setHeader('X-Data-Source', 'validation-fallback')
+        .json({
+          ...EMPTY_RESPONSE,
+          metadata: {
+            ...EMPTY_RESPONSE.metadata,
+            source: 'validation-fallback',
+            warning: 'Invalid userId format',
+            userId: userId,
+            sessionId: sessionId || null
+          }
+        });
     }
     
     console.log(`[Memory Load API] Loading memories for user ${userId}, session ${sessionId || 'all'}`);
@@ -124,24 +124,22 @@ export async function GET(request: NextRequest) {
           : new Date().toISOString()
       };
       
-      return NextResponse.json({
-        memories,
-        preferences,
-        metadata: {
-          source: 'kv',
-          timestamp: new Date().toISOString(),
-          userId,
-          sessionId: sessionId || null,
-          stats
-        }
-      }, {
-        status: 200,
-        headers: {
-          'Cache-Control': 'max-age=60',
-          'Content-Type': 'application/json',
-          'X-Data-Source': 'kv'
-        }
-      });
+      return res
+        .status(200)
+        .setHeader('Cache-Control', 'max-age=60')
+        .setHeader('Content-Type', 'application/json')
+        .setHeader('X-Data-Source', 'kv')
+        .json({
+          memories,
+          preferences,
+          metadata: {
+            source: 'kv',
+            timestamp: new Date().toISOString(),
+            userId,
+            sessionId: sessionId || null,
+            stats
+          }
+        });
     }
     
     // Try mock data as fallback
@@ -175,24 +173,22 @@ export async function GET(request: NextRequest) {
             : new Date().toISOString()
         };
         
-        return NextResponse.json({
-          memories: mockMemories,
-          preferences,
-          metadata: {
-            source: 'mock',
-            timestamp: new Date().toISOString(),
-            userId,
-            sessionId: sessionId || null,
-            stats
-          }
-        }, {
-          status: 200,
-          headers: {
-            'Cache-Control': 'max-age=60',
-            'Content-Type': 'application/json',
-            'X-Data-Source': 'mock'
-          }
-        });
+        return res
+          .status(200)
+          .setHeader('Cache-Control', 'max-age=60')
+          .setHeader('Content-Type', 'application/json')
+          .setHeader('X-Data-Source', 'mock')
+          .json({
+            memories: mockMemories,
+            preferences,
+            metadata: {
+              source: 'mock',
+              timestamp: new Date().toISOString(),
+              userId,
+              sessionId: sessionId || null,
+              stats
+            }
+          });
       }
     } catch (mockError) {
       console.warn('[Memory Load API] Mock data failed:', mockError instanceof Error ? mockError.message : mockError);
@@ -200,42 +196,38 @@ export async function GET(request: NextRequest) {
     
     // Final fallback: return empty data structure
     console.log('[Memory Load API] All data sources failed, returning empty response');
-    return NextResponse.json({
-      ...EMPTY_RESPONSE,
-      metadata: {
-        ...EMPTY_RESPONSE.metadata,
-        source: 'empty-fallback',
-        userId,
-        sessionId: sessionId || null,
-        kvError: kvError instanceof Error ? kvError.message : String(kvError)
-      }
-    }, {
-      status: 200,
-      headers: {
-        'Cache-Control': 'max-age=60',
-        'Content-Type': 'application/json',
-        'X-Data-Source': 'empty-fallback'
-      }
-    });
+    return res
+      .status(200)
+      .setHeader('Cache-Control', 'max-age=60')
+      .setHeader('Content-Type', 'application/json')
+      .setHeader('X-Data-Source', 'empty-fallback')
+      .json({
+        ...EMPTY_RESPONSE,
+        metadata: {
+          ...EMPTY_RESPONSE.metadata,
+          source: 'empty-fallback',
+          userId,
+          sessionId: sessionId || null,
+          kvError: kvError instanceof Error ? kvError.message : String(kvError)
+        }
+      });
     
   } catch (error) {
     // Even in case of unexpected errors, return valid JSON
     console.error('[Memory Load API] Unexpected error:', error);
     
-    return NextResponse.json({
-      ...EMPTY_RESPONSE,
-      metadata: {
-        ...EMPTY_RESPONSE.metadata,
-        source: 'error-fallback',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      }
-    }, {
-      status: 200, // Always return 200 to avoid 404
-      headers: {
-        'Cache-Control': 'max-age=60',
-        'Content-Type': 'application/json',
-        'X-Data-Source': 'error-fallback'
-      }
-    });
+    return res
+      .status(200) // Always return 200 to avoid 404
+      .setHeader('Cache-Control', 'max-age=60')
+      .setHeader('Content-Type', 'application/json')
+      .setHeader('X-Data-Source', 'error-fallback')
+      .json({
+        ...EMPTY_RESPONSE,
+        metadata: {
+          ...EMPTY_RESPONSE.metadata,
+          source: 'error-fallback',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        }
+      });
   }
 }

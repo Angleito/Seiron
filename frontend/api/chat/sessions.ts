@@ -1,4 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { fetchWithRetry } from '../../utils/apiRetry';
+import { mockDataStore, createMockResponse } from '../../lib/mockData';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || 'http://localhost:3001';
+const BACKEND_TIMEOUT = 5000; // 5 second timeout for backend requests
 
 interface ChatSession {
   id: string;
@@ -33,9 +38,6 @@ interface SessionsResponse {
   };
 }
 
-// In-memory storage for demo (replace with database in production)
-let sessions: ChatSession[] = [];
-
 function setCorsHeaders(res: VercelResponse, origin: string | undefined) {
   const allowedOrigins = [
     'http://localhost:3000',
@@ -67,86 +69,111 @@ export default async function handler(
   setCorsHeaders(res, origin);
   
   try {
-    const userId = req.headers['x-user-id'] as string || 'anonymous';
+    const authHeader = req.headers['authorization'] as string;
+    const userIdHeader = req.headers['x-user-id'] as string;
     
     if (req.method === 'GET') {
-      // Parse query parameters
-      const { 
-        page = '1',
-        limit = '20',
-        archived = 'false',
-        search = ''
-      } = req.query as Record<string, string>;
+      const queryString = new URLSearchParams(req.query as any).toString();
       
-      const pageNum = parseInt(page, 10) || 1;
-      const limitNum = parseInt(limit, 10) || 20;
-      const isArchived = archived === 'true';
-      
-      // Filter sessions
-      let filteredSessions = sessions.filter(session => 
-        session.userId === userId && 
-        session.archived === isArchived
+      const response = await fetchWithRetry(
+        `${BACKEND_URL}/api/chat/sessions${queryString ? `?${queryString}` : ''}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(authHeader && { 'authorization': authHeader }),
+            ...(userIdHeader && { 'x-user-id': userIdHeader }),
+          },
+        },
+        {
+          maxRetries: 2,
+          initialDelay: 1000,
+          onRetry: (attempt, error) => {
+            console.warn(`Retrying chat sessions request (attempt ${attempt}):`, error.message);
+          }
+        }
       );
       
-      // Apply search filter
-      if (search) {
-        filteredSessions = filteredSessions.filter(session =>
-          session.title.toLowerCase().includes(search.toLowerCase())
-        );
+      if (!response.ok) {
+        console.error('Backend sessions request failed:', response.status, response.statusText);
+        
+        // Return graceful fallback for anonymous users when backend is unavailable
+        if (response.status === 404 || response.status === 503 || response.status === 502) {
+          console.log(`[API] Backend unavailable (${response.status}), using mock data for sessions`);
+          
+          const userId = req.query.userId as string || userIdHeader || 'anonymous';
+          const page = parseInt(req.query.page as string || '1', 10);
+          const limit = parseInt(req.query.limit as string || '20', 10);
+          const archived = req.query.archived === 'true';
+          const search = req.query.search as string || undefined;
+          const order = (req.query.order || 'desc') as 'asc' | 'desc';
+          
+          const result = mockDataStore.getSessions(userId, {
+            page,
+            limit,
+            archived,
+            search,
+            order
+          });
+          
+          const stats = mockDataStore.getStats(userId);
+          
+          const response = createMockResponse({
+            success: true,
+            sessions: result.sessions,
+            pagination: result.pagination,
+            stats,
+            filters: {
+              search,
+              archived
+            }
+          });
+          
+          res.setHeader('Cache-Control', 'private, max-age=60, stale-while-revalidate=300');
+          res.setHeader('X-Data-Source', 'mock');
+          return res.status(200).json(response);
+        }
+        
+        return res.status(response.status).json({
+          error: 'Failed to fetch sessions'
+        });
       }
       
-      // Pagination
-      const total = filteredSessions.length;
-      const totalPages = Math.ceil(total / limitNum);
-      const startIndex = (pageNum - 1) * limitNum;
-      const endIndex = startIndex + limitNum;
-      
-      const paginatedSessions = filteredSessions.slice(startIndex, endIndex);
-      
-      const response: SessionsResponse = {
-        success: true,
-        sessions: paginatedSessions,
-        pagination: {
-          page: pageNum,
-          limit: limitNum,
-          total,
-          totalPages,
-          hasNext: pageNum < totalPages,
-          hasPrev: pageNum > 1
-        },
-        stats: {
-          total_sessions: sessions.filter(s => s.userId === userId).length,
-          active_sessions: sessions.filter(s => s.userId === userId && !s.archived).length,
-          archived_sessions: sessions.filter(s => s.userId === userId && s.archived).length,
-          total_messages: sessions.filter(s => s.userId === userId).reduce((sum, s) => sum + s.messageCount, 0)
-        },
-        filters: {
-          search: search || undefined,
-          archived: isArchived
-        }
-      };
-      
-      res.status(200).json(response);
+      const data = await response.json();
+      return res.status(200).json(data);
       
     } else if (req.method === 'POST') {
-      const { title } = req.body as { title: string };
+      const body = req.body;
       
-      const newSession: ChatSession = {
-        id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        userId,
-        title: title || 'New Chat Session',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        messageCount: 0,
-        archived: false
-      };
+      const response = await fetchWithRetry(
+        `${BACKEND_URL}/api/chat/sessions`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(authHeader && { 'authorization': authHeader }),
+            ...(userIdHeader && { 'x-user-id': userIdHeader }),
+          },
+          body: JSON.stringify(body),
+        },
+        {
+          maxRetries: 2,
+          initialDelay: 1000,
+          onRetry: (attempt, error) => {
+            console.warn(`Retrying create session request (attempt ${attempt}):`, error.message);
+          }
+        }
+      );
       
-      sessions.push(newSession);
+      if (!response.ok) {
+        console.error('Backend session creation failed:', response.status, response.statusText);
+        return res.status(response.status).json({
+          error: 'Failed to create session'
+        });
+      }
       
-      res.status(201).json({
-        success: true,
-        session: newSession
-      });
+      const data = await response.json();
+      return res.status(201).json(data);
       
     } else {
       res.status(405).json({
