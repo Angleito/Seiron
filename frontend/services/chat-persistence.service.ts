@@ -2,6 +2,7 @@ import { pipe } from 'fp-ts/function'
 import * as TE from 'fp-ts/TaskEither'
 import * as E from 'fp-ts/Either'
 import { logger } from '@lib/logger'
+import { apiClient } from '../utils/apiClient'
 
 // API Types based on the backend endpoints
 export interface ChatSession {
@@ -114,25 +115,15 @@ export class ChatPersistenceService {
             ...(params.search && { search: params.search })
           })
 
-          const response = await fetch(`${this.apiBaseUrl}/sessions?${searchParams}`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-user-id': userId
-            }
-          })
+          const data = await apiClient.get<SessionsResponse>(
+            `${this.apiBaseUrl}/sessions?${searchParams}`
+          )
 
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-          }
-
-          const data = await response.json()
-          
           if (!data.success) {
             throw new Error(data.error || 'Failed to fetch sessions')
           }
 
-          return data as SessionsResponse
+          return data
         },
         (error) => this.handleError(error, 'Failed to fetch sessions')
       ),
@@ -164,28 +155,15 @@ export class ChatPersistenceService {
             ...(params.cursor && { cursor: params.cursor })
           })
 
-          const response = await fetch(
-            `${this.apiBaseUrl}/messages/${sessionId}?${searchParams}`,
-            {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-                'x-user-id': userId
-              }
-            }
+          const data = await apiClient.get<MessagesResponse>(
+            `${this.apiBaseUrl}/messages/${sessionId}?${searchParams}`
           )
 
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-          }
-
-          const data = await response.json()
-          
           if (!data.success) {
             throw new Error(data.error || 'Failed to fetch messages')
           }
 
-          return data as MessagesResponse
+          return data
         },
         (error) => this.handleError(error, 'Failed to fetch messages')
       ),

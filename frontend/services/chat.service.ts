@@ -1,7 +1,5 @@
 import { createAuthenticatedFetch } from '../lib/auth/authInterceptor'
-
-// API endpoint configuration - using environment variable or relative paths for Vercel deployment
-const API_BASE_URL = import.meta.env.NEXT_PUBLIC_BACKEND_URL || ''
+import { apiClient } from '../utils/apiClient'
 
 // Create authenticated fetch instance
 const authFetch = createAuthenticatedFetch({
@@ -31,25 +29,13 @@ export async function processChat(message: string, sessionId: string, walletAddr
       throw new Error('Message and session ID are required for processing')
     }
 
-    // Call backend API chat orchestrate endpoint
-    const response = await authFetch(`${API_BASE_URL}/api/chat/orchestrate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message,
-        sessionId,
-        walletAddress,
-      }),
+    // Use unified API client to call backend
+    const data = await apiClient.post<ChatResponse>('/api/chat/orchestrate', {
+      message,
+      sessionId,
+      walletAddress,
     })
 
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.message || 'Failed to process chat message')
-    }
-
-    const data = await response.json()
     return data
 
   } catch (error) {
@@ -63,8 +49,9 @@ export function getWebSocketEndpoint(sessionId: string) {
     throw new Error('Session ID is required for WebSocket connection')
   }
 
-  // Use backend WebSocket endpoint if configured, otherwise use frontend API
-  const backendUrl = import.meta.env.NEXT_PUBLIC_BACKEND_URL
+  // Get backend URL from API client
+  const clientStatus = apiClient.getStatus()
+  const backendUrl = clientStatus.backendUrl
   
   if (backendUrl) {
     // Use backend WebSocket endpoint

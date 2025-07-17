@@ -11,6 +11,7 @@ import { WalletConnectProvider } from './components/wallet/WalletConnectProvider
 import { privyConfig } from './config/privy'
 import { wagmiConfig } from './config/wagmi'
 import { initializeEnvironmentValidation } from './utils/envValidation'
+import { initializeApp } from './utils/appInitializer'
 import './styles/globals.css'
 
 // Debug logging for app initialization
@@ -22,6 +23,18 @@ console.log('Prod mode:', import.meta.env.PROD)
 
 // Initialize environment validation
 initializeEnvironmentValidation()
+
+// Initialize app (async initialization)
+initializeApp().then(result => {
+  if (result.success) {
+    console.log('✅ App initialized successfully')
+    if (result.warnings.length > 0) {
+      console.warn('⚠️ Configuration warnings:', result.warnings)
+    }
+  } else {
+    console.error('❌ App initialization failed:', result.errors)
+  }
+})
 
 
 const queryClient = new QueryClient({

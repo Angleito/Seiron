@@ -4,6 +4,7 @@ import * as TE from 'fp-ts/TaskEither'
 import * as E from 'fp-ts/Either'
 import * as O from 'fp-ts/Option'
 import { logger } from '@lib/logger'
+import { apiClient } from '../../utils/apiClient'
 
 export interface AIMemoryEntry {
   id: string
@@ -41,7 +42,7 @@ interface AIMemoryCache {
   lastUpdated: Date
 }
 
-// Memory API endpoints (using Vercel API routes)
+// Memory API endpoints (using unified API client)
 const MEMORY_API = {
   load: '/api/ai/memory/load',
   save: '/api/ai/memory/save',
@@ -95,32 +96,8 @@ export function useAIMemory({
           const params = new URLSearchParams({ userId })
           if (sessionId) params.append('sessionId', sessionId)
 
-          const response = await fetch(`${MEMORY_API.load}?${params}`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
-          })
-
-          if (!response.ok) {
-            throw new Error(`Failed to load memories: ${response.statusText}`)
-          }
-
-          // Validate content-type before parsing JSON
-          const contentType = response.headers.get('content-type')
-          if (!contentType || !contentType.includes('application/json')) {
-            const text = await response.text()
-            const preview = text.substring(0, 100)
-            logger.error(`Expected JSON response but got ${contentType}. Response preview: ${preview}...`)
-            throw new Error(`Invalid response type: Expected JSON but received ${contentType || 'unknown'}. This may indicate an HTML error page.`)
-          }
-
-          try {
-            return await response.json()
-          } catch (parseError) {
-            const text = await response.text()
-            const preview = text.substring(0, 100)
-            logger.error(`Failed to parse JSON response. Response preview: ${preview}...`)
-            throw new Error(`Failed to parse JSON response: ${parseError instanceof Error ? parseError.message : 'Unknown parse error'}`)
-          }
+          const result = await apiClient.get<AIMemoryEntry[]>(`${MEMORY_API.load}?${params}`)
+          return result
         },
         (error) => error as Error
       ),
