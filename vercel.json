@@ -1,32 +1,88 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "frontend/dist"
-      }
-    }
-  ],
+  "buildCommand": "cd frontend && npm run build",
+  "outputDirectory": "frontend/dist",
+  "installCommand": "cd frontend && npm install",
+  "framework": "vite",
   "functions": {
     "frontend/api/**/*.ts": {
       "runtime": "@vercel/node@latest",
       "maxDuration": 30
     }
   },
-  "routes": [
+  "rewrites": [
     {
-      "src": "/models/(.*)",
-      "dest": "/frontend/models/$1"
+      "source": "/models/:path*",
+      "destination": "/models/:path*"
     },
     {
-      "src": "/api/(.*)",
-      "dest": "/frontend/api/$1"
+      "source": "/api/ai/memory/:path*",
+      "destination": "/api/ai/memory/:path*"
     },
     {
-      "src": "/(.*)",
-      "dest": "/frontend/$1"
+      "source": "/api/chat/:path*",
+      "destination": "/api/chat/:path*"
+    },
+    {
+      "source": "/api/dragon/:path*",
+      "destination": "/api/dragon/:path*"
+    },
+    {
+      "source": "/api/voice/:path*",
+      "destination": "/api/voice/:path*"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/((?!api|assets|images|models|fonts|favicon.ico|seiron.png|test.html|debug-config.html|debug-models.html|test-static.txt|test-model-loading.html).*)",
+      "destination": "/index.html"
     }
-  ]
+  ],
+  "trailingSlash": false,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; connect-src 'self' blob: data: https: wss: ws: http:; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; media-src 'self' blob: data:; worker-src 'self' blob: data:; child-src 'self' blob: data:; frame-src 'self' https:; manifest-src 'self';"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization, X-Requested-With, X-User-Id"
+        }
+      ]
+    },
+    {
+      "source": "/models/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }
