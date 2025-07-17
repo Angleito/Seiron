@@ -7,6 +7,7 @@ import { WagmiProvider } from '@privy-io/wagmi'
 import { router } from './router'
 // import HomePage3D from './src/pages/HomePage3D'
 import { RootErrorBoundary } from './components/error-boundaries/RootErrorBoundary'
+import { WalletConnectProvider } from './components/wallet/WalletConnectProvider'
 import { privyConfig } from './config/privy'
 import { wagmiConfig } from './config/wagmi'
 import { initializeEnvironmentValidation } from './utils/envValidation'
@@ -21,6 +22,7 @@ console.log('Prod mode:', import.meta.env.PROD)
 
 // Initialize environment validation
 initializeEnvironmentValidation()
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -78,11 +80,13 @@ async function renderApp() {
           <PrivyProvider 
             appId={privyConfig.appId} 
             config={privyConfig.config}>
-            <QueryClientProvider client={queryClient}>
-              <WagmiProvider config={wagmiConfig}>
-                <RouterProvider router={router} />
-              </WagmiProvider>
-            </QueryClientProvider>
+            <WalletConnectProvider>
+              <QueryClientProvider client={queryClient}>
+                <WagmiProvider config={wagmiConfig}>
+                  <RouterProvider router={router} />
+                </WagmiProvider>
+              </QueryClientProvider>
+            </WalletConnectProvider>
           </PrivyProvider>
         </RootErrorBoundary>
       </React.StrictMode>
@@ -157,11 +161,13 @@ function renderAppSync() {
             <PrivyProvider 
               appId={privyConfig.appId} 
               config={privyConfig.config}>
-              <QueryClientProvider client={queryClient}>
-                <WagmiProvider config={wagmiConfig}>
-                  <RouterProvider router={router} />
-                </WagmiProvider>
-              </QueryClientProvider>
+              <WalletConnectProvider>
+                <QueryClientProvider client={queryClient}>
+                  <WagmiProvider config={wagmiConfig}>
+                    <RouterProvider router={router} />
+                  </WagmiProvider>
+                </QueryClientProvider>
+              </WalletConnectProvider>
             </PrivyProvider>
           </RootErrorBoundary>
         </React.StrictMode>

@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import * as THREE from 'three';
-import React from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { webglDiagnostics } from './webglDiagnostics';
 
 export interface WebGLRecoveryConfig {
@@ -27,6 +27,7 @@ export interface WebGLRecoveryConfig {
   performanceAlertDebounceMs?: number;
   // Batch cleanup configuration
   enableBatchCleanup?: boolean;
+  enableAutomaticCleanup?: boolean; // New option to disable automatic cleanup
   batchCleanupInterval?: number;
   cleanupPriorityThreshold?: number;
   onContextLost?: () => void;
@@ -133,11 +134,11 @@ export class WebGLRecoveryManager extends EventEmitter {
   
   private adaptiveMonitoring = {
     enabled: true,
-    currentInterval: 5000,
+    currentInterval: 15000, // Start with 15 seconds instead of 5
     performanceAlertLastFired: 0,
     memoryAlertLastFired: 0,
     stablePerformancePeriod: 0,
-    performanceStableThreshold: 30000 // 30 seconds
+    performanceStableThreshold: 60000 // 60 seconds for stability
   };
   
   private batchCleanup = {
@@ -217,13 +218,14 @@ export class WebGLRecoveryManager extends EventEmitter {
     recoverySuccessRateThreshold: 0.7, // 70% success rate threshold
     // Enhanced monitoring defaults
     adaptiveMonitoringEnabled: true,
-    minMonitoringInterval: 2000, // Minimum 2 seconds
-    maxMonitoringInterval: 15000, // Maximum 15 seconds
-    performanceAlertDebounceMs: 5000, // 5 second debounce
+    minMonitoringInterval: 10000, // Minimum 10 seconds (was 2)
+    maxMonitoringInterval: 60000, // Maximum 60 seconds (was 15)
+    performanceAlertDebounceMs: 10000, // 10 second debounce (was 5)
     // Batch cleanup defaults
     enableBatchCleanup: true,
-    batchCleanupInterval: 3000, // Execute batches every 3 seconds
-    cleanupPriorityThreshold: 0.8, // High priority threshold
+    enableAutomaticCleanup: true, // Default to true for backward compatibility
+    batchCleanupInterval: 30000, // Execute batches every 30 seconds (was 3)
+    cleanupPriorityThreshold: 0.9, // Higher priority threshold (was 0.8)
     onContextLost: () => {},
     onContextRestored: () => {},
     onRecoveryFailed: () => {},
@@ -362,8 +364,8 @@ export class WebGLRecoveryManager extends EventEmitter {
         this.config.recoveryDelayMs = 2000;
         this.config.performanceThreshold = 20;
         this.config.memoryThreshold = 200;
-        this.adaptiveMonitoring.currentInterval = 10000; // Less frequent monitoring
-        this.batchCleanup.batchTimer = null; // More aggressive batching
+        this.adaptiveMonitoring.currentInterval = 30000; // Much less frequent monitoring for low-end
+        this.config.batchCleanupInterval = 60000; // Cleanup every minute for low-end
         break;
       case 'mid-range':
         // Use default settings
@@ -373,7 +375,8 @@ export class WebGLRecoveryManager extends EventEmitter {
         this.config.recoveryDelayMs = 500;
         this.config.performanceThreshold = 45;
         this.config.memoryThreshold = 800;
-        this.adaptiveMonitoring.currentInterval = 3000; // More frequent monitoring
+        this.adaptiveMonitoring.currentInterval = 20000; // Still reasonable for high-end (was 3000)
+        this.config.batchCleanupInterval = 45000; // Cleanup every 45 seconds for high-end
         break;
     }
   }
@@ -421,6 +424,12 @@ export class WebGLRecoveryManager extends EventEmitter {
    * Start batch cleanup timer
    */
   private startBatchCleanupTimer(): void {
+    // Don't start timer if automatic cleanup is disabled
+    if (!this.config.enableAutomaticCleanup) {
+      console.log('[WebGLRecovery] Automatic cleanup is disabled');
+      return;
+    }
+    
     if (this.batchCleanup.batchTimer) {
       clearInterval(this.batchCleanup.batchTimer);
     }
@@ -434,7 +443,20 @@ export class WebGLRecoveryManager extends EventEmitter {
    * Execute batch cleanup operations
    */
   private executeBatchCleanup(): void {
+    // Skip if no pending operations
     if (this.batchCleanup.pendingOperations.length === 0) return;
+    
+    // Skip if we recently ran a cleanup and memory pressure is low
+    const timeSinceLastCleanup = Date.now() - this.batchCleanup.lastBatchExecution;
+    if (timeSinceLastCleanup < 10000) { // Don't run more than once per 10 seconds
+      const memoryInfo = this.getMemoryInfo();
+      if (memoryInfo) {
+        const memoryPressure = (memoryInfo.usedJSHeapSize || 0) / (memoryInfo.jsHeapSizeLimit || 1);
+        if (memoryPressure < 0.7) { // Only skip if memory is under 70%
+          return;
+        }
+      }
+    }
     
     const batchStart = performance.now();
     const operationsToProcess = [...this.batchCleanup.pendingOperations];
@@ -1317,10 +1339,10 @@ export class WebGLRecoveryManager extends EventEmitter {
       if (memoryBefore && memoryBefore.usedJSHeapSize && memoryBefore.jsHeapSizeLimit) {
         const memoryPressure = (memoryBefore.usedJSHeapSize || 0) / (memoryBefore.jsHeapSizeLimit || 1);
         
-        // Only create temporary objects if memory pressure is high
-        if (memoryPressure > 0.7) {
+        // Only create temporary objects if memory pressure is very high
+        if (memoryPressure > 0.85) { // Raised from 0.7 to 0.85
           const cleanup = [];
-          const iterations = Math.min(30, Math.floor(memoryPressure * 50)); // Adaptive iterations
+          const iterations = Math.min(20, Math.floor(memoryPressure * 30)); // Reduced iterations
           
           for (let i = 0; i < iterations; i++) {
             cleanup.push(new Float32Array(5)); // Smaller arrays
@@ -1339,17 +1361,16 @@ export class WebGLRecoveryManager extends EventEmitter {
       const gcTime = performance.now() - gcStart;
       this.diagnostics.monitoringOverheadMs += gcTime;
       
-      // Check memory after cleanup
+      // Check memory after cleanup only if we freed significant memory
       setTimeout(() => {
         const memoryAfter = this.getMemoryInfo();
         if (memoryBefore && memoryAfter) {
           const memoryFreed = (memoryBefore.usedJSHeapSize || 0) - (memoryAfter.usedJSHeapSize || 0);
           const efficiencyPercent = (memoryFreed / (memoryBefore.usedJSHeapSize || 1)) * 100;
           
-          if (memoryFreed > 0) {
+          // Only log if we freed more than 10MB or 5% of memory
+          if (memoryFreed > 10 * 1024 * 1024 || efficiencyPercent > 5) {
             console.log(`[WebGLRecovery] Memory cleanup: freed ${(memoryFreed / 1024 / 1024).toFixed(1)}MB (${efficiencyPercent.toFixed(1)}% efficiency) in ${gcTime.toFixed(1)}ms`);
-          } else {
-            console.log(`[WebGLRecovery] Memory cleanup completed in ${gcTime.toFixed(1)}ms (no significant memory freed)`);
           }
         }
       }, 100);
@@ -1556,8 +1577,8 @@ export class WebGLRecoveryManager extends EventEmitter {
       // Calculate memory pressure (percentage of limit being used)
       const memoryPressure = usedMemoryMB / limitMemoryMB;
       
-      // More aggressive memory monitoring to prevent context loss
-      if (memoryPressure > 0.8) { // Over 80% of memory limit
+      // Less aggressive memory monitoring to reduce cleanup frequency
+      if (memoryPressure > 0.85) { // Over 85% of memory limit (was 80%)
         console.warn(`[WebGLRecovery] High memory pressure detected: ${memoryPressure.toFixed(2)}`);
         this.addUserNotification(`High memory usage: ${usedMemoryMB.toFixed(0)}MB / ${limitMemoryMB.toFixed(0)}MB`, 'warning');
         
@@ -1568,7 +1589,7 @@ export class WebGLRecoveryManager extends EventEmitter {
         
         // Force memory cleanup
         this.forceGarbageCollection();
-      } else if (memoryPressure > 0.6) { // Over 60% of memory limit
+      } else if (memoryPressure > 0.75) { // Over 75% of memory limit (was 60%)
         // Normal quality reduction
         if (avgMemory > this.config.memoryThreshold && this.qualitySettings.level > 0) {
           this.reduceQuality('memory');
@@ -1706,13 +1727,13 @@ export class WebGLRecoveryManager extends EventEmitter {
       // Calculate memory pressure (percentage of limit being used)
       const memoryPressure = usedMemoryMB / limitMemoryMB;
       
-      // Debounced high memory pressure alerts
-      if (memoryPressure > 0.8 && (now - this.adaptiveMonitoring.memoryAlertLastFired > this.config.performanceAlertDebounceMs)) {
+      // Debounced high memory pressure alerts with higher thresholds
+      if (memoryPressure > 0.9 && (now - this.adaptiveMonitoring.memoryAlertLastFired > this.config.performanceAlertDebounceMs)) {
         this.adaptiveMonitoring.memoryAlertLastFired = now;
-        console.warn(`[WebGLRecovery] High memory pressure detected: ${memoryPressure.toFixed(2)} (debounced)`);
+        console.warn(`[WebGLRecovery] Critical memory pressure detected: ${memoryPressure.toFixed(2)} (debounced)`);
         
         this.addUserNotification(
-          `High memory usage: ${usedMemoryMB.toFixed(0)}MB / ${limitMemoryMB.toFixed(0)}MB`, 
+          `Critical memory usage: ${usedMemoryMB.toFixed(0)}MB / ${limitMemoryMB.toFixed(0)}MB`, 
           'warning',
           'optimization'
         );
@@ -1724,18 +1745,19 @@ export class WebGLRecoveryManager extends EventEmitter {
         
         // Schedule batch cleanup instead of immediate forced cleanup
         if (this.config.enableBatchCleanup) {
-          this.scheduleBatchCleanup('memory', 0.9); // High priority
+          this.scheduleBatchCleanup('memory', 0.95); // Very high priority
         } else {
           this.forceGarbageCollection();
         }
         
         this.adjustMonitoringInterval(false); // Increase monitoring frequency
-      } else if (memoryPressure > 0.6) {
+      } else if (memoryPressure > 0.8) { // Raised from 0.6 to 0.8
         // Normal quality reduction with debouncing
-        if (avgMemory > this.config.memoryThreshold && this.qualitySettings.level > 0) {
+        if (avgMemory > this.config.memoryThreshold && this.qualitySettings.level > 0 && 
+            (now - this.adaptiveMonitoring.memoryAlertLastFired > this.config.performanceAlertDebounceMs)) {
           this.reduceQuality('memory');
         }
-      } else if (memoryPressure < 0.4) {
+      } else if (memoryPressure < 0.5) { // Raised from 0.4 to 0.5
         // Low memory pressure - can reduce monitoring frequency
         this.adjustMonitoringInterval(true);
       }
@@ -2081,6 +2103,36 @@ export class WebGLRecoveryManager extends EventEmitter {
   } */
 
   /**
+   * Manually trigger cleanup if needed (exposed for external control)
+   */
+  public triggerCleanupIfNeeded(): boolean {
+    const memoryInfo = this.getMemoryInfo();
+    if (!memoryInfo) return false;
+    
+    const memoryPressure = (memoryInfo.usedJSHeapSize || 0) / (memoryInfo.jsHeapSizeLimit || 1);
+    
+    // Only trigger cleanup if memory pressure is high
+    if (memoryPressure > 0.85) {
+      console.log(`[WebGLRecovery] Manual cleanup triggered due to memory pressure: ${(memoryPressure * 100).toFixed(1)}%`);
+      this.executeBatchCleanup();
+      this.forceGarbageCollection();
+      return true;
+    }
+    
+    return false;
+  }
+  
+  /**
+   * Get current memory pressure (0-1)
+   */
+  public getMemoryPressure(): number {
+    const memoryInfo = this.getMemoryInfo();
+    if (!memoryInfo) return 0;
+    
+    return (memoryInfo.usedJSHeapSize || 0) / (memoryInfo.jsHeapSizeLimit || 1);
+  }
+  
+  /**
    * Cleanup and remove event listeners
    */
   public dispose(): void {
@@ -2092,6 +2144,12 @@ export class WebGLRecoveryManager extends EventEmitter {
     
     // Stop monitoring
     this.stopPreventiveMonitoring();
+    
+    // Stop batch cleanup timer
+    if (this.batchCleanup.batchTimer) {
+      clearInterval(this.batchCleanup.batchTimer);
+      this.batchCleanup.batchTimer = null;
+    }
     
     if (this.canvas) {
       this.canvas.removeEventListener('webglcontextlost', this.handleContextLost);
@@ -2116,8 +2174,8 @@ export class WebGLRecoveryManager extends EventEmitter {
  * React hook for WebGL recovery
  */
 export function useWebGLRecovery(config?: WebGLRecoveryConfig) {
-  const managerRef = React.useRef<WebGLRecoveryManager | null>(null);
-  const [diagnostics, setDiagnostics] = React.useState<WebGLDiagnostics>({
+  const managerRef = useRef<WebGLRecoveryManager | null>(null);
+  const [diagnostics, setDiagnostics] = useState<WebGLDiagnostics>({
     contextLossCount: 0,
     recoveryAttempts: 0,
     successfulRecoveries: 0,
@@ -2142,11 +2200,11 @@ export function useWebGLRecovery(config?: WebGLRecoveryConfig) {
     contextHealthScore: 100,
     devicePerformanceProfile: 'mid-range'
   });
-  const [shouldFallback, setShouldFallback] = React.useState(false);
-  const [isRecovering, setIsRecovering] = React.useState(false);
-  const [currentRecoveryAttempt, setCurrentRecoveryAttempt] = React.useState(0);
+  const [shouldFallback, setShouldFallback] = useState(false);
+  const [isRecovering, setIsRecovering] = useState(false);
+  const [currentRecoveryAttempt, setCurrentRecoveryAttempt] = useState(0);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const manager = new WebGLRecoveryManager({
       ...config,
       onContextLost: () => {
@@ -2185,20 +2243,20 @@ export function useWebGLRecovery(config?: WebGLRecoveryConfig) {
     return () => {
       manager.dispose();
     };
-  }, [config]);
+  }, []); // Remove config dependency to prevent recreation on every config change
 
-  const initializeRecovery = React.useCallback(
+  const initializeRecovery = useCallback(
     (canvas: HTMLCanvasElement, renderer?: THREE.WebGLRenderer) => {
       managerRef.current?.initializeRecovery(canvas, renderer);
     },
     []
   );
 
-  const simulateContextLoss = React.useCallback(() => {
+  const simulateContextLoss = useCallback(() => {
     managerRef.current?.simulateContextLoss();
   }, []);
 
-  const resetDiagnostics = React.useCallback(() => {
+  const resetDiagnostics = useCallback(() => {
     managerRef.current?.resetDiagnostics();
     setDiagnostics(managerRef.current?.getDiagnostics() || {
       contextLossCount: 0,
@@ -2230,13 +2288,13 @@ export function useWebGLRecovery(config?: WebGLRecoveryConfig) {
     setCurrentRecoveryAttempt(0);
   }, []);
 
-  const forceRecovery = React.useCallback(() => {
+  const forceRecovery = useCallback(() => {
     if (managerRef.current) {
       managerRef.current.simulateContextLoss();
     }
   }, []);
 
-  const getQualitySettings = React.useCallback(() => {
+  const getQualitySettings = useCallback(() => {
     return managerRef.current?.getQualitySettings() || {
       level: 4,
       antialias: true,
@@ -2248,15 +2306,15 @@ export function useWebGLRecovery(config?: WebGLRecoveryConfig) {
     };
   }, []);
 
-  const setQualityLevel = React.useCallback((level: number) => {
+  const setQualityLevel = useCallback((level: number) => {
     managerRef.current?.setQualityLevel(level);
   }, []);
 
-  const dismissNotification = React.useCallback((id: string) => {
+  const dismissNotification = useCallback((id: string) => {
     managerRef.current?.dismissNotification(id);
   }, []);
 
-  const clearNotifications = React.useCallback(() => {
+  const clearNotifications = useCallback(() => {
     managerRef.current?.clearNotifications();
   }, []);
 

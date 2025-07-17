@@ -1,222 +1,163 @@
 'use client'
 
-import React, { useRef, useEffect, useState, Suspense, useCallback } from 'react'
-import { useFrame, useLoader } from '@react-three/fiber'
-import { GLTFLoader, DRACOLoader } from 'three-stdlib'
+import React, { useRef, useEffect, Suspense, useState } from 'react'
+import { useLoader } from '@react-three/fiber'
+import { GLTFLoader } from 'three-stdlib'
 import * as THREE from 'three'
-import { useMouseTracking } from '@/hooks/useMouseTracking'
-import { Html } from '@react-three/drei'
+import { logger } from '@lib/logger'
 
 interface SeironDragonHeadGLBProps {
-  enableEyeTracking?: boolean
   lightningActive?: boolean
-  intensity?: number
-  onLoadError?: (error: Error) => void
   onError?: (error: Error) => void
   modelUrl?: string
+  enableEyeTracking?: boolean
+  intensity?: number
 }
 
-// Error boundary for model loading
-class ModelErrorBoundary extends React.Component<
-  { children: React.ReactNode; fallback?: React.ReactNode; onError?: () => void },
-  { hasError: boolean; error?: Error }
-> {
-  constructor(props: any) {
-    super(props)
-    this.state = { hasError: false }
-  }
-
-  static getDerivedStateFromError(error: Error) {
-    console.error('Model loading error caught by boundary:', error)
-    return { hasError: true, error }
-  }
-
-  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Model loading error details:', { error, errorInfo })
-    this.props.onError?.()
-  }
-
-  override render() {
-    if (this.state.hasError) {
-      return this.props.fallback || <Html><div>Failed to load 3D model</div></Html>
+// Fallback dragon model using simple geometry
+const FallbackDragon: React.FC<{ lightningActive?: boolean }> = ({ lightningActive = false }) => {
+  const groupRef = useRef<THREE.Group>(null)
+  
+  useEffect(() => {
+    if (groupRef.current && lightningActive) {
+      groupRef.current.rotation.y += 0.01
     }
-    return this.props.children
-  }
-}
-
-// Loading component
-function LoadingFallback() {
+  })
+  
   return (
-    <>
-      {/* Simple loading indicator */}
-      <mesh>
-        <boxGeometry args={[0.5, 0.5, 0.5]} />
-        <meshStandardMaterial color="#ff6600" emissive="#ff3300" emissiveIntensity={0.5} />
+    <group ref={groupRef}>
+      {/* Dragon body */}
+      <mesh position={[0, 0, 0]}>
+        <coneGeometry args={[0.8, 2, 8]} />
+        <meshStandardMaterial color="#ff4444" metalness={0.6} roughness={0.4} />
       </mesh>
-      <Html center>
-        <div style={{ 
-          color: 'white', 
-          fontSize: '12px',
-          background: 'rgba(0,0,0,0.7)',
-          padding: '8px 16px',
-          borderRadius: '4px'
-        }}>
-          Summoning dragon...
-        </div>
-      </Html>
-    </>
+      
+      {/* Dragon head */}
+      <mesh position={[0, 1.2, 0]}>
+        <sphereGeometry args={[0.6, 12, 12]} />
+        <meshStandardMaterial color="#ff6666" metalness={0.5} roughness={0.3} />
+      </mesh>
+      
+      {/* Eyes */}
+      <mesh position={[0.2, 1.3, 0.4]}>
+        <sphereGeometry args={[0.1, 8, 8]} />
+        <meshStandardMaterial color="#ffff00" emissive="#ffff00" emissiveIntensity={lightningActive ? 2 : 0.5} />
+      </mesh>
+      <mesh position={[-0.2, 1.3, 0.4]}>
+        <sphereGeometry args={[0.1, 8, 8]} />
+        <meshStandardMaterial color="#ffff00" emissive="#ffff00" emissiveIntensity={lightningActive ? 2 : 0.5} />
+      </mesh>
+    </group>
   )
 }
 
 // Inner component that actually loads the model - memoized to prevent infinite re-renders
 const SeironDragonHeadGLBInner = React.memo(function SeironDragonHeadGLBInner({
-  enableEyeTracking = true,
   lightningActive = false,
-  intensity = 1,
-  onLoadError,
-  modelUrl = '/models/seiron_animated.gltf'
+  modelUrl = '/models/seiron_animated.gltf',
+  onError
 }: SeironDragonHeadGLBProps) {
   const groupRef = useRef<THREE.Group>(null)
-  const modelRef = useRef<THREE.Group>(null)
-  const initialSetupDone = useRef(false)
+  const [loadError, setLoadError] = useState<Error | null>(null)
   
-  console.log('Attempting to load model from:', modelUrl)
-  console.log('Full URL would be:', window.location.origin + modelUrl)
+  // List of fallback models to try in order
+  const fallbackModels = [
+    '/models/seiron_optimized.glb',
+    '/models/seiron.glb',
+    '/models/dragon_head_optimized.glb',
+    '/models/dragon_head.glb'
+  ]
   
-  // Add error boundary logging
+  const [currentModelUrl, setCurrentModelUrl] = useState(modelUrl)
+  const [fallbackIndex, setFallbackIndex] = useState(-1)
+  
   useEffect(() => {
-    console.log('SeironDragonHeadGLBInner component mounted')
-    console.log('Available models:', [
-      'dragon_head_optimized.glb',
-      'seiron_optimized.glb', 
-      'dragon_head.glb',
-      'seiron_head.glb'
-    ])
-  }, [])
-  
-  const gltf = useLoader(
-    GLTFLoader, 
-    modelUrl,
-    undefined, // No DRACO loader for standard GLTF
-    (progress) => {  // Progress handler
-      console.log('Loading progress event:', progress)
-      if (progress && typeof progress === 'object' && 'loaded' in progress && 'total' in progress) {
-        const percentage = ((progress as any).loaded / (progress as any).total * 100).toFixed(1)
-        console.log('Loading progress:', percentage + '%')
+    if (loadError && fallbackIndex < fallbackModels.length - 1) {
+      const nextIndex = fallbackIndex + 1
+      const nextModel = fallbackModels[nextIndex]
+      logger.warn(`Failed to load ${currentModelUrl}, trying fallback model: ${nextModel}`)
+      setCurrentModelUrl(nextModel || '')
+      setFallbackIndex(nextIndex)
+      setLoadError(null)
+    } else if (loadError && fallbackIndex >= fallbackModels.length - 1) {
+      logger.error('All model loading attempts failed, using geometry fallback')
+      if (onError) {
+        onError(loadError)
       }
     }
-  )
+  }, [loadError, fallbackIndex, currentModelUrl, onError])
   
-  console.log('Model loaded successfully:', gltf)
+  logger.info(`Attempting to load model from: ${currentModelUrl}`)
   
-  // Mouse tracking for eye movement
-  const { mousePosition, isMouseActive } = useMouseTracking(undefined, {
-    smoothing: true,
-    smoothingFactor: 0.08
-  })
-
-  // Setup model on load
-  useEffect(() => {
-    if (gltf && gltf.scene && modelRef.current && !initialSetupDone.current) {
-      // Clear any existing children
-      modelRef.current.clear()
-      
-      // Clone the scene to avoid issues
-      const clonedScene = gltf.scene.clone()
-      
-      // Make it MASSIVE - scale up significantly
-      clonedScene.scale.set(5, 5, 5)
-      
-      // Rotate to face the user (adjust based on model's original orientation)
-      clonedScene.rotation.y = Math.PI // 180 degrees if model is facing away
-      clonedScene.position.set(0, -2, -3) // Position so head is centered
-      
-      // Apply RED dragon materials with GOLDEN accents
-      clonedScene.traverse((child: THREE.Object3D) => {
-        if (child instanceof THREE.Mesh) {
-          // Create new material for red dragon with golden accents
-          const material = new THREE.MeshPhysicalMaterial({
-            color: new THREE.Color(0.8, 0.1, 0.05), // Deep red
-            metalness: 0.9,
-            roughness: 0.2,
-            clearcoat: 0.5,
-            clearcoatRoughness: 0.1,
-            emissive: new THREE.Color(0.6, 0.05, 0.02), // Red glow
-            emissiveIntensity: lightningActive ? 0.8 : 0.2,
-          })
-          
-          // Check if this part should be golden (based on material name or mesh name)
-          const meshName = child.name.toLowerCase()
-          if (meshName.includes('horn') || meshName.includes('spike') || 
-              meshName.includes('accent') || meshName.includes('detail')) {
-            // Golden accents for horns and details
-            material.color = new THREE.Color(0.9, 0.7, 0.2) // Gold
-            material.emissive = new THREE.Color(0.8, 0.6, 0.1) // Golden glow
-            material.metalness = 1.0
-            material.roughness = 0.1
-          }
-          
-          child.material = material
-          child.castShadow = true
-          child.receiveShadow = true
-        }
-      })
-      
-      // Add to scene
-      modelRef.current.add(clonedScene)
-      initialSetupDone.current = true
-    }
-  }, [gltf, lightningActive])
-
-  // Animation
-  useFrame((state, delta) => {
-    if (!groupRef.current || !modelRef.current) return
-
-    // Breathing animation - subtle on the already massive model
-    const breathe = Math.sin(state.clock.elapsedTime * 0.8) * 0.02
-    const baseScale = modelRef.current.children[0]?.scale.x || 5
-    modelRef.current.children.forEach(child => {
-      child.scale.setScalar(baseScale * (1 + breathe))
-    })
-
-    // Eye tracking with head movement - looking at the user
-    if (enableEyeTracking && isMouseActive) {
-      const normalizedX = (mousePosition.x / window.innerWidth) * 2 - 1
-      const normalizedY = -(mousePosition.y / window.innerHeight) * 2 + 1
-
-      // Head follows mouse to maintain eye contact
-      groupRef.current.rotation.y = normalizedX * 0.2
-      groupRef.current.rotation.x = -0.1 + normalizedY * 0.15 // Slight downward tilt
+  // Load the model with simplified approach
+  let gltf;
+  try {
+    gltf = useLoader(GLTFLoader, currentModelUrl)
+    logger.info('Model loaded successfully:', currentModelUrl)
+  } catch (error) {
+    logger.error(`Error loading model ${currentModelUrl}:`, error)
+    
+    // Check if this is a typed array error
+    if (error instanceof Error && error.message.includes('Invalid typed array length')) {
+      const newError = new Error(
+        `Model file corruption detected: The binary data for ${currentModelUrl} is incomplete or corrupted. ` +
+        `Expected buffer size does not match actual file size. This often happens when the .bin file is truncated during upload.`
+      )
+      setLoadError(newError)
     } else {
-      // Return to looking straight at user
-      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, -0.1, delta * 2)
-      groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, 0, delta * 2)
+      setLoadError(error as Error)
     }
+    
+    // If all fallbacks failed, return the fallback geometry
+    if (fallbackIndex >= fallbackModels.length - 1) {
+      return <FallbackDragon lightningActive={lightningActive} />
+    }
+    
+    throw error
+  }
 
-    // Intensity-based scaling - make it grow dramatically on appearance
-    const targetScale = 1.2 * intensity // Even bigger!
-    groupRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), delta * 2)
 
-    // Lightning effect - enhance red glow and golden accents
-    if (lightningActive && modelRef.current) {
-      modelRef.current.traverse((child) => {
-        if (child instanceof THREE.Mesh && child.material) {
-          const material = child.material as THREE.MeshPhysicalMaterial
-          if (material.emissive) {
-            const pulsate = 0.5 + Math.sin(state.clock.elapsedTime * 10) * 0.5
-            material.emissiveIntensity = pulsate
-          }
+  // Use the loaded model
+  useEffect(() => {
+    if (gltf && gltf.scene) {
+      // Log model information for debugging
+      console.log('Dragon model info:');
+      console.log('- Position:', gltf.scene.position);
+      console.log('- Scale:', gltf.scene.scale);
+      console.log('- Visible:', gltf.scene.visible);
+      
+      // Calculate bounding box
+      const box = new THREE.Box3().setFromObject(gltf.scene);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+      console.log('- Bounding box size:', size);
+      console.log('- Bounding box center:', center);
+      
+      // Make sure it's visible
+      gltf.scene.traverse((child: THREE.Object3D) => {
+        child.visible = true;
+        if (child instanceof THREE.Mesh) {
+          console.log('Found mesh:', child.name, 'Material:', child.material);
         }
-      })
+      });
     }
-  })
-
-
+  }, [gltf]);
+  
+  // Scale the model appropriately
+  const modelScale = 0.02; // Dragon model needs small scale
+  
   return (
-    <group ref={groupRef} position={[0, -10, -32]} scale={0}>
-      <group ref={modelRef}>
-        {/* Model will be added here programmatically */}
-      </group>
+    <group ref={groupRef} position={[0, -1, -3]} scale={1}>
+      {/* Render the GLTF scene directly */}
+      {gltf && (
+        <primitive 
+          object={gltf.scene} 
+          scale={[modelScale, modelScale, modelScale]} 
+          position={[0, 0, 0]}
+          rotation={[0, Math.PI, 0]} // Rotate 180 degrees to face camera
+        />
+      )}
+      
       
       {/* Dramatic lighting setup for red dragon */}
       <pointLight
@@ -247,81 +188,58 @@ const SeironDragonHeadGLBInner = React.memo(function SeironDragonHeadGLBInner({
   )
 })
 
-// Error recovery wrapper component
-function SeironDragonHeadGLBWithFallback(props: SeironDragonHeadGLBProps) {
-  const [currentModelIndex, setCurrentModelIndex] = useState(0)
-  const [hasError, setHasError] = useState(false)
-  
-  const modelFallbacks = [
-    '/models/seiron_animated.gltf',
-    '/models/seiron_animated_optimized.gltf', 
-    '/models/seiron.glb',
-    '/models/dragon_head.glb'
-  ]
-
-  const handleError = useCallback(() => {
-    const nextIndex = currentModelIndex + 1
-    if (nextIndex < modelFallbacks.length) {
-      console.log(`Model failed, trying fallback: ${modelFallbacks[nextIndex]}`)
-      setCurrentModelIndex(nextIndex)
-      setHasError(false) // Reset error state to try again
-    } else {
-      console.error('All model fallbacks failed')
-      setHasError(true)
-      props.onError?.(new Error('All model loading attempts failed'))
-    }
-  }, [currentModelIndex, modelFallbacks, props])
-
-  if (hasError) {
-    return (
-      <Html center>
-        <div style={{ 
-          color: 'white', 
-          fontSize: '14px',
-          background: 'rgba(255,0,0,0.8)',
-          padding: '16px',
-          borderRadius: '8px'
-        }}>
-          All models failed to load
-        </div>
-      </Html>
-    )
+// Error boundary specifically for GLTF loading
+class GLTFErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallback?: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: any) {
+    super(props)
+    this.state = { hasError: false, error: null }
   }
 
-  return (
-    <ModelErrorBoundary fallback={
-      <Html center>
-        <div style={{ 
-          color: 'white', 
-          fontSize: '14px',
-          background: 'rgba(255,165,0,0.8)',
-          padding: '16px',
-          borderRadius: '8px'
-        }}>
-          Loading fallback model...
-        </div>
-      </Html>
-    } onError={handleError}>
-      <Suspense fallback={<LoadingFallback />}>
-        <SeironDragonHeadGLBInner 
-          {...props} 
-          key={`model-${currentModelIndex}`}
-          modelUrl={modelFallbacks[currentModelIndex]}
-        />
-      </Suspense>
-    </ModelErrorBoundary>
-  )
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error }
+  }
+
+  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    logger.error('GLTF loading error caught by boundary:', error, errorInfo)
+  }
+
+  override render() {
+    if (this.state.hasError) {
+      return this.props.fallback || <FallbackDragon lightningActive={false} />
+    }
+
+    return this.props.children
+  }
 }
 
 // Main component with error boundary and suspense
 export function SeironDragonHeadGLB(props: SeironDragonHeadGLBProps) {
+  const [error, setError] = useState<Error | null>(null)
+  
   useEffect(() => {
-    // Log component mount and model path
-    console.log('SeironDragonHeadGLB mounted')
-    console.log('Model path:', '/models/seiron_animated.gltf')
-    console.log('Current URL:', window.location.href)
-    console.log('Base URL:', document.baseURI)
+    logger.info('SeironDragonHeadGLB mounted with model:', props.modelUrl || '/models/seiron_animated.gltf')
   }, [])
 
-  return <SeironDragonHeadGLBWithFallback {...props} />
+  const handleError = (error: Error) => {
+    logger.error('Model loading error:', error)
+    setError(error)
+    if (props.onError) {
+      props.onError(error)
+    }
+  }
+
+  return (
+    <GLTFErrorBoundary fallback={<FallbackDragon lightningActive={props.lightningActive} />}>
+      <Suspense fallback={<FallbackDragon lightningActive={false} />}>
+        {error ? (
+          <FallbackDragon lightningActive={props.lightningActive} />
+        ) : (
+          <SeironDragonHeadGLBInner {...props} onError={handleError} />
+        )}
+      </Suspense>
+    </GLTFErrorBoundary>
+  )
 }

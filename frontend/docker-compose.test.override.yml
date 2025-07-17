@@ -1,0 +1,155 @@
+version: '3.8'
+
+# Environment-specific overrides for testing
+# This file provides different configurations for CI, local testing, and debugging
+
+services:
+  # CI-specific overrides
+  postgres-test:
+    environment:
+      # CI environments may have different memory constraints
+      POSTGRES_SHARED_BUFFERS: "${CI_POSTGRES_SHARED_BUFFERS:-128MB}"
+      POSTGRES_EFFECTIVE_CACHE_SIZE: "${CI_POSTGRES_CACHE_SIZE:-256MB}"
+    command: >
+      postgres
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=all
+      -c log_statement=${CI_LOG_LEVEL:-all}
+      -c log_min_duration_statement=${CI_LOG_DURATION:-0}
+      -c shared_buffers=${CI_POSTGRES_SHARED_BUFFERS:-128MB}
+      -c effective_cache_size=${CI_POSTGRES_CACHE_SIZE:-256MB}
+      -c max_connections=${CI_POSTGRES_MAX_CONNECTIONS:-100}
+
+  redis-test:
+    command: redis-server --appendonly yes --maxmemory ${CI_REDIS_MEMORY:-128mb} --maxmemory-policy allkeys-lru
+
+  elevenlabs-mock:
+    environment:
+      # Faster responses in CI
+      MOCK_RESPONSE_DELAY: "${CI_MOCK_DELAY:-50}"
+      ENABLE_MOCK_LATENCY: "${CI_ENABLE_LATENCY:-false}"
+      MOCK_ERROR_RATE: "${CI_MOCK_ERROR_RATE:-0}"
+
+  audio-simulator:
+    environment:
+      # Lower quality audio for faster CI tests
+      AUDIO_SAMPLE_RATE: "${CI_AUDIO_SAMPLE_RATE:-22050}"
+      AUDIO_CHANNELS: "${CI_AUDIO_CHANNELS:-1}"
+      ENABLE_AUDIO_COMPRESSION: "${CI_AUDIO_COMPRESSION:-true}"
+
+  backend-test:
+    environment:
+      # CI-specific backend configuration
+      LOG_LEVEL: "${CI_LOG_LEVEL:-info}"
+      ENABLE_REQUEST_LOGGING: "${CI_REQUEST_LOGGING:-false}"
+      API_RATE_LIMIT: "${CI_RATE_LIMIT:-1000}"
+      WEBSOCKET_HEARTBEAT_INTERVAL: "${CI_WS_HEARTBEAT:-5000}"
+      DATABASE_POOL_SIZE: "${CI_DB_POOL_SIZE:-10}"
+      REDIS_CONNECTION_TIMEOUT: "${CI_REDIS_TIMEOUT:-3000}"
+      
+      # Memory limits for CI
+      NODE_OPTIONS: "--max_old_space_size=${CI_NODE_MEMORY:-2048}"
+    deploy:
+      resources:
+        limits:
+          memory: "${CI_BACKEND_MEMORY:-1G}"
+          cpus: "${CI_BACKEND_CPUS:-1.0}"
+
+  frontend-test:
+    environment:
+      # CI-specific frontend configuration
+      VITE_TEST_TIMEOUT: "${CI_TEST_TIMEOUT:-30000}"
+      VITE_API_TIMEOUT: "${CI_API_TIMEOUT:-10000}"
+      VITE_WEBSOCKET_TIMEOUT: "${CI_WS_TIMEOUT:-5000}"
+      VITE_AUDIO_TIMEOUT: "${CI_AUDIO_TIMEOUT:-15000}"
+      
+      # Performance settings for CI
+      VITE_CHUNK_SIZE_WARNING_LIMIT: "${CI_CHUNK_SIZE:-1000}"
+      VITE_DISABLE_ANIMATIONS: "${CI_DISABLE_ANIMATIONS:-true}"
+      
+      # Memory limits for CI
+      NODE_OPTIONS: "--max_old_space_size=${CI_NODE_MEMORY:-2048}"
+    deploy:
+      resources:
+        limits:
+          memory: "${CI_FRONTEND_MEMORY:-1G}"
+          cpus: "${CI_FRONTEND_CPUS:-1.0}"
+
+  test-runner:
+    environment:
+      # CI test execution configuration
+      PARALLEL_JOBS: "${CI_PARALLEL_JOBS:-2}"
+      TEST_TIMEOUT: "${CI_TEST_TIMEOUT:-180000}"
+      HEADLESS: "${CI_HEADLESS:-true}"
+      BROWSER_MEMORY: "${CI_BROWSER_MEMORY:-512}"
+      
+      # CI-specific test configuration
+      ENABLE_VIDEO_RECORDING: "${CI_VIDEO_RECORDING:-false}"
+      ENABLE_SCREENSHOT_ON_FAILURE: "${CI_SCREENSHOT_FAILURE:-true}"
+      ENABLE_TRACE_ON_FAILURE: "${CI_TRACE_FAILURE:-false}"
+      RETRY_COUNT: "${CI_RETRY_COUNT:-2}"
+      
+      # Performance monitoring in CI
+      ENABLE_PERFORMANCE_MONITORING: "${CI_PERF_MONITORING:-true}"
+      PERFORMANCE_BUDGET_MS: "${CI_PERF_BUDGET:-3000}"
+      
+      # Memory and resource limits
+      NODE_OPTIONS: "--max_old_space_size=${CI_NODE_MEMORY:-2048}"
+    deploy:
+      resources:
+        limits:
+          memory: "${CI_TEST_RUNNER_MEMORY:-2G}"
+          cpus: "${CI_TEST_RUNNER_CPUS:-2.0}"
+
+  backend-unit-tests:
+    environment:
+      JEST_COVERAGE_THRESHOLD: "${CI_COVERAGE_THRESHOLD:-80}"
+      JEST_MAX_WORKERS: "${CI_JEST_WORKERS:-2}"
+      JEST_TIMEOUT: "${CI_JEST_TIMEOUT:-30000}"
+      NODE_OPTIONS: "--max_old_space_size=${CI_NODE_MEMORY:-1024}"
+    deploy:
+      resources:
+        limits:
+          memory: "${CI_UNIT_TEST_MEMORY:-512M}"
+          cpus: "${CI_UNIT_TEST_CPUS:-1.0}"
+
+  frontend-unit-tests:
+    environment:
+      VITEST_COVERAGE_THRESHOLD: "${CI_COVERAGE_THRESHOLD:-80}"
+      VITEST_MAX_WORKERS: "${CI_VITEST_WORKERS:-2}"
+      VITEST_TIMEOUT: "${CI_VITEST_TIMEOUT:-30000}"
+      NODE_OPTIONS: "--max_old_space_size=${CI_NODE_MEMORY:-1024}"
+    deploy:
+      resources:
+        limits:
+          memory: "${CI_UNIT_TEST_MEMORY:-512M}"
+          cpus: "${CI_UNIT_TEST_CPUS:-1.0}"
+
+  integration-tests:
+    environment:
+      INTEGRATION_TEST_TIMEOUT: "${CI_INTEGRATION_TIMEOUT:-120000}"
+      DATABASE_CLEANUP_STRATEGY: "${CI_DB_CLEANUP:-truncate}"
+      ENABLE_TEST_ISOLATION: "${CI_TEST_ISOLATION:-true}"
+      NODE_OPTIONS: "--max_old_space_size=${CI_NODE_MEMORY:-1024}"
+    deploy:
+      resources:
+        limits:
+          memory: "${CI_INTEGRATION_MEMORY:-1G}"
+          cpus: "${CI_INTEGRATION_CPUS:-1.0}"
+
+  performance-tests:
+    environment:
+      LOAD_TEST_USERS: "${CI_LOAD_USERS:-25}"
+      LOAD_TEST_DURATION: "${CI_LOAD_DURATION:-30s}"
+      PERFORMANCE_THRESHOLD_MS: "${CI_PERF_THRESHOLD:-2000}"
+      MEMORY_USAGE_THRESHOLD_MB: "${CI_MEMORY_THRESHOLD:-500}"
+      CPU_USAGE_THRESHOLD_PERCENT: "${CI_CPU_THRESHOLD:-80}"
+      NODE_OPTIONS: "--max_old_space_size=${CI_NODE_MEMORY:-1024}"
+    deploy:
+      resources:
+        limits:
+          memory: "${CI_PERFORMANCE_MEMORY:-1G}"
+          cpus: "${CI_PERFORMANCE_CPUS:-2.0}"
+
+# Local development overrides (can be applied with -f docker-compose.test.yml -f docker-compose.test.override.yml)
+# These settings optimize for local development and debugging

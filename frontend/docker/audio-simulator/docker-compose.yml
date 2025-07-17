@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  audio-simulator:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - LOG_LEVEL=info
+    volumes:
+      - audio_temp:/app/temp
+      - audio_uploads:/app/uploads
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - audio-test-network
+
+  # Optional: Audio processing worker for heavy tasks
+  audio-worker:
+    build: .
+    command: ["node", "worker.js"]
+    environment:
+      - NODE_ENV=production
+      - WORKER_MODE=true
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    volumes:
+      - audio_temp:/app/temp
+    restart: unless-stopped
+    networks:
+      - audio-test-network
+
+  # Redis for task queuing (optional)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - audio-test-network
+
+  # Nginx reverse proxy for load balancing (optional)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - audio-simulator
+    restart: unless-stopped
+    networks:
+      - audio-test-network
+
+volumes:
+  audio_temp:
+  audio_uploads:
+  redis_data:
+
+networks:
+  audio-test-network:
+    driver: bridge

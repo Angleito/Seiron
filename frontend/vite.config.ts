@@ -22,6 +22,7 @@ export default defineConfig(({ mode }) => {
         '@features': path.resolve(__dirname, './features'),
         '@pages': path.resolve(__dirname, './pages'),
       },
+      dedupe: ['react', 'react-dom'],
     },
     server: {
       port: 3000,
@@ -127,6 +128,8 @@ export default defineConfig(({ mode }) => {
         exclude: ['three'], // Let Three.js handle model loading
         force: true, // Force re-optimization to fix missing chunks
         include: [
+          'react',
+          'react-dom',
           '@privy-io/react-auth',
           '@tanstack/react-query',
           'wagmi',

@@ -23,6 +23,12 @@ export interface AIResponse {
   suggestions?: string[];
   confidence: number;
   reasoning?: string;
+  blockchainData?: {
+    hiveInsights?: any;
+    marketData?: any;
+    isBlockchainQuery: boolean;
+    queryType?: 'price' | 'defi' | 'staking' | 'wallet' | 'transaction' | 'general';
+  };
 }
 
 export interface ChatMessage {
@@ -35,6 +41,15 @@ export interface ChatContext {
   walletAddress: string;
   messages: ChatMessage[];
   portfolioData?: any;
+  blockchainContext?: {
+    recentBlockchainQueries: Array<{
+      query: string;
+      timestamp: Date;
+      type: string;
+      hadBlockchainData: boolean;
+    }>;
+    preferredQueryTypes: string[];
+  };
 }
 
 export class AIService {

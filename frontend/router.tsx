@@ -75,8 +75,8 @@ const WebGL3DPageLoader = ({
   modelPath?: string
   fallbackModelPath?: string
 }) => {
-  // Use seiron_animated.gltf as the default model path
-  const defaultModelPath = '/models/seiron_animated.gltf'
+  // Use seiron.glb as the default model path (seiron_animated.gltf is corrupted)
+  const defaultModelPath = '/models/seiron.glb'
   const defaultFallbackPath = '/models/dragon_head.glb'
   const effectiveModelPath = modelPath || defaultModelPath
   const effectiveFallbackPath = fallbackModelPath || defaultFallbackPath
@@ -181,10 +181,10 @@ export const router = createBrowserRouter([
         element: (
           <WebGL3DPageLoader 
             pageName="3D WebGL Dragons"
-            modelPath="/models/seiron_animated.gltf"
+            modelPath="/models/seiron.glb"
             fallbackModelPath="/models/dragon_head.glb"
           >
-            <WebGL3DPage modelPath="/models/seiron_animated.gltf" />
+            <WebGL3DPage modelPath="/models/seiron.glb" />
           </WebGL3DPageLoader>
         ),
       },

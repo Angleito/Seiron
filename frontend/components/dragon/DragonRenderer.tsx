@@ -125,8 +125,8 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
   fallbackType = 'fallback',
   enableProgressiveLoading = false,
   modelPath,
-  lowQualityModel = '/models/seiron.glb',
-  highQualityModel = '/models/seiron.glb', // Using the primary working model
+  lowQualityModel = '/models/seiron_optimized.glb',
+  highQualityModel = '/models/seiron.glb', // Using working GLB models instead of corrupted GLTF
   enablePerformanceMonitor = false,
   performanceMonitorPosition = 'top-left',
   onError,
@@ -682,7 +682,7 @@ export const DragonRenderer: React.FC<DragonRendererProps> = ({
           
           // LOD based on size with availability checking and safe fallbacks
           // Prioritize models that are confirmed to work in production
-          return '/models/seiron.glb' // Primary working model - use this for everything
+          return '/models/seiron.glb' // Primary working model - animated GLTF is corrupted
         }
         
         const modelPath = getLODModel()

@@ -1,0 +1,130 @@
+# Docker Compose file for comprehensive voice chat E2E testing
+# Note: version field is obsolete in newer Docker Compose versions
+
+services:
+  # Test Database
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: seiron-test-db
+    environment:
+      POSTGRES_DB: seiron_test
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./docker/test/postgres-test/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d seiron_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - test-network
+
+  # Test Redis Cache
+  redis-test:
+    image: redis:7-alpine
+    container_name: seiron-test-redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_test_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - test-network
+
+  # Backend Test Service
+  backend-test:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.test
+    container_name: seiron-backend-test
+    environment:
+      - NODE_ENV=test
+      - DATABASE_URL=postgresql://test_user:test_password@postgres-test:5432/seiron_test
+      - REDIS_URL=redis://redis-test:6379
+      - PORT=4000
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - backend_test_modules:/app/node_modules
+      - ./test-results:/app/test-results
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - test-network
+
+  # Frontend Test Service
+  frontend-test:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.test
+    container_name: seiron-frontend-test
+    environment:
+      - NODE_ENV=test
+      - VITE_API_URL=http://backend-test:4000
+      - VITE_ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
+      - CI=true
+    ports:
+      - "3001:3000"
+    depends_on:
+      backend-test:
+        condition: service_healthy
+    volumes:
+      - ./frontend:/app
+      - frontend_test_modules:/app/node_modules
+      - ./test-results:/app/test-results
+    networks:
+      - test-network
+
+
+  # Test Runner Orchestrator
+  test-runner:
+    build:
+      context: ./docker/test/test-runner
+      dockerfile: Dockerfile
+    container_name: seiron-test-runner
+    environment:
+      - FRONTEND_URL=http://frontend-test:3000
+      - BACKEND_URL=http://backend-test:4000
+    depends_on:
+      frontend-test:
+        condition: service_started
+      backend-test:
+        condition: service_healthy
+    volumes:
+      - ./test-results:/app/test-results
+      - ./frontend/e2e:/app/e2e
+      - ./backend/src/__tests__:/app/backend-tests
+    profiles:
+      - test-suite
+    networks:
+      - test-network
+
+volumes:
+  postgres_test_data:
+  redis_test_data:
+  backend_test_modules:
+  frontend_test_modules:
+
+networks:
+  test-network:
+    driver: bridge

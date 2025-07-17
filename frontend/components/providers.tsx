@@ -8,6 +8,7 @@ import { privyConfig, seiMainnet } from '@config/privy'
 import { wagmiConfig } from '@config/wagmi'
 // Removed dragon interaction provider after component cleanup
 import { WalletProvider } from '../contexts/WalletContext'
+import { WalletConnectProvider } from './wallet/WalletConnectProvider'
 import { RootErrorBoundary } from '@components/error-boundaries'
 import { logger } from '@lib/logger'
 import { 
@@ -93,18 +94,20 @@ export function Providers({
 
   return (
     <WalletCompatibilityErrorBoundary>
-      <PrivyProvider
-        appId={privyConfig.appId}
-        config={safePrivyConfig}
-      >
-        <QueryClientProvider client={queryClient}>
-          <WagmiProvider config={wagmiConfig}>
-            <WalletProvider>
-              {children}
-            </WalletProvider>
-          </WagmiProvider>
-        </QueryClientProvider>
-      </PrivyProvider>
+      <WalletConnectProvider>
+        <PrivyProvider
+          appId={privyConfig.appId}
+          config={safePrivyConfig}
+        >
+          <QueryClientProvider client={queryClient}>
+            <WagmiProvider config={wagmiConfig}>
+              <WalletProvider>
+                {children}
+              </WalletProvider>
+            </WagmiProvider>
+          </QueryClientProvider>
+        </PrivyProvider>
+      </WalletConnectProvider>
     </WalletCompatibilityErrorBoundary>
   )
 }

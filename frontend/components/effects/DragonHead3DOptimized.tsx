@@ -298,7 +298,6 @@ export const DragonHead3DOptimized = React.memo(function DragonHead3DOptimized({
     <div className={`absolute inset-0 ${className}`}>
       <Suspense fallback={<SimpleDragonFallback className={className} />}>
         <DragonHead3D 
-          className={className}
           intensity={intensity}
           enableEyeTracking={enableEyeTracking}
           lightningActive={lightningActive}

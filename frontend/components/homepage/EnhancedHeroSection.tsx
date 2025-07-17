@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, BookOpen, Zap, TrendingUp } from 'lucide-react'
 import { StormBackground } from '../effects/StormBackground'
+import { LightningEffect } from '../effects/LightningEffect'
 import { PowerLevelCounter } from './PowerLevelCounter'
 import { DragonRenderer } from '../dragon/DragonRenderer'
 import { cn } from '@/lib/utils'
@@ -45,6 +46,10 @@ export const EnhancedHeroSection: React.FC<EnhancedHeroSectionProps> = ({
   const [isLoaded, setIsLoaded] = useState(false)
   const [currentTaglineIndex, setCurrentTaglineIndex] = useState(0)
   const [powerLevelVisible, setPowerLevelVisible] = useState(false)
+  const [triggerLightning, setTriggerLightning] = useState(false)
+  const [isLightningActive, setIsLightningActive] = useState(false)
+  const [showScreenFlash, setShowScreenFlash] = useState(false)
+  const [showAtmosphericFlash, setShowAtmosphericFlash] = useState(false)
 
   const sizeClasses = {
     sm: { title: 'text-4xl sm:text-6xl', subtitle: 'text-lg', spacing: 'mb-8' },
@@ -97,6 +102,30 @@ export const EnhancedHeroSection: React.FC<EnhancedHeroSectionProps> = ({
     }
   }, [onNavigate])
 
+  // Lightning effect callbacks
+  const handleTriggerLightning = useCallback(() => {
+    if (enableAnimations) {
+      setTriggerLightning(true)
+      // Trigger atmospheric flash for button interactions
+      setShowAtmosphericFlash(true)
+      setTimeout(() => setShowAtmosphericFlash(false), 300)
+    }
+  }, [enableAnimations])
+
+  const handleLightningComplete = useCallback(() => {
+    setTriggerLightning(false)
+  }, [])
+
+  const handleLightningStrike = useCallback((isActive: boolean) => {
+    setIsLightningActive(isActive)
+    
+    if (isActive && enableAnimations) {
+      // Trigger coordinated screen flash
+      setShowScreenFlash(true)
+      setTimeout(() => setShowScreenFlash(false), 150)
+    }
+  }, [enableAnimations])
+
   const currentTagline = useMemo(() => {
     return customTaglines[currentTaglineIndex] || customTaglines[0]
   }, [customTaglines, currentTaglineIndex])
@@ -106,6 +135,8 @@ export const EnhancedHeroSection: React.FC<EnhancedHeroSectionProps> = ({
       className={cn("min-h-screen", className)}
       intensity={0.8}
       animated={enableAnimations}
+      isLightningActive={isLightningActive}
+      lightningIntensity={0.4}
     >
       {/* Gigantic GLB Dragon Background */}
       <div className="absolute inset-0 z-10">
@@ -113,11 +144,22 @@ export const EnhancedHeroSection: React.FC<EnhancedHeroSectionProps> = ({
           size="gigantic"
           enableAnimations={enableAnimations}
           enableProgressiveLoading={true}
-          lowQualityModel="/models/seiron.glb"
+          lowQualityModel="/models/seiron_optimized.glb"
           highQualityModel="/models/seiron.glb"
           className="w-full h-full"
         />
       </div>
+
+      {/* Lightning Effects Layer */}
+      <LightningEffect
+        className="z-40"
+        frequency="medium"
+        intensity="intense"
+        enabled={enableAnimations}
+        triggerLightning={triggerLightning}
+        onTriggerComplete={handleLightningComplete}
+        onLightningStrike={handleLightningStrike}
+      />
 
       {/* Main Content */}
       <div className="relative z-50 flex flex-col items-center justify-center min-h-screen px-4">
@@ -256,46 +298,75 @@ export const EnhancedHeroSection: React.FC<EnhancedHeroSectionProps> = ({
           )}>
             <div className="flex gap-6 justify-center">
               <motion.button
-                onClick={() => handleNavigation('/chat')}
+                onClick={() => {
+                  handleTriggerLightning()
+                  handleNavigation('/chat')
+                }}
+                onMouseEnter={() => handleTriggerLightning()}
                 className="
                   group relative overflow-hidden
                   px-10 py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 
                   text-red-950 font-bold rounded-lg
-                  storm-hover-glow storm-hover-lightning
+                  storm-summon-enhanced storm-electrical-surge
                   border-2 border-yellow-400
                   shadow-lg shadow-yellow-500/50
-                  transform transition-all duration-300
-                  hover:shadow-xl hover:shadow-yellow-500/60
-                  hover:border-yellow-300
-                  hover:scale-105
-                  active:scale-95
                   opacity-100
                   cursor-pointer
                   pointer-events-auto
                   z-10
                   block
                 "
-                whileHover={enableAnimations ? { scale: 1.05 } : {}}
-                whileTap={enableAnimations ? { scale: 0.95 } : {}}
+                whileHover={enableAnimations ? { 
+                  scale: 1.05,
+                  y: -2
+                } : {}}
+                whileTap={enableAnimations ? { 
+                  scale: 0.98,
+                  y: 0
+                } : {}}
+                transition={enableAnimations ? {
+                  type: "spring",
+                  stiffness: 400,
+                  damping: 10,
+                  mass: 0.8
+                } : {}}
               >
                 <Sparkles className="inline mr-3 h-5 w-5 storm-breathing" />
                 <span className="relative z-10 text-lg font-extrabold tracking-wide">
                   SUMMON
                 </span>
-                {/* Enhanced lightning flash effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none" />
-                
-                {/* Power aura effect */}
+                {/* Enhanced electrical power aura with physics-based animation */}
                 <motion.div
-                  className="absolute inset-0 bg-yellow-400/20 rounded-lg blur-md -z-10"
+                  className="absolute inset-0 bg-gradient-radial from-blue-400/20 via-yellow-400/15 to-transparent rounded-lg blur-lg -z-10"
                   animate={enableAnimations ? {
-                    scale: [1, 1.1, 1],
-                    opacity: [0.2, 0.4, 0.2]
+                    scale: [1, 1.15, 1],
+                    opacity: [0.3, 0.6, 0.3],
+                    rotate: [0, 360]
                   } : {}}
                   transition={{
-                    duration: 2,
+                    duration: 4,
                     repeat: Infinity,
-                    ease: "easeInOut"
+                    ease: "easeInOut",
+                    rotate: {
+                      duration: 20,
+                      repeat: Infinity,
+                      ease: "linear"
+                    }
+                  }}
+                />
+                
+                {/* Secondary electrical field */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-radial from-white/10 via-blue-300/20 to-transparent rounded-lg blur-md -z-20"
+                  animate={enableAnimations ? {
+                    scale: [1.1, 1, 1.1],
+                    opacity: [0.2, 0.5, 0.2]
+                  } : {}}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: 0.5
                   }}
                 />
               </motion.button>
@@ -363,6 +434,17 @@ export const EnhancedHeroSection: React.FC<EnhancedHeroSectionProps> = ({
           }}
         />
       </div>
+
+      {/* Enhanced Screen Flash Coordination */}
+      <div className={cn(
+        "screen-flash-lightning",
+        showScreenFlash && "active"
+      )} />
+      
+      <div className={cn(
+        "atmospheric-flash",
+        showAtmosphericFlash && "button-triggered"
+      )} />
     </StormBackground>
   )
 }

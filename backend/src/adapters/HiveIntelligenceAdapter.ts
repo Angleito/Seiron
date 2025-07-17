@@ -1,434 +1,331 @@
-import { pipe } from 'fp-ts/function';
 import * as TE from 'fp-ts/TaskEither';
 import * as E from 'fp-ts/Either';
-import { EventEmitter } from 'events';
+import { pipe } from 'fp-ts/function';
 import axios, { AxiosInstance } from 'axios';
-import { OpenAI } from 'openai';
-import { HiveIntelligenceAdapter as IHiveIntelligenceAdapter } from '../services/SeiIntegrationService';
-import type {
-  HiveResponse,
-  HiveQueryMetadata,
-  HiveAnalyticsResult,
-  HiveSearchResult,
-  HiveInsight,
-  HiveRecommendation
-} from '../services/SeiIntegrationService';
-import logger from '../utils/logger';
+import { EventEmitter } from 'events';
+import { createHash } from 'crypto';
+import { logger } from '../utils/logger';
 
-/**
- * Real HiveIntelligenceAdapter Implementation
- * 
- * This adapter provides AI-powered blockchain search and analytics using OpenAI
- * for natural language processing and intelligent insights generation.
- */
-export class HiveIntelligenceAdapter extends EventEmitter implements IHiveIntelligenceAdapter {
-  private openai: OpenAI;
-  private axiosInstance: AxiosInstance;
-  private creditUsage: {
-    usedCredits: number;
-    totalCredits: number;
-    remainingCredits: number;
+export interface HiveIntelligenceConfig {
+  apiKey: string;
+  baseUrl?: string;
+  maxRequestsPerMinute?: number;
+  cacheTTL?: number;
+  retryAttempts?: number;
+  retryDelay?: number;
+}
+
+export interface BlockchainQueryParams {
+  query: string;
+  temperature?: number;
+  includeDataSources?: boolean;
+  maxTokens?: number;
+}
+
+export interface BlockchainQueryResponse {
+  query: string;
+  response: string;
+  sources?: string[];
+  creditsUsed: number;
+  timestamp: string;
+}
+
+interface HiveAPIResponse {
+  results: {
+    answer: string;
+    sources?: string[];
   };
-  private rateLimiter: Map<string, number[]> = new Map();
-  private cache: Map<string, { data: any; expiresAt: number }> = new Map();
+  metadata: {
+    credits_used: number;
+  };
+}
 
-  constructor(private config: {
-    openaiApiKey: string;
-    baseUrl?: string;
-    maxRequestsPerMinute?: number;
-    cacheEnabled?: boolean;
-    cacheTTL?: number;
-  }) {
+interface CacheEntry {
+  data: BlockchainQueryResponse;
+  expiresAt: number;
+}
+
+export class HiveIntelligenceAdapter extends EventEmitter {
+  public readonly name = 'HiveIntelligence';
+  public readonly version = '1.0.0';
+  public isInitialized = false;
+
+  private axiosInstance: AxiosInstance;
+  private rateLimiter: Map<string, number[]> = new Map();
+  private cache: Map<string, CacheEntry> = new Map();
+  private cacheCleanupInterval?: NodeJS.Timeout;
+  private readonly encryptedApiKey: string;
+
+  constructor(private config: HiveIntelligenceConfig) {
     super();
     
-    this.openai = new OpenAI({
-      apiKey: config.openaiApiKey
-    });
-
+    // Encrypt API key in memory for additional security
+    this.encryptedApiKey = this.encryptApiKey(config.apiKey);
+    
+    // Initialize axios with secure configuration
     this.axiosInstance = axios.create({
-      baseURL: config.baseUrl || 'https://api.dexscreener.com/latest',
+      baseURL: config.baseUrl || 'https://api.hiveintelligence.xyz/v1',
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': 'Seiron/1.0.0 HiveIntelligence'
+        'User-Agent': 'Seiron-Chatbot/1.0'
       }
     });
 
-    this.creditUsage = {
-      usedCredits: 0,
-      totalCredits: 10000,
-      remainingCredits: 10000
-    };
+    // Add request interceptor to inject auth header
+    this.axiosInstance.interceptors.request.use(config => {
+      config.headers['Authorization'] = `Bearer ${this.decryptApiKey(this.encryptedApiKey)}`;
+      return config;
+    });
 
-    // Setup cache cleanup
-    if (config.cacheEnabled !== false) {
-      setInterval(() => this.cleanupCache(), 60000); // Clean every minute
-    }
+    // Add response interceptor for error handling
+    this.axiosInstance.interceptors.response.use(
+      response => response,
+      error => {
+        // Sanitize error to prevent API key leakage
+        if (error.config?.headers?.Authorization) {
+          error.config.headers.Authorization = '[REDACTED]';
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    this.setupCacheCleanup();
   }
 
   /**
-   * Perform AI-powered search on blockchain data
+   * Initialize the adapter and verify API connectivity
    */
-  public search = (
-    query: string,
-    metadata?: HiveQueryMetadata
-  ): TE.TaskEither<Error, HiveResponse> => {
-    const cacheKey = this.getCacheKey('search', query, metadata);
-    
-    // Check cache first
-    if (this.config.cacheEnabled !== false) {
-      const cached = this.getFromCache(cacheKey);
-      if (cached) {
-        return TE.right(cached);
-      }
-    }
-
+  public initialize = (): TE.TaskEither<Error, void> => {
     return pipe(
-      this.checkRateLimit('search'),
-      TE.chain(() => this.performSearch(query, metadata)),
-      TE.map(results => {
-        const response: HiveResponse = {
-          data: results
-        };
-        
-        // Cache the response
-        if (this.config.cacheEnabled !== false) {
-          this.setInCache(cacheKey, response);
-        }
-        
-        // Update credit usage
-        this.updateCreditUsage(results.length * 10);
-        
-        return response;
-      }),
+      TE.tryCatch(
+        async () => {
+          // Test API connection with a simple query
+          const testQuery = await this.axiosInstance.post('/search', {
+            query: 'What is Sei network?',
+            temperature: 0.1,
+            include_data_sources: false
+          });
+
+          if (testQuery.status === 200) {
+            this.isInitialized = true;
+            logger.info('HiveIntelligence adapter initialized successfully');
+            this.emit('initialized');
+          }
+        },
+        error => new Error(`Failed to initialize HiveIntelligence adapter: ${this.sanitizeError(error)}`)
+      ),
       TE.mapLeft(error => {
-        logger.error('Hive search failed:', error);
+        logger.error('HiveIntelligence initialization failed:', error);
         return error;
       })
     );
   };
 
   /**
-   * Get AI-powered analytics and insights
+   * Query blockchain data using natural language
    */
-  public getAnalytics = (
-    query: string,
-    metadata?: HiveQueryMetadata
-  ): TE.TaskEither<Error, HiveResponse> => {
-    const cacheKey = this.getCacheKey('analytics', query, metadata);
-    
-    // Check cache first
-    if (this.config.cacheEnabled !== false) {
-      const cached = this.getFromCache(cacheKey);
-      if (cached) {
-        return TE.right(cached);
-      }
-    }
-
+  public queryBlockchainData = (params: BlockchainQueryParams): TE.TaskEither<Error, BlockchainQueryResponse> => {
     return pipe(
-      this.checkRateLimit('analytics'),
-      TE.chain(() => this.performAnalytics(query, metadata)),
-      TE.map(analytics => {
-        const response: HiveResponse = {
-          data: analytics
-        };
+      // Check rate limit
+      this.checkRateLimit('query'),
+      TE.chain(() => {
+        // Check cache first
+        const cacheKey = this.getCacheKey(params);
+        const cached = this.getFromCache(cacheKey);
         
-        // Cache the response
-        if (this.config.cacheEnabled !== false) {
-          this.setInCache(cacheKey, response);
+        if (cached) {
+          logger.debug('Returning cached blockchain query result');
+          return TE.right(cached);
         }
+
+        // Make API request
+        return this.performQuery(params);
+      }),
+      TE.map(response => {
+        // Cache the response
+        const cacheKey = this.getCacheKey(params);
+        this.setCache(cacheKey, response);
         
-        // Update credit usage
-        this.updateCreditUsage(50);
-        
+        // Emit event for monitoring
+        this.emit('query', {
+          query: params.query,
+          creditsUsed: response.creditsUsed,
+          cached: false
+        });
+
         return response;
       }),
       TE.mapLeft(error => {
-        logger.error('Hive analytics failed:', error);
+        logger.error('Blockchain query failed:', error);
+        this.emit('error', error);
         return error;
       })
     );
   };
 
   /**
-   * Install Hive plugin
+   * Get current credit usage and limits
    */
-  public installHivePlugin = (): TE.TaskEither<Error, void> => {
-    return TE.tryCatch(
-      async () => {
-        // Test OpenAI connection
-        await this.openai.chat.completions.create({
-          model: 'gpt-4-turbo-preview',
-          messages: [{ role: 'user', content: 'Test connection' }],
-          max_tokens: 10
-        });
-        
-        logger.info('Hive Intelligence adapter initialized successfully');
-        this.emit('hive:initialized');
-      },
-      error => new Error(`Failed to initialize Hive Intelligence: ${error}`)
-    );
+  public getUsageInfo = (): TE.TaskEither<Error, { creditsUsed: number; dailyLimit: number }> => {
+    // This would typically make an API call to get usage info
+    // For now, we'll track it locally
+    return TE.right({
+      creditsUsed: this.calculateDailyUsage(),
+      dailyLimit: 10 // Free tier limit
+    });
   };
 
   /**
-   * Get credit usage
+   * Clear cache and reset rate limiters
    */
-  public getCreditUsage = (): TE.TaskEither<Error, {
-    usedCredits: number;
-    totalCredits: number;
-    remainingCredits: number;
-  }> => {
-    return TE.right(this.creditUsage);
+  public reset = (): void => {
+    this.cache.clear();
+    this.rateLimiter.clear();
+    logger.info('HiveIntelligence adapter reset');
   };
 
-  // ============================================================================
-  // Private Implementation Methods
-  // ============================================================================
-
   /**
-   * Perform the actual search using AI
+   * Cleanup resources
    */
-  private performSearch = (
-    query: string,
-    metadata?: HiveQueryMetadata
-  ): TE.TaskEither<Error, HiveSearchResult[]> => {
-    return TE.tryCatch(
-      async () => {
-        try {
-          // Get blockchain data from external sources
-          const blockchainData = await this.fetchBlockchainData(metadata?.walletAddress);
-          
-          // Use AI to analyze and search
-          const completion = await this.openai.chat.completions.create({
-            model: 'gpt-4-turbo-preview',
-            messages: [
-              {
-                role: 'system',
-                content: `You are a blockchain data analyst specializing in the Sei Network. 
-                         Analyze the provided data and respond to search queries with relevant insights.
-                         Format your response as a JSON array of search results.`
-              },
-              {
-                role: 'user',
-                content: `Query: ${query}\n\nData: ${JSON.stringify(blockchainData)}\n\n
-                         Provide search results as JSON with this structure:
-                         [{
-                           "id": "unique-id",
-                           "title": "Result title",
-                           "description": "Detailed description",
-                           "type": "transaction|address|token|protocol|event",
-                           "chain": "sei",
-                           "relevanceScore": 0-100,
-                           "data": {},
-                           "timestamp": "ISO-8601"
-                         }]`
-              }
-            ],
-            response_format: { type: 'json_object' },
-            temperature: 0.3,
-            max_tokens: 2000
+  public destroy = (): void => {
+    if (this.cacheCleanupInterval) {
+      clearInterval(this.cacheCleanupInterval);
+    }
+    this.reset();
+    this.removeAllListeners();
+    logger.info('HiveIntelligence adapter destroyed');
+  };
+
+  // Private helper methods
+
+  private performQuery = (params: BlockchainQueryParams): TE.TaskEither<Error, BlockchainQueryResponse> => {
+    return pipe(
+      TE.tryCatch(
+        async () => {
+          const response = await this.axiosInstance.post<HiveAPIResponse>('/search', {
+            query: params.query,
+            temperature: params.temperature ?? 0.3,
+            include_data_sources: params.includeDataSources ?? true,
+            max_tokens: params.maxTokens ?? 500
           });
 
-          const response = JSON.parse(completion.choices[0].message.content || '{}');
-          return response.results || [];
-        } catch (error) {
-          logger.error('AI search failed:', error);
-          throw error;
+          return this.transformResponse(params.query, response.data);
+        },
+        error => new Error(`API request failed: ${this.sanitizeError(error)}`)
+      ),
+      // Retry logic
+      TE.orElse((error) => {
+        const retryAttempts = this.config.retryAttempts ?? 2;
+        if (retryAttempts > 0) {
+          logger.warn(`Retrying query, attempts remaining: ${retryAttempts}`);
+          return pipe(
+            TE.of(undefined),
+            TE.delay(this.config.retryDelay ?? 1000),
+            TE.chain(() => this.performQuery({ ...params, retryAttempts: retryAttempts - 1 } as any))
+          );
         }
-      },
-      error => new Error(`AI search failed: ${error}`)
+        return TE.left(error);
+      })
     );
   };
 
-  /**
-   * Perform analytics using AI
-   */
-  private performAnalytics = (
-    query: string,
-    metadata?: HiveQueryMetadata
-  ): TE.TaskEither<Error, HiveAnalyticsResult> => {
-    return TE.tryCatch(
-      async () => {
-        try {
-          // Get comprehensive blockchain data
-          const blockchainData = await this.fetchBlockchainData(metadata?.walletAddress);
-          const marketData = await this.fetchMarketData();
-          
-          // Use AI to generate analytics
-          const completion = await this.openai.chat.completions.create({
-            model: 'gpt-4-turbo-preview',
-            messages: [
-              {
-                role: 'system',
-                content: `You are a blockchain analytics expert specializing in DeFi and the Sei Network.
-                         Provide comprehensive analytics, insights, and recommendations based on the data.
-                         Focus on risk analysis, yield opportunities, and market trends.`
-              },
-              {
-                role: 'user',
-                content: `Query: ${query}\n\nBlockchain Data: ${JSON.stringify(blockchainData)}\n\n
-                         Market Data: ${JSON.stringify(marketData)}\n\n
-                         Provide analytics as JSON with this structure:
-                         {
-                           "insights": [{
-                             "id": "unique-id",
-                             "type": "trend|anomaly|opportunity|risk|correlation",
-                             "title": "Insight title",
-                             "description": "Detailed description",
-                             "confidence": 0-100,
-                             "data": {}
-                           }],
-                           "recommendations": [{
-                             "id": "unique-id",
-                             "type": "buy|sell|hold|monitor|optimize",
-                             "title": "Recommendation title",
-                             "description": "Detailed description",
-                             "priority": "high|medium|low",
-                             "expectedImpact": 0-100,
-                             "actionItems": []
-                           }]
-                         }`
-              }
-            ],
-            response_format: { type: 'json_object' },
-            temperature: 0.5,
-            max_tokens: 3000
-          });
-
-          const response = JSON.parse(completion.choices[0].message.content || '{}');
-          return {
-            insights: response.insights || [],
-            recommendations: response.recommendations || []
-          };
-        } catch (error) {
-          logger.error('AI analytics failed:', error);
-          throw error;
-        }
-      },
-      error => new Error(`AI analytics failed: ${error}`)
-    );
+  private transformResponse = (query: string, apiResponse: HiveAPIResponse): BlockchainQueryResponse => {
+    return {
+      query,
+      response: apiResponse.results.answer,
+      sources: apiResponse.results.sources,
+      creditsUsed: apiResponse.metadata.credits_used,
+      timestamp: new Date().toISOString()
+    };
   };
 
-  /**
-   * Fetch blockchain data from external sources
-   */
-  private fetchBlockchainData = async (walletAddress?: string): Promise<any> => {
-    try {
-      const data: any = {};
-      
-      // Fetch token data from DexScreener
-      try {
-        const tokenResponse = await this.axiosInstance.get('/dex/search', {
-          params: { q: 'sei' }
-        });
-        data.tokens = tokenResponse.data.pairs || [];
-      } catch (error) {
-        logger.warn('Failed to fetch token data:', error);
-      }
-      
-      // If wallet address provided, fetch wallet-specific data
-      if (walletAddress) {
-        // This would typically connect to Sei Network RPC
-        // For now, we'll return mock data structure
-        data.wallet = {
-          address: walletAddress,
-          // Additional wallet data would be fetched here
-        };
-      }
-      
-      return data;
-    } catch (error) {
-      logger.error('Failed to fetch blockchain data:', error);
-      return {};
-    }
-  };
-
-  /**
-   * Fetch market data
-   */
-  private fetchMarketData = async (): Promise<any> => {
-    try {
-      // Fetch market data from various sources
-      // This is a simplified version - real implementation would aggregate multiple sources
-      const response = await this.axiosInstance.get('/dex/tokens/sei');
-      return response.data || {};
-    } catch (error) {
-      logger.warn('Failed to fetch market data:', error);
-      return {};
-    }
-  };
-
-  /**
-   * Check rate limit
-   */
   private checkRateLimit = (operation: string): TE.TaskEither<Error, void> => {
-    const maxRequests = this.config.maxRequestsPerMinute || 60;
+    const maxRequests = this.config.maxRequestsPerMinute ?? 20;
     const now = Date.now();
     const windowMs = 60000; // 1 minute
-    
-    // Get request timestamps for this operation
+
     const timestamps = this.rateLimiter.get(operation) || [];
-    
-    // Remove old timestamps
     const recentTimestamps = timestamps.filter(t => now - t < windowMs);
-    
+
     if (recentTimestamps.length >= maxRequests) {
-      return TE.left(new Error('Rate limit exceeded'));
+      const oldestTimestamp = recentTimestamps[0];
+      const waitTime = windowMs - (now - oldestTimestamp);
+      return TE.left(new Error(`Rate limit exceeded. Please wait ${Math.ceil(waitTime / 1000)} seconds.`));
     }
-    
-    // Add current timestamp
+
     recentTimestamps.push(now);
     this.rateLimiter.set(operation, recentTimestamps);
-    
+
     return TE.right(undefined);
   };
 
-  /**
-   * Update credit usage
-   */
-  private updateCreditUsage = (credits: number): void => {
-    this.creditUsage.usedCredits += credits;
-    this.creditUsage.remainingCredits = Math.max(0, this.creditUsage.totalCredits - this.creditUsage.usedCredits);
-    
-    // Emit alert if running low on credits
-    if (this.creditUsage.remainingCredits < 1000) {
-      this.emit('hive:credit:alert', {
-        remainingCredits: this.creditUsage.remainingCredits,
-        totalCredits: this.creditUsage.totalCredits
-      });
-    }
+  private getCacheKey = (params: BlockchainQueryParams): string => {
+    const normalizedQuery = params.query.toLowerCase().trim();
+    return createHash('sha256')
+      .update(`${normalizedQuery}-${params.temperature ?? 0.3}-${params.includeDataSources ?? true}`)
+      .digest('hex');
   };
 
-  /**
-   * Cache management
-   */
-  private getCacheKey = (operation: string, query: string, metadata?: any): string => {
-    return `hive:${operation}:${Buffer.from(JSON.stringify({ query, metadata })).toString('base64')}`;
-  };
-
-  private getFromCache = (key: string): any => {
+  private getFromCache = (key: string): BlockchainQueryResponse | null => {
     const entry = this.cache.get(key);
-    if (!entry || Date.now() > entry.expiresAt) {
+    if (!entry) return null;
+
+    if (Date.now() > entry.expiresAt) {
       this.cache.delete(key);
       return null;
     }
+
     return entry.data;
   };
 
-  private setInCache = (key: string, data: any): void => {
-    const ttl = this.config.cacheTTL || 300000; // 5 minutes default
+  private setCache = (key: string, data: BlockchainQueryResponse): void => {
+    const ttl = (this.config.cacheTTL ?? 300) * 1000; // Convert to milliseconds
     this.cache.set(key, {
       data,
       expiresAt: Date.now() + ttl
     });
   };
 
-  private cleanupCache = (): void => {
-    const now = Date.now();
-    for (const [key, entry] of this.cache.entries()) {
-      if (now > entry.expiresAt) {
-        this.cache.delete(key);
+  private setupCacheCleanup = (): void => {
+    // Clean up expired cache entries every minute
+    this.cacheCleanupInterval = setInterval(() => {
+      const now = Date.now();
+      for (const [key, entry] of this.cache.entries()) {
+        if (now > entry.expiresAt) {
+          this.cache.delete(key);
+        }
       }
-    }
+    }, 60000);
+  };
+
+  private calculateDailyUsage = (): number => {
+    // In a real implementation, this would track actual usage
+    // For now, return a placeholder
+    return 0;
+  };
+
+  private encryptApiKey = (apiKey: string): string => {
+    // Simple obfuscation for in-memory storage
+    // In production, use proper encryption with AES-256-GCM
+    return Buffer.from(apiKey).toString('base64');
+  };
+
+  private decryptApiKey = (encryptedKey: string): string => {
+    // Decrypt the obfuscated key
+    return Buffer.from(encryptedKey, 'base64').toString();
+  };
+
+  private sanitizeError = (error: any): string => {
+    // Remove sensitive information from error messages
+    const message = error?.message || String(error);
+    return message
+      .replace(/Bearer\s+[^\s]+/gi, 'Bearer [REDACTED]')
+      .replace(/apiKey['":\s]+[^'",\s}]+/gi, 'apiKey: [REDACTED]');
   };
 }
+
+// Factory function
+export const createHiveIntelligenceAdapter = (config: HiveIntelligenceConfig): HiveIntelligenceAdapter => {
+  return new HiveIntelligenceAdapter(config);
+};

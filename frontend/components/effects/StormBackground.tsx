@@ -1,12 +1,14 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { cn } from '../../lib/utils'
-import { DragonRenderer, VoiceAnimationState } from '../dragon/DragonRenderer'
+import { DragonRenderer } from '../dragon/DragonRenderer'
 
 interface StormBackgroundProps {
   className?: string
   intensity?: number // 0-1, controls overall storm intensity
   animated?: boolean // whether animations are enabled
   children?: React.ReactNode
+  isLightningActive?: boolean // whether lightning is currently active
+  lightningIntensity?: number // 0-1, additional intensity boost during lightning
 }
 
 interface ScrollState {
@@ -83,7 +85,9 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
   className,
   intensity = 0.6,
   animated = true,
-  children
+  children,
+  isLightningActive = false,
+  lightningIntensity = 0.3
 }) => {
   const [isLoading, setIsLoading] = useState(true)
   const prefersReducedMotion = useReducedMotion()
@@ -107,8 +111,10 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
     return () => window.removeEventListener('resize', checkDevice)
   }, [])
 
-  // Normalize intensity to 0-1 range
-  const normalizedIntensity = Math.max(0, Math.min(1, intensity))
+  // Calculate dynamic intensity based on lightning state
+  const baseIntensity = Math.max(0, Math.min(1, intensity))
+  const lightningBoost = isLightningActive ? lightningIntensity : 0
+  const normalizedIntensity = Math.max(0, Math.min(1, baseIntensity + lightningBoost))
 
   // Loading state management
   useEffect(() => {
@@ -129,18 +135,7 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
     return scrollProgress * baseMultiplier * parallaxStrength
   }, [scrollState.scrollY, normalizedIntensity, shouldAnimate])
 
-  if (isLoading) {
-    return (
-      <div className={cn(
-        "absolute inset-0 bg-gradient-to-b from-slate-900 to-slate-800",
-        className
-      )}>
-        {children}
-      </div>
-    )
-  }
-
-  // Debug logging
+  // Debug logging - moved before conditional return to follow React Hook rules
   useEffect(() => {
     console.log('🌩️ StormBackground mounted with:', {
       className,
@@ -151,6 +146,17 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
       shouldAnimate
     })
   }, [className, intensity, animated, isMobile, isTablet, shouldAnimate])
+
+  if (isLoading) {
+    return (
+      <div className={cn(
+        "absolute inset-0 bg-gradient-to-b from-slate-900 to-slate-800",
+        className
+      )}>
+        {children}
+      </div>
+    )
+  }
 
   return (
     <div 
@@ -214,7 +220,7 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
             }}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-yellow-400">
+          <div className="w-full h-full flex items-center justify-center text-blue-100">
             <div className="text-center">
               <div className="text-8xl mb-4">🐉</div>
               <div className="text-2xl font-bold">Dragon Loading...</div>

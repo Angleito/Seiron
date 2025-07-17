@@ -18,6 +18,15 @@
   --storm-shadow: rgba(0, 0, 0, 0.8);
   --storm-glow: rgba(255, 215, 0, 0.4);
   
+  /* Enhanced Realistic Lightning Colors */
+  --lightning-core: #ffffff;
+  --lightning-inner: #88ddff;
+  --lightning-middle: #0099ff;
+  --lightning-outer: #0066cc;
+  --lightning-aura: rgba(255, 255, 255, 0.8);
+  --electric-blue: #00aaff;
+  --plasma-white: rgba(255, 255, 255, 0.9);
+  
   /* Animation Durations */
   --storm-duration-fast: 0.3s;
   --storm-duration-normal: 0.8s;
@@ -37,6 +46,81 @@
   --storm-delay-3: 0.3s;
   --storm-delay-4: 0.4s;
   --storm-delay-5: 0.5s;
+}
+
+/* ========================================
+   CORONA DISCHARGE ANIMATIONS
+   ======================================== */
+
+/* Corona flash for return stroke */
+@keyframes coronaFlash {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+    filter: brightness(3) saturate(2);
+  }
+  100% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1);
+    filter: brightness(2) saturate(1.5);
+  }
+}
+
+/* Corona stutter for stepped leader */
+@keyframes coronaStutter {
+  0%, 70% {
+    opacity: 0.1;
+    transform: translate(-50%, -50%) scale(0.9);
+    filter: brightness(1);
+  }
+  15%, 35% {
+    opacity: 0.4;
+    transform: translate(-50%, -50%) scale(1.1);
+    filter: brightness(1.5);
+  }
+  20%, 30% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1.2);
+    filter: brightness(2);
+  }
+}
+
+/* Corona fade for channel persistence */
+@keyframes coronaFade {
+  0% {
+    opacity: 0.4;
+    transform: translate(-50%, -50%) scale(1);
+    filter: brightness(1.8);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+    filter: brightness(1);
+  }
+}
+
+/* Electrical field distortion */
+@keyframes electricalField {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+    filter: blur(15px);
+  }
+  30% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1.5);
+    filter: blur(8px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2);
+    filter: blur(20px);
+  }
 }
 
 /* ========================================
@@ -116,6 +200,25 @@
     transform: scaleY(0) skewX(0deg);
     filter: brightness(1) contrast(1);
   }
+}
+
+/* Multi-Flash Lightning Animation for Realistic Return Stroke */
+@keyframes multiFlash {
+  0% { 
+    opacity: 1; 
+  }      /* Initial bright flash */
+  20% { 
+    opacity: 0.4; 
+  }   /* Quick dim */
+  40% { 
+    opacity: 1; 
+  }     /* Return stroke (main flash) */
+  60% { 
+    opacity: 0.5; 
+  }   /* Secondary dim */
+  100% { 
+    opacity: 0; 
+  }    /* Complete fade */
 }
 
 @keyframes storm-lightning-glow {
@@ -410,6 +513,391 @@
 
 .storm-hover-vortex:hover {
   transform: rotate(5deg) scale(1.02);
+}
+
+/* ========================================
+   Enhanced Realistic Lightning Effects (2024)
+   Performance-optimized and cross-browser compatible
+   ======================================== */
+
+/* Global performance optimizations */
+.storm-enhanced-glow,
+.storm-electrical-surge,
+.storm-lightning-flash,
+.storm-breathing-aura,
+.storm-summon-enhanced {
+  /* CSS containment for better performance */
+  contain: layout style paint;
+  
+  /* Force hardware acceleration */
+  will-change: transform, opacity, filter;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  
+  /* Optimize repaints */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  -moz-backface-visibility: hidden;
+  -ms-backface-visibility: hidden;
+}
+
+/* Multi-layered realistic glow with physics-based lighting */
+.storm-enhanced-glow {
+  position: relative;
+  transition: all var(--storm-duration-fast) cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+.storm-enhanced-glow:hover {
+  transform: scale(1.05) translateZ(0) !important;
+  /* Multi-layered realistic glow - inner to outer */
+  box-shadow: 
+    0 0 8px var(--lightning-core),          /* Core white glow */
+    0 0 16px var(--lightning-inner),        /* Inner blue-white */
+    0 0 24px var(--lightning-middle),       /* Middle electric blue */
+    0 0 40px var(--lightning-outer),        /* Outer deep blue */
+    0 0 60px rgba(255, 215, 0, 0.3),       /* Golden aura */
+    0 4px 20px var(--storm-shadow) !important; /* Shadow depth */
+  filter: brightness(1.2) saturate(1.3) !important;
+}
+
+/* Electrical surge effect for button interactions */
+.storm-electrical-surge {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+.storm-electrical-surge::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle,
+    var(--plasma-white) 0%,
+    var(--lightning-inner) 20%,
+    transparent 40%
+  );
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.storm-electrical-surge:hover::before {
+  opacity: 0.4;
+  transform: scale(1.2);
+}
+
+/* Realistic lightning flash effect */
+.storm-lightning-flash {
+  position: relative;
+  transition: all var(--storm-duration-fast) var(--storm-ease-lightning);
+  overflow: hidden;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+.storm-lightning-flash::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--lightning-aura) 20%,
+    var(--lightning-core) 50%,
+    var(--lightning-aura) 80%,
+    transparent 100%
+  );
+  transition: left 0.8s cubic-bezier(0.95, 0.05, 0.795, 0.035);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.storm-lightning-flash:hover::after {
+  left: 100%;
+}
+
+/* Breathing electrical aura for idle state */
+.storm-breathing-aura {
+  position: relative;
+}
+
+.storm-breathing-aura::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background: radial-gradient(
+    circle,
+    var(--lightning-aura) 0%,
+    var(--electric-blue) 30%,
+    transparent 70%
+  );
+  border-radius: inherit;
+  opacity: 0.3;
+  animation: breathing-aura 3s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes breathing-aura {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.4;
+  }
+}
+
+/* Lightning drawing animation for SVG stroke paths */
+@keyframes drawLightning {
+  0% {
+    stroke-dashoffset: inherit;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+/* Enhanced screen flash coordination for lightning strikes */
+.screen-flash-lightning {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(
+    circle,
+    var(--lightning-core) 0%,
+    var(--lightning-inner) 20%,
+    var(--lightning-middle) 40%,
+    transparent 60%
+  );
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: screen;
+  transition: opacity 0.1s ease-out;
+  
+  /* Performance optimizations */
+  will-change: opacity, transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.screen-flash-lightning.active {
+  animation: coordinatedFlash 0.15s ease-out forwards;
+}
+
+@keyframes coordinatedFlash {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  20% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  40% {
+    opacity: 0.6;
+    transform: scale(1.02);
+  }
+  70% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+/* Enhanced atmospheric flash for button interactions */
+.atmospheric-flash {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(
+    45deg,
+    transparent 0%,
+    var(--lightning-aura) 30%,
+    var(--lightning-core) 50%,
+    var(--lightning-aura) 70%,
+    transparent 100%
+  );
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9998;
+  mix-blend-mode: soft-light;
+  
+  /* Performance optimizations and cross-browser compatibility */
+  will-change: opacity, transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  -webkit-transform: translateZ(0);
+  -moz-transform: translateZ(0);
+  -ms-transform: translateZ(0);
+}
+
+.atmospheric-flash.button-triggered {
+  animation: atmosphericPulse 0.3s ease-out forwards;
+}
+
+@keyframes atmosphericPulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) rotate(0deg);
+  }
+  30% {
+    opacity: 0.4;
+    transform: scale(1.05) rotate(1deg);
+  }
+  60% {
+    opacity: 0.2;
+    transform: scale(1.02) rotate(-0.5deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* Combine all enhanced effects for summon button */
+.storm-summon-enhanced {
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  overflow: hidden;
+}
+
+.storm-summon-enhanced::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  background: radial-gradient(
+    circle,
+    var(--lightning-aura) 0%,
+    var(--electric-blue) 40%,
+    transparent 70%
+  );
+  border-radius: inherit;
+  opacity: 0.2;
+  animation: breathing-aura 4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.storm-summon-enhanced::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 150%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    var(--lightning-aura) 30%,
+    var(--lightning-core) 50%,
+    var(--lightning-aura) 70%,
+    transparent 100%
+  );
+  transition: left 1s cubic-bezier(0.95, 0.05, 0.795, 0.035);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.storm-summon-enhanced:hover {
+  transform: scale(1.05) translateZ(0) !important;
+  box-shadow: 
+    0 0 10px var(--lightning-core),
+    0 0 20px var(--lightning-inner),
+    0 0 30px var(--lightning-middle),
+    0 0 50px var(--lightning-outer),
+    0 0 80px rgba(255, 215, 0, 0.4),
+    0 6px 25px rgba(0, 0, 0, 0.6) !important;
+  filter: brightness(1.3) saturate(1.4) !important;
+}
+
+.storm-summon-enhanced:hover::before {
+  opacity: 0.5;
+  transform: scale(1.1);
+}
+
+.storm-summon-enhanced:hover::after {
+  left: 100%;
+}
+
+.storm-summon-enhanced:active {
+  transform: scale(0.98) translateZ(0) !important;
+  filter: brightness(2) !important;
+}
+
+/* Performance optimizations for mobile and low-end devices */
+@media (max-width: 768px) {
+  .storm-summon-enhanced::before,
+  .storm-summon-enhanced::after {
+    animation-duration: 6s; /* Slower animations on mobile for better performance */
+  }
+  
+  .screen-flash-lightning,
+  .atmospheric-flash {
+    mix-blend-mode: normal; /* Disable blend modes on mobile for performance */
+  }
+}
+
+/* Reduced motion support for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .storm-summon-enhanced::before,
+  .storm-summon-enhanced::after,
+  .screen-flash-lightning,
+  .atmospheric-flash {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .storm-enhanced-glow:hover,
+  .storm-electrical-surge:hover::before,
+  .storm-lightning-flash:hover::after {
+    animation: none !important;
+    transition: opacity 0.3s ease !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .storm-summon-enhanced {
+    border-color: HighlightText !important;
+    background: ButtonFace !important;
+    color: ButtonText !important;
+  }
+  
+  .screen-flash-lightning,
+  .atmospheric-flash {
+    display: none; /* Hide flash effects in high contrast mode */
+  }
 }
 
 /* ========================================

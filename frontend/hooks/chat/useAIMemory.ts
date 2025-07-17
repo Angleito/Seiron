@@ -104,7 +104,23 @@ export function useAIMemory({
             throw new Error(`Failed to load memories: ${response.statusText}`)
           }
 
-          return response.json()
+          // Validate content-type before parsing JSON
+          const contentType = response.headers.get('content-type')
+          if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text()
+            const preview = text.substring(0, 100)
+            logger.error(`Expected JSON response but got ${contentType}. Response preview: ${preview}...`)
+            throw new Error(`Invalid response type: Expected JSON but received ${contentType || 'unknown'}. This may indicate an HTML error page.`)
+          }
+
+          try {
+            return await response.json()
+          } catch (parseError) {
+            const text = await response.text()
+            const preview = text.substring(0, 100)
+            logger.error(`Failed to parse JSON response. Response preview: ${preview}...`)
+            throw new Error(`Failed to parse JSON response: ${parseError instanceof Error ? parseError.message : 'Unknown parse error'}`)
+          }
         },
         (error) => error as Error
       ),
@@ -181,7 +197,23 @@ export function useAIMemory({
             throw new Error(`Failed to save memory: ${response.statusText}`)
           }
 
-          return response.json()
+          // Validate content-type before parsing JSON
+          const contentType = response.headers.get('content-type')
+          if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text()
+            const preview = text.substring(0, 100)
+            logger.error(`Expected JSON response but got ${contentType}. Response preview: ${preview}...`)
+            throw new Error(`Invalid response type: Expected JSON but received ${contentType || 'unknown'}. This may indicate an HTML error page.`)
+          }
+
+          try {
+            return await response.json()
+          } catch (parseError) {
+            const text = await response.text()
+            const preview = text.substring(0, 100)
+            logger.error(`Failed to parse JSON response. Response preview: ${preview}...`)
+            throw new Error(`Failed to parse JSON response: ${parseError instanceof Error ? parseError.message : 'Unknown parse error'}`)
+          }
         },
         (error) => error as Error
       ),
@@ -232,7 +264,23 @@ export function useAIMemory({
             throw new Error(`Failed to update memory: ${response.statusText}`)
           }
 
-          return response.json()
+          // Validate content-type before parsing JSON
+          const contentType = response.headers.get('content-type')
+          if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text()
+            const preview = text.substring(0, 100)
+            logger.error(`Expected JSON response but got ${contentType}. Response preview: ${preview}...`)
+            throw new Error(`Invalid response type: Expected JSON but received ${contentType || 'unknown'}. This may indicate an HTML error page.`)
+          }
+
+          try {
+            return await response.json()
+          } catch (parseError) {
+            const text = await response.text()
+            const preview = text.substring(0, 100)
+            logger.error(`Failed to parse JSON response. Response preview: ${preview}...`)
+            throw new Error(`Failed to parse JSON response: ${parseError instanceof Error ? parseError.message : 'Unknown parse error'}`)
+          }
         },
         (error) => error as Error
       ),
@@ -336,7 +384,23 @@ export function useAIMemory({
             throw new Error(`Failed to search memories: ${response.statusText}`)
           }
 
-          return response.json()
+          // Validate content-type before parsing JSON
+          const contentType = response.headers.get('content-type')
+          if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text()
+            const preview = text.substring(0, 100)
+            logger.error(`Expected JSON response but got ${contentType}. Response preview: ${preview}...`)
+            throw new Error(`Invalid response type: Expected JSON but received ${contentType || 'unknown'}. This may indicate an HTML error page.`)
+          }
+
+          try {
+            return await response.json()
+          } catch (parseError) {
+            const text = await response.text()
+            const preview = text.substring(0, 100)
+            logger.error(`Failed to parse JSON response. Response preview: ${preview}...`)
+            throw new Error(`Failed to parse JSON response: ${parseError instanceof Error ? parseError.message : 'Unknown parse error'}`)
+          }
         },
         (error) => error as Error
       ),

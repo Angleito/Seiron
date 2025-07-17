@@ -69,6 +69,14 @@ export interface AIConfig {
     readonly maxTokens: number;
     readonly temperature: number;
   };
+  readonly hiveIntelligence: {
+    readonly apiKey: string;
+    readonly baseUrl: string;
+    readonly maxRequestsPerMinute: number;
+    readonly cacheTTL: number;
+    readonly retryAttempts: number;
+    readonly retryDelay: number;
+  };
 }
 
 /**

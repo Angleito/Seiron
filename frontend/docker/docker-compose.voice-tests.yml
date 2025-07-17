@@ -1,0 +1,85 @@
+# Docker Compose for Voice Chat E2E Testing
+version: '3.8'
+
+services:
+  voice-tests:
+    build:
+      context: ..
+      dockerfile: docker/voice-test.Dockerfile
+    container_name: seiron-voice-tests
+    volumes:
+      - ../e2e:/app/e2e
+      - ../test-results:/app/test-results
+      - ../playwright.config.ts:/app/playwright.config.ts
+      - ../scripts:/app/scripts
+    environment:
+      - CI=true
+      - DISPLAY=:99
+      - PULSE_RUNTIME_PATH=/tmp/pulse-runtime
+      - RUN_BASIC=true
+      - RUN_PERMISSIONS=true
+      - RUN_VAD=true
+      - RUN_ERROR_RECOVERY=true
+      - RUN_MEMORY=true
+      - RUN_MOBILE=true
+      - RUN_CROSS_BROWSER=false
+      - RUN_PERFORMANCE=false
+    networks:
+      - voice-test-network
+    depends_on:
+      - frontend-dev
+    command: >
+      bash -c "
+        setup-audio-env.sh &&
+        ./scripts/run-voice-tests.sh
+      "
+
+  frontend-dev:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: seiron-frontend-dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:8080
+    volumes:
+      - ..:/app
+      - /app/node_modules
+    networks:
+      - voice-test-network
+    command: npm run dev
+
+  # Mock services for testing
+  mock-elevenlabs:
+    image: mockserver/mockserver:latest
+    container_name: mock-elevenlabs
+    ports:
+      - "1080:1080"
+    environment:
+      - MOCKSERVER_PROPERTY_FILE=/config/mockserver.properties
+    volumes:
+      - ./mocks:/config
+    networks:
+      - voice-test-network
+
+  mock-ai-service:
+    image: mockserver/mockserver:latest
+    container_name: mock-ai-service
+    ports:
+      - "1081:1080"
+    environment:
+      - MOCKSERVER_PROPERTY_FILE=/config/ai-mockserver.properties
+    volumes:
+      - ./mocks:/config
+    networks:
+      - voice-test-network
+
+networks:
+  voice-test-network:
+    driver: bridge
+
+volumes:
+  test-results:
+  screenshots:

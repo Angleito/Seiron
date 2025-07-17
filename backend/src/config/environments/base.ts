@@ -167,7 +167,15 @@ const validateAIConfig = (): Either<readonly import('../types').ConfigError[], A
     validateEnvString('OPENAI_API_KEY'),
     validateEnvWithDefault('OPENAI_MODEL', 'gpt-4', (value) => right(value)),
     validateEnvWithDefault('OPENAI_MAX_TOKENS', 1000, (value) => validateNumber('OPENAI_MAX_TOKENS', value)),
-    validateEnvWithDefault('OPENAI_TEMPERATURE', 0.7, (value) => validateNumber('OPENAI_TEMPERATURE', value))
+    validateEnvWithDefault('OPENAI_TEMPERATURE', 0.7, (value) => validateNumber('OPENAI_TEMPERATURE', value)),
+    validateEnvString('HIVE_INTELLIGENCE_API_KEY'),
+    validateEnvWithDefault('HIVE_INTELLIGENCE_BASE_URL', 'https://api.hiveintelligence.xyz/v1', (value) => 
+      validateUrl('HIVE_INTELLIGENCE_BASE_URL', value)
+    ),
+    validateEnvWithDefault('HIVE_INTELLIGENCE_RATE_LIMIT', 20, (value) => validateNumber('HIVE_INTELLIGENCE_RATE_LIMIT', value)),
+    validateEnvWithDefault('HIVE_INTELLIGENCE_CACHE_TTL', 300, (value) => validateNumber('HIVE_INTELLIGENCE_CACHE_TTL', value)),
+    validateEnvWithDefault('HIVE_INTELLIGENCE_RETRY_ATTEMPTS', 2, (value) => validateNumber('HIVE_INTELLIGENCE_RETRY_ATTEMPTS', value)),
+    validateEnvWithDefault('HIVE_INTELLIGENCE_RETRY_DELAY', 1000, (value) => validateNumber('HIVE_INTELLIGENCE_RETRY_DELAY', value))
   ];
 
   return pipe(
@@ -176,13 +184,21 @@ const validateAIConfig = (): Either<readonly import('../types').ConfigError[], A
       if (result._tag === 'Left') {
         return result;
       }
-      const [apiKey, model, maxTokens, temperature] = result.right;
+      const [openaiApiKey, openaiModel, openaiMaxTokens, openaiTemperature, hiveApiKey, hiveBaseUrl, hiveRateLimit, hiveCacheTTL, hiveRetryAttempts, hiveRetryDelay] = result.right;
       return right({
         openai: {
-          apiKey,
-          model,
-          maxTokens,
-          temperature
+          apiKey: openaiApiKey,
+          model: openaiModel,
+          maxTokens: openaiMaxTokens,
+          temperature: openaiTemperature
+        },
+        hiveIntelligence: {
+          apiKey: hiveApiKey,
+          baseUrl: hiveBaseUrl,
+          maxRequestsPerMinute: hiveRateLimit,
+          cacheTTL: hiveCacheTTL,
+          retryAttempts: hiveRetryAttempts,
+          retryDelay: hiveRetryDelay
         }
       });
     }

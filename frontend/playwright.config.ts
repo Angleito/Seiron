@@ -37,6 +37,35 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'] },
     },
 
+    // Voice chat specific testing
+    {
+      name: 'voice-chat-chrome',
+      use: { 
+        ...devices['Desktop Chrome'],
+        permissions: ['microphone'],
+        launchOptions: {
+          args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream']
+        }
+      },
+      testMatch: '**/voice-chat/*.spec.ts',
+    },
+    {
+      name: 'voice-chat-firefox',
+      use: { 
+        ...devices['Desktop Firefox'],
+        permissions: ['microphone'],
+      },
+      testMatch: '**/voice-chat/*.spec.ts',
+    },
+    {
+      name: 'voice-chat-webkit',
+      use: { 
+        ...devices['Desktop Safari'],
+        permissions: ['microphone'],
+      },
+      testMatch: '**/voice-chat/*.spec.ts',
+    },
+
     // Mobile devices
     {
       name: 'mobile-iPhone-12',
@@ -52,6 +81,24 @@ export default defineConfig({
       name: 'mobile-Samsung-Galaxy-S21',
       use: { ...devices['Galaxy S21'] },
       testMatch: '**/mobile/*.spec.ts',
+    },
+
+    // Voice chat mobile testing
+    {
+      name: 'voice-mobile-iPhone',
+      use: { 
+        ...devices['iPhone 13'],
+        permissions: ['microphone'],
+      },
+      testMatch: '**/voice-chat/voice-mobile.spec.ts',
+    },
+    {
+      name: 'voice-mobile-Android',
+      use: { 
+        ...devices['Galaxy S8'],
+        permissions: ['microphone'],
+      },
+      testMatch: '**/voice-chat/voice-mobile.spec.ts',
     },
 
     // High DPI displays

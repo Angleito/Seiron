@@ -2,6 +2,7 @@
 export { useElevenLabsTTS } from './useElevenLabsTTS'
 export { useSecureElevenLabsTTS } from './useSecureElevenLabsTTS'
 export { useSpeechRecognition } from './useSpeechRecognition'
+export { useSeiVoiceIntegration } from './useSeiVoiceIntegration'
 
 // Dragon Control Hooks - Advanced dragon state management
 export { useDragon3D } from './useDragon3D'
@@ -25,6 +26,13 @@ export type {
   SpeechRecognitionState, 
   SpeechRecognitionAction
 } from './useSpeechRecognition'
+
+// Sei Voice Integration Types
+export type {
+  SeiVoiceState,
+  SeiVoiceConfig,
+  EnhancedVoiceResponse
+} from './useSeiVoiceIntegration'
 
 // Dragon Control Hook Types
 export type {

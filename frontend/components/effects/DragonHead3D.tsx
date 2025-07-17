@@ -1,16 +1,12 @@
 'use client'
 
-import React, { useRef, useEffect, useState, useMemo, Suspense } from 'react'
+import { useRef, useEffect, useState, Suspense } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { useMouseTracking } from '@/hooks/useMouseTracking'
 import { useWebGLRecovery } from '../../utils/webglRecovery'
-import { useDragonModel } from '@/hooks/useDragonModel'
 import { SeironDragonHeadGLB } from './SeironDragonHeadGLB'
-import { DragonParticles } from './DragonParticles'
 
 interface DragonHead3DProps {
-  className?: string
   intensity?: number
   enableEyeTracking?: boolean
   lightningActive?: boolean
@@ -45,7 +41,7 @@ function DragonLighting({ lightningActive = false }: { lightningActive: boolean 
   const directionalRef = useRef<THREE.DirectionalLight>(null)
   const rimLightRef = useRef<THREE.DirectionalLight>(null)
 
-  useFrame((state) => {
+  useFrame(() => {
     // Enhance lighting during lightning strikes
     if (ambientRef.current) {
       ambientRef.current.intensity = lightningActive ? 0.8 : 0.3
@@ -115,12 +111,11 @@ function DragonScene({
         lightningActive={lightningActive && isLoaded}
         intensity={isLoaded ? intensity : 0}
       />
-      {/* Particle effects around the dragon */}
-      <DragonParticles 
-        count={300}
-        lightningActive={lightningActive && isLoaded}
-        intensity={isLoaded ? intensity : 0}
-      />
+      {/* Debug sphere to make sure something renders */}
+      <mesh position={[0, 0, 0]}>
+        <sphereGeometry args={[1, 32, 32]} />
+        <meshStandardMaterial color="red" />
+      </mesh>
       {/* Fog for atmosphere */}
       <fog attach="fog" args={['#1a202c', 5, 25]} />
     </>
@@ -129,7 +124,6 @@ function DragonScene({
 
 // Main component
 export function DragonHead3D({ 
-  className = "",
   intensity = 0.8,
   enableEyeTracking = true,
   lightningActive = false,
@@ -145,9 +139,7 @@ export function DragonHead3D({
   // WebGL recovery hook
   const {
     initializeRecovery,
-    diagnostics,
-    shouldFallback,
-    resetDiagnostics
+    shouldFallback
   } = useWebGLRecovery({
     maxRecoveryAttempts: 3,
     recoveryDelayMs: 1000,
@@ -204,32 +196,48 @@ export function DragonHead3D({
       }
     }, 100)
     return () => clearTimeout(timer)
-  }, [])
+  }, [onLoad])
 
   // Initialize WebGL recovery when Canvas is ready
   useEffect(() => {
     if (canvasRef.current && rendererRef.current) {
       initializeRecovery(canvasRef.current, rendererRef.current)
     }
-  }, [canvasRef.current, rendererRef.current, initializeRecovery])
+  }, [initializeRecovery]) // Remove ref.current from dependencies
 
   if (hasError || shouldFallback) {
     return null // Fail silently to not break the page
   }
 
   return (
-    <div className={`absolute inset-0 ${className}`}>
+    <div style={{ 
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100vw',
+      height: '100vh',
+      pointerEvents: 'none',
+      zIndex: 100
+    }}>
       <Canvas
         ref={canvasRef}
         camera={{ 
-          position: [0, 1, 8], 
-          fov: 45,
+          position: [0, 0, 10], 
+          fov: 50,
           near: 0.1,
           far: 100
         }}
+        resize={{ 
+          polyfill: ResizeObserver,
+          debounce: { scroll: 50, resize: 0 }
+        }}
         style={{ 
-          background: 'transparent',
-          pointerEvents: 'none' // Allow mouse events to pass through
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'transparent'
         }}
         gl={{ 
           antialias: true, 
@@ -260,7 +268,7 @@ export function DragonHead3D({
             intensity={intensity}
           />
         </Suspense>
-      </Canvas>
+    </Canvas>
     </div>
   )
 }

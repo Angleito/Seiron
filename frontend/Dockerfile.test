@@ -1,0 +1,43 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install dependencies for testing
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    freetype-dev \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    curl
+
+# Set Chromium path for Playwright
+ENV CHROMIUM_PATH=/usr/bin/chromium-browser
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Install Playwright browsers
+RUN npx playwright install --with-deps chromium
+
+# Copy source code
+COPY . .
+
+# Build the application for testing
+RUN npm run build
+
+# Expose port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000 || exit 1
+
+# Default command for testing
+CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0"]

@@ -1,0 +1,385 @@
+version: '3.8'
+
+services:
+  # Test PostgreSQL Database
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: seiron-test-postgres
+    environment:
+      POSTGRES_DB: seiron_test_db
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./docker/test/postgres-test/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ../sql/migrations:/docker-entrypoint-initdb.d/migrations
+    command: >
+      postgres
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=all
+      -c log_statement=all
+      -c log_min_duration_statement=0
+      -c log_line_prefix='%t [%p-%l] %u@%d '
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d seiron_test_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - test-network
+
+  # Test Redis Instance
+  redis-test:
+    image: redis:7-alpine
+    container_name: seiron-test-redis
+    ports:
+      - "6380:6379"  # Different port to avoid conflicts
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_test_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - test-network
+
+  # ElevenLabs Mock Service
+  elevenlabs-mock:
+    build:
+      context: ./docker/test/elevenlabs-mock
+      dockerfile: Dockerfile
+    container_name: seiron-test-elevenlabs
+    ports:
+      - "11000:11000"
+    environment:
+      - NODE_ENV=test
+      - PORT=11000
+      - MOCK_RESPONSE_DELAY=100
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - test-network
+
+  # Audio Device Simulator
+  audio-simulator:
+    build:
+      context: ./docker/test/audio-simulator
+      dockerfile: Dockerfile
+    container_name: seiron-test-audio
+    ports:
+      - "8888:8888"
+    environment:
+      - NODE_ENV=test
+      - AUDIO_SAMPLE_RATE=44100
+      - AUDIO_CHANNELS=2
+    volumes:
+      - ./docker/test/audio-simulator/samples:/app/samples:ro
+      - test_audio_artifacts:/app/artifacts
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - test-network
+
+  # Backend Service (Test Configuration)
+  backend-test:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.test
+      target: test
+    container_name: seiron-test-backend
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=test
+      - PORT=3001
+      - DB_HOST=postgres-test
+      - DB_PORT=5432
+      - DB_NAME=seiron_test_db
+      - DB_USER=test_user
+      - DB_PASSWORD=test_password
+      - REDIS_HOST=redis-test
+      - REDIS_PORT=6379
+      - ELEVENLABS_API_URL=http://elevenlabs-mock:11000
+      - ELEVENLABS_API_KEY=test_key_12345
+      - JWT_SECRET=test_jwt_secret_key_for_testing_only
+      - CORS_ORIGIN=http://localhost:3000
+      - LOG_LEVEL=debug
+      - ENABLE_REQUEST_LOGGING=true
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      elevenlabs-mock:
+        condition: service_healthy
+    volumes:
+      - ../backend/src:/app/src:ro
+      - ../backend/__tests__:/app/__tests__:ro
+      - test_backend_coverage:/app/coverage
+      - test_backend_logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - test-network
+    profiles:
+      - backend
+      - full-stack
+      - e2e
+
+  # Frontend Service (Test Configuration)  
+  frontend-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+      target: test
+    container_name: seiron-test-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=test
+      - VITE_API_URL=http://backend-test:3001
+      - VITE_WEBSOCKET_URL=ws://backend-test:3001
+      - VITE_ELEVENLABS_MOCK_URL=http://elevenlabs-mock:11000
+      - VITE_AUDIO_SIMULATOR_URL=http://audio-simulator:8888
+      - VITE_TEST_MODE=true
+    depends_on:
+      backend-test:
+        condition: service_healthy
+      audio-simulator:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src:ro
+      - ./components:/app/components:ro
+      - ./hooks:/app/hooks:ro
+      - ./utils:/app/utils:ro
+      - ./__tests__:/app/__tests__:ro
+      - ./e2e:/app/e2e:ro
+      - test_frontend_coverage:/app/coverage
+      - test_frontend_artifacts:/app/test-results
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - test-network
+    profiles:
+      - frontend
+      - full-stack
+      - e2e
+
+  # Test Runner Orchestration Service
+  test-runner:
+    build:
+      context: ./docker/test/test-runner
+      dockerfile: Dockerfile
+    container_name: seiron-test-runner
+    environment:
+      - NODE_ENV=test
+      - TEST_SUITE=${TEST_SUITE:-full}
+      - BACKEND_URL=http://backend-test:3001
+      - FRONTEND_URL=http://frontend-test:3000
+      - POSTGRES_URL=postgresql://test_user:test_password@postgres-test:5432/seiron_test_db
+      - REDIS_URL=redis://redis-test:6379
+      - ELEVENLABS_MOCK_URL=http://elevenlabs-mock:11000
+      - AUDIO_SIMULATOR_URL=http://audio-simulator:8888
+      - PARALLEL_JOBS=${PARALLEL_JOBS:-4}
+      - TEST_TIMEOUT=${TEST_TIMEOUT:-300000}
+      - HEADLESS=${HEADLESS:-true}
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      elevenlabs-mock:
+        condition: service_healthy
+      audio-simulator:
+        condition: service_healthy
+      backend-test:
+        condition: service_healthy
+      frontend-test:
+        condition: service_healthy
+    volumes:
+      - ./e2e:/app/e2e:ro
+      - ./__tests__:/app/frontend-tests:ro
+      - ../backend/__tests__:/app/backend-tests:ro
+      - test_runner_artifacts:/app/artifacts
+      - test_runner_reports:/app/reports
+      - test_runner_screenshots:/app/screenshots
+      - test_runner_videos:/app/videos
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # For Docker-in-Docker if needed
+    networks:
+      - test-network
+    profiles:
+      - e2e
+      - full-stack
+
+  # Unit Test Runner (Backend)
+  backend-unit-tests:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.test
+      target: test
+    container_name: seiron-backend-unit-tests
+    environment:
+      - NODE_ENV=test
+      - TEST_TYPE=unit
+      - JEST_COVERAGE_THRESHOLD=80
+    volumes:
+      - ../backend/src:/app/src:ro
+      - ../backend/__tests__:/app/__tests__:ro
+      - test_backend_unit_coverage:/app/coverage
+    command: ["npm", "run", "test:unit", "--", "--coverage", "--maxWorkers=4"]
+    networks:
+      - test-network
+    profiles:
+      - unit
+      - backend
+
+  # Unit Test Runner (Frontend)
+  frontend-unit-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+      target: test
+    container_name: seiron-frontend-unit-tests
+    environment:
+      - NODE_ENV=test
+      - TEST_TYPE=unit
+      - VITEST_COVERAGE_THRESHOLD=80
+    volumes:
+      - ./src:/app/src:ro
+      - ./components:/app/components:ro
+      - ./hooks:/app/hooks:ro
+      - ./utils:/app/utils:ro
+      - ./__tests__:/app/__tests__:ro
+      - test_frontend_unit_coverage:/app/coverage
+    command: ["npm", "run", "test:unit", "--", "--coverage", "--reporter=verbose"]
+    networks:
+      - test-network
+    profiles:
+      - unit
+      - frontend
+
+  # Integration Test Runner
+  integration-tests:
+    build:
+      context: ./docker/test/test-runner
+      dockerfile: Dockerfile
+    container_name: seiron-integration-tests
+    environment:
+      - NODE_ENV=test
+      - TEST_TYPE=integration
+      - BACKEND_URL=http://backend-test:3001
+      - FRONTEND_URL=http://frontend-test:3000
+      - POSTGRES_URL=postgresql://test_user:test_password@postgres-test:5432/seiron_test_db
+      - REDIS_URL=redis://redis-test:6379
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      backend-test:
+        condition: service_healthy
+    volumes:
+      - ../backend/__tests__:/app/backend-tests:ro
+      - ./__tests__:/app/frontend-tests:ro
+      - test_integration_artifacts:/app/artifacts
+      - test_integration_coverage:/app/coverage
+    command: ["npm", "run", "test:integration"]
+    networks:
+      - test-network
+    profiles:
+      - integration
+
+  # Performance Test Runner
+  performance-tests:
+    build:
+      context: ./docker/test/test-runner
+      dockerfile: Dockerfile
+    container_name: seiron-performance-tests
+    environment:
+      - NODE_ENV=test
+      - TEST_TYPE=performance
+      - BACKEND_URL=http://backend-test:3001
+      - FRONTEND_URL=http://frontend-test:3000
+      - LOAD_TEST_USERS=${LOAD_TEST_USERS:-50}
+      - LOAD_TEST_DURATION=${LOAD_TEST_DURATION:-60s}
+    depends_on:
+      backend-test:
+        condition: service_healthy
+      frontend-test:
+        condition: service_healthy
+    volumes:
+      - test_performance_artifacts:/app/artifacts
+      - test_performance_reports:/app/reports
+    command: ["npm", "run", "test:performance"]
+    networks:
+      - test-network
+    profiles:
+      - performance
+
+volumes:
+  postgres_test_data:
+    driver: local
+  redis_test_data:
+    driver: local
+  test_audio_artifacts:
+    driver: local
+  test_backend_coverage:
+    driver: local
+  test_backend_logs:
+    driver: local
+  test_frontend_coverage:
+    driver: local
+  test_frontend_artifacts:
+    driver: local
+  test_backend_unit_coverage:
+    driver: local
+  test_frontend_unit_coverage:
+    driver: local
+  test_integration_artifacts:
+    driver: local
+  test_integration_coverage:
+    driver: local
+  test_performance_artifacts:
+    driver: local
+  test_performance_reports:
+    driver: local
+  test_runner_artifacts:
+    driver: local
+  test_runner_reports:
+    driver: local
+  test_runner_screenshots:
+    driver: local
+  test_runner_videos:
+    driver: local
+
+networks:
+  test-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16

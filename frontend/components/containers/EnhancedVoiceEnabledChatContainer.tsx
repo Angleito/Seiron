@@ -175,10 +175,19 @@ export const EnhancedVoiceEnabledChatContainer = React.memo(function EnhancedVoi
     sessionId: currentSessionId,
     autoSync: enableAIMemory,
     onSyncError: (error) => {
+      logger.error('AI Memory sync error:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      })
       handlePersistenceError({
         type: 'unknown',
         message: `AI Memory sync error: ${error.message}`,
-        details: { originalError: error.message }
+        details: { 
+          originalError: error.message,
+          errorName: error.name,
+          errorStack: error.stack
+        }
       })
     }
   })
@@ -329,18 +338,30 @@ export const EnhancedVoiceEnabledChatContainer = React.memo(function EnhancedVoi
   
   // Handle voice errors
   const handleVoiceError = useCallback((error: Error) => {
-    logger.error('Voice interface error:', error)
+    logger.error('Voice interface error:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    })
     const persistenceError: ChatPersistenceError = {
       type: 'unknown',
       message: `Voice error: ${error.message}`,
-      details: { originalError: error.message }
+      details: { 
+        originalError: error.message,
+        errorName: error.name,
+        errorStack: error.stack
+      }
     }
     setPersistenceErrors(prev => [...prev, persistenceError])
   }, [])
 
   // Handle persistence errors
   const handlePersistenceError = useCallback((error: ChatPersistenceError) => {
-    logger.error('Persistence error:', error)
+    logger.error('Persistence error:', {
+      type: error.type,
+      message: error.message,
+      details: error.details
+    })
     setPersistenceErrors(prev => [...prev, error])
   }, [])
 
@@ -371,7 +392,11 @@ export const EnhancedVoiceEnabledChatContainer = React.memo(function EnhancedVoi
         // Auto-play voice if enabled
         if (isVoiceEnabled && !isPlaying) {
           playResponse(lastMessage.content).catch(error => {
-            logger.error('Failed to play audio response:', error)
+            logger.error('Failed to play audio response:', {
+              message: error.message,
+              stack: error.stack,
+              name: error.name
+            })
           })
         }
         
@@ -389,7 +414,15 @@ export const EnhancedVoiceEnabledChatContainer = React.memo(function EnhancedVoi
             lastMessage.metadata.confidence || 0.8
           ).then(result => {
             if (E.isLeft(result)) {
-              logger.error('Failed to save AI reasoning to memory:', result.left)
+              logger.error('Failed to save AI reasoning to memory:', {
+                error: result.left,
+                errorType: typeof result.left,
+                errorDetails: result.left instanceof Error ? {
+                  message: result.left.message,
+                  stack: result.left.stack,
+                  name: result.left.name
+                } : result.left
+              })
             }
           })
         }

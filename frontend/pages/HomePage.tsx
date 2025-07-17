@@ -2,8 +2,9 @@ import React, { Suspense, lazy, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DragonHead3D from '@/components/effects/DragonHead3D'
 
-// Lazy load the StormLightningEffect component
+// Lazy load the lightning effect components
 const StormLightningEffect = lazy(() => import('@/components/effects/StormLightningEffect'))
+const DragonSummoningLightning = lazy(() => import('@/components/effects/DragonSummoningLightning'))
 
 
 // Enhanced DBZ Feature Card Component
@@ -130,21 +131,22 @@ export default function HomePage() {
           <div className="background-transition"></div>
           <div className="background-transition-overlay"></div>
           
-          {/* Lightning Effects */}
+          {/* Realistic Dragon Summoning Lightning Effects */}
           <div className="lightning-container">
-            <div className="lightning-bolt-1"></div>
-            <div className="lightning-bolt-2"></div>
-            <div className="lightning-bolt-3"></div>
-            <div className="lightning-bolt-4"></div>
-            <div className="lightning-bolt-5"></div>
-            <div className="lightning-bolt-6"></div>
-            <div className="lightning-bolt-7"></div>
-            <div className="lightning-bolt-8"></div>
-            <div className="lightning-bolt-9"></div>
+            <Suspense fallback={null}>
+              <DragonSummoningLightning
+                isActive={summoningPhase === 'lightning' || summoningPhase === 'arrival'}
+                onLightningComplete={() => {
+                  if (summoningPhase === 'lightning') {
+                    setSummoningPhase('arrival')
+                  }
+                }}
+              />
+            </Suspense>
           </div>
           
-          {/* Enhanced Lightning Effect */}
-          {summoningPhase === 'lightning' && (
+          {/* Enhanced Background Lightning Effect */}
+          {(summoningPhase === 'lightning' || summoningPhase === 'arrival') && (
             <Suspense fallback={null}>
               <StormLightningEffect />
             </Suspense>
@@ -154,29 +156,68 @@ export default function HomePage() {
           <div className="screen-flash"></div>
           
           {/* Dragon Head 3D Model */}
-          <div className="dragon-head-container" style={{ display: summoningPhase === 'arrival' ? 'block' : 'none' }}>
-            <Suspense fallback={<div style={{ color: 'white', textAlign: 'center' }}>Loading Dragon...</div>}>
-              <DragonHead3D 
-                className="w-full h-full"
-                intensity={summoningPhase === 'arrival' ? 1 : 0}
-                enableEyeTracking={summoningPhase === 'arrival'}
-                lightningActive={summoningPhase === 'arrival'}
-                onLoad={handleDragonModelLoad}
-              />
-            </Suspense>
-            
-            {/* Enter Chat Button - appears after model loads */}
-            {dragonModelLoaded && (
-              <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-50">
-                <button
-                  onClick={handleEnterChat}
-                  className="dbz-button-primary text-xl px-8 py-4 animate-pulse"
-                >
-                  🐉 ENTER CHAT
-                </button>
+          {summoningPhase === 'arrival' && (
+            <>
+              <div style={{ 
+                position: 'fixed', 
+                top: '20px', 
+                left: '20px', 
+                color: 'white', 
+                zIndex: 10000,
+                background: 'rgba(0,0,0,0.5)',
+                padding: '10px'
+              }}>
+                DEBUG: Dragon should be visible now
               </div>
-            )}
-          </div>
+              <Suspense fallback={
+                <div style={{ 
+                  color: 'white', 
+                  textAlign: 'center',
+                  position: 'fixed',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  zIndex: 10000
+                }}>
+                  Loading Dragon Model...
+                </div>
+              }>
+                <DragonHead3D 
+                  intensity={summoningPhase === 'arrival' ? 1 : 0}
+                  enableEyeTracking={summoningPhase === 'arrival'}
+                  lightningActive={summoningPhase === 'arrival'}
+                  onLoad={handleDragonModelLoad}
+                />
+              </Suspense>
+            </>
+          )}
+          
+        </div>
+      )}
+      
+      {/* Enter Chat Button - appears when summoning is active and in arrival phase */}
+      {isSummoning && summoningPhase === 'arrival' && (
+        <div style={{
+          position: 'fixed',
+          bottom: '80px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 10000, // Higher than summoning overlay
+          // Ensure button is always visible on smaller viewports
+          maxWidth: '90vw',
+          textAlign: 'center'
+        }}>
+          <button
+            onClick={handleEnterChat}
+            className="dbz-button-primary text-xl px-8 py-4 animate-pulse"
+            style={{
+              // Make button responsive
+              fontSize: 'clamp(1rem, 2vw, 1.25rem)',
+              padding: 'clamp(0.75rem, 2vw, 1rem) clamp(1.5rem, 4vw, 2rem)'
+            }}
+          >
+            🐉 ENTER CHAT
+          </button>
         </div>
       )}
       
