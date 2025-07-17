@@ -6,7 +6,6 @@
   "framework": "vite",
   "functions": {
     "frontend/api/**/*.ts": {
-      "runtime": "@vercel/node@latest",
       "maxDuration": 30
     }
   },
