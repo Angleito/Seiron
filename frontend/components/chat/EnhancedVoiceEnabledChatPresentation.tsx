@@ -92,6 +92,9 @@ interface EnhancedVoiceEnabledChatPresentationProps {
   showPreferences?: boolean
   aiMemories?: any[] // AIMemoryEntry[]
   isLoadingMemory?: boolean
+  isMemoryUsingFallback?: boolean
+  isMemoryBackendAvailable?: boolean
+  memoryError?: Error | null
   
   // Event handlers
   onInputChange: (value: string) => void
@@ -170,6 +173,9 @@ export const EnhancedVoiceEnabledChatPresentation = React.memo(function Enhanced
   showPreferences,
   // aiMemories,
   isLoadingMemory,
+  isMemoryUsingFallback,
+  isMemoryBackendAvailable,
+  memoryError,
   
   // Event handlers
   onInputChange,
@@ -287,6 +293,18 @@ export const EnhancedVoiceEnabledChatPresentation = React.memo(function Enhanced
             <div className="flex items-center gap-1">
               {isLoadingMemory ? (
                 <div className="animate-pulse text-orange-300 text-sm">🧠 Syncing...</div>
+              ) : memoryError ? (
+                <Badge variant="error" size="sm" title={memoryError.message}>
+                  🧠 Memory Error
+                </Badge>
+              ) : isMemoryUsingFallback ? (
+                <Badge variant="warning" size="sm" title="Using local storage fallback">
+                  🧠 Memory (Offline)
+                </Badge>
+              ) : !isMemoryBackendAvailable ? (
+                <Badge variant="secondary" size="sm" title="Backend unavailable">
+                  🧠 Memory (Local)
+                </Badge>
               ) : (
                 <Badge variant="success" size="sm">
                   🧠 Memory Active

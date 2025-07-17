@@ -16,7 +16,7 @@ import { ChatPersistenceError, ChatMessage as PersistenceMessage } from '../../s
 import { EnhancedVoiceEnabledChatPresentation } from '../chat/EnhancedVoiceEnabledChatPresentation'
 import { UnifiedChatMessage, getMessageTimestamp } from '../../types/components/chat'
 import { StreamMessage } from '../../types/chat-stream'
-import { useAIMemory } from '@hooks/chat/useAIMemory'
+import { useAIMemoryWithFallback } from '@hooks/chat/useAIMemoryWithFallback'
 import { ChatPreferencesData } from '../chat/ChatPreferences'
 
 interface EnhancedVoiceEnabledChatContainerProps {
@@ -160,20 +160,21 @@ export const EnhancedVoiceEnabledChatContainer = React.memo(function EnhancedVoi
     }
   })
 
-  // AI Memory hook for persistent user context
+  // AI Memory hook for persistent user context with fallback support
   const {
-    memories,
+    entries: memories,
     isLoading: isLoadingMemory,
     saveMemory,
-    // updateMemory,
     getMemory,
-    // searchMemories,
-    getMemoriesByCategory,
-    // hasMemory
-  } = useAIMemory({
+    searchMemories,
+    isUsingFallback: isMemoryUsingFallback,
+    backendAvailable: isMemoryBackendAvailable,
+    error: memoryError
+  } = useAIMemoryWithFallback({
     userId,
     sessionId: currentSessionId,
     autoSync: enableAIMemory,
+    fallbackToLocalStorage: true,
     onSyncError: (error) => {
       logger.error('AI Memory sync error:', {
         message: error.message,
@@ -189,8 +190,22 @@ export const EnhancedVoiceEnabledChatContainer = React.memo(function EnhancedVoi
           errorStack: error.stack
         }
       })
+    },
+    onFallbackActivated: (reason) => {
+      logger.info('AI Memory fallback activated:', reason)
+      // Create a user-friendly notification
+      handlePersistenceError({
+        type: 'warning',
+        message: 'AI Memory is running in offline mode. Your preferences will be saved locally.',
+        details: { reason }
+      })
     }
   })
+
+  // Helper function to get memories by category (compatibility wrapper)
+  const getMemoriesByCategory = useCallback((category: 'preference' | 'context' | 'fact' | 'interaction') => {
+    return memories.filter(memory => memory.category === category)
+  }, [memories])
 
   // Load user preferences from memory on mount
   useEffect(() => {
@@ -509,6 +524,9 @@ export const EnhancedVoiceEnabledChatContainer = React.memo(function EnhancedVoi
       showPreferences={showPreferences}
       aiMemories={memories}
       isLoadingMemory={isLoadingMemory}
+      isMemoryUsingFallback={isMemoryUsingFallback}
+      isMemoryBackendAvailable={isMemoryBackendAvailable}
+      memoryError={memoryError}
       
       // Event handlers
       onInputChange={setInput}

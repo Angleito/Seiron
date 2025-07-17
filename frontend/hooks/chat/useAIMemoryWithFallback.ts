@@ -25,6 +25,7 @@ export interface AIMemoryState {
   lastSync: Date | null;
   isUsingFallback: boolean;
   backendAvailable: boolean;
+  retryCount: number; // Track retry attempts
 }
 
 export interface UseAIMemoryOptions {
@@ -66,9 +67,19 @@ const MEMORY_API = {
 const STORAGE_KEY_PREFIX = 'ai_memory_';
 const BACKEND_STATUS_KEY = 'ai_memory_backend_status';
 
+// Retry configuration
+const MAX_RETRY_ATTEMPTS = 2;
+const RETRY_DELAYS = [1000, 3000]; // Backoff delays in milliseconds
+
 /**
  * Enhanced useAIMemory hook with comprehensive fallback support
  * Falls back to localStorage when backend is unavailable
+ * 
+ * Features:
+ * - Automatic retry with exponential backoff (max 2 attempts)
+ * - Graceful degradation to localStorage
+ * - Smart backend availability checking
+ * - Minimal console logging to prevent spam
  */
 export function useAIMemoryWithFallback({
   userId,
@@ -88,13 +99,15 @@ export function useAIMemoryWithFallback({
     onSyncErrorRef.current = onSyncError;
     onFallbackActivatedRef.current = onFallbackActivated;
   }, [onSyncError, onFallbackActivated]);
+
   const [state, setState] = useState<AIMemoryState>({
     entries: [],
     isLoading: false,
     error: null,
     lastSync: null,
     isUsingFallback: false,
-    backendAvailable: true
+    backendAvailable: true,
+    retryCount: 0
   });
 
   const cacheRef = useRef<AIMemoryCache>({
@@ -105,15 +118,28 @@ export function useAIMemoryWithFallback({
   const syncTimeoutRef = useRef<NodeJS.Timeout>();
   const lastBackendCheckRef = useRef<number>(0);
   const backendCheckIntervalRef = useRef<number>(60000); // Check every minute
+  const lastErrorLogRef = useRef<number>(0); // Track last error log time to prevent spam
+  const errorLogThrottleMs = 10000; // Only log same errors every 10 seconds
+
+  // Helper to throttle error logging
+  const logThrottledError = useCallback((message: string, error: any) => {
+    const now = Date.now();
+    if (now - lastErrorLogRef.current > errorLogThrottleMs) {
+      logger.error(message, error);
+      lastErrorLogRef.current = now;
+    }
+  }, []);
 
   // Get localStorage key for user
   const getStorageKey = useCallback((key: string) => {
     return `${STORAGE_KEY_PREFIX}${userId}_${sessionId || 'global'}_${key}`;
   }, [userId, sessionId]);
 
-  // Check backend availability
+  // Check backend availability with improved error handling
   const checkBackendAvailability = useCallback(async (): Promise<boolean> => {
     const now = Date.now();
+    
+    // Use cached result if recent
     if (now - lastBackendCheckRef.current < backendCheckIntervalRef.current) {
       return state.backendAvailable;
     }
@@ -128,23 +154,34 @@ export function useAIMemoryWithFallback({
       const available = response.ok;
       lastBackendCheckRef.current = now;
       
-      // Store backend status
+      // Store backend status in localStorage for persistence
       localStorage.setItem(BACKEND_STATUS_KEY, JSON.stringify({
         available,
         lastCheck: now
       }));
 
       setState(prev => ({ ...prev, backendAvailable: available }));
+      
+      // Only log state changes
+      if (available !== state.backendAvailable) {
+        logger.info(`Backend availability changed to: ${available ? 'available' : 'unavailable'}`);
+      }
+      
       return available;
     } catch (error) {
-      logger.warn('Backend availability check failed:', error);
       lastBackendCheckRef.current = now;
       setState(prev => ({ ...prev, backendAvailable: false }));
+      
+      // Only log if this is a new error state
+      if (state.backendAvailable) {
+        logger.warn('Backend became unavailable:', error);
+      }
+      
       return false;
     }
-  }, [userId]);
+  }, [userId, state.backendAvailable]);
 
-  // Load from localStorage (fallback)
+  // Load from localStorage with improved error handling
   const loadFromLocalStorage = useCallback((): AIMemoryEntry[] => {
     try {
       const entries: AIMemoryEntry[] = [];
@@ -176,7 +213,7 @@ export function useAIMemoryWithFallback({
               expiresAt: data.expiresAt ? new Date(data.expiresAt) : undefined
             });
           } catch (error) {
-            logger.warn(`Failed to parse localStorage entry: ${key}`, error);
+            // Silently remove corrupted entries
             localStorage.removeItem(key);
           }
         }
@@ -185,12 +222,12 @@ export function useAIMemoryWithFallback({
       logger.debug('Loaded memories from localStorage', { count: entries.length });
       return entries;
     } catch (error) {
-      logger.error('Failed to load from localStorage:', error);
+      logThrottledError('Failed to load from localStorage:', error);
       return [];
     }
-  }, [userId, sessionId]);
+  }, [userId, sessionId, logThrottledError]);
 
-  // Save to localStorage (fallback)
+  // Save to localStorage with validation
   const saveToLocalStorage = useCallback((key: string, entry: Omit<AIMemoryEntry, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       const storageKey = getStorageKey(key);
@@ -203,35 +240,54 @@ export function useAIMemoryWithFallback({
       };
 
       localStorage.setItem(storageKey, JSON.stringify(data));
-      logger.debug('Saved memory to localStorage', { key, category: entry.category });
       return true;
     } catch (error) {
-      logger.error('Failed to save to localStorage:', error);
+      // Check if it's a quota exceeded error
+      if (error instanceof Error && error.name === 'QuotaExceededError') {
+        logger.warn('localStorage quota exceeded. Attempting cleanup...');
+        // Try to clean up old entries
+        const keys = Object.keys(localStorage);
+        const userPrefix = `${STORAGE_KEY_PREFIX}${userId}_`;
+        const memoryKeys = keys.filter(k => k.startsWith(userPrefix));
+        
+        // Remove oldest entries (simple FIFO strategy)
+        if (memoryKeys.length > 10) {
+          memoryKeys.slice(0, 5).forEach(k => localStorage.removeItem(k));
+          // Retry save
+          try {
+            localStorage.setItem(storageKey, JSON.stringify(data));
+            return true;
+          } catch (retryError) {
+            logThrottledError('Failed to save to localStorage after cleanup:', retryError);
+            return false;
+          }
+        }
+      }
+      logThrottledError('Failed to save to localStorage:', error);
       return false;
     }
-  }, [getStorageKey]);
+  }, [getStorageKey, userId, logThrottledError]);
 
-  // Delete from localStorage (fallback)
+  // Delete from localStorage
   const deleteFromLocalStorage = useCallback((key: string) => {
     try {
       const storageKey = getStorageKey(key);
       localStorage.removeItem(storageKey);
-      logger.debug('Deleted memory from localStorage', { key });
       return true;
     } catch (error) {
-      logger.error('Failed to delete from localStorage:', error);
+      logThrottledError('Failed to delete from localStorage:', error);
       return false;
     }
-  }, [getStorageKey]);
+  }, [getStorageKey, logThrottledError]);
 
-  // Load memories with fallback
-  const loadMemories = useCallback(async (): Promise<AIMemoryEntry[]> => {
-    setState(prev => ({ ...prev, isLoading: true, error: null }));
+  // Load memories with retry logic and fallback
+  const loadMemories = useCallback(async (retryAttempt: number = 0): Promise<AIMemoryEntry[]> => {
+    setState(prev => ({ ...prev, isLoading: true, error: null, retryCount: retryAttempt }));
 
     // Check if backend is available
     const backendAvailable = await checkBackendAvailability();
 
-    if (backendAvailable) {
+    if (backendAvailable && retryAttempt < MAX_RETRY_ATTEMPTS) {
       // Try to load from backend
       const backendResult = await pipe(
         TE.tryCatch(
@@ -277,14 +333,15 @@ export function useAIMemoryWithFallback({
             error: null,
             lastSync: new Date(),
             isUsingFallback: false,
-            backendAvailable: true
+            backendAvailable: true,
+            retryCount: 0
           });
 
-          logger.info('Loaded memories from backend', { count: entries.length });
+          logger.info('Successfully loaded memories from backend', { count: entries.length });
           return entries;
         }),
         TE.mapLeft((error) => {
-          logger.warn('Backend memory load failed, falling back to localStorage:', error);
+          logger.debug(`Backend load attempt ${retryAttempt + 1} failed:`, error.message);
           return error;
         })
       )();
@@ -292,21 +349,52 @@ export function useAIMemoryWithFallback({
       if (E.isRight(backendResult)) {
         return backendResult.right;
       } else {
-        // Fall back to localStorage
-        logger.info('Falling back to localStorage due to backend error');
-        onFallbackActivatedRef.current?.('Backend load failed');
-        return loadFromLocalStorage();
+        // Implement retry with backoff
+        if (retryAttempt < MAX_RETRY_ATTEMPTS - 1) {
+          const delay = RETRY_DELAYS[retryAttempt];
+          logger.info(`Retrying backend load after ${delay}ms (attempt ${retryAttempt + 2}/${MAX_RETRY_ATTEMPTS})`);
+          
+          // Wait before retry
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return loadMemories(retryAttempt + 1);
+        } else {
+          // Max retries reached, fall back to localStorage
+          logger.info('Max retry attempts reached. Falling back to localStorage');
+          onFallbackActivatedRef.current?.(`Backend unavailable after ${MAX_RETRY_ATTEMPTS} attempts`);
+          onSyncErrorRef.current?.(backendResult.left);
+          
+          const localEntries = loadFromLocalStorage();
+          setState(prev => ({
+            ...prev,
+            entries: localEntries,
+            isLoading: false,
+            error: backendResult.left,
+            isUsingFallback: true,
+            retryCount: 0
+          }));
+          return localEntries;
+        }
       }
     } else {
-      // Backend not available, use localStorage
-      logger.info('Backend not available, using localStorage');
-      onFallbackActivatedRef.current?.('Backend not available');
-      return loadFromLocalStorage();
+      // Backend not available or max retries reached, use localStorage
+      if (!backendAvailable) {
+        logger.debug('Backend not available, using localStorage fallback');
+        onFallbackActivatedRef.current?.('Backend not available');
+      }
+      
+      const localEntries = loadFromLocalStorage();
+      setState(prev => ({
+        ...prev,
+        entries: localEntries,
+        isLoading: false,
+        isUsingFallback: true,
+        retryCount: 0
+      }));
+      return localEntries;
     }
   }, [userId, sessionId, cacheEnabled, fallbackToLocalStorage, checkBackendAvailability, loadFromLocalStorage]);
 
-
-  // Save memory with fallback
+  // Save memory with improved error handling
   const saveMemory = useCallback(async (
     key: string,
     value: any,
@@ -323,7 +411,7 @@ export function useAIMemoryWithFallback({
     };
 
     if (state.backendAvailable && !state.isUsingFallback) {
-      // Try backend first
+      // Try backend first with single attempt (no retry for saves)
       const result = await pipe(
         TE.tryCatch(
           async () => {
@@ -362,11 +450,10 @@ export function useAIMemoryWithFallback({
             entries: [...prev.entries.filter(e => e.key !== key), newEntry]
           }));
 
-          logger.debug('Saved memory to backend', { key, category });
           return newEntry;
         }),
         TE.mapLeft((error) => {
-          logger.warn('Backend save failed, falling back to localStorage:', error);
+          logger.debug('Backend save failed, falling back to localStorage:', error.message);
           return error;
         })
       )();
@@ -418,11 +505,11 @@ export function useAIMemoryWithFallback({
         }
       }
       
-      return Promise.resolve(E.left(new Error('Failed to save memory')));
+      return Promise.resolve(E.left(new Error('Failed to save memory: localStorage unavailable')));
     }
   }, [userId, sessionId, cacheEnabled, fallbackToLocalStorage, state.backendAvailable, state.isUsingFallback, saveToLocalStorage]);
 
-  // Delete memory with fallback
+  // Delete memory with improved error handling
   const deleteMemory = useCallback(async (key: string): Promise<E.Either<Error, boolean>> => {
     if (state.backendAvailable && !state.isUsingFallback) {
       // Try backend first
@@ -455,11 +542,10 @@ export function useAIMemoryWithFallback({
             entries: prev.entries.filter(e => e.key !== key)
           }));
 
-          logger.debug('Deleted memory from backend', { key });
           return success;
         }),
         TE.mapLeft((error) => {
-          logger.warn('Backend delete failed, falling back to localStorage:', error);
+          logger.debug('Backend delete failed, falling back to localStorage:', error.message);
           return error;
         })
       )();
@@ -497,23 +583,26 @@ export function useAIMemoryWithFallback({
         }
       }
       
-      return Promise.resolve(E.left(new Error('Failed to delete memory')));
+      return Promise.resolve(E.left(new Error('Failed to delete memory: localStorage unavailable')));
     }
   }, [userId, cacheEnabled, fallbackToLocalStorage, state.backendAvailable, state.isUsingFallback, deleteFromLocalStorage]);
 
   // Initial load effect
   useEffect(() => {
     if (autoSync) {
-      loadMemories();
+      loadMemories(0);
     }
   }, []); // Run only on mount
 
-  // Auto-sync interval effect
+  // Auto-sync interval effect with retry count reset
   useEffect(() => {
     if (autoSync && syncInterval > 0) {
       // Set up interval for periodic sync
       const interval = setInterval(() => {
-        loadMemories();
+        // Only sync if not currently loading and not in a retry sequence
+        if (!state.isLoading && state.retryCount === 0) {
+          loadMemories(0);
+        }
       }, syncInterval);
       
       syncTimeoutRef.current = interval;
@@ -521,7 +610,7 @@ export function useAIMemoryWithFallback({
     }
     // Return undefined explicitly for the else case
     return undefined;
-  }, [autoSync, syncInterval]); // Dependencies don't include loadMemories to prevent infinite loop
+  }, [autoSync, syncInterval, state.isLoading, state.retryCount]); // Include state to prevent concurrent syncs
 
   // Cleanup effect
   useEffect(() => {
@@ -571,19 +660,25 @@ export function useAIMemoryWithFallback({
       }
 
       // Clear state
-      setState(prev => ({ ...prev, entries: [] }));
+      setState(prev => ({ ...prev, entries: [], retryCount: 0 }));
       
       logger.info('Cleared all memories');
       return true;
     } catch (error) {
-      logger.error('Failed to clear memories:', error);
+      logThrottledError('Failed to clear memories:', error);
       return false;
     }
-  }, [userId, sessionId, fallbackToLocalStorage, cacheEnabled]);
+  }, [userId, sessionId, fallbackToLocalStorage, cacheEnabled, logThrottledError]);
+
+  // Force sync method (resets retry count)
+  const forceSync = useCallback(async () => {
+    setState(prev => ({ ...prev, retryCount: 0 }));
+    return loadMemories(0);
+  }, [loadMemories]);
 
   return {
     state,
-    loadMemories,
+    loadMemories: forceSync, // Expose forceSync as loadMemories to maintain API
     saveMemory,
     deleteMemory,
     getMemory,
@@ -596,6 +691,7 @@ export function useAIMemoryWithFallback({
     error: state.error,
     lastSync: state.lastSync,
     isUsingFallback: state.isUsingFallback,
-    backendAvailable: state.backendAvailable
+    backendAvailable: state.backendAvailable,
+    retryCount: state.retryCount
   };
 }

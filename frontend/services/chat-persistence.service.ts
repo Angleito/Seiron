@@ -64,7 +64,7 @@ export interface MessagesResponse {
 }
 
 export interface ChatPersistenceError {
-  type: 'network' | 'validation' | 'permission' | 'server' | 'unknown'
+  type: 'network' | 'validation' | 'permission' | 'server' | 'unknown' | 'warning'
   message: string
   details?: Record<string, unknown>
 }

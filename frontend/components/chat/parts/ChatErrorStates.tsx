@@ -26,6 +26,7 @@ export const ChatErrorDisplay = React.memo(function ChatErrorDisplay({
       case 'validation': return '⚠️'
       case 'permission': return '🔒'
       case 'server': return '🖥️'
+      case 'warning': return '⚡'
       default: return '❌'
     }
   }
@@ -36,6 +37,7 @@ export const ChatErrorDisplay = React.memo(function ChatErrorDisplay({
       case 'validation': return 'Invalid Data'
       case 'permission': return 'Access Denied'
       case 'server': return 'Server Error'
+      case 'warning': return 'Notice'
       default: return 'Unknown Error'
     }
   }
@@ -50,6 +52,8 @@ export const ChatErrorDisplay = React.memo(function ChatErrorDisplay({
         return 'You may need to log in or check your permissions.'
       case 'server': 
         return 'Our servers are experiencing issues. Please try again later.'
+      case 'warning':
+        return 'This is informational and may not require immediate action.'
       default: 
         return 'An unexpected error occurred. Please try again.'
     }
@@ -62,7 +66,7 @@ export const ChatErrorDisplay = React.memo(function ChatErrorDisplay({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <h3 className="font-semibold text-gray-200">{getErrorTitle(error.type)}</h3>
-            <Badge variant="danger" size="sm">{error.type}</Badge>
+            <Badge variant={error.type === 'warning' ? 'warning' : 'danger'} size="sm">{error.type}</Badge>
           </div>
           <p className="text-gray-300 text-size-3 mb-2">{error.message}</p>
           <p className="text-gray-400 text-size-4 mb-3">{getErrorSuggestion(error.type)}</p>
@@ -353,10 +357,10 @@ export const ChatErrorToast = React.memo(function ChatErrorToast({
       className={`fixed top-4 right-4 z-50 bg-gray-900/90 border border-gray-700 rounded-lg p-4 shadow-lg backdrop-blur-sm max-w-sm ${className}`}
     >
       <div className="flex items-start gap-3">
-        <span className="text-xl flex-shrink-0">⚠️</span>
+        <span className="text-xl flex-shrink-0">{error.type === 'warning' ? '⚡' : '⚠️'}</span>
         <div className="flex-1 min-w-0">
           <div className="font-normal text-gray-200 text-sm mb-1">
-            {error.type === 'network' ? 'Connection Error' : 'Error'}
+            {error.type === 'network' ? 'Connection Error' : error.type === 'warning' ? 'Notice' : 'Error'}
           </div>
           <div className="text-gray-400 text-xs">{error.message}</div>
         </div>

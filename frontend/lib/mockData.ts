@@ -46,6 +46,33 @@ export interface MockAIMemoryEntry {
   metadata?: Record<string, unknown>;
 }
 
+// New AI Memory interfaces matching the requested format
+export interface AIMemory {
+  id: string;
+  userId: string;
+  sessionId: string;
+  content: string;
+  timestamp: string;
+  type: 'preference' | 'conversation' | 'context';
+}
+
+export interface AIPreferences {
+  theme?: 'light' | 'dark';
+  language?: string;
+  voiceEnabled?: boolean;
+}
+
+export interface AIMemoryMetadata {
+  source: 'mock' | 'kv' | 'localStorage';
+  timestamp: string;
+}
+
+export interface AIMemoryResponse {
+  memories: AIMemory[];
+  preferences: AIPreferences;
+  metadata: AIMemoryMetadata;
+}
+
 export interface PaginationInfo {
   page: number;
   limit: number;
@@ -416,3 +443,155 @@ export const createErrorResponse = (message: string, status: number = 400) => ({
   status,
   timestamp: new Date().toISOString()
 });
+
+// AI Memory Mock Data Generation Functions
+export const generateMockAIMemory = (
+  userId: string = 'anonymous',
+  sessionId: string = 'session_default',
+  type: AIMemory['type'] = 'context'
+): AIMemory => {
+  const id = `memory_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const contents = {
+    preference: [
+      'User prefers dark theme for trading interfaces',
+      'User likes concise responses with technical details',
+      'User is interested in DeFi and automated trading strategies',
+      'User prefers voice commands for quick trades',
+      'User wants real-time price alerts for SEI token'
+    ],
+    conversation: [
+      'Discussed SEI network performance optimization',
+      'Explained orderbook functionality in detail',
+      'User asked about staking rewards on SEI',
+      'Conversation about MEV protection strategies',
+      'Discussion on cross-chain bridging with SEI'
+    ],
+    context: [
+      'User has intermediate knowledge of blockchain technology',
+      'User is actively trading on SEI network',
+      'User manages a portfolio worth >$10k',
+      'User frequently uses automated trading bots',
+      'User is based in PST timezone'
+    ]
+  };
+
+  const contentArray = contents[type];
+  const content = contentArray[Math.floor(Math.random() * contentArray.length)];
+
+  return {
+    id,
+    userId,
+    sessionId,
+    content,
+    timestamp: new Date().toISOString(),
+    type
+  };
+};
+
+export const generateMockPreferences = (userId: string = 'anonymous'): AIPreferences => {
+  return {
+    theme: Math.random() > 0.5 ? 'dark' : 'light',
+    language: 'en',
+    voiceEnabled: Math.random() > 0.3
+  };
+};
+
+export const generateMockAIMemoryResponse = (
+  userId: string = 'anonymous',
+  sessionId?: string,
+  memoriesCount: number = 5
+): AIMemoryResponse => {
+  const memories: AIMemory[] = [];
+  const types: AIMemory['type'][] = ['preference', 'conversation', 'context'];
+  
+  // Generate diverse memories
+  for (let i = 0; i < memoriesCount; i++) {
+    const type = types[i % types.length];
+    memories.push(generateMockAIMemory(
+      userId,
+      sessionId || `session_${Date.now() - i * 3600000}`,
+      type
+    ));
+  }
+
+  return {
+    memories,
+    preferences: generateMockPreferences(userId),
+    metadata: {
+      source: 'mock',
+      timestamp: new Date().toISOString()
+    }
+  };
+};
+
+// Generate test scenarios
+export const generateTestScenarios = () => {
+  return {
+    // New user with no memories
+    newUser: generateMockAIMemoryResponse('user_new', undefined, 0),
+    
+    // Active trader with rich history
+    activeTrader: generateMockAIMemoryResponse('user_active', 'session_trading', 10),
+    
+    // Anonymous user with basic preferences
+    anonymousUser: generateMockAIMemoryResponse('anonymous', undefined, 3),
+    
+    // Power user with many sessions
+    powerUser: (() => {
+      const response = generateMockAIMemoryResponse('user_power', undefined, 20);
+      response.preferences.theme = 'dark';
+      response.preferences.voiceEnabled = true;
+      return response;
+    })(),
+    
+    // User with specific preferences
+    customUser: (() => {
+      const response = generateMockAIMemoryResponse('user_custom', 'session_custom', 7);
+      response.memories.push({
+        id: 'memory_custom_1',
+        userId: 'user_custom',
+        sessionId: 'session_custom',
+        content: 'User exclusively trades SEI/USDC pairs',
+        timestamp: new Date().toISOString(),
+        type: 'preference'
+      });
+      response.preferences = {
+        theme: 'dark',
+        language: 'en',
+        voiceEnabled: false
+      };
+      return response;
+    })()
+  };
+};
+
+// Utility to get mock memory by different sources
+export const getMockMemoryBySource = (source: AIMemoryMetadata['source']): AIMemoryResponse => {
+  const response = generateMockAIMemoryResponse();
+  response.metadata.source = source;
+  
+  // Add source-specific characteristics
+  switch (source) {
+    case 'kv':
+      // KV store typically has more persistent, structured data
+      response.memories.push({
+        id: 'memory_kv_persistent',
+        userId: 'anonymous',
+        sessionId: 'session_kv',
+        content: 'Long-term preference: Always show USD values alongside SEI',
+        timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days old
+        type: 'preference'
+      });
+      break;
+    case 'localStorage':
+      // Local storage might have more recent, browser-specific data
+      response.memories = response.memories.slice(0, 3); // Fewer memories
+      response.preferences.theme = 'light'; // Browser-specific preference
+      break;
+    case 'mock':
+      // Mock data is already the default
+      break;
+  }
+  
+  return response;
+};
