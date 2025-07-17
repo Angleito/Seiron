@@ -61,6 +61,7 @@ services:
       - REDIS_PORT=6379
       - REDIS_DB=0
       - FRONTEND_URL=http://localhost:3000
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
       # API Keys (to be provided via .env file)
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4}
