@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { fetchWithRetry } from '@/utils/apiRetry';
+import { mockDataStore, createMockResponse, createErrorResponse } from '@/lib/mockData';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || 'http://localhost:3001';
+const BACKEND_TIMEOUT = 5000; // 5 second timeout for backend requests
 
 // GET /api/chat/sessions - Get all chat sessions
 export async function GET(request: NextRequest) {
@@ -38,27 +40,41 @@ export async function GET(request: NextRequest) {
       
       // Return graceful fallback for anonymous users when backend is unavailable
       if (response.status === 404 || response.status === 503 || response.status === 502) {
+        console.log(`[API] Backend unavailable (${response.status}), using mock data for sessions`);
+        
         const userId = searchParams.get('userId') || userIdHeader || 'anonymous';
-        return NextResponse.json({
+        const page = parseInt(searchParams.get('page') || '1', 10);
+        const limit = parseInt(searchParams.get('limit') || '20', 10);
+        const archived = searchParams.get('archived') === 'true';
+        const search = searchParams.get('search') || undefined;
+        const order = (searchParams.get('order') || 'desc') as 'asc' | 'desc';
+        
+        const result = mockDataStore.getSessions(userId, {
+          page,
+          limit,
+          archived,
+          search,
+          order
+        });
+        
+        const stats = mockDataStore.getStats(userId);
+        
+        const response = createMockResponse({
           success: true,
-          sessions: [],
-          pagination: {
-            page: 1,
-            limit: 20,
-            total: 0,
-            totalPages: 0,
-            hasNext: false,
-            hasPrev: false
-          },
-          stats: {
-            total_sessions: 0,
-            active_sessions: 0,
-            archived_sessions: 0,
-            total_messages: 0
-          },
+          sessions: result.sessions,
+          pagination: result.pagination,
+          stats,
           filters: {
-            search: searchParams.get('search') || undefined,
-            archived: searchParams.get('archived') === 'true'
+            search,
+            archived
+          }
+        });
+        
+        return NextResponse.json(response, {
+          headers: {
+            'Cache-Control': 'private, max-age=60, stale-while-revalidate=300',
+            'Content-Type': 'application/json',
+            'X-Data-Source': 'mock'
           }
         });
       }
