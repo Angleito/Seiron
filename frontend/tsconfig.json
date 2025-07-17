@@ -82,6 +82,18 @@
     "utils/apiRetry.ts",
     "components/wallet/WalletConnectProvider.tsx",
     "api/**/*",
-    "app/**/*"
+    "app/**/*",
+    "components/chat/examples/**/*",
+    "components/voice/**/*",
+    "hooks/chat/**/*",
+    "hooks/useWalletOperations.ts",
+    "lib/audio-*.ts",
+    "lib/auth/**/*",
+    "lib/elevenlabs-client.ts",
+    "lib/sei-integration.ts",
+    "lib/test-utils/**/*",
+    "lib/voice-error-recovery.ts",
+    "pages/dragons/**/*",
+    "utils/feature-preloader.ts"
   ]
 }
