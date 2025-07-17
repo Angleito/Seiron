@@ -1,7 +1,7 @@
 import { createAuthenticatedFetch } from '../lib/auth/authInterceptor'
 
-// API endpoint configuration - using relative paths for Vercel deployment
-const API_BASE_URL = ''
+// API endpoint configuration - using environment variable or relative paths for Vercel deployment
+const API_BASE_URL = import.meta.env.NEXT_PUBLIC_BACKEND_URL || ''
 
 // Create authenticated fetch instance
 const authFetch = createAuthenticatedFetch({
@@ -63,12 +63,26 @@ export function getWebSocketEndpoint(sessionId: string) {
     throw new Error('Session ID is required for WebSocket connection')
   }
 
-  // Use frontend API WebSocket endpoint
-  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  const wsHost = window.location.host
+  // Use backend WebSocket endpoint if configured, otherwise use frontend API
+  const backendUrl = import.meta.env.NEXT_PUBLIC_BACKEND_URL
   
-  return {
-    wsEndpoint: `${wsProtocol}//${wsHost}/api/chat/ws/${sessionId}`,
-    protocol: 'agent-chat-v1',
+  if (backendUrl) {
+    // Use backend WebSocket endpoint
+    const wsProtocol = backendUrl.startsWith('https:') ? 'wss:' : 'ws:'
+    const wsHost = backendUrl.replace(/^https?:\/\//, '')
+    
+    return {
+      wsEndpoint: `${wsProtocol}//${wsHost}/api/chat/ws/${sessionId}`,
+      protocol: 'agent-chat-v1',
+    }
+  } else {
+    // Use frontend API WebSocket endpoint
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const wsHost = window.location.host
+    
+    return {
+      wsEndpoint: `${wsProtocol}//${wsHost}/api/chat/ws/${sessionId}`,
+      protocol: 'agent-chat-v1',
+    }
   }
 }

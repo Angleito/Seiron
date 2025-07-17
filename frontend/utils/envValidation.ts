@@ -203,6 +203,7 @@ export const envConfig = {
   voiceUseSpeakerBoost: getBooleanEnv('VITE_VOICE_USE_SPEAKER_BOOST', true),
   
   // API
+  backendUrl: safeGetEnv('NEXT_PUBLIC_BACKEND_URL'),
   apiUrl: safeGetEnv('VITE_API_URL'),
   wsUrl: safeGetEnv('VITE_WS_URL'),
   

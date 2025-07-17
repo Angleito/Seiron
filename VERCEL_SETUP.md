@@ -10,20 +10,13 @@ In your Vercel dashboard → Project Settings → Environment Variables, add:
 
 ```env
 # Backend API URL (use your CloudFlare tunnel URL)
-BACKEND_URL=https://your-tunnel-url.trycloudflare.com
-
-# Frontend API URLs (use your CloudFlare tunnel URL)
-VITE_API_URL=https://your-tunnel-url.trycloudflare.com
-VITE_WS_URL=wss://your-tunnel-url.trycloudflare.com
-
-# Orchestrator endpoints (use your CloudFlare tunnel URL)
-VITE_ORCHESTRATOR_API=https://your-tunnel-url.trycloudflare.com
-VITE_ORCHESTRATOR_WS=wss://your-tunnel-url.trycloudflare.com
-
-# Internal orchestrator endpoints (use your CloudFlare tunnel URL)
-ORCHESTRATOR_ENDPOINT=https://your-tunnel-url.trycloudflare.com
-ORCHESTRATOR_WS_ENDPOINT=wss://your-tunnel-url.trycloudflare.com
+NEXT_PUBLIC_BACKEND_URL=https://your-tunnel-url.trycloudflare.com
 ```
+
+This single environment variable will configure:
+- API route proxying to your Docker backend
+- WebSocket connections to your Docker backend  
+- Chat service endpoint configuration
 
 ### Creating Your Tunnel
 

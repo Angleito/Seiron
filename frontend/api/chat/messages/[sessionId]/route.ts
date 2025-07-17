@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { fetchWithRetry } from '@/utils/apiRetry';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || 'http://localhost:3001';
 
 // GET /api/chat/messages/[sessionId] - Get messages for a specific session
 export async function GET(
