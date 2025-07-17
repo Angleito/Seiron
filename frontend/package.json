@@ -108,7 +108,8 @@
     "zod": "^3.24.1"
   },
   "engines": {
-    "node": "22.x"
+    "node": ">=22.0.0",
+    "npm": ">=8.0.0"
   },
   "devDependencies": {
     "@axe-core/puppeteer": "^4.8.5",

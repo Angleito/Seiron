@@ -8,7 +8,7 @@ const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
 // Mock logger
-jest.mock('@lib/logger', () => ({
+jest.mock('../../lib/logger', () => ({
   logger: {
     safe: jest.fn(),
     info: jest.fn(),

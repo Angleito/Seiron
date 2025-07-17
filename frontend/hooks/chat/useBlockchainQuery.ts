@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { pipe } from 'fp-ts/function'
 import * as TE from 'fp-ts/TaskEither'
 import * as E from 'fp-ts/Either'
-import { logger } from '@lib/logger'
+import { logger } from '../../lib/logger'
 
 // Types and interfaces
 export interface BlockchainQueryParams {

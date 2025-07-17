@@ -9,7 +9,7 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 // Mock logger
 jest.mock('../../utils/logger', () => ({
-  logger: {
+  default: {
     info: jest.fn(),
     error: jest.fn(),
     warn: jest.fn(),

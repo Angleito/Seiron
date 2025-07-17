@@ -2,14 +2,25 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Create package.json for mock server
+COPY <<EOF package.json
+{
+  "name": "hive-mock-server",
+  "version": "1.0.0",
+  "description": "Mock Hive Intelligence API server for testing",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  }
+}
+EOF
 
 # Install dependencies
-RUN npm ci --only=production
-
-# Copy source code
-COPY . .
+RUN npm install
 
 # Create mock server directory
 RUN mkdir -p /app/hive-mock
