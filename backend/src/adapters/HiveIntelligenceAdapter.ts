@@ -4,7 +4,7 @@ import { pipe } from 'fp-ts/function';
 import axios, { AxiosInstance } from 'axios';
 import { EventEmitter } from 'events';
 import { createHash } from 'crypto';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
 
 export interface HiveIntelligenceConfig {
   apiKey: string;
@@ -221,7 +221,11 @@ export class HiveIntelligenceAdapter extends EventEmitter {
           logger.warn(`Retrying query, attempts remaining: ${retryAttempts}`);
           return pipe(
             TE.of(undefined),
-            TE.delay(this.config.retryDelay ?? 1000),
+            TE.chain(() => {
+              return new Promise(resolve => {
+                setTimeout(() => resolve(undefined), this.config.retryDelay ?? 1000);
+              });
+            }),
             TE.chain(() => this.performQuery({ ...params, retryAttempts: retryAttempts - 1 } as any))
           );
         }
@@ -291,7 +295,7 @@ export class HiveIntelligenceAdapter extends EventEmitter {
     // Clean up expired cache entries every minute
     this.cacheCleanupInterval = setInterval(() => {
       const now = Date.now();
-      for (const [key, entry] of this.cache.entries()) {
+      for (const [key, entry] of Array.from(this.cache.entries())) {
         if (now > entry.expiresAt) {
           this.cache.delete(key);
         }

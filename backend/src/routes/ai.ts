@@ -6,6 +6,7 @@ import * as E from 'fp-ts/Either';
 import { rateLimit } from 'express-rate-limit';
 import { cacheService, CacheService } from '../utils/cache';
 import { createHiveIntelligenceAdapter } from '../adapters/HiveIntelligenceAdapter';
+import logger from '../utils/logger';
 
 const router = Router();
 
@@ -740,7 +741,7 @@ router.get('/memory/search',
   // Get all user memory keys if sessionId not specified
   const memoryKeys = sessionId ? 
     [CacheService.generateKey('ai_memory', userId as string, sessionId as string)] :
-    [cacheService.generateKey('ai_memory', userId as string, 'default')]; // For now, just search default session
+    [CacheService.generateKey('ai_memory', userId as string, 'default')]; // For now, just search default session
   
   const result = await pipe(
     TE.tryCatch(
@@ -825,8 +826,145 @@ router.get('/memory/search',
 });
 
 /**
+ * Blockchain intent detection keywords and patterns
+ */
+const BLOCKCHAIN_KEYWORDS = {
+  // Sei Network specific
+  sei: ['sei', 'sei network', 'seichain', 'sei blockchain', 'sei token', 'sei coin'],
+  
+  // General blockchain terms
+  general: ['blockchain', 'crypto', 'cryptocurrency', 'defi', 'decentralized finance', 'web3', 'dapp', 'dapps'],
+  
+  // Wallet operations
+  wallet: ['wallet', 'balance', 'address', 'send', 'receive', 'transfer', 'withdraw', 'deposit'],
+  
+  // Staking and delegation
+  staking: ['stake', 'staking', 'delegate', 'delegation', 'validator', 'unstake', 'unbond', 'rewards', 'commission'],
+  
+  // Trading and DeFi
+  trading: ['swap', 'trade', 'liquidity', 'pool', 'farm', 'farming', 'yield', 'lend', 'borrow', 'lending', 'borrowing'],
+  
+  // Tokens and assets
+  assets: ['token', 'coin', 'asset', 'nft', 'collectible', 'price', 'market cap', 'volume', 'supply'],
+  
+  // Transaction operations
+  transactions: ['transaction', 'tx', 'hash', 'confirm', 'pending', 'gas', 'fee', 'block', 'blockchain'],
+  
+  // Protocols and dApps
+  protocols: ['protocol', 'dapp', 'contract', 'smart contract', 'cosmwasm', 'ibc', 'cosmos', 'tendermint'],
+  
+  // Market and analytics
+  market: ['market', 'price', 'chart', 'analysis', 'trend', 'bull', 'bear', 'volatility', 'cap'],
+  
+  // Security and compliance
+  security: ['security', 'audit', 'risk', 'slippage', 'impermanent loss', 'rug pull', 'flash loan']
+};
+
+/**
+ * Enhanced blockchain intent detection with context awareness
+ */
+const detectBlockchainIntent = (transcript: string, context?: any): { 
+  hasBlockchainIntent: boolean;
+  detectedCategories: string[];
+  keywords: string[];
+  confidence: number;
+  priority: 'high' | 'medium' | 'low';
+  suggestedActions?: string[];
+} => {
+  const normalizedTranscript = transcript.toLowerCase();
+  const detectedCategories: string[] = [];
+  const keywords: string[] = [];
+  const suggestedActions: string[] = [];
+  
+  // Check each category for keyword matches
+  Object.entries(BLOCKCHAIN_KEYWORDS).forEach(([category, categoryKeywords]) => {
+    const matches = categoryKeywords.filter(keyword => 
+      normalizedTranscript.includes(keyword.toLowerCase())
+    );
+    
+    if (matches.length > 0) {
+      detectedCategories.push(category);
+      keywords.push(...matches);
+      
+      // Add suggested actions based on category
+      switch (category) {
+        case 'wallet':
+          suggestedActions.push('check_wallet_balance', 'view_transaction_history');
+          break;
+        case 'staking':
+          suggestedActions.push('view_staking_rewards', 'check_validator_performance');
+          break;
+        case 'trading':
+          suggestedActions.push('check_token_prices', 'view_liquidity_pools');
+          break;
+        case 'sei':
+          suggestedActions.push('sei_network_status', 'sei_token_info');
+          break;
+      }
+    }
+  });
+  
+  const hasBlockchainIntent = detectedCategories.length > 0;
+  
+  // Calculate confidence based on multiple factors
+  let confidence = 0;
+  if (hasBlockchainIntent) {
+    confidence += detectedCategories.length * 0.2; // Base confidence per category
+    confidence += keywords.length * 0.1; // Additional confidence per keyword
+    
+    // Boost confidence for high-priority categories
+    if (detectedCategories.includes('sei')) confidence += 0.3;
+    if (detectedCategories.includes('wallet')) confidence += 0.2;
+    if (detectedCategories.includes('trading')) confidence += 0.2;
+    
+    // Context-based confidence boost
+    if (context?.hasPortfolio) confidence += 0.1;
+    if (context?.previousBlockchainQueries) confidence += 0.1;
+    
+    confidence = Math.min(confidence, 1.0);
+  }
+  
+  // Determine priority
+  let priority: 'high' | 'medium' | 'low' = 'low';
+  if (confidence > 0.7) priority = 'high';
+  else if (confidence > 0.4) priority = 'medium';
+  
+  return {
+    hasBlockchainIntent,
+    detectedCategories,
+    keywords,
+    confidence,
+    priority,
+    suggestedActions: suggestedActions.filter((action, index, self) => self.indexOf(action) === index)
+  };
+};
+
+/**
+ * Validate and enhance blockchain context for better processing
+ */
+const enhanceBlockchainContext = (intent: any, portfolioData?: any): any => {
+  const enhanced = { ...intent };
+  
+  // Add portfolio context if available
+  if (portfolioData) {
+    enhanced.portfolioContext = {
+      hasAssets: Object.keys(portfolioData).length > 0,
+      assetCount: Object.keys(portfolioData).length,
+      totalValue: portfolioData.totalValue || 0,
+      primaryAssets: Object.keys(portfolioData).slice(0, 3)
+    };
+  }
+  
+  // Add timestamp for context tracking
+  enhanced.detectedAt = new Date().toISOString();
+  
+  return enhanced;
+};
+
+
+/**
  * POST /api/ai/voice/process
- * Process voice input and generate AI response with voice synthesis
+ * Process voice input and generate AI response with voice synthesis and blockchain intent detection
  */
 router.post('/voice/process', 
   voiceRateLimit,
@@ -845,6 +983,9 @@ router.post('/voice/process',
 
   const { userId, sessionId, transcript, audioMetadata, voiceSettings } = req.body;
   
+  // Detect blockchain intent in the transcript
+  const blockchainIntent = detectBlockchainIntent(transcript);
+  
   const result = await pipe(
     // Load conversation memory
     pipe(
@@ -855,13 +996,104 @@ router.post('/voice/process',
       // Extract portfolio data from memory if available
       const portfolioData = memory.entries?.find((entry: any) => entry.key === 'portfolio_data')?.value;
       
-      // Process with AI service
-      return req.services?.ai?.processMessage 
-        ? req.services.ai.processMessage(transcript, userId, portfolioData)
-        : TE.left(new Error('AI service not available'));
+      // If blockchain intent is detected, enhance with blockchain data
+      if (blockchainIntent.hasBlockchainIntent) {
+        logger.info('Blockchain intent detected in voice transcript', {
+          userId,
+          sessionId,
+          categories: blockchainIntent.detectedCategories,
+          keywords: blockchainIntent.keywords,
+          confidence: blockchainIntent.confidence
+        });
+        
+        // Initialize Hive Intelligence adapter for blockchain queries
+        const hiveAdapter = createHiveIntelligenceAdapter({
+          apiKey: process.env.HIVE_INTELLIGENCE_API_KEY!,
+          baseUrl: process.env.HIVE_INTELLIGENCE_BASE_URL,
+          maxRequestsPerMinute: parseInt(process.env.HIVE_INTELLIGENCE_RATE_LIMIT || '20'),
+          cacheTTL: parseInt(process.env.HIVE_INTELLIGENCE_CACHE_TTL || '300'),
+          retryAttempts: parseInt(process.env.HIVE_INTELLIGENCE_RETRY_ATTEMPTS || '2'),
+          retryDelay: parseInt(process.env.HIVE_INTELLIGENCE_RETRY_DELAY || '1000')
+        });
+        
+        return pipe(
+          // Initialize adapter
+          hiveAdapter.initialize(),
+          TE.chain(() => {
+            // Construct blockchain query based on detected intent
+            const blockchainQuery = `Voice query about ${blockchainIntent.detectedCategories.join(', ')}: ${transcript}`;
+            
+            // Get blockchain data from Hive Intelligence
+            return hiveAdapter.queryBlockchainData({
+              query: blockchainQuery,
+              temperature: 0.3,
+              includeDataSources: true,
+              maxTokens: 300
+            });
+          }),
+          TE.chain(blockchainData => {
+            // Enhanced prompt with blockchain context
+            const enhancedPrompt = `${transcript}
+
+[BLOCKCHAIN CONTEXT]
+Detected blockchain intent: ${blockchainIntent.detectedCategories.join(', ')}
+Keywords: ${blockchainIntent.keywords.join(', ')}
+Blockchain Data: ${blockchainData.response}
+${blockchainData.sources ? `Sources: ${blockchainData.sources.join(', ')}` : ''}
+
+[PORTFOLIO CONTEXT]
+${portfolioData ? `Portfolio: ${JSON.stringify(portfolioData, null, 2)}` : 'No portfolio data available'}
+
+Please provide a comprehensive response that incorporates the blockchain information and relates it to the user's voice query.`;
+            
+            // Process enhanced prompt with AI service
+            const aiResult = req.services?.ai?.processMessage 
+              ? req.services.ai.processMessage(enhancedPrompt, userId, portfolioData)
+              : TE.left(new Error('AI service not available'));
+            
+            // Clean up adapter resources
+            hiveAdapter.destroy();
+            
+            return pipe(
+              aiResult,
+              TE.map(aiResponse => ({
+                ...aiResponse,
+                blockchainContext: {
+                  intent: blockchainIntent,
+                  blockchainData: {
+                    response: blockchainData.response,
+                    sources: blockchainData.sources,
+                    creditsUsed: blockchainData.creditsUsed
+                  }
+                }
+              }))
+            );
+          }),
+          TE.orElse(error => {
+            logger.warn('Blockchain data retrieval failed, falling back to regular processing', {
+              error: error.message,
+              userId,
+              sessionId
+            });
+            
+            // Clean up adapter resources
+            hiveAdapter.destroy();
+            
+            // Fall back to regular AI processing
+            return req.services?.ai?.processMessage 
+              ? req.services.ai.processMessage(transcript, userId, portfolioData)
+              : TE.left(new Error('AI service not available'));
+          })
+        );
+      } else {
+        // Regular AI processing for non-blockchain queries
+        return req.services?.ai?.processMessage 
+          ? req.services.ai.processMessage(transcript, userId, portfolioData)
+          : TE.left(new Error('AI service not available'));
+      }
     }),
     TE.chain(aiResponse => {
-      // Save conversation to memory
+      // Save conversation to memory with blockchain context
       const conversationEntry = {
         id: `conversation_${Date.now()}`,
         userId,
@@ -873,7 +1105,9 @@ router.post('/voice/process',
           audioMetadata,
           timestamp: new Date().toISOString(),
           confidence: aiResponse.confidence,
-          command: aiResponse.command
+          command: aiResponse.command,
+          blockchainIntent: blockchainIntent.hasBlockchainIntent ? blockchainIntent : undefined,
+          blockchainContext: (aiResponse as any).blockchainContext
         },
         category: 'interaction' as const,
         confidence: aiResponse.confidence,
@@ -914,6 +1148,8 @@ router.post('/voice/process',
       suggestions: result.right.suggestions,
       confidence: result.right.confidence,
       reasoning: result.right.reasoning,
+      blockchainIntent: blockchainIntent.hasBlockchainIntent ? blockchainIntent : undefined,
+      blockchainContext: (result.right as any).blockchainContext,
       voiceSettings: voiceSettings || {
         stability: 0.5,
         similarityBoost: 0.75,
@@ -926,7 +1162,7 @@ router.post('/voice/process',
 
 /**
  * POST /api/ai/voice/stream
- * Stream AI response generation for real-time voice processing
+ * Stream AI response generation for real-time voice processing with blockchain awareness
  */
 router.post('/voice/stream', 
   streamRateLimit,
@@ -953,6 +1189,9 @@ router.post('/voice/stream',
   });
 
   try {
+    // Detect blockchain intent in the transcript
+    const blockchainIntent = detectBlockchainIntent(transcript);
+    
     // Load conversation memory
     const memoryResult = await cacheService.get<any>(CacheService.generateKey('ai_memory', userId, sessionId))();
     const memory = E.isRight(memoryResult) ? memoryResult.right : { entries: [], preferences: {} };
@@ -964,12 +1203,84 @@ router.post('/voice/stream',
     res.write(`data: ${JSON.stringify({ 
       type: 'status', 
       status: 'processing', 
-      message: 'Analyzing your request...' 
+      message: blockchainIntent.hasBlockchainIntent ? 'Analyzing blockchain query...' : 'Analyzing your request...',
+      blockchainIntent: blockchainIntent.hasBlockchainIntent ? blockchainIntent : undefined
     })}\n\n`);
+
+    let finalPrompt = transcript;
+    let blockchainContext: any = undefined;
+    
+    // If blockchain intent is detected, enhance with blockchain data
+    if (blockchainIntent.hasBlockchainIntent) {
+      res.write(`data: ${JSON.stringify({
+        type: 'status',
+        status: 'fetching_blockchain_data',
+        message: 'Fetching blockchain data...'
+      })}\n\n`);
+      
+      try {
+        // Initialize Hive Intelligence adapter for blockchain queries
+        const hiveAdapter = createHiveIntelligenceAdapter({
+          apiKey: process.env.HIVE_INTELLIGENCE_API_KEY!,
+          baseUrl: process.env.HIVE_INTELLIGENCE_BASE_URL,
+          maxRequestsPerMinute: parseInt(process.env.HIVE_INTELLIGENCE_RATE_LIMIT || '20'),
+          cacheTTL: parseInt(process.env.HIVE_INTELLIGENCE_CACHE_TTL || '300'),
+          retryAttempts: parseInt(process.env.HIVE_INTELLIGENCE_RETRY_ATTEMPTS || '2'),
+          retryDelay: parseInt(process.env.HIVE_INTELLIGENCE_RETRY_DELAY || '1000')
+        });
+        
+        const initResult = await hiveAdapter.initialize()();
+        if (E.isRight(initResult)) {
+          const blockchainQuery = `Voice query about ${blockchainIntent.detectedCategories.join(', ')}: ${transcript}`;
+          
+          const blockchainResult = await hiveAdapter.queryBlockchainData({
+            query: blockchainQuery,
+            temperature: 0.3,
+            includeDataSources: true,
+            maxTokens: 300
+          })();
+          
+          if (E.isRight(blockchainResult)) {
+            const blockchainData = blockchainResult.right;
+            
+            // Enhanced prompt with blockchain context
+            finalPrompt = `${transcript}\n\n[BLOCKCHAIN CONTEXT]\nDetected blockchain intent: ${blockchainIntent.detectedCategories.join(', ')}\nKeywords: ${blockchainIntent.keywords.join(', ')}\nBlockchain Data: ${blockchainData.response}\n${blockchainData.sources ? `Sources: ${blockchainData.sources.join(', ')}` : ''}\n\n[PORTFOLIO CONTEXT]\n${portfolioData ? `Portfolio: ${JSON.stringify(portfolioData, null, 2)}` : 'No portfolio data available'}\n\nPlease provide a comprehensive response that incorporates the blockchain information and relates it to the user's voice query.`;
+            
+            blockchainContext = {
+              intent: blockchainIntent,
+              blockchainData: {
+                response: blockchainData.response,
+                sources: blockchainData.sources,
+                creditsUsed: blockchainData.creditsUsed
+              }
+            };
+            
+            res.write(`data: ${JSON.stringify({
+              type: 'blockchain_data',
+              blockchainContext
+            })}\n\n`);
+          }
+        }
+        
+        // Clean up adapter resources
+        hiveAdapter.destroy();
+      } catch (error) {
+        logger.warn('Blockchain data retrieval failed in streaming mode', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          userId,
+          sessionId
+        });
+        
+        res.write(`data: ${JSON.stringify({
+          type: 'blockchain_warning',
+          message: 'Blockchain data unavailable, proceeding with regular processing'
+        })}\n\n`);
+      }
+    }
 
     // Process with AI service (this would typically be a streaming response)
     if (req.services?.ai?.processMessage) {
-      const aiResult = await req.services.ai.processMessage(transcript, userId, portfolioData)();
+      const aiResult = await req.services.ai.processMessage(finalPrompt, userId, portfolioData)();
       
       if (E.isRight(aiResult)) {
         // Stream the response (in chunks for demonstration)
@@ -995,7 +1306,9 @@ router.post('/voice/stream',
           response: aiResult.right.message,
           command: aiResult.right.command,
           suggestions: aiResult.right.suggestions,
-          confidence: aiResult.right.confidence
+          confidence: aiResult.right.confidence,
+          blockchainIntent: blockchainIntent.hasBlockchainIntent ? blockchainIntent : undefined,
+          blockchainContext
         })}\n\n`);
         
         // Save conversation to memory
@@ -1010,7 +1323,9 @@ router.post('/voice/stream',
             timestamp: new Date().toISOString(),
             confidence: aiResult.right.confidence,
             command: aiResult.right.command,
-            streamProcessed: true
+            streamProcessed: true,
+            blockchainIntent: blockchainIntent.hasBlockchainIntent ? blockchainIntent : undefined,
+            blockchainContext
           },
           category: 'interaction' as const,
           confidence: aiResult.right.confidence,
@@ -1192,6 +1507,194 @@ router.post('/voice/context/update',
     success: true,
     data: result.right,
     message: `${contextType} context updated successfully`
+  });
+});
+
+/**
+ * POST /api/ai/voice/blockchain/query
+ * Dedicated endpoint for blockchain-focused voice queries with enhanced data integration
+ */
+router.post('/voice/blockchain/query', 
+  voiceRateLimit,
+  [
+    body('userId').notEmpty().withMessage('User ID is required'),
+    body('sessionId').notEmpty().withMessage('Session ID is required'),
+    body('transcript').notEmpty().withMessage('Voice transcript is required'),
+    body('blockchainContext').optional().isObject().withMessage('Blockchain context must be an object'),
+    body('voiceSettings').optional().isObject().withMessage('Voice settings must be an object')
+  ], 
+  async (req: Request, res: Response) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { userId, sessionId, transcript, blockchainContext, voiceSettings } = req.body;
+  
+  // Force blockchain intent detection or use provided context
+  const blockchainIntent = blockchainContext || detectBlockchainIntent(transcript);
+  
+  // Enhance intent if not provided
+  if (!blockchainContext) {
+    blockchainIntent.hasBlockchainIntent = true;
+    if (blockchainIntent.detectedCategories.length === 0) {
+      blockchainIntent.detectedCategories = ['general'];
+      blockchainIntent.keywords = ['blockchain'];
+      blockchainIntent.confidence = 0.8;
+    }
+  }
+  
+  const result = await pipe(
+    // Load conversation memory
+    pipe(
+      cacheService.get<any>(CacheService.generateKey('ai_memory', userId, sessionId)),
+      TE.map(memory => memory || { entries: [], preferences: {} })
+    ),
+    TE.chain(memory => {
+      // Extract portfolio data from memory if available
+      const portfolioData = memory.entries?.find((entry: any) => entry.key === 'portfolio_data')?.value;
+      
+      logger.info('Processing dedicated blockchain voice query', {
+        userId,
+        sessionId,
+        categories: blockchainIntent.detectedCategories,
+        keywords: blockchainIntent.keywords,
+        confidence: blockchainIntent.confidence
+      });
+      
+      // Initialize Hive Intelligence adapter for blockchain queries
+      const hiveAdapter = createHiveIntelligenceAdapter({
+        apiKey: process.env.HIVE_INTELLIGENCE_API_KEY!,
+        baseUrl: process.env.HIVE_INTELLIGENCE_BASE_URL,
+        maxRequestsPerMinute: parseInt(process.env.HIVE_INTELLIGENCE_RATE_LIMIT || '20'),
+        cacheTTL: parseInt(process.env.HIVE_INTELLIGENCE_CACHE_TTL || '300'),
+        retryAttempts: parseInt(process.env.HIVE_INTELLIGENCE_RETRY_ATTEMPTS || '2'),
+        retryDelay: parseInt(process.env.HIVE_INTELLIGENCE_RETRY_DELAY || '1000')
+      });
+      
+      return pipe(
+        // Initialize adapter
+        hiveAdapter.initialize(),
+        TE.chain(() => {
+          // Construct detailed blockchain query
+          const blockchainQuery = `Voice query about ${blockchainIntent.detectedCategories.join(', ')} on Sei Network: ${transcript}\n\nPlease provide detailed information about: ${blockchainIntent.keywords.join(', ')}`;
+          
+          // Get blockchain data from Hive Intelligence
+          return hiveAdapter.queryBlockchainData({
+            query: blockchainQuery,
+            temperature: 0.2, // Lower temperature for more precise blockchain info
+            includeDataSources: true,
+            maxTokens: 600 // More tokens for detailed blockchain responses
+          });
+        }),
+        TE.chain(blockchainData => {
+          // Enhanced prompt specifically for blockchain queries
+          const enhancedPrompt = `BLOCKCHAIN VOICE QUERY: ${transcript}\n\n[BLOCKCHAIN INTELLIGENCE]\nCategories: ${blockchainIntent.detectedCategories.join(', ')}\nKeywords: ${blockchainIntent.keywords.join(', ')}\nConfidence: ${blockchainIntent.confidence}\n\nBlockchain Data:\n${blockchainData.response}\n\n${blockchainData.sources ? `Data Sources:\n${blockchainData.sources.map(src => `- ${src}`).join('\n')}` : ''}\n\n[USER PORTFOLIO]\n${portfolioData ? `Portfolio Data:\n${JSON.stringify(portfolioData, null, 2)}` : 'No portfolio data available'}\n\n[INSTRUCTIONS]\nProvide a comprehensive, voice-friendly response that:\n1. Directly addresses the user's voice query\n2. Incorporates the blockchain intelligence data\n3. Relates findings to the user's portfolio if available\n4. Suggests actionable next steps\n5. Uses conversational tone suitable for voice interaction\n\nResponse should be detailed but easy to understand when spoken aloud.`;
+          
+          // Process enhanced prompt with AI service
+          const aiResult = req.services?.ai?.processMessage 
+            ? req.services.ai.processMessage(enhancedPrompt, userId, portfolioData)
+            : TE.left(new Error('AI service not available'));
+          
+          // Clean up adapter resources
+          hiveAdapter.destroy();
+          
+          return pipe(
+            aiResult,
+            TE.map(aiResponse => ({
+              ...aiResponse,
+              blockchainContext: {
+                intent: blockchainIntent,
+                blockchainData: {
+                  response: blockchainData.response,
+                  sources: blockchainData.sources,
+                  creditsUsed: blockchainData.creditsUsed
+                },
+                enhancedForVoice: true
+              }
+            }))
+          );
+        }),
+        TE.orElse(error => {
+          logger.error('Blockchain voice query failed', {
+            error: error.message,
+            userId,
+            sessionId,
+            transcript
+          });
+          
+          // Clean up adapter resources
+          hiveAdapter.destroy();
+          
+          return TE.left(error);
+        })
+      );
+    }),
+    TE.chain(aiResponse => {
+      // Save conversation to memory with enhanced blockchain context
+      const conversationEntry = {
+        id: `blockchain_voice_query_${Date.now()}`,
+        userId,
+        sessionId,
+        key: `blockchain_voice_query_${Date.now()}`,
+        value: {
+          userTranscript: transcript,
+          aiResponse: aiResponse.message,
+          timestamp: new Date().toISOString(),
+          confidence: aiResponse.confidence,
+          command: aiResponse.command,
+          blockchainIntent,
+          blockchainContext: (aiResponse as any).blockchainContext,
+          dedicatedBlockchainQuery: true
+        },
+        category: 'interaction' as const,
+        confidence: aiResponse.confidence,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      return pipe(
+        cacheService.get<any>(CacheService.generateKey('ai_memory', userId, sessionId)),
+        TE.chain(existingMemory => {
+          const updatedMemory = {
+            ...existingMemory,
+            entries: [...(existingMemory?.entries || []), conversationEntry],
+            lastUpdated: new Date().toISOString()
+          };
+          return pipe(
+            cacheService.set(CacheService.generateKey('ai_memory', userId, sessionId), updatedMemory, 604800),
+            TE.map(() => aiResponse)
+          );
+        })
+      );
+    })
+  )();
+
+  if (E.isLeft(result)) {
+    return res.status(500).json({
+      success: false,
+      error: 'Blockchain voice query failed',
+      details: result.left.message
+    });
+  }
+
+  res.json({
+    success: true,
+    data: {
+      response: result.right.message,
+      command: result.right.command,
+      suggestions: result.right.suggestions,
+      confidence: result.right.confidence,
+      reasoning: result.right.reasoning,
+      blockchainIntent,
+      blockchainContext: (result.right as any).blockchainContext,
+      voiceSettings: voiceSettings || {
+        stability: 0.6, // Slightly more stable for technical blockchain content
+        similarityBoost: 0.8,
+        style: 0.4, // More neutral for informational content
+        useSpeakerBoost: true
+      }
+    }
   });
 });
 

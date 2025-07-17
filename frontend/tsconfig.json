@@ -77,6 +77,11 @@
     "components/dragon/DragonModelManager.tsx",
     "components/dragon/EnhancedModelPreloader.tsx",
     "e2e/**/*",
-    "scripts/**/*"
+    "scripts/**/*",
+    "utils/walletConnectManager.ts",
+    "utils/apiRetry.ts",
+    "components/wallet/WalletConnectProvider.tsx",
+    "api/**/*",
+    "app/**/*"
   ]
 }

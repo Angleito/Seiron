@@ -93,8 +93,13 @@ export class AIService {
     
     return pipe(
       this.updateContext(walletAddress, message, portfolioData),
-      TE.chain(() => this.parseCommand(message)),
-      TE.chain(command => this.generateResponse(message, command, walletAddress)),
+      TE.chain(() => this.detectBlockchainIntent(message, walletAddress)),
+      TE.chain(blockchainIntent => 
+        pipe(
+          this.parseCommand(message),
+          TE.chain(command => this.generateResponseWithBlockchainData(message, command, walletAddress, blockchainIntent))
+        )
+      ),
       TE.map(response => {
         const duration = performance.now() - startTime;
         this.logger.info('Message processed successfully', {
@@ -103,7 +108,8 @@ export class AIService {
           duration: Math.round(duration),
           responseLength: response.message.length,
           hasCommand: !!response.command,
-          confidence: response.confidence
+          confidence: response.confidence,
+          hasBlockchainData: !!response.blockchainData
         });
         return response;
       }),
@@ -119,6 +125,81 @@ export class AIService {
         return error;
       })
     );
+  };
+
+  /**
+   * Detect blockchain intent from user message
+   */
+  private detectBlockchainIntent = (
+    message: string,
+    walletAddress: string
+  ): TE.TaskEither<Error, { isBlockchainQuery: boolean; queryType?: string; confidence: number }> => {
+    const startTime = performance.now();
+    
+    this.logger.debug('Detecting blockchain intent', {
+      messageLength: message.length,
+      walletAddress,
+      timestamp: new Date().toISOString()
+    });
+    
+    return TE.of((() => {
+      const lowerMessage = message.toLowerCase();
+      const blockchainKeywords = {
+        price: ['price', 'cost', 'value', 'worth', 'market cap', 'mcap', 'token price'],
+        defi: ['defi', 'yield', 'apy', 'apr', 'liquidity', 'swap', 'pool', 'farm', 'stake', 'unstake'],
+        staking: ['stake', 'staking', 'delegate', 'validator', 'rewards', 'unstake', 'undelegate'],
+        wallet: ['balance', 'wallet', 'address', 'transfer', 'send', 'receive', 'transaction history'],
+        transaction: ['transaction', 'tx', 'hash', 'confirm', 'pending', 'failed', 'gas', 'fee'],
+        general: ['sei', 'blockchain', 'network', 'block', 'consensus', 'node', 'protocol']
+      };
+      
+      let maxConfidence = 0;
+      let detectedType = 'general';
+      let isBlockchainQuery = false;
+      
+      for (const [type, keywords] of Object.entries(blockchainKeywords)) {
+        const matchCount = keywords.filter(keyword => lowerMessage.includes(keyword)).length;
+        const confidence = matchCount / keywords.length;
+        
+        if (confidence > maxConfidence) {
+          maxConfidence = confidence;
+          detectedType = type;
+        }
+        
+        if (matchCount > 0) {
+          isBlockchainQuery = true;
+        }
+      }
+      
+      // Additional heuristics for blockchain detection
+      if (!isBlockchainQuery) {
+        const portfolioKeywords = ['portfolio', 'holdings', 'assets', 'positions', 'trades'];
+        const protocolKeywords = ['yei', 'dragonswap', 'takara', 'silo', 'astroport'];
+        
+        if (portfolioKeywords.some(keyword => lowerMessage.includes(keyword)) ||
+            protocolKeywords.some(keyword => lowerMessage.includes(keyword))) {
+          isBlockchainQuery = true;
+          detectedType = 'defi';
+          maxConfidence = 0.7;
+        }
+      }
+      
+      const duration = performance.now() - startTime;
+      const result = {
+        isBlockchainQuery,
+        queryType: isBlockchainQuery ? detectedType : undefined,
+        confidence: maxConfidence
+      };
+      
+      this.logger.debug('Blockchain intent detection completed', {
+        walletAddress,
+        duration: Math.round(duration),
+        result,
+        matchedKeywords: isBlockchainQuery
+      });
+      
+      return result;
+    })());
   };
 
   /**
@@ -149,12 +230,103 @@ export class AIService {
   };
 
   /**
+   * Generate AI response with blockchain data integration
+   */
+  private generateResponseWithBlockchainData = (
+    message: string,
+    command: Command | undefined,
+    walletAddress: string,
+    blockchainIntent: { isBlockchainQuery: boolean; queryType?: string; confidence: number }
+  ): TE.TaskEither<Error, AIResponse> => {
+    const startTime = performance.now();
+    
+    this.logger.debug('Generating response with blockchain data', {
+      walletAddress,
+      hasCommand: !!command,
+      blockchainIntent,
+      timestamp: new Date().toISOString()
+    });
+    
+    return pipe(
+      blockchainIntent.isBlockchainQuery && blockchainIntent.confidence > 0.3
+        ? this.fetchBlockchainData(message, walletAddress, blockchainIntent.queryType!)
+        : TE.right(undefined),
+      TE.chain(blockchainData => this.generateResponse(message, command, walletAddress, blockchainData)),
+      TE.map(response => {
+        const duration = performance.now() - startTime;
+        this.logger.debug('Response with blockchain data generated', {
+          walletAddress,
+          duration: Math.round(duration),
+          hasBlockchainData: !!response.blockchainData,
+          blockchainIntent
+        });
+        return response;
+      })
+    );
+  };
+
+  /**
+   * Fetch blockchain data using Hive Intelligence
+   */
+  private fetchBlockchainData = (
+    message: string,
+    walletAddress: string,
+    queryType: string
+  ): TE.TaskEither<Error, any> => {
+    const startTime = performance.now();
+    
+    this.logger.debug('Fetching blockchain data', {
+      walletAddress,
+      queryType,
+      hasHiveAdapter: !!this.hiveAdapter,
+      timestamp: new Date().toISOString()
+    });
+    
+    if (!this.hiveAdapter) {
+      this.logger.debug('Hive adapter not available, skipping blockchain data fetch', { walletAddress });
+      return TE.right(undefined);
+    }
+    
+    return pipe(
+      this.hiveAdapter.search(message, { walletAddress, queryType }),
+      TE.map(hiveResponse => {
+        const duration = performance.now() - startTime;
+        this.logger.info('Blockchain data fetched successfully', {
+          walletAddress,
+          queryType,
+          duration: Math.round(duration),
+          hasData: !!hiveResponse.data
+        });
+        
+        return {
+          hiveInsights: hiveResponse.data,
+          queryType,
+          fetchedAt: new Date().toISOString(),
+          source: 'hive'
+        };
+      }),
+      TE.orElse(error => {
+        const duration = performance.now() - startTime;
+        this.logger.warn('Failed to fetch blockchain data', {
+          walletAddress,
+          queryType,
+          duration: Math.round(duration),
+          error: error.message
+        });
+        // Return undefined instead of failing to maintain backward compatibility
+        return TE.right(undefined);
+      })
+    );
+  };
+
+  /**
    * Generate AI response using OpenAI
    */
   private generateResponse = (
     message: string,
     command: Command | undefined,
-    walletAddress: string
+    walletAddress: string,
+    blockchainData?: any
   ): TE.TaskEither<Error, AIResponse> => {
     const startTime = performance.now();
     const openAIStartTime = performance.now();
@@ -162,7 +334,7 @@ export class AIService {
     return TE.tryCatch(
       async () => {
         const context = this.contexts.get(walletAddress);
-        const systemPrompt = this.buildSystemPrompt(context);
+        const systemPrompt = this.buildSystemPrompt(context, blockchainData);
         
         const messageHistory = context?.messages.slice(-10) || [];
         const chatMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
@@ -230,16 +402,32 @@ export class AIService {
           openAIDuration: Math.round(openAIDuration),
           suggestionsCount: suggestions.length,
           confidence,
-          reasoning
+          reasoning,
+          hasBlockchainData: !!blockchainData
         });
         
-        return {
+        const response: AIResponse = {
           message: aiMessage,
           command,
           suggestions,
           confidence,
           reasoning
         };
+        
+        // Add blockchain data if available
+        if (blockchainData) {
+          response.blockchainData = {
+            hiveInsights: blockchainData.hiveInsights,
+            marketData: blockchainData.marketData,
+            isBlockchainQuery: true,
+            queryType: blockchainData.queryType as 'price' | 'defi' | 'staking' | 'wallet' | 'transaction' | 'general'
+          };
+          
+          // Update context with blockchain query tracking
+          this.updateBlockchainContext(walletAddress, message, blockchainData.queryType, true);
+        }
+        
+        return response;
       },
       (error) => {
         const duration = performance.now() - startTime;
@@ -271,7 +459,11 @@ export class AIService {
         context = {
           walletAddress,
           messages: [],
-          portfolioData
+          portfolioData,
+          blockchainContext: {
+            recentBlockchainQueries: [],
+            preferredQueryTypes: []
+          }
         };
         this.contexts.set(walletAddress, context);
         
@@ -319,7 +511,7 @@ export class AIService {
   /**
    * Build system prompt for AI
    */
-  private buildSystemPrompt(context?: ChatContext): string {
+  private buildSystemPrompt(context?: ChatContext, blockchainData?: any): string {
     const basePrompt = `You are an AI assistant for the Sei Portfolio Manager, a DeFi portfolio management platform on the Sei Network.
 
 Your capabilities include:
@@ -327,6 +519,7 @@ Your capabilities include:
 - Managing concentrated liquidity positions on DragonSwap V2
 - Providing portfolio analysis and recommendations
 - Executing transactions through natural language commands
+- Accessing real-time blockchain data and market insights
 
 Current supported commands:
 - Supply/Withdraw from lending markets
@@ -341,22 +534,45 @@ Guidelines:
 - Provide clear explanations of risks
 - Suggest optimal strategies based on market conditions
 - Use technical terms when appropriate but explain them clearly
+- When blockchain data is available, incorporate it into your responses
+- Prioritize real-time data over general information
 
 When users ask about transactions, parse their intent and provide clear next steps.`;
 
+    let contextualPrompt = basePrompt;
+
     if (context?.portfolioData) {
-      return `${basePrompt}
+      contextualPrompt += `
 
 Current Portfolio Data:
 - Total Value: $${context.portfolioData.totalValueUSD?.toFixed(2) || '0.00'}
 - Lending Positions: ${context.portfolioData.lendingPositions?.length || 0}
 - Liquidity Positions: ${context.portfolioData.liquidityPositions?.length || 0}
-- Health Factor: ${context.portfolioData.healthFactor || 'N/A'}
-
-Use this context to provide personalized advice.`;
+- Health Factor: ${context.portfolioData.healthFactor || 'N/A'}`;
     }
 
-    return basePrompt;
+    if (blockchainData && blockchainData.hiveInsights) {
+      contextualPrompt += `
+
+Real-time Blockchain Insights:
+${JSON.stringify(blockchainData.hiveInsights, null, 2)}
+
+Use this blockchain data to provide more accurate and timely advice.`;
+    }
+
+    if (context?.blockchainContext && context.blockchainContext.recentBlockchainQueries.length > 0) {
+      const recentQueries = context.blockchainContext.recentBlockchainQueries.slice(-3);
+      contextualPrompt += `
+
+Recent Blockchain Queries:
+${recentQueries.map(q => `- ${q.type}: ${q.query.substring(0, 100)}...`).join('\n')}`;
+    }
+
+    contextualPrompt += `
+
+Use this context to provide personalized advice.`;
+
+    return contextualPrompt;
   }
 
   /**
@@ -388,6 +604,27 @@ Use this context to provide personalized advice.`;
       }
 
       return suggestions.length > 0 ? suggestions : defaultSuggestions;
+    }
+
+    // Add blockchain-specific suggestions based on recent queries
+    if (context?.blockchainContext && context.blockchainContext.preferredQueryTypes.length > 0) {
+      const blockchainSuggestions = [];
+      
+      if (context.blockchainContext.preferredQueryTypes.includes('price')) {
+        blockchainSuggestions.push("Check SEI token price", "Show market cap data");
+      }
+      
+      if (context.blockchainContext.preferredQueryTypes.includes('defi')) {
+        blockchainSuggestions.push("Find best yield opportunities", "Check DeFi protocol stats");
+      }
+      
+      if (context.blockchainContext.preferredQueryTypes.includes('staking')) {
+        blockchainSuggestions.push("Show staking rewards", "Check validator performance");
+      }
+      
+      if (blockchainSuggestions.length > 0) {
+        return [...blockchainSuggestions, ...defaultSuggestions.slice(0, 3)];
+      }
     }
 
     return defaultSuggestions;
@@ -427,6 +664,58 @@ Use this context to provide personalized advice.`;
         contextExists: !!context
       });
     })());
+
+  /**
+   * Update blockchain context for query tracking
+   */
+  private updateBlockchainContext = (
+    walletAddress: string,
+    query: string,
+    queryType: string,
+    hadBlockchainData: boolean
+  ): void => {
+    const context = this.contexts.get(walletAddress);
+    if (!context) return;
+
+    if (!context.blockchainContext) {
+      context.blockchainContext = {
+        recentBlockchainQueries: [],
+        preferredQueryTypes: []
+      };
+    }
+
+    // Add to recent queries
+    context.blockchainContext.recentBlockchainQueries.push({
+      query,
+      timestamp: new Date(),
+      type: queryType,
+      hadBlockchainData
+    });
+
+    // Keep only last 10 queries
+    if (context.blockchainContext.recentBlockchainQueries.length > 10) {
+      context.blockchainContext.recentBlockchainQueries = 
+        context.blockchainContext.recentBlockchainQueries.slice(-10);
+    }
+
+    // Update preferred query types
+    const queryTypeCounts = context.blockchainContext.recentBlockchainQueries.reduce((acc, q) => {
+      acc[q.type] = (acc[q.type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    context.blockchainContext.preferredQueryTypes = Object.entries(queryTypeCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3)
+      .map(([type]) => type);
+
+    this.logger.debug('Updated blockchain context', {
+      walletAddress,
+      queryType,
+      totalQueries: context.blockchainContext.recentBlockchainQueries.length,
+      preferredTypes: context.blockchainContext.preferredQueryTypes
+    });
+  };
 
   /**
    * Generate portfolio analysis
@@ -793,7 +1082,6 @@ Keep the analysis concise and actionable.`;
   }
 }
 
-// Adapter interface types
 // ChatInterface class implementation
 class ChatInterface {
   parseCommand(message: string): E.Either<Error, Command | undefined> {
@@ -816,6 +1104,92 @@ class ChatInterface {
       return E.right({ type: 'query', payload: { action: 'balance' } });
     }
     
+    if (lowerMessage.includes('stake') || lowerMessage.includes('delegate')) {
+      return E.right({ type: 'stake', payload: { action: 'stake' } });
+    }
+    
+    if (lowerMessage.includes('price') || lowerMessage.includes('market')) {
+      return E.right({ type: 'market_query', payload: { action: 'price_check' } });
+    }
+    
     return E.right(undefined);
   }
 }
+
+/**
+ * Blockchain integration utility functions
+ */
+export const BlockchainIntegrationUtils = {
+  /**
+   * Check if message is blockchain-related
+   */
+  isBlockchainQuery: (message: string): boolean => {
+    const blockchainKeywords = [
+      'price', 'token', 'coin', 'crypto', 'blockchain', 'defi', 'yield',
+      'stake', 'swap', 'liquidity', 'pool', 'validator', 'apy', 'apr',
+      'balance', 'wallet', 'transaction', 'gas', 'fee', 'sei', 'network'
+    ];
+    
+    const lowerMessage = message.toLowerCase();
+    return blockchainKeywords.some(keyword => lowerMessage.includes(keyword));
+  },
+
+  /**
+   * Extract query type from message
+   */
+  extractQueryType: (message: string): string => {
+    const lowerMessage = message.toLowerCase();
+    
+    if (lowerMessage.includes('price') || lowerMessage.includes('cost') || lowerMessage.includes('value')) {
+      return 'price';
+    }
+    if (lowerMessage.includes('stake') || lowerMessage.includes('delegate') || lowerMessage.includes('validator')) {
+      return 'staking';
+    }
+    if (lowerMessage.includes('yield') || lowerMessage.includes('pool') || lowerMessage.includes('liquidity')) {
+      return 'defi';
+    }
+    if (lowerMessage.includes('balance') || lowerMessage.includes('wallet') || lowerMessage.includes('address')) {
+      return 'wallet';
+    }
+    if (lowerMessage.includes('transaction') || lowerMessage.includes('tx') || lowerMessage.includes('gas')) {
+      return 'transaction';
+    }
+    
+    return 'general';
+  },
+
+  /**
+   * Format blockchain data for response
+   */
+  formatBlockchainResponse: (data: any): string => {
+    if (!data || !data.hiveInsights) {
+      return 'No blockchain data available.';
+    }
+    
+    try {
+      const insights = data.hiveInsights;
+      if (typeof insights === 'string') {
+        return insights;
+      }
+      
+      if (typeof insights === 'object') {
+        return JSON.stringify(insights, null, 2);
+      }
+      
+      return 'Blockchain data retrieved successfully.';
+    } catch (error) {
+      return 'Error formatting blockchain data.';
+    }
+  }
+};
+
+/**
+ * Export types for external use
+ */
+export type { 
+  ChatContext as AIServiceChatContext, 
+  AIResponse as AIServiceResponse, 
+  Command as AIServiceCommand, 
+  ChatMessage as AIServiceChatMessage 
+};
