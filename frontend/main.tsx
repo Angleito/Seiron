@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { PrivyProvider } from '@privy-io/react-auth'
 import { WagmiProvider } from '@privy-io/wagmi'
+import { Analytics } from '@vercel/analytics/next'
 import { router } from './router'
 // import HomePage3D from './src/pages/HomePage3D'
 import { RootErrorBoundary } from './components/error-boundaries/RootErrorBoundary'
@@ -97,6 +98,7 @@ async function renderApp() {
               <QueryClientProvider client={queryClient}>
                 <WagmiProvider config={wagmiConfig}>
                   <RouterProvider router={router} />
+                  <Analytics />
                 </WagmiProvider>
               </QueryClientProvider>
             </WalletConnectProvider>
@@ -112,6 +114,7 @@ async function renderApp() {
         <RootErrorBoundary>
           <QueryClientProvider client={queryClient}>
             <RouterProvider router={router} />
+            <Analytics />
           </QueryClientProvider>
         </RootErrorBoundary>
       </React.StrictMode>
