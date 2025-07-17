@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "frontend/dist"
+      }
+    }
+  ],
+  "functions": {
+    "frontend/api/**/*.ts": {
+      "runtime": "@vercel/node@latest",
+      "maxDuration": 30
+    }
+  },
+  "routes": [
+    {
+      "src": "/models/(.*)",
+      "dest": "/frontend/models/$1"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/frontend/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/$1"
+    }
+  ]
+}
