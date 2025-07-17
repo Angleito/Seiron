@@ -1,0 +1,169 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci --only=production
+
+# Copy source code
+COPY . .
+
+# Create mock server directory
+RUN mkdir -p /app/hive-mock
+
+# Copy mock server files
+COPY <<EOF /app/hive-mock/server.js
+const express = require('express');
+const cors = require('cors');
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+app.use(cors());
+app.use(express.json());
+
+// Mock responses database
+const mockResponses = new Map();
+const requestHistory = [];
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
+// Main search endpoint
+app.post('/search', (req, res) => {
+  const { query, temperature, include_data_sources, max_tokens } = req.body;
+  
+  // Log request
+  requestHistory.push({
+    query,
+    temperature,
+    include_data_sources,
+    max_tokens,
+    timestamp: new Date().toISOString()
+  });
+
+  // Check for exact match first
+  if (mockResponses.has(query)) {
+    const response = mockResponses.get(query);
+    if (response.error) {
+      return res.status(500).json({ error: response.error });
+    }
+    return res.json(response);
+  }
+
+  // Check for partial matches
+  for (const [pattern, response] of mockResponses.entries()) {
+    if (query.toLowerCase().includes(pattern.toLowerCase()) || 
+        pattern.toLowerCase().includes(query.toLowerCase())) {
+      if (response.error) {
+        return res.status(500).json({ error: response.error });
+      }
+      return res.json(response);
+    }
+  }
+
+  // Generate dynamic response based on query content
+  let response = \`Mock response for: \${query}\`;
+  let sources = ['https://mock-source.com'];
+  let creditsUsed = 15;
+
+  // SEI-specific responses
+  if (query.toLowerCase().includes('sei')) {
+    response = 'SEI is a Layer 1 blockchain optimized for trading with fast finality and low fees.';
+    sources = ['https://sei.io', 'https://docs.sei.io'];
+    creditsUsed = 20;
+  }
+
+  // DeFi responses
+  if (query.toLowerCase().includes('defi')) {
+    response = 'DeFi (Decentralized Finance) refers to financial services built on blockchain technology.';
+    sources = ['https://defipulse.com', 'https://defiprotocols.com'];
+    creditsUsed = 18;
+  }
+
+  // Staking responses
+  if (query.toLowerCase().includes('staking') || query.toLowerCase().includes('stake')) {
+    response = 'Staking involves locking up tokens to participate in network validation and earn rewards.';
+    sources = ['https://staking.com', 'https://stakingrewards.com'];
+    creditsUsed = 16;
+  }
+
+  // Price queries
+  if (query.toLowerCase().includes('price')) {
+    response = 'Current market prices vary. Please check live data for accurate pricing information.';
+    sources = ['https://coingecko.com', 'https://coinmarketcap.com'];
+    creditsUsed = 12;
+  }
+
+  // Default response format
+  const hiveResponse = {
+    results: {
+      answer: response,
+      sources: include_data_sources ? sources : undefined
+    },
+    metadata: {
+      credits_used: creditsUsed,
+      query_type: 'mock',
+      timestamp: new Date().toISOString()
+    }
+  };
+
+  res.json(hiveResponse);
+});
+
+// Admin endpoints for testing
+app.post('/mock/add-response', (req, res) => {
+  const { query, response } = req.body;
+  mockResponses.set(query, response);
+  res.json({ success: true, message: 'Mock response added' });
+});
+
+app.post('/mock/add-error', (req, res) => {
+  const { query, error } = req.body;
+  mockResponses.set(query, { error });
+  res.json({ success: true, message: 'Mock error added' });
+});
+
+app.get('/mock/history', (req, res) => {
+  res.json({ requests: requestHistory });
+});
+
+app.post('/mock/clear', (req, res) => {
+  mockResponses.clear();
+  requestHistory.length = 0;
+  res.json({ success: true, message: 'Mock data cleared' });
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(\`Mock Hive Intelligence service running on port \${PORT}\`);
+});
+EOF
+
+# Copy package.json for mock server
+COPY <<EOF /app/hive-mock/package.json
+{
+  "name": "hive-mock-server",
+  "version": "1.0.0",
+  "description": "Mock Hive Intelligence API server for testing",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  }
+}
+EOF
+
+# Install mock server dependencies
+WORKDIR /app/hive-mock
+RUN npm install
+
+EXPOSE 3001
+
+CMD ["npm", "start"]

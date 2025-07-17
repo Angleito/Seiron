@@ -2,11 +2,8 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Install dependencies for testing
-RUN apk add --no-cache \
-    curl \
-    bash \
-    git
+# Install system dependencies
+RUN apk add --no-cache curl postgresql-client redis bash git
 
 # Copy package files
 COPY package*.json ./
@@ -17,11 +14,76 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build the application
-RUN npm run build
+# Create test reports directory
+RUN mkdir -p test-reports
 
-# Create test results directory
-RUN mkdir -p /app/test-results
+# Install global test tools
+RUN npm install -g jest-cli
+
+# Create test scripts directory
+RUN mkdir -p /app/test-scripts
+
+# Add test runner script
+COPY <<EOF /app/test-scripts/run-hive-tests.sh
+#!/bin/bash
+set -e
+
+echo "Starting Hive Intelligence integration tests..."
+
+# Wait for dependencies
+echo "Waiting for PostgreSQL..."
+until pg_isready -h \${POSTGRES_HOST:-localhost} -p \${POSTGRES_PORT:-5432} -U \${POSTGRES_USER:-test_user}; do
+  echo "PostgreSQL is unavailable - sleeping"
+  sleep 1
+done
+
+echo "Waiting for Redis..."
+until redis-cli -h \${REDIS_HOST:-localhost} -p \${REDIS_PORT:-6379} ping; do
+  echo "Redis is unavailable - sleeping"
+  sleep 1
+done
+
+echo "Waiting for Hive Mock Service..."
+until curl -f \${HIVE_INTELLIGENCE_BASE_URL:-http://hive-mock:3001}/health; do
+  echo "Hive Mock is unavailable - sleeping"
+  sleep 1
+done
+
+echo "All dependencies ready. Starting tests..."
+
+# Run different test suites based on environment
+if [ "\$TEST_SUITE" = "unit" ]; then
+  echo "Running unit tests..."
+  npm run test:unit -- --testPathPattern="HiveIntelligenceAdapter.test.ts"
+elif [ "\$TEST_SUITE" = "property" ]; then
+  echo "Running property-based tests..."
+  npm run test:property -- --testPathPattern="HiveIntelligenceAdapter.property.test.ts"
+elif [ "\$TEST_SUITE" = "integration" ]; then
+  echo "Running integration tests..."
+  npm run test:integration -- --testPathPattern="ai.blockchain.integration.test.ts"
+elif [ "\$TEST_SUITE" = "security" ]; then
+  echo "Running security tests..."
+  npm run test:security -- --testPathPattern="security"
+elif [ "\$TEST_SUITE" = "performance" ]; then
+  echo "Running performance tests..."
+  npm run test:performance -- --testPathPattern="performance"
+else
+  echo "Running all Hive Intelligence tests..."
+  npm run test:hive-integration
+fi
+
+echo "Tests completed!"
+EOF
+
+RUN chmod +x /app/test-scripts/run-hive-tests.sh
+
+# Add test package.json scripts
+RUN npm pkg set scripts.test:unit="jest --testPathPattern=__tests__ --testNamePattern=unit --coverage --coverageDirectory=test-reports/unit"
+RUN npm pkg set scripts.test:property="jest --testPathPattern=property --coverage --coverageDirectory=test-reports/property"
+RUN npm pkg set scripts.test:integration="jest --testPathPattern=integration --coverage --coverageDirectory=test-reports/integration"
+RUN npm pkg set scripts.test:security="jest --testPathPattern=security --coverage --coverageDirectory=test-reports/security"
+RUN npm pkg set scripts.test:performance="jest --testPathPattern=performance --coverage --coverageDirectory=test-reports/performance"
+RUN npm pkg set scripts.test:hive-integration="jest --testPathPattern=HiveIntelligence --coverage --coverageDirectory=test-reports/hive-integration --verbose"
 
 # Expose port
 EXPOSE 4000
@@ -30,5 +92,5 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:4000/health || exit 1
 
-# Default command for testing
-CMD ["npm", "run", "start"]
+# Default command
+CMD ["/app/test-scripts/run-hive-tests.sh"]
