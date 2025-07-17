@@ -10,7 +10,7 @@ const { generateAudioWaveform, simulateAudioDevice, analyzeAudio } = require('./
 const { simulateDeviceCapabilities, createVirtualDevice } = require('./device-simulator');
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());

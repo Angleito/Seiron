@@ -463,7 +463,7 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = parseInt(process.env.PORT || '8000');
+const PORT = parseInt(process.env.PORT || '3001');
 
 // Initialize adapters before starting server
 const startServer = async () => {

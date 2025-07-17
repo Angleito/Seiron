@@ -15,7 +15,7 @@ RUN apk add --no-cache \
 COPY package*.json ./
 
 # Install Node.js dependencies
-RUN npm ci --only=production
+RUN if [ -f package-lock.json ]; then npm ci --only=production; else npm install --only=production; fi
 
 # Copy application files
 COPY *.js ./
@@ -32,11 +32,11 @@ RUN chown -R nodejs:nodejs /app
 USER nodejs
 
 # Expose port
-EXPOSE 3001
+EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3001/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"
+  CMD node -e "require('http').get('http://localhost:3000/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"
 
 # Start the application
 CMD ["npm", "start"]

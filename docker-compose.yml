@@ -1,0 +1,178 @@
+# Docker Compose for Seiron AI Dragon Trading Assistant
+# Production-ready configuration optimized for local development and testing
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: seiron-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: seiron
+      POSTGRES_USER: seiron_user
+      POSTGRES_PASSWORD: seiron_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U seiron_user -d seiron"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - seiron-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: seiron-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks:
+      - seiron-network
+
+  # Backend API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: seiron-backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - DATABASE_URL=postgres://seiron_user:seiron_password@db:5432/seiron
+      - REDIS_URL=redis://redis:6379
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - FRONTEND_URL=http://localhost:3000
+      # API Keys (to be provided via .env file)
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4}
+      - OPENAI_MAX_TOKENS=${OPENAI_MAX_TOKENS:-1000}
+      - OPENAI_TEMPERATURE=${OPENAI_TEMPERATURE:-0.7}
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
+      - ELEVENLABS_VOICE_ID=${ELEVENLABS_VOICE_ID:-EXAVITQu4vr4xnSDxMaL}
+      - ELEVENLABS_MODEL=${ELEVENLABS_MODEL:-eleven_monolingual_v1}
+      - ELEVENLABS_VOICE_STABILITY=${ELEVENLABS_VOICE_STABILITY:-0.5}
+      - ELEVENLABS_VOICE_SIMILARITY=${ELEVENLABS_VOICE_SIMILARITY:-0.8}
+      - ELEVENLABS_VOICE_STYLE=${ELEVENLABS_VOICE_STYLE:-0.0}
+      - ELEVENLABS_VOICE_BOOST=${ELEVENLABS_VOICE_BOOST:-true}
+      # Supabase Configuration
+      - SUPABASE_URL=${SUPABASE_URL:-http://localhost:54321}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      # SEI Network Configuration
+      - SEI_RPC_URL=${SEI_RPC_URL:-https://sei-rpc.polkachu.com}
+      - SEI_EVM_RPC_URL=${SEI_EVM_RPC_URL:-https://evm-rpc.sei-apis.com}
+      - SEI_CHAIN_ID=${SEI_CHAIN_ID:-1329}
+      # Adapter Configuration
+      - HIVE_BASE_URL=${HIVE_BASE_URL:-http://localhost:3001}
+      - HIVE_API_KEY=${HIVE_API_KEY}
+      - HIVE_INTELLIGENCE_API_KEY=${HIVE_INTELLIGENCE_API_KEY}
+      - SAK_WALLET_PRIVATE_KEY=${SAK_WALLET_PRIVATE_KEY}
+      - MCP_ENDPOINT=${MCP_ENDPOINT:-ws://localhost:3003}
+      - MCP_PORT=${MCP_PORT:-3003}
+      - MCP_API_KEY=${MCP_API_KEY}
+    ports:
+      - "3001:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/package.json:/app/package.json
+      - ./backend/package-lock.json:/app/package-lock.json
+      - ./backend/tsconfig.json:/app/tsconfig.json
+      - backend_node_modules:/app/node_modules
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - seiron-network
+
+  # Voice Testing Service (optional)
+  voice-test:
+    build:
+      context: ./frontend/docker/audio-simulator
+      dockerfile: Dockerfile
+    container_name: seiron-voice-test
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - BACKEND_URL=http://backend:3001
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
+    ports:
+      - "3002:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - ./frontend/docker/audio-simulator:/app
+      - voice_test_modules:/app/node_modules
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - seiron-network
+    profiles:
+      - voice-testing
+
+  # Nginx Reverse Proxy (optional, for production-like setup)
+  nginx:
+    image: nginx:alpine
+    container_name: seiron-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - backend
+    networks:
+      - seiron-network
+    profiles:
+      - production
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  backend_node_modules:
+    driver: local
+  voice_test_modules:
+    driver: local
+
+networks:
+  seiron-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
