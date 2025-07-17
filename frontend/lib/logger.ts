@@ -32,7 +32,19 @@ export const logger = {
   }
 };
 
-// Export safeError function for error boundary usage
+// Export safe logging functions for various log levels
 export const safeError = (message: string, context?: any) => {
   logger.safe('error', message, context);
+};
+
+export const safeWarn = (message: string, context?: any) => {
+  logger.safe('warn', message, context);
+};
+
+export const safeInfo = (message: string, context?: any) => {
+  logger.safe('info', message, context);
+};
+
+export const safeDebug = (message: string, context?: any) => {
+  logger.safe('debug', message, context);
 };
