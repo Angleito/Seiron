@@ -8,10 +8,6 @@
     "api/**/*.ts": {
       "runtime": "@vercel/node@3.0.0",
       "maxDuration": 30
-    },
-    "api/**/route.ts": {
-      "runtime": "@vercel/node@3.0.0",
-      "maxDuration": 30
     }
   },
   "rewrites": [
