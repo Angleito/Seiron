@@ -1,9 +1,14 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { loadMemories } from '../../../lib/conversation-memory';
-import { mockDataStore, createMockResponse, createErrorResponse } from '../../../lib/mockData';
-import * as E from 'fp-ts/Either';
 
-const BACKEND_TIMEOUT = 5000; // 5 second timeout for backend requests
+// Type definitions
+interface MemoryMetadata {
+  source: string;
+  timestamp: string;
+  userId: string | null;
+  sessionId: string | null;
+  stats?: any;
+  warning?: string;
+}
 
 // Default empty response structure
 const EMPTY_RESPONSE = {
@@ -16,6 +21,37 @@ const EMPTY_RESPONSE = {
     sessionId: null as string | null
   }
 };
+
+// Mock memory data for testing
+const MOCK_MEMORIES = [
+  {
+    key: 'theme_preference',
+    value: 'dark',
+    category: 'preference',
+    confidence: 1.0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    metadata: { source: 'user_setting' }
+  },
+  {
+    key: 'language',
+    value: 'en',
+    category: 'preference',
+    confidence: 1.0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    metadata: { source: 'user_setting' }
+  },
+  {
+    key: 'last_session',
+    value: new Date().toISOString(),
+    category: 'context',
+    confidence: 0.9,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    metadata: { source: 'system' }
+  }
+];
 
 // Vercel Function handler
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -80,20 +116,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     try {
       console.log('[Memory Load API] Attempting to load from Vercel KV...');
-      const memoriesResult = await Promise.race([
-        loadMemories(userId, sessionId || undefined),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('KV timeout')), BACKEND_TIMEOUT)
-        )
-      ]) as any;
-      
-      if (E.isRight(memoriesResult)) {
-        memories = memoriesResult.right;
-        console.log(`[Memory Load API] Successfully loaded ${memories.length} memories from KV`);
-      } else {
-        kvError = memoriesResult.left;
-        console.warn('[Memory Load API] KV returned error:', kvError);
-      }
+      // Skip KV for now - it might be causing the 500 error
+      // TODO: Re-enable when KV is properly configured
+      kvError = new Error('KV disabled for debugging');
+      console.warn('[Memory Load API] KV disabled, using mock data');
     } catch (error) {
       kvError = error;
       console.warn('[Memory Load API] KV operation failed:', error instanceof Error ? error.message : error);
@@ -143,10 +169,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     
     // Try mock data as fallback
-    console.log(`[Memory Load API] KV unavailable, attempting mock data for user ${userId}`);
+    console.log(`[Memory Load API] KV unavailable, using mock data for user ${userId}`);
     
     try {
-      const mockMemories = mockDataStore.getMemories(userId, sessionId || undefined);
+      // Use hardcoded mock data instead of importing
+      const mockMemories = MOCK_MEMORIES;
       
       if (mockMemories && Array.isArray(mockMemories) && mockMemories.length > 0) {
         console.log(`[Memory Load API] Returning ${mockMemories.length} mock memories`);

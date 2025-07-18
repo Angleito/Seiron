@@ -39,17 +39,10 @@ interface SessionsResponse {
 }
 
 function setCorsHeaders(res: VercelResponse, origin: string | undefined) {
-  const allowedOrigins = [
-    'http://localhost:3000',
-    'https://seiron.vercel.app',
-    process.env.FRONTEND_URL
-  ].filter(Boolean);
-  
-  const allowedOrigin = origin && allowedOrigins.includes(origin) ? origin : '*';
-  
-  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+  // Allow all origins in production for now
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-User-Id');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-User-Id, x-user-id');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
 }
 
@@ -86,8 +79,8 @@ export default async function handler(
           },
         },
         {
-          maxRetries: 2,
-          initialDelay: 1000,
+          maxRetries: 1, // Reduce retries to fail faster
+          initialDelay: 500,
           onRetry: (attempt, error) => {
             console.warn(`Retrying chat sessions request (attempt ${attempt}):`, error.message);
           }
@@ -97,9 +90,9 @@ export default async function handler(
       if (!response.ok) {
         console.error('Backend sessions request failed:', response.status, response.statusText);
         
-        // Return graceful fallback for anonymous users when backend is unavailable
-        if (response.status === 404 || response.status === 503 || response.status === 502) {
-          console.log(`[API] Backend unavailable (${response.status}), using mock data for sessions`);
+        // Return graceful fallback for anonymous users when backend is unavailable or unauthorized
+        if (response.status === 401 || response.status === 404 || response.status === 503 || response.status === 502) {
+          console.log(`[API] Backend unavailable or unauthorized (${response.status}), using mock data for sessions`);
           
           const userId = req.query.userId as string || userIdHeader || 'anonymous';
           const page = parseInt(req.query.page as string || '1', 10);
