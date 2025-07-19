@@ -2,8 +2,8 @@ import React, { Suspense, lazy, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 // Lazy load the effect components
 const DragonHead3D = lazy(() => import('../components/effects/DragonHead3D'))
-const StormLightningEffect = lazy(() => import('@/components/effects/StormLightningEffect'))
-const DragonSummoningLightning = lazy(() => import('@/components/effects/DragonSummoningLightning'))
+const StormLightningEffect = lazy(() => import('../components/effects/StormLightningEffect'))
+const DragonSummoningLightning = lazy(() => import('../components/effects/DragonSummoningLightning'))
 
 
 // Enhanced DBZ Feature Card Component

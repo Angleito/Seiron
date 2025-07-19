@@ -11,11 +11,11 @@ import {
   GenericFeatureLoader
 } from '@components/ui/FeatureLoadingStates'
 
-// Lazy load pages for code splitting - using relative imports without extensions
-const HomePage = lazy(() => import('./pages/HomePage'))
-const AgentTestPage = lazy(() => import('./pages/AgentTestPage'))
-const ChatPage = lazy(() => import('./pages/chat'))
-const AboutPage = lazy(() => import('./pages/about'))
+// Lazy load pages for code splitting - using explicit relative paths from frontend root
+const HomePage = lazy(() => import('./pages/HomePage.tsx'))
+const AgentTestPage = lazy(() => import('./pages/AgentTestPage.tsx'))
+const ChatPage = lazy(() => import('./pages/chat.tsx'))
+const AboutPage = lazy(() => import('./pages/about.tsx'))
 
 // Dragon Demo Pages - temporarily disabled as pages don't exist
 // const AsciiComplexPage = lazy(() => import('./pages/dragons/AsciiComplexPage'))
@@ -24,7 +24,7 @@ const AboutPage = lazy(() => import('./pages/about'))
 // const WebGL3DPage = lazy(() => import('./pages/dragons/WebGL3DPage'))
 
 // Verification Pages
-const ReactError310VerificationPage = lazy(() => import('./pages/verification/ReactError310VerificationPage'))
+const ReactError310VerificationPage = lazy(() => import('./pages/verification/ReactError310VerificationPage.tsx'))
 
 const PageLoader = ({ 
   children, 

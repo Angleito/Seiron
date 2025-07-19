@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { useSpeechRecognition } from '../../hooks/voice/useSpeechRecognition'
 import { useSecureElevenLabsTTS, SecureElevenLabsConfig as ElevenLabsConfig } from '../../hooks/voice/useSecureElevenLabsTTS'
+import { useSpeechRecognitionLazy } from '../../hooks/voice/lazy'
 import * as E from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
 import * as O from 'fp-ts/Option'
@@ -67,6 +67,35 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
     lastError: null
   })
 
+  // Dynamic speech recognition hook loading
+  const [speechRecognition, setSpeechRecognition] = useState<any>(null)
+  const [speechHookLoading, setSpeechHookLoading] = useState(true)
+
+  useEffect(() => {
+    const loadSpeechRecognition = async () => {
+      try {
+        const hook = await useSpeechRecognitionLazy()
+        setSpeechRecognition(() => hook)
+        setSpeechHookLoading(false)
+      } catch (error) {
+        logger.error('Failed to load speech recognition hook', error)
+        setSpeechHookLoading(false)
+      }
+    }
+    loadSpeechRecognition()
+  }, [])
+
+  // Use the dynamically loaded hook
+  const speechRecognitionResult = speechRecognition ? speechRecognition() : {
+    isListening: false,
+    transcript: '',
+    interimTranscript: '',
+    error: null,
+    startListening: () => Promise.resolve(),
+    stopListening: () => Promise.resolve(),
+    isSupported: false
+  }
+
   const {
     isListening,
     transcript,
@@ -75,7 +104,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
     startListening,
     stopListening,
     isSupported: isSpeechSupported
-  } = useSpeechRecognition()
+  } = speechRecognitionResult
   
   logger.debug('🔊 Speech recognition hook initialized', {
     isListening,
@@ -411,6 +440,15 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
     window.location.hostname === 'localhost' ||
     window.location.hostname === '127.0.0.1'
   )
+
+  if (speechHookLoading) {
+    return (
+      <div className={`${className} flex items-center justify-center py-8`}>
+        <DragonBallLoadingStates.KiCharging size="lg" color="orange" />
+        <span className="ml-3 text-orange-400">Loading voice powers...</span>
+      </div>
+    )
+  }
 
   if (!isSpeechSupported || !isSecureContext) {
     const errorMessage = !isSpeechSupported 

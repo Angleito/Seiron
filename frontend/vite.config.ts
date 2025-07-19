@@ -51,11 +51,11 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',        // listen on all interfaces for LAN access
       port: 3000,
       strictPort: true,
-      origin: `http://192.168.8.196:3000`, // explicit origin for proper URL resolution
+      // Remove explicit origin to let Vite handle module resolution properly
       hmr: {
         protocol: 'ws',
         port: 3000,
-        host: '192.168.8.196', // explicit host for WebSocket connection
+        // Remove explicit host to prevent module resolution issues
       },
       // Handle SPA routing - always serve index.html for any route
       middlewareMode: false,
