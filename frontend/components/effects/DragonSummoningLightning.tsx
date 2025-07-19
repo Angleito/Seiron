@@ -6,8 +6,8 @@ interface DragonSummoningLightningProps {
 }
 
 /**
- * Temporary placeholder for DragonSummoningLightning component
- * TODO: Implement the actual dragon summoning lightning effects
+ * DragonSummoningLightning component - provides visual lightning flash effects
+ * Creates a pulsing white flash effect synchronized with lightning strikes
  */
 const DragonSummoningLightning: React.FC<DragonSummoningLightningProps> = ({ 
   isActive = false, 
@@ -48,21 +48,7 @@ const DragonSummoningLightning: React.FC<DragonSummoningLightningProps> = ({
       background: lightningStrikes % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.1)',
       transition: 'background 0.1s'
     }}>
-      {/* Lightning flash effect */}
-      <div style={{
-        position: 'absolute',
-        top: '20%',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        color: 'white',
-        fontSize: '2rem',
-        textAlign: 'center'
-      }}>
-        ⚡ Lightning Summoning ⚡
-        <div style={{ fontSize: '1rem', marginTop: '1rem' }}>
-          Strikes: {lightningStrikes}
-        </div>
-      </div>
+      {/* Lightning flash effect only - text removed */}
     </div>
   )
 }
