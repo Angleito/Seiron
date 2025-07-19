@@ -48,16 +48,23 @@ export default defineConfig(({ mode }) => {
       conditions: ['import', 'module', 'browser', 'default'],
     },
     server: {
-      host: true,             // listen on 0.0.0.0 for LAN access
+      host: '0.0.0.0',        // listen on all interfaces for LAN access
       port: 3000,
       strictPort: true,
+      origin: `http://192.168.8.196:3000`, // explicit origin for proper URL resolution
       hmr: {
         protocol: 'ws',
-        clientPort: 3000,     // always point the browser to this port
-        // leave host undefined so Vite uses window.location.hostname
+        port: 3000,
+        host: '192.168.8.196', // explicit host for WebSocket connection
       },
       // Handle SPA routing - always serve index.html for any route
       middlewareMode: false,
+      // Cache-busting headers for development
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
     },
     build: {
       target: 'esnext',
@@ -106,14 +113,13 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       global: 'globalThis',
-      // Ensure Buffer is available globally
+      // Ensure Buffer is available globally and prevent externalization
       'global.Buffer': 'globalThis.Buffer',
-      // Force Lit to production mode
       'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
-      // Lit-specific development mode flag
-      'globalThis.litIsInDevelopmentMode': JSON.stringify(isDevelopment),
-      // Additional Lit configuration
-      'globalThis.litElementVersions': JSON.stringify([]),
+      // Prevent Buffer externalization in browser
+      '__VITE_IS_MODERN__': true,
+      // Make Buffer available as window.Buffer
+      'window.Buffer': 'globalThis.Buffer',
     },
   }
 })
