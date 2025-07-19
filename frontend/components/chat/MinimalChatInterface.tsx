@@ -193,14 +193,32 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
       spokenMessagesRef.current.add(latestMessage.id)
       
       // Speak the message
+      console.log('TTS: Attempting to speak message')
+      console.log('TTS state before speak:', {
+        isSpeaking: tts.isSpeaking,
+        isLoading: tts.isLoading,
+        error: tts.error,
+        voiceId: import.meta.env.VITE_ELEVENLABS_VOICE_ID
+      })
+      
       tts.speak(latestMessage.content)().then(result => {
+        console.log('TTS speak result:', result)
         if (result._tag === 'Left') {
-          console.error('TTS Error:', result.left)
+          console.error('TTS Error details:', {
+            error: result.left,
+            type: result.left.type,
+            message: result.left.message,
+            statusCode: result.left.statusCode
+          })
           // Remove from spoken set on error so it can be retried
           spokenMessagesRef.current.delete(latestMessage.id)
+          // Show error to user
+          alert(`TTS Error: ${result.left.message}`)
         } else {
           console.log('TTS Success: Message spoken')
         }
+      }).catch(err => {
+        console.error('TTS speak promise error:', err)
       })
     }
   }, [messages, ttsEnabled, voiceEnabled, tts])
