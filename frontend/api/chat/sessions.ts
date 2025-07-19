@@ -111,9 +111,20 @@ export default async function handler(
           
           const stats = mockDataStore.getStats(userId);
           
+          // Transform MockChatSession to match expected ChatSession format
+          const transformedSessions = result.sessions.map(session => ({
+            id: session.id,
+            userId: session.userId,
+            title: session.title,
+            createdAt: session.created_at,
+            updatedAt: session.updated_at,
+            messageCount: session.message_count,
+            archived: session.is_archived
+          }));
+          
           const response = createMockResponse({
             success: true,
-            sessions: result.sessions,
+            sessions: transformedSessions,
             pagination: result.pagination,
             stats,
             filters: {
@@ -177,6 +188,67 @@ export default async function handler(
     
   } catch (error) {
     console.error('Chat sessions API error:', error);
+    
+    // For GET requests, attempt to return mock data as fallback
+    if (req.method === 'GET') {
+      console.log('[API] Error occurred, falling back to mock data for sessions');
+      
+      const userId = req.query.userId as string || req.headers['x-user-id'] as string || 'anonymous';
+      const page = parseInt(req.query.page as string || '1', 10);
+      const limit = parseInt(req.query.limit as string || '20', 10);
+      const archived = req.query.archived === 'true';
+      const search = req.query.search as string || undefined;
+      const order = (req.query.order || 'desc') as 'asc' | 'desc';
+      
+      try {
+        const result = mockDataStore.getSessions(userId, {
+          page,
+          limit,
+          archived,
+          search,
+          order
+        });
+        
+        const stats = mockDataStore.getStats(userId);
+        
+        // Transform MockChatSession to match expected ChatSession format
+        const transformedSessions = result.sessions.map(session => ({
+          id: session.id,
+          userId: session.userId,
+          title: session.title,
+          createdAt: session.created_at,
+          updatedAt: session.updated_at,
+          messageCount: session.message_count,
+          archived: session.is_archived
+        }));
+        
+        const response = createMockResponse({
+          success: true,
+          sessions: transformedSessions,
+          pagination: result.pagination,
+          stats,
+          filters: {
+            search,
+            archived
+          }
+        });
+        
+        res.setHeader('Cache-Control', 'private, max-age=60, stale-while-revalidate=300');
+        res.setHeader('X-Data-Source', 'mock-fallback');
+        res.setHeader('X-Error-Fallback', 'true');
+        return res.status(200).json(response);
+      } catch (fallbackError) {
+        console.error('Failed to generate fallback mock data:', fallbackError);
+        // If even mock data fails, return minimal error response
+        return res.status(500).json({
+          success: false,
+          error: 'Internal server error',
+          fallback: true
+        });
+      }
+    }
+    
+    // For non-GET requests, return error
     res.status(500).json({
       success: false,
       error: 'Internal server error'

@@ -15,26 +15,6 @@
       "destination": "/models/:path*"
     },
     {
-      "source": "/api/ai/memory/:path*",
-      "destination": "/api/ai/memory/:path*"
-    },
-    {
-      "source": "/api/chat/:path*",
-      "destination": "/api/chat/:path*"
-    },
-    {
-      "source": "/api/dragon/:path*",
-      "destination": "/api/dragon/:path*"
-    },
-    {
-      "source": "/api/voice/:path*",
-      "destination": "/api/voice/:path*"
-    },
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    },
-    {
       "source": "/((?!api|assets|images|models|fonts|favicon.ico|seiron.png|test.html|debug-config.html|debug-models.html|test-static.txt|test-model-loading.html).*)",
       "destination": "/index.html"
     }
