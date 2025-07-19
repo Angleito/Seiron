@@ -71,6 +71,11 @@ export default function HomePage() {
     }
   }, [])
 
+  // Debug phase changes
+  useEffect(() => {
+    console.log('Summoning phase changed to:', summoningPhase);
+  }, [summoningPhase])
+
   const handleSummon = () => {
     if (isSummoning) return // Prevent multiple summons
     
@@ -122,6 +127,7 @@ export default function HomePage() {
   }
 
   const handleVideoComplete = () => {
+    console.log('Video complete, transitioning to arrival phase');
     setSummoningPhase('arrival')
   }
 
@@ -139,7 +145,9 @@ export default function HomePage() {
               <DragonSummoningLightning
                 isActive={summoningPhase === 'lightning'}
                 onLightningComplete={() => {
+                  console.log('Lightning complete callback triggered, current phase:', summoningPhase);
                   if (summoningPhase === 'lightning') {
+                    console.log('Transitioning to video phase');
                     setSummoningPhase('video')
                   }
                 }}
@@ -148,7 +156,7 @@ export default function HomePage() {
           </div>
           
           {/* Enhanced Background Lightning Effect */}
-          {(summoningPhase === 'lightning' || summoningPhase === 'arrival') && (
+          {(summoningPhase === 'lightning' || summoningPhase === 'video' || summoningPhase === 'arrival') && (
             <Suspense fallback={null}>
               <StormLightningEffect />
             </Suspense>
@@ -172,6 +180,7 @@ export default function HomePage() {
                 Loading Video...
               </div>
             }>
+              {console.log('Rendering VideoPlayer component')}
               <VideoPlayer
                 src="/videos/dragon-transition.mp4"
                 onVideoComplete={handleVideoComplete}

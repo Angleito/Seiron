@@ -44,6 +44,7 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
   const [isVoiceListening, setIsVoiceListening] = useState(false)
   const [ttsEnabled, setTTSEnabled] = useState(true) // Enable TTS by default
   const [showTranscriptPreview, setShowTranscriptPreview] = useState(false)
+  const [ttsStatusMap, setTtsStatusMap] = useState<Record<string, Message['ttsStatus']>>({})
   
   // Generate or get session ID
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`)
@@ -92,15 +93,14 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
       // Find which message is being spoken and update its status
       const spokenIds = Array.from(spokenMessagesRef.current)
       const lastSpokenId = spokenIds[spokenIds.length - 1]
-      if (lastSpokenId) {
-        setMessages(prev => prev.map(msg => 
-          msg.id === lastSpokenId && msg.ttsStatus === 'loading'
-            ? { ...msg, ttsStatus: 'playing' as const }
-            : msg
-        ))
+      if (lastSpokenId && ttsStatusMap[lastSpokenId] === 'loading') {
+        setTtsStatusMap(prev => ({
+          ...prev,
+          [lastSpokenId]: 'playing'
+        }))
       }
     }
-  }, [tts.isSpeaking])
+  }, [tts.isSpeaking, ttsStatusMap])
   
   // Debug TTS initialization
   useEffect(() => {
@@ -211,11 +211,10 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
       spokenMessagesRef.current.add(latestMessage.id)
       
       // Update message TTS status to loading
-      setMessages(prev => prev.map(msg => 
-        msg.id === latestMessage.id 
-          ? { ...msg, ttsStatus: 'loading' as const }
-          : msg
-      ))
+      setTtsStatusMap(prev => ({
+        ...prev,
+        [latestMessage.id]: 'loading'
+      }))
       
       // Speak the message
       console.log('TTS: Attempting to speak message')
@@ -238,29 +237,26 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
           // Remove from spoken set on error so it can be retried
           spokenMessagesRef.current.delete(latestMessage.id)
           // Update status to error
-          setMessages(prev => prev.map(msg => 
-            msg.id === latestMessage.id 
-              ? { ...msg, ttsStatus: 'error' as const }
-              : msg
-          ))
+          setTtsStatusMap(prev => ({
+            ...prev,
+            [latestMessage.id]: 'error'
+          }))
           // Log error but don't show alert - just let chat continue working
           console.warn('TTS unavailable:', result.left.message)
         } else {
           console.log('TTS Success: Message spoken')
           // Update status to completed
-          setMessages(prev => prev.map(msg => 
-            msg.id === latestMessage.id 
-              ? { ...msg, ttsStatus: 'completed' as const }
-              : msg
-          ))
+          setTtsStatusMap(prev => ({
+            ...prev,
+            [latestMessage.id]: 'completed'
+          }))
         }
       }).catch(err => {
         console.error('TTS speak promise error:', err)
-        setMessages(prev => prev.map(msg => 
-          msg.id === latestMessage.id 
-            ? { ...msg, ttsStatus: 'error' as const }
-            : msg
-        ))
+        setTtsStatusMap(prev => ({
+          ...prev,
+          [latestMessage.id]: 'error'
+        }))
       })
     }
   }, [messages, ttsEnabled, voiceEnabled, tts])

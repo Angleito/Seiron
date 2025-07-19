@@ -1833,3 +1833,20 @@ Console errors are now visible again. The generic_error should now show proper e
 - Video file should be named `dragon-transition.mp4` and placed in the videos directory
 
 The video will now automatically play after the lightning sequence completes and before the dragon arrives.
+
+### Video Playback Debugging (Completed)
+- Added base `.summoning-overlay` CSS class with proper display and positioning
+- Fixed video container z-index (10001) to ensure it appears above other elements
+- Added comprehensive debug logging to track:
+  - Phase transitions
+  - Video loading states
+  - Playback events
+  - Error handling
+- Enhanced background lightning effect to continue during video phase
+- Video should now properly display after lightning sequence
+
+**To test the video playback:**
+1. Open browser console to see debug logs
+2. Click "SUMMON" button
+3. Watch for phase transitions: darkening → storm → lightning → video → arrival
+4. Check console for any video loading errors or autoplay issues

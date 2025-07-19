@@ -22,27 +22,37 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
+    console.log('VideoPlayer mounted with src:', src);
     const video = videoRef.current;
-    if (!video) return;
+    if (!video) {
+      console.error('Video ref not available');
+      return;
+    }
 
     const handleCanPlay = () => {
+      console.log('Video can play, attempting autoplay...');
       setIsLoading(false);
-      video.play().catch((error) => {
+      video.play().then(() => {
+        console.log('Video playback started successfully');
+      }).catch((error) => {
         console.error('Video autoplay failed:', error);
         setHasError(true);
       });
     };
 
     const handlePlay = () => {
+      console.log('Video play event triggered');
       onVideoStart?.();
     };
 
     const handleEnded = () => {
+      console.log('Video ended, calling completion callback');
       onVideoComplete?.();
     };
 
-    const handleError = () => {
-      console.error('Video loading error');
+    const handleError = (e: Event) => {
+      const videoError = video.error;
+      console.error('Video loading error:', videoError?.message || 'Unknown error', videoError);
       setHasError(true);
       setIsLoading(false);
       // Call complete callback even on error to continue the sequence
