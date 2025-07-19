@@ -7,6 +7,7 @@ interface VideoPlayerProps {
   className?: string;
   muted?: boolean;
   loop?: boolean;
+  cropStyle?: React.CSSProperties;
 }
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({
@@ -16,6 +17,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   className = '',
   muted = true,
   loop = false,
+  cropStyle,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -98,7 +100,10 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         loop={loop}
         playsInline
         preload="auto"
-        style={{ opacity: isLoading ? 0 : 1 }}
+        style={{ 
+          opacity: isLoading ? 0 : 1,
+          ...cropStyle 
+        }}
       >
         <source src={src} type="video/mp4" />
         <source src={src.replace('.mp4', '.webm')} type="video/webm" />

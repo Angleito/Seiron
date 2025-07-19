@@ -1850,3 +1850,11 @@ The video will now automatically play after the lightning sequence completes and
 2. Click "SUMMON" button
 3. Watch for phase transitions: darkening → storm → lightning → video → arrival
 4. Check console for any video loading errors or autoplay issues
+
+### Video Cropping Enhancement (Completed)
+- Modified video player CSS to crop out black bars and watermarks
+- Added scale transform (1.4x) to zoom in on video content
+- Adjusted object-position to 'center 40%' to hide bottom watermark
+- Added cropStyle prop to VideoPlayer component for flexible cropping
+- Ensured overflow:hidden on container for proper cropping
+- Video now displays without black bars or Veo watermark

@@ -136,11 +136,11 @@ export interface VoiceChatState {
  */
 const DEFAULT_CONFIG: Required<VoiceChatConfig> = {
   voiceId: process.env.VITE_ELEVENLABS_VOICE_ID || 'default',
-  modelId: 'eleven_monolingual_v1',
+  modelId: 'eleven_turbo_v2_5', // Use turbo model for faster response
   voiceSettings: {
-    stability: Number(process.env.VITE_VOICE_STABILITY) || 0.75,
-    similarityBoost: Number(process.env.VITE_VOICE_SIMILARITY_BOOST) || 0.75,
-    style: Number(process.env.VITE_VOICE_STYLE) || 0.5,
+    stability: Number(process.env.VITE_VOICE_STABILITY) || 0.5, // Lower for more natural speech
+    similarityBoost: Number(process.env.VITE_VOICE_SIMILARITY_BOOST) || 0.8, // Higher to maintain voice
+    style: Number(process.env.VITE_VOICE_STYLE) || 0.0, // Neutral for speed
     useSpeakerBoost: process.env.VITE_VOICE_USE_SPEAKER_BOOST === 'true'
   },
   speechSettings: {
@@ -212,6 +212,7 @@ export const useVoiceChat = (config: VoiceChatConfig = {}) => {
   const lastTranscriptRef = useRef<string>('')
   const voiceActivityRef = useRef<boolean>(false)
   const audioPermissionRef = useRef<boolean>(false)
+  const wasListeningBeforeTTSRef = useRef<boolean>(false)
   
   // Voice hooks
   const speechRecognition = useSpeechRecognition()
@@ -314,6 +315,26 @@ export const useVoiceChat = (config: VoiceChatConfig = {}) => {
     const interval = setInterval(checkVoiceActivity, 50)
     return () => clearInterval(interval)
   }, [speechRecognition.transcript, speechRecognition.interimTranscript, audioLevel, mergedConfig.audioSettings.vadThreshold])
+  
+  // Auto re-enable voice listening after TTS completes
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | undefined
+    
+    // When TTS stops speaking and we have voice enabled, re-enable listening
+    if (!isSpeaking && voiceEnabled && hasAudioPermission && !isListening && !error) {
+      // Add a small delay to prevent interrupting any trailing audio
+      timeoutId = setTimeout(() => {
+        logger.info('Auto re-enabling voice listening after TTS completed')
+        startListening()
+      }, 500) // 500ms delay to ensure audio has fully stopped
+    }
+    
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+    }
+  }, [isSpeaking, voiceEnabled, hasAudioPermission, isListening, error, startListening])
   
   // Enhanced connection initialization with permission handling
   useEffect(() => {

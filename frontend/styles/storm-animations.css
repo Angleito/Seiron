@@ -1244,7 +1244,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow: hidden; /* Critical for cropping */
 }
 
 /* Video Element */
@@ -1253,6 +1253,9 @@
   height: 100%;
   object-fit: cover;
   transition: opacity 0.5s ease-in-out;
+  /* Crop out black bars - adjust these values based on your video */
+  transform: scale(1.2); /* Scale up to hide black bars */
+  object-position: center center; /* Center the video */
 }
 
 /* Loading State */
@@ -1292,6 +1295,13 @@
 /* Summoning Video Specific Styles */
 .summoning-video {
   animation: video-fade-in 0.5s ease-out forwards;
+}
+
+/* Crop black bars from summoning video */
+.summoning-video .video-player {
+  /* Adjust scale to crop out black bars and watermark */
+  transform: scale(1.3); /* Increase scale to hide more of the edges */
+  object-position: center 45%; /* Shift slightly up to hide bottom watermark */
 }
 
 @keyframes video-fade-in {

@@ -25,6 +25,34 @@ interface VoiceResponse {
   code?: string;
 }
 
+// Clean text for TTS - remove markdown formatting and asterisks
+function cleanTextForTTS(text: string): string {
+  // Remove markdown formatting
+  let cleaned = text
+    // Remove bold/italic markers
+    .replace(/\*{1,3}([^*]+)\*{1,3}/g, '$1')
+    .replace(/_{1,3}([^_]+)_{1,3}/g, '$1')
+    // Remove code blocks
+    .replace(/```[^`]*```/g, '')
+    .replace(/`([^`]+)`/g, '$1')
+    // Remove headers
+    .replace(/^#{1,6}\s+/gm, '')
+    // Remove links but keep text
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    // Remove horizontal rules
+    .replace(/^-{3,}$/gm, '')
+    // Remove blockquotes
+    .replace(/^>\s+/gm, '')
+    // Remove list markers
+    .replace(/^[\*\-\+]\s+/gm, '')
+    .replace(/^\d+\.\s+/gm, '')
+    // Clean up extra whitespace
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  
+  return cleaned;
+}
+
 // Mock voice synthesis for demo purposes
 // In production, this would integrate with ElevenLabs or other TTS service
 function mockVoiceSynthesis(text: string): string {
@@ -163,6 +191,14 @@ export default async function handler(
       return;
     }
     
+    // Clean text for TTS
+    const cleanedText = cleanTextForTTS(text);
+    console.log('Text cleaned for TTS:', {
+      originalLength: text.length,
+      cleanedLength: cleanedText.length,
+      preview: cleanedText.substring(0, 100)
+    });
+    
     // Check for ElevenLabs API key
     const apiKey = process.env.ELEVENLABS_API_KEY;
     
@@ -171,7 +207,7 @@ export default async function handler(
     if (!apiKey) {
       console.log('No API key found, using mock synthesis');
       // Mock response for demo
-      const mockAudio = mockVoiceSynthesis(text);
+      const mockAudio = mockVoiceSynthesis(cleanedText);
       
       const response: VoiceResponse = {
         success: true,
@@ -203,12 +239,12 @@ export default async function handler(
         'Accept': 'audio/mpeg'
       },
       body: JSON.stringify({
-        text,
-        model_id: modelId || 'eleven_multilingual_v2',
+        text: cleanedText, // Use cleaned text
+        model_id: modelId || 'eleven_turbo_v2_5', // Use turbo model for faster response
         voice_settings: voiceSettings || {
-          stability: 0.5,
-          similarity_boost: 0.5,
-          style: 0.0,
+          stability: 0.5, // Lower for more natural variation
+          similarity_boost: 0.8, // Higher to maintain voice character
+          style: 0.0, // Neutral style for speed
           use_speaker_boost: false
         }
       })

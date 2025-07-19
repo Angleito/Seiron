@@ -151,7 +151,7 @@ const playAudioBuffer = (
 export const useSecureElevenLabsTTS = (config: SecureElevenLabsConfig) => {
   logger.debug('🔊 Initializing Secure ElevenLabs TTS', {
     voiceId: config.voiceId,
-    modelId: config.modelId || 'eleven_monolingual_v1',
+    modelId: config.modelId || 'eleven_turbo_v2_5',
     voiceSettings: config.voiceSettings,
     hasApiConfig: !!config.apiConfig
   })
@@ -202,7 +202,7 @@ export const useSecureElevenLabsTTS = (config: SecureElevenLabsConfig) => {
       const request: VoiceSynthesisRequest = {
         text,
         voiceId: config.voiceId,
-        modelId: config.modelId || 'eleven_monolingual_v1',
+        modelId: config.modelId || 'eleven_turbo_v2_5',
         voiceSettings: config.voiceSettings ? {
           stability: config.voiceSettings.stability,
           similarityBoost: config.voiceSettings.similarityBoost,

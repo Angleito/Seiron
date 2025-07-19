@@ -185,6 +185,10 @@ export default function HomePage() {
                 src="/videos/dragon-transition.mp4"
                 onVideoComplete={handleVideoComplete}
                 className="summoning-video"
+                cropStyle={{
+                  transform: 'scale(1.4)', // More aggressive crop
+                  objectPosition: 'center 40%' // Move up to hide bottom watermark
+                }}
               />
             </Suspense>
           )}
