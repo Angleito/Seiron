@@ -35,6 +35,7 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const spokenMessagesRef = useRef<Set<string>>(new Set())
   
   // Voice integration state
   const [voiceEnabled, setVoiceEnabled] = useState(true) // Enable voice by default
@@ -82,6 +83,21 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
       useSpeakerBoost: true
     }
   })
+  
+  // Debug TTS initialization
+  useEffect(() => {
+    console.log('TTS Configuration:', {
+      voiceId: import.meta.env.VITE_ELEVENLABS_VOICE_ID || 'default',
+      hasVoiceId: !!import.meta.env.VITE_ELEVENLABS_VOICE_ID,
+      ttsEnabled,
+      voiceEnabled,
+      ttsHook: {
+        isSpeaking: tts.isSpeaking,
+        isLoading: tts.isLoading,
+        hasError: !!tts.error
+      }
+    })
+  }, [ttsEnabled, voiceEnabled, tts.isSpeaking, tts.isLoading, tts.error])
   
   // Convert StreamMessage[] to Message[] for display
   const messages: Message[] = [
@@ -138,7 +154,17 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
 
   // Speak assistant messages when TTS is enabled
   useEffect(() => {
-    if (!ttsEnabled || !voiceEnabled || messages.length === 0) return
+    console.log('TTS Effect triggered:', {
+      ttsEnabled,
+      voiceEnabled,
+      messagesLength: messages.length,
+      lastMessage: messages[messages.length - 1]
+    })
+    
+    if (!ttsEnabled || !voiceEnabled || messages.length === 0) {
+      console.log('TTS Effect early return:', { ttsEnabled, voiceEnabled, messagesLength: messages.length })
+      return
+    }
     
     // Get the latest message
     const latestMessage = messages[messages.length - 1]
@@ -146,10 +172,36 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
     // Only speak assistant messages that are not loading
     if (latestMessage.role === 'assistant' && !latestMessage.isLoading) {
       // Skip the welcome message (it has a specific ID)
-      if (latestMessage.id === 'welcome') return
+      if (latestMessage.id === 'welcome') {
+        console.log('Skipping welcome message')
+        return
+      }
+      
+      // Check if we've already spoken this message
+      if (spokenMessagesRef.current.has(latestMessage.id)) {
+        console.log('Message already spoken:', latestMessage.id)
+        return
+      }
+      
+      console.log('Speaking message:', {
+        id: latestMessage.id,
+        content: latestMessage.content.substring(0, 50) + '...',
+        contentLength: latestMessage.content.length
+      })
+      
+      // Mark message as being spoken
+      spokenMessagesRef.current.add(latestMessage.id)
       
       // Speak the message
-      tts.speak(latestMessage.content)
+      tts.speak(latestMessage.content)().then(result => {
+        if (result._tag === 'Left') {
+          console.error('TTS Error:', result.left)
+          // Remove from spoken set on error so it can be retried
+          spokenMessagesRef.current.delete(latestMessage.id)
+        } else {
+          console.log('TTS Success: Message spoken')
+        }
+      })
     }
   }, [messages, ttsEnabled, voiceEnabled, tts])
   

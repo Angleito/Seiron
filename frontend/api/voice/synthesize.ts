@@ -28,17 +28,72 @@ interface VoiceResponse {
 // Mock voice synthesis for demo purposes
 // In production, this would integrate with ElevenLabs or other TTS service
 function mockVoiceSynthesis(text: string): string {
-  // Generate a simple base64 audio mock
-  const textData = `Mock audio data for: ${text.substring(0, 50)}...`;
-  // Use browser-compatible base64 encoding
+  // Generate a simple tone (beep) WAV file
+  // WAV header for 0.5 second tone at 44100Hz, 16-bit mono
+  const sampleRate = 44100;
+  const duration = 0.5; // 0.5 seconds
+  const frequency = 440; // A4 note (440 Hz)
+  const numSamples = Math.floor(sampleRate * duration);
+  const dataSize = numSamples * 2; // 16-bit = 2 bytes per sample
+  const fileSize = 44 + dataSize; // 44 bytes for WAV header + data
+  
+  // Create ArrayBuffer for WAV file
+  const buffer = new ArrayBuffer(fileSize);
+  const view = new DataView(buffer);
+  
+  // "RIFF" chunk descriptor
+  view.setUint8(0, 0x52); // R
+  view.setUint8(1, 0x49); // I
+  view.setUint8(2, 0x46); // F
+  view.setUint8(3, 0x46); // F
+  view.setUint32(4, fileSize - 8, true); // File size - 8
+  view.setUint8(8, 0x57);  // W
+  view.setUint8(9, 0x41);  // A
+  view.setUint8(10, 0x56); // V
+  view.setUint8(11, 0x45); // E
+  
+  // "fmt " sub-chunk
+  view.setUint8(12, 0x66); // f
+  view.setUint8(13, 0x6D); // m
+  view.setUint8(14, 0x74); // t
+  view.setUint8(15, 0x20); // (space)
+  view.setUint32(16, 16, true); // Subchunk1Size (16 for PCM)
+  view.setUint16(20, 1, true); // AudioFormat (1 for PCM)
+  view.setUint16(22, 1, true); // NumChannels (1 for mono)
+  view.setUint32(24, sampleRate, true); // SampleRate
+  view.setUint32(28, sampleRate * 2, true); // ByteRate
+  view.setUint16(32, 2, true); // BlockAlign
+  view.setUint16(34, 16, true); // BitsPerSample
+  
+  // "data" sub-chunk
+  view.setUint8(36, 0x64); // d
+  view.setUint8(37, 0x61); // a
+  view.setUint8(38, 0x74); // t
+  view.setUint8(39, 0x61); // a
+  view.setUint32(40, dataSize, true); // Subchunk2Size
+  
+  // Generate a simple sine wave tone
+  const amplitude = 0.3 * 32767; // 30% volume (max is 32767 for 16-bit)
+  for (let i = 0; i < numSamples; i++) {
+    const sample = Math.sin(2 * Math.PI * frequency * i / sampleRate) * amplitude;
+    const int16Sample = Math.floor(sample);
+    view.setInt16(44 + i * 2, int16Sample, true);
+  }
+  
+  // Convert ArrayBuffer to base64
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  
   if (typeof btoa === 'function') {
-    return btoa(textData);
+    return btoa(binary);
   } else if (typeof globalThis.Buffer !== 'undefined') {
-    const audioData = globalThis.Buffer.from(textData);
-    return audioData.toString('base64');
+    return globalThis.Buffer.from(bytes).toString('base64');
   } else {
     // Fallback: manual base64 encoding
-    return btoa(unescape(encodeURIComponent(textData)));
+    return btoa(unescape(encodeURIComponent(binary)));
   }
 }
 
@@ -84,6 +139,12 @@ export default async function handler(
   setCorsHeaders(res, origin);
   
   try {
+    console.log('Voice synthesis request received:', {
+      method: req.method,
+      body: req.body,
+      headers: req.headers
+    });
+    
     const { text, voiceId, modelId, voiceSettings, outputFormat } = req.body as VoiceRequest;
     
     // Validate input
@@ -108,7 +169,10 @@ export default async function handler(
     // Check for ElevenLabs API key
     const apiKey = process.env.ELEVENLABS_API_KEY;
     
+    console.log('API Key status:', { hasApiKey: !!apiKey });
+    
     if (!apiKey) {
+      console.log('No API key found, using mock synthesis');
       // Mock response for demo
       const mockAudio = mockVoiceSynthesis(text);
       
@@ -116,10 +180,16 @@ export default async function handler(
         success: true,
         data: {
           audioBuffer: mockAudio,
-          contentType: 'audio/mpeg',
+          contentType: 'audio/wav',
           characterCount: text.length
         }
       };
+      
+      console.log('Sending mock response:', {
+        success: response.success,
+        audioBufferLength: mockAudio.length,
+        contentType: response.data?.contentType
+      });
       
       res.status(200).json(response);
       return;
