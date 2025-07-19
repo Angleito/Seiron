@@ -12,10 +12,10 @@ import {
 } from '@components/ui/FeatureLoadingStates'
 
 // Lazy load pages for code splitting
-const HomePage = lazy(() => import('./pages/HomePage'))
-const AgentTestPage = lazy(() => import('./pages/AgentTestPage'))
-const ChatPage = lazy(() => import('./pages/chat'))
-const AboutPage = lazy(() => import('./pages/about'))
+const HomePage = lazy(() => import('./pages/HomePage.tsx'))
+const AgentTestPage = lazy(() => import('./pages/AgentTestPage.tsx'))
+const ChatPage = lazy(() => import('./pages/chat.tsx'))
+const AboutPage = lazy(() => import('./pages/about.tsx'))
 
 // Dragon Demo Pages - temporarily disabled as pages don't exist
 // const AsciiComplexPage = lazy(() => import('./pages/dragons/AsciiComplexPage'))

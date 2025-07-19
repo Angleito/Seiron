@@ -47,12 +47,12 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 3000,
-      host: true,
-      // Enable HMR with WebSocket configuration
+      host: '0.0.0.0',
+      // Enable HMR with WebSocket configuration for network access
       hmr: {
-        port: 3000,
+        port: 3001,
         protocol: 'ws',
-        host: true,
+        host: '192.168.8.196',
       },
       // Handle SPA routing - always serve index.html for any route
       middlewareMode: false,
