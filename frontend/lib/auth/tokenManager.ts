@@ -163,7 +163,9 @@ export class TokenManager {
       const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
       const decoded = typeof window !== 'undefined' && typeof atob === 'function'
         ? atob(base64)
-        : Buffer.from(base64, 'base64').toString('utf-8')
+        : typeof globalThis.Buffer !== 'undefined'
+          ? globalThis.Buffer.from(base64, 'base64').toString('utf-8')
+          : atob(base64) // Fallback to atob even in non-browser environments
       
       const payload = JSON.parse(decoded)
       return O.some(payload)

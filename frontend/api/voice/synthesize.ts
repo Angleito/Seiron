@@ -29,8 +29,17 @@ interface VoiceResponse {
 // In production, this would integrate with ElevenLabs or other TTS service
 function mockVoiceSynthesis(text: string): string {
   // Generate a simple base64 audio mock
-  const audioData = Buffer.from(`Mock audio data for: ${text.substring(0, 50)}...`);
-  return audioData.toString('base64');
+  const textData = `Mock audio data for: ${text.substring(0, 50)}...`;
+  // Use browser-compatible base64 encoding
+  if (typeof btoa === 'function') {
+    return btoa(textData);
+  } else if (typeof globalThis.Buffer !== 'undefined') {
+    const audioData = globalThis.Buffer.from(textData);
+    return audioData.toString('base64');
+  } else {
+    // Fallback: manual base64 encoding
+    return btoa(unescape(encodeURIComponent(textData)));
+  }
 }
 
 function setCorsHeaders(res: VercelResponse, origin: string | undefined) {
@@ -149,7 +158,10 @@ export default async function handler(
     }
     
     const audioBuffer = await elevenLabsResponse.arrayBuffer();
-    const base64Audio = Buffer.from(audioBuffer).toString('base64');
+    // Use browser-compatible buffer conversion
+    const base64Audio = typeof globalThis.Buffer !== 'undefined'
+      ? globalThis.Buffer.from(audioBuffer).toString('base64')
+      : btoa(String.fromCharCode(...new Uint8Array(audioBuffer)));
     
     const response: VoiceResponse = {
       success: true,

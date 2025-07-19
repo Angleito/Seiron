@@ -1,73 +1,52 @@
+import './polyfills'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import './styles/globals.css'
-
-// Simple test component to verify React mounting
-function SimpleApp() {
-  console.log('🎉 SimpleApp component rendering!')
-  
-  return (
-    <div style={{ 
-      padding: '20px', 
-      color: '#fbbf24', 
-      background: '#000', 
-      fontFamily: 'monospace',
-      minHeight: '100vh'
-    }}>
-      <h1>🐉 Seiron - Simple Test</h1>
-      <p>React is mounting successfully!</p>
-      <div style={{ marginTop: '20px' }}>
-        <h2>Debug Info:</h2>
-        <ul>
-          <li>Environment: {import.meta.env.MODE}</li>
-          <li>React version: {React.version}</li>
-          <li>Time: {new Date().toLocaleTimeString()}</li>
-        </ul>
-      </div>
-      
-      {/* Simple dragon placeholder */}
-      <div style={{ 
-        marginTop: '40px', 
-        textAlign: 'center',
-        fontSize: '80px'
-      }}>
-        🐉
-      </div>
-      <p style={{ textAlign: 'center', marginTop: '20px' }}>
-        Gigantic Dragon Placeholder
-      </p>
-    </div>
-  )
-}
+import { RouterProvider } from 'react-router-dom'
+import { router } from './router'
 
 console.log('🚀 Simple Seiron App Starting...')
-console.log('Root element:', document.getElementById('root'))
 
-try {
-  const rootElement = document.getElementById('root')
-  if (!rootElement) {
-    throw new Error('Root element not found')
-  }
-
-  console.log('🏗️ Creating React root (simple)...')
-  const root = ReactDOM.createRoot(rootElement)
+const rootElement = document.getElementById('root')
+if (!rootElement) {
+  console.error('❌ Root element not found')
+} else {
+  console.log('✅ Root element found, creating React root...')
   
-  console.log('🎨 Rendering simple app...')
-  root.render(<SimpleApp />)
-  
-  console.log('✅ Simple app render complete')
-} catch (error) {
-  console.error('❌ Failed to render simple app:', error)
-  
-  // Last resort fallback
-  const rootElement = document.getElementById('root')
-  if (rootElement) {
+  try {
+    const root = ReactDOM.createRoot(rootElement)
+    console.log('✅ React root created')
+    
+    console.log('🎨 Rendering app with router...')
+    root.render(
+      <React.StrictMode>
+        <div style={{ 
+          background: 'linear-gradient(135deg, #1a1a1a 0%, #000000 100%)',
+          minHeight: '100vh',
+          color: 'white'
+        }}>
+          <RouterProvider router={router} />
+        </div>
+      </React.StrictMode>
+    )
+    
+    console.log('✅ App rendered successfully with router')
+  } catch (error) {
+    console.error('❌ Error rendering app:', error)
+    
+    // Fallback rendering
     rootElement.innerHTML = `
-      <div style="padding: 20px; color: #fff; background: #000; font-family: monospace;">
-        <h1>🐉 Seiron Critical Error</h1>
-        <p>React failed to mount. Error: ${error}</p>
-        <div style="margin-top: 40px; text-align: center; font-size: 80px;">🐉</div>
-        <p style="text-align: center;">Emergency Dragon Mode</p>
+      <div style="
+        padding: 2rem; 
+        color: white; 
+        background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
+        min-height: 100vh;
+        font-family: Arial, sans-serif;
+      ">
+        <h1>❌ Router Test Failed</h1>
+        <p>Error: ${error instanceof Error ? error.message : 'Unknown error'}</p>
+        <pre style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 4px; overflow-x: auto;">
+          ${error instanceof Error ? error.stack : JSON.stringify(error)}
+        </pre>
       </div>
     `
   }

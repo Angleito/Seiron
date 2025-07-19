@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { cn } from '../../lib/utils'
-import { DragonRenderer } from '../dragon/DragonRenderer'
 
 interface StormBackgroundProps {
   className?: string
@@ -97,7 +96,6 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
   // Simple device detection
   const [isMobile, setIsMobile] = useState(false)
   const [isTablet, setIsTablet] = useState(false)
-  const [dragonError, setDragonError] = useState(false)
   
   useEffect(() => {
     const checkDevice = () => {
@@ -195,38 +193,20 @@ export const StormBackground = React.memo<StormBackgroundProps>(({
           zIndex: 20
         }}
       >
-        {!dragonError ? (
-          <DragonRenderer
-            className="w-full h-full"
-            size="lg"
-            dragonType="ascii"
-            enableFallback={true}
-            fallbackType="ascii"
-            enableAnimations={shouldAnimate}
-            voiceState={{
-              isListening: false,
-              isSpeaking: false,
-              isProcessing: false,
-              isIdle: true,
-              volume: normalizedIntensity,
-              emotion: 'calm'
-            }}
-            onError={(error, type) => {
-              console.error(`Dragon ${type} error in StormBackground:`, error)
-              setDragonError(true)
-            }}
-            onFallback={(fromType, toType) => {
-              console.log(`Dragon fallback in StormBackground: ${fromType} → ${toType}`)
-            }}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-blue-100">
-            <div className="text-center">
-              <div className="text-8xl mb-4">🐉</div>
-              <div className="text-2xl font-bold">Dragon Loading...</div>
+        <div className="w-full h-full flex items-center justify-center text-blue-100">
+          <div className="text-center">
+            <div 
+              className="text-8xl mb-4 transition-all duration-300"
+              style={{
+                transform: shouldAnimate ? `scale(${1 + normalizedIntensity * 0.2})` : 'scale(1)',
+                opacity: 0.7 + normalizedIntensity * 0.3
+              }}
+            >
+              🐉
             </div>
+            <div className="text-2xl font-bold">Seiron Dragon</div>
           </div>
-        )}
+        </div>
       </div>
       
       {/* Atmospheric enhancement overlay */}

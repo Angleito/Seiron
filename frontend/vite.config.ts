@@ -20,6 +20,10 @@ export default defineConfig(({ mode }) => {
           global: true,
           process: true,
         },
+        // Ensure buffer is not externalized
+        exclude: [],
+        // Force include buffer polyfill
+        protocolImports: true,
       }),
       // Custom API plugin for development
       // API routes are handled by Vercel in production
@@ -48,7 +52,7 @@ export default defineConfig(({ mode }) => {
       hmr: {
         port: 3000,
         protocol: 'ws',
-        host: 'localhost',
+        host: true,
       },
       // Handle SPA routing - always serve index.html for any route
       middlewareMode: false,
@@ -100,7 +104,7 @@ export default defineConfig(({ mode }) => {
     define: {
       global: 'globalThis',
       // Ensure Buffer is available globally
-      'global.Buffer': 'Buffer',
+      'global.Buffer': 'globalThis.Buffer',
       // Force Lit to production mode
       'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
       // Lit-specific development mode flag

@@ -7,11 +7,22 @@ if (typeof window !== 'undefined') {
   window.global = window
 }
 
+// Also ensure it's available on globalThis
+if (typeof globalThis !== 'undefined') {
+  globalThis.Buffer = Buffer
+  globalThis.global = globalThis
+}
+
 // Export for TypeScript
 declare global {
   interface Window {
     Buffer: typeof Buffer
     global: Window
+  }
+  
+  namespace globalThis {
+    var Buffer: typeof import('buffer').Buffer
+    var global: typeof globalThis
   }
 }
 

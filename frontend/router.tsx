@@ -199,4 +199,11 @@ export const router = createBrowserRouter([
       },
     ],
   },
-])
+], {
+  future: {
+    // Enable React.startTransition for router state updates to prepare for React Router v7
+    // This eliminates the "React Router Future Flag Warning" and provides better React 18+ compatibility
+    // @ts-expect-error v7_startTransition is a valid future flag but types may not be updated yet
+    v7_startTransition: true,
+  },
+})
