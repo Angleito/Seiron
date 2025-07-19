@@ -6,7 +6,8 @@
   "framework": "vite",
   "functions": {
     "frontend/api/**/*.ts": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "runtime": "nodejs20.x"
     }
   },
   "rewrites": [

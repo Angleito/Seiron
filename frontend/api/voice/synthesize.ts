@@ -83,17 +83,8 @@ function mockVoiceSynthesis(text: string): string {
   // Convert ArrayBuffer to base64
   const bytes = new Uint8Array(buffer);
   
-  // In Node.js environment (Vercel Functions), use Buffer
-  if (typeof globalThis.Buffer !== 'undefined') {
-    return globalThis.Buffer.from(bytes).toString('base64');
-  }
-  
-  // Browser fallback (shouldn't be reached in Vercel Functions)
-  let binary = '';
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
+  // Use Buffer for Node.js environment (Vercel Functions)
+  return Buffer.from(bytes).toString('base64');
 }
 
 function setCorsHeaders(res: VercelResponse, origin: string | undefined) {
@@ -118,27 +109,33 @@ export default async function handler(
 ): Promise<void> {
   const origin = req.headers.origin as string | undefined;
   
-  // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
-    setCorsHeaders(res, origin);
-    res.status(200).end();
-    return;
-  }
-  
-  // Only allow POST
-  if (req.method !== 'POST') {
-    setCorsHeaders(res, origin);
-    res.status(405).json({
-      success: false,
-      error: 'Method not allowed',
-      code: 'METHOD_NOT_ALLOWED'
-    });
-    return;
-  }
-  
-  setCorsHeaders(res, origin);
-  
   try {
+    console.log('[Voice Synthesis] Handler started', {
+      method: req.method,
+      origin,
+      hasBody: !!req.body,
+      bodyType: typeof req.body
+    });
+    
+    // Handle CORS preflight
+    if (req.method === 'OPTIONS') {
+      setCorsHeaders(res, origin);
+      res.status(200).end();
+      return;
+    }
+  
+    // Only allow POST
+    if (req.method !== 'POST') {
+      setCorsHeaders(res, origin);
+      res.status(405).json({
+        success: false,
+        error: 'Method not allowed',
+        code: 'METHOD_NOT_ALLOWED'
+      });
+      return;
+    }
+    
+    setCorsHeaders(res, origin);
     console.log('Voice synthesis request received:', {
       method: req.method,
       body: req.body,
@@ -229,7 +226,7 @@ export default async function handler(
     
     const audioBuffer = await elevenLabsResponse.arrayBuffer();
     // Convert to base64 using Buffer (Node.js/Vercel Functions environment)
-    const base64Audio = globalThis.Buffer.from(audioBuffer).toString('base64');
+    const base64Audio = Buffer.from(audioBuffer).toString('base64');
     
     const response: VoiceResponse = {
       success: true,
@@ -243,11 +240,21 @@ export default async function handler(
     res.status(200).json(response);
     
   } catch (error) {
-    console.error('Voice synthesis error:', error);
+    console.error('[Voice Synthesis] Critical error:', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      type: error instanceof Error ? error.constructor.name : typeof error
+    });
+    
+    setCorsHeaders(res, origin);
     res.status(500).json({
       success: false,
-      error: 'Internal server error',
-      code: 'INTERNAL_ERROR'
+      error: error instanceof Error ? error.message : 'Internal server error',
+      code: 'INTERNAL_ERROR',
+      details: process.env.NODE_ENV !== 'production' ? {
+        message: error instanceof Error ? error.message : String(error),
+        type: error instanceof Error ? error.constructor.name : typeof error
+      } : undefined
     });
   }
 }
