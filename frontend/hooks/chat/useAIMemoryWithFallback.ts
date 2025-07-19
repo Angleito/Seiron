@@ -229,16 +229,16 @@ export function useAIMemoryWithFallback({
 
   // Save to localStorage with validation
   const saveToLocalStorage = useCallback((key: string, entry: Omit<AIMemoryEntry, 'id' | 'createdAt' | 'updatedAt'>) => {
-    try {
-      const storageKey = getStorageKey(key);
-      const data: LocalStorageMemory[string] = {
-        value: entry.value,
-        category: entry.category,
-        confidence: entry.confidence,
-        timestamp: Date.now(),
-        expiresAt: entry.expiresAt?.getTime()
-      };
+    const storageKey = getStorageKey(key);
+    const data: LocalStorageMemory[string] = {
+      value: entry.value,
+      category: entry.category,
+      confidence: entry.confidence,
+      timestamp: Date.now(),
+      expiresAt: entry.expiresAt?.getTime()
+    };
 
+    try {
       localStorage.setItem(storageKey, JSON.stringify(data));
       return true;
     } catch (error) {

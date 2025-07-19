@@ -103,6 +103,7 @@ Seiron/
 - **Liquidity Dragon**: Dynamic LP management on DragonSwap
 - **Market Dragon**: Real-time analysis and opportunity detection
 - **Portfolio Dragon**: Holistic portfolio optimization
+- **Futures Dragon**: Advanced perpetual futures trading on Bluefin
 
 ### Natural Language Examples
 ```
@@ -140,6 +141,7 @@ Seiron/
 - [Takara Protocol](docs/takara-protocol-integration.md) - Takara integration
 - [Lending System](src/lending/README.md) - Yei Finance integration
 - [Liquidity Management](src/liquidity/README.md) - DragonSwap integration
+- **[Bluefin Futures](https://bluefin.io)** - Perpetual futures trading
 
 ## 🤝 Contributing
 

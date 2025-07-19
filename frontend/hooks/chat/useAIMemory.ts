@@ -101,7 +101,8 @@ export function useAIMemory({
         },
         (error) => error as Error
       ),
-      TE.map((data: { memories: AIMemoryEntry[], success?: boolean }) => {
+      TE.map((result: any) => {
+        const data = result as { memories: AIMemoryEntry[], success?: boolean }
         const entries = data.memories.map(m => ({
           ...m,
           createdAt: new Date(m.createdAt),

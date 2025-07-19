@@ -40,6 +40,7 @@ export type AgentType =
   | 'portfolio_agent'
   | 'risk_agent'
   | 'analysis_agent'
+  | 'planning_agent'
 
 export interface AgentMessage {
   id: string

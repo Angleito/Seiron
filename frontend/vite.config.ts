@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -8,7 +9,21 @@ export default defineConfig(({ mode }) => {
   const isDevelopment = mode === 'development'
   
   return {
-    plugins: [react()],
+    plugins: [
+      react(),
+      nodePolyfills({
+        // Enable specific polyfills
+        include: ['buffer', 'process', 'util'],
+        // Whether to polyfill globals
+        globals: {
+          Buffer: true,
+          global: true,
+          process: true,
+        },
+      }),
+      // Custom API plugin for development
+      // API routes are handled by Vercel in production
+    ].filter(Boolean),
     publicDir: 'public',
     resolve: {
       alias: {
@@ -23,99 +38,41 @@ export default defineConfig(({ mode }) => {
         '@pages': path.resolve(__dirname, './pages'),
       },
       dedupe: ['react', 'react-dom'],
+      // Ensure proper resolution of ESM modules
+      conditions: ['import', 'module', 'browser', 'default'],
     },
     server: {
       port: 3000,
       host: true,
+      // Enable HMR with WebSocket configuration
+      hmr: {
+        port: 3000,
+        protocol: 'ws',
+        host: 'localhost',
+      },
       // Handle SPA routing - always serve index.html for any route
       middlewareMode: false,
-      // Configure headers for model files
-      headers: {
-        'Cache-Control': 'public, max-age=31536000', // 1 year cache for static assets
-      },
-      // Configure CORS and MIME types for model files
-      configure: (app: any) => {
-        // CORS middleware for model files
-        app.use((req: any, res: any, next: any) => {
-          const origin = req.headers.origin || '*'
-          
-          // Set CORS headers for all requests
-          res.setHeader('Access-Control-Allow-Origin', origin)
-          res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS')
-          res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Content-Length, Accept, Accept-Encoding, Authorization, Cache-Control, X-Requested-With')
-          res.setHeader('Access-Control-Allow-Credentials', 'true')
-          res.setHeader('Access-Control-Max-Age', '86400') // 24 hours
-          
-          // Handle preflight OPTIONS requests
-          if (req.method === 'OPTIONS') {
-            res.status(200).end()
-            return
-          }
-          
-          // Set appropriate MIME types for model files
-          if (req.url?.endsWith('.glb')) {
-            res.setHeader('Content-Type', 'model/gltf-binary')
-            res.setHeader('Accept-Ranges', 'bytes')
-          } else if (req.url?.endsWith('.gltf')) {
-            res.setHeader('Content-Type', 'model/gltf+json')
-            res.setHeader('Accept-Ranges', 'bytes')
-          } else if (req.url?.endsWith('.obj')) {
-            res.setHeader('Content-Type', 'model/obj')
-            res.setHeader('Accept-Ranges', 'bytes')
-          } else if (req.url?.endsWith('.bin')) {
-            res.setHeader('Content-Type', 'application/octet-stream')
-            res.setHeader('Accept-Ranges', 'bytes')
-          }
-          
-          next()
-        })
-        
-        // Static file serving middleware for models
-        app.use('/models', (req: any, res: any, next: any) => {
-          // Ensure model files are served with proper headers
-          res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin')
-          res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none')
-          
-          // Add specific headers for Three.js model loading
-          if (req.url.includes('.gltf') || req.url.includes('.glb') || req.url.includes('.bin')) {
-            res.setHeader('X-Content-Type-Options', 'nosniff')
-            res.setHeader('Referrer-Policy', 'no-referrer')
-          }
-          
-          next()
-        })
-      },
     },
     build: {
       target: 'esnext',
       sourcemap: !isProduction,
       assetsDir: 'assets',
-      // Ensure model files are copied to output directory
       copyPublicDir: true,
+      minify: isProduction ? 'terser' : false,
+      terserOptions: isProduction ? {
+        compress: {
+          drop_console: true,
+          drop_debugger: true,
+        },
+        mangle: {
+          // Preserve important function names
+          keep_fnames: /^(time|timeEnd|performance|logger)/,
+          reserved: ['time', 'timeEnd', 'performance', 'logger']
+        },
+      } : undefined,
       rollupOptions: {
-        // Don't try to process model files through Rollup
-        external: [
-          // Don't bundle large model files - let them be copied as static assets
-          /.*\.glb$/,
-          /.*\.gltf$/,
-          /.*\.bin$/,
-          /.*\.obj$/
-        ],
         output: {
-          assetFileNames: (assetInfo) => {
-            // Preserve model directory structure during build
-            if (assetInfo.name && (assetInfo.name.endsWith('.glb') || assetInfo.name.endsWith('.gltf') || assetInfo.name.endsWith('.bin'))) {
-              return 'models/[name][extname]'
-            }
-            // Preserve texture directory structure
-            if (assetInfo.name && assetInfo.name.includes('Material.')) {
-              return 'models/textures/[name][extname]'
-            }
-            return 'assets/[name]-[hash][extname]'
-          },
           manualChunks: {
-            // Separate Three.js and 3D rendering libraries
-            'threejs-vendor': ['three', '@react-three/fiber', '@react-three/drei'],
             // Animation and UI libraries  
             'ui-vendor': ['framer-motion'],
             // React and core libraries
@@ -123,10 +80,11 @@ export default defineConfig(({ mode }) => {
           }
         }
       },
-      // Optimize for model files
       optimizeDeps: {
-        exclude: ['three'], // Let Three.js handle model loading
-        force: true, // Force re-optimization to fix missing chunks
+        esbuildOptions: {
+          target: 'esnext',
+        },
+        force: true,
         include: [
           'react',
           'react-dom',
@@ -141,6 +99,8 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       global: 'globalThis',
+      // Ensure Buffer is available globally
+      'global.Buffer': 'Buffer',
       // Force Lit to production mode
       'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
       // Lit-specific development mode flag

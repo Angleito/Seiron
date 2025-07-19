@@ -3,7 +3,8 @@
 import React, { Component, ErrorInfo, ReactNode, Suspense } from 'react'
 import { logger } from '@lib/logger'
 import { errorRecoveryUtils } from '../../utils/errorRecovery'
-import { GLTFErrorBoundary } from '../dragon/GLTFErrorBoundary'
+// GLTFErrorBoundary removed - file doesn't exist
+// import { GLTFErrorBoundary } from '../dragon/GLTFErrorBoundary'
 import ReactError310Handler from './ReactError310Handler'
 
 interface CompositeErrorBoundaryProps {
@@ -811,20 +812,21 @@ export class CompositeErrorBoundary extends Component<CompositeErrorBoundaryProp
     }
     
     // Wrap with GLTF error boundary if enabled
-    if (enableGLTFRecovery) {
-      wrappedChildren = (
-        <GLTFErrorBoundary
-          modelPath={modelPath}
-          enableAutoRecovery={true}
-          maxRetries={2}
-          onError={(error, errorInfo) => {
-            logger.error('GLTF Error in Composite Boundary:', { error, errorInfo })
-          }}
-        >
-          {wrappedChildren}
-        </GLTFErrorBoundary>
-      )
-    }
+    // GLTFErrorBoundary removed - component doesn't exist
+    // if (enableGLTFRecovery) {
+    //   wrappedChildren = (
+    //     <GLTFErrorBoundary
+    //       modelPath={modelPath}
+    //       enableAutoRecovery={true}
+    //       maxRetries={2}
+    //       onError={(error, errorInfo) => {
+    //         logger.error('GLTF Error in Composite Boundary:', { error, errorInfo })
+    //       }}
+    //     >
+    //       {wrappedChildren}
+    //     </GLTFErrorBoundary>
+    //   )
+    // }
     
     // Wrap with React error handler
     wrappedChildren = (

@@ -14,21 +14,21 @@ export { default as PerformanceErrorBoundary } from './PerformanceErrorBoundary'
 import { withCompositeErrorBoundary } from './CompositeErrorBoundary'
 
 // Legacy and Alias Error Boundaries (for backward compatibility)
-export { CompositeErrorBoundary as PageErrorBoundary } from './CompositeErrorBoundary'
-export { CompositeErrorBoundary as VoiceErrorBoundary } from './CompositeErrorBoundary'
-export { CompositeErrorBoundary as ChatErrorBoundary } from './CompositeErrorBoundary'
-export { CompositeErrorBoundary as WebGLErrorBoundary } from './CompositeErrorBoundary'
-export { CompositeErrorBoundary as SpeechRecognitionErrorBoundary } from './CompositeErrorBoundary'
-export { CompositeErrorBoundary as TTSErrorBoundary } from './CompositeErrorBoundary'
-export { CompositeErrorBoundary as ErrorBoundary } from './CompositeErrorBoundary'
-export { CompositeErrorBoundary as RootErrorBoundary } from './CompositeErrorBoundary'
+export { default as PageErrorBoundary } from './CompositeErrorBoundary'
+export { default as VoiceErrorBoundary } from './CompositeErrorBoundary'
+export { default as ChatErrorBoundary } from './CompositeErrorBoundary'
+export { default as WebGLErrorBoundary } from './CompositeErrorBoundary'
+export { default as SpeechRecognitionErrorBoundary } from './CompositeErrorBoundary'
+export { default as TTSErrorBoundary } from './CompositeErrorBoundary'
+export { default as ErrorBoundary } from './CompositeErrorBoundary'
+export { default as RootErrorBoundary } from './CompositeErrorBoundary'
 
 // Export the missing components referenced in errors
-export { CompositeErrorBoundary as DragonWebGLErrorBoundary } from './CompositeErrorBoundary'
-export { CompositeErrorBoundary as DragonWalletErrorBoundary } from './CompositeErrorBoundary'
+export { default as DragonWebGLErrorBoundary } from './CompositeErrorBoundary'
+export { default as DragonWalletErrorBoundary } from './CompositeErrorBoundary'
 
-// GLTF Error Boundary (re-export from dragon components)
-export { GLTFErrorBoundary, withGLTFErrorBoundary, DragonGLTFErrorBoundary } from '../dragon/GLTFErrorBoundary'
+// GLTF Error Boundary (removed - file doesn't exist)
+// export { GLTFErrorBoundary, withGLTFErrorBoundary, DragonGLTFErrorBoundary } from '../dragon/GLTFErrorBoundary'
 
 
 // Utility Types (need to be properly typed interfaces instead of trying to export from the component)

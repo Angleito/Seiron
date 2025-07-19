@@ -11,20 +11,12 @@
   },
   "rewrites": [
     {
-      "source": "/models/:path*",
-      "destination": "/models/:path*"
-    },
-    {
       "source": "/api/ai/memory/:path*",
       "destination": "/api/ai/memory/:path*"
     },
     {
       "source": "/api/chat/:path*",
       "destination": "/api/chat/:path*"
-    },
-    {
-      "source": "/api/dragon/:path*",
-      "destination": "/api/dragon/:path*"
     },
     {
       "source": "/api/voice/:path*",
@@ -35,7 +27,7 @@
       "destination": "/api/$1"
     },
     {
-      "source": "/((?!api|assets|images|models|fonts|favicon.ico|seiron.png|test.html|debug-config.html|debug-models.html|test-static.txt|test-model-loading.html).*)",
+      "source": "/((?!api|assets|images|fonts|favicon.ico|seiron.png|test.html|debug-config.html|test-static.txt).*)",
       "destination": "/index.html"
     }
   ],
@@ -64,70 +56,6 @@
         {
           "key": "Access-Control-Allow-Headers",
           "value": "Content-Type, Authorization, X-Requested-With, X-User-Id"
-        }
-      ]
-    },
-    {
-      "source": "/models/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/models/(.*\\.glb)",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "model/gltf-binary"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        },
-        {
-          "key": "Accept-Ranges",
-          "value": "bytes"
-        }
-      ]
-    },
-    {
-      "source": "/models/(.*\\.gltf)",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "model/gltf+json"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        },
-        {
-          "key": "Accept-Ranges",
-          "value": "bytes"
-        }
-      ]
-    },
-    {
-      "source": "/models/(.*\\.bin)",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "application/octet-stream"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        },
-        {
-          "key": "Accept-Ranges",
-          "value": "bytes"
         }
       ]
     }

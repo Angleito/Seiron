@@ -17,11 +17,11 @@ const AgentTestPage = lazy(() => import('./pages/AgentTestPage'))
 const ChatPage = lazy(() => import('./pages/chat'))
 const AboutPage = lazy(() => import('./pages/about'))
 
-// Dragon Demo Pages
-const AsciiComplexPage = lazy(() => import('./pages/dragons/AsciiComplexPage'))
-const AsciiAnimatedPage = lazy(() => import('./pages/dragons/AsciiAnimatedPage'))
-const Sprite2DPage = lazy(() => import('./pages/dragons/Sprite2DPage'))
-const WebGL3DPage = lazy(() => import('./pages/dragons/WebGL3DPage'))
+// Dragon Demo Pages - temporarily disabled as pages don't exist
+// const AsciiComplexPage = lazy(() => import('./pages/dragons/AsciiComplexPage'))
+// const AsciiAnimatedPage = lazy(() => import('./pages/dragons/AsciiAnimatedPage'))
+// const Sprite2DPage = lazy(() => import('./pages/dragons/Sprite2DPage'))
+// const WebGL3DPage = lazy(() => import('./pages/dragons/WebGL3DPage'))
 
 // Verification Pages
 const ReactError310VerificationPage = lazy(() => import('./pages/verification/ReactError310VerificationPage'))
@@ -152,42 +152,43 @@ export const router = createBrowserRouter([
           </PageLoader>
         ),
       },
-      {
-        path: 'dragons/ascii-complex',
-        element: (
-          <PageLoader pageName="Complex ASCII Dragons">
-            <AsciiComplexPage />
-          </PageLoader>
-        ),
-      },
-      {
-        path: 'dragons/ascii-animated',
-        element: (
-          <PageLoader pageName="Animated ASCII Dragons">
-            <AsciiAnimatedPage />
-          </PageLoader>
-        ),
-      },
-      {
-        path: 'dragons/sprite-2d',
-        element: (
-          <PageLoader pageName="2D Sprite Dragons">
-            <Sprite2DPage />
-          </PageLoader>
-        ),
-      },
-      {
-        path: 'dragons/webgl-3d',
-        element: (
-          <WebGL3DPageLoader 
-            pageName="3D WebGL Dragons"
-            modelPath="/models/seiron.glb"
-            fallbackModelPath="/models/dragon_head.glb"
-          >
-            <WebGL3DPage modelPath="/models/seiron.glb" />
-          </WebGL3DPageLoader>
-        ),
-      },
+      // Dragon routes temporarily disabled - pages don't exist
+      // {
+      //   path: 'dragons/ascii-complex',
+      //   element: (
+      //     <PageLoader pageName="Complex ASCII Dragons">
+      //       <AsciiComplexPage />
+      //     </PageLoader>
+      //   ),
+      // },
+      // {
+      //   path: 'dragons/ascii-animated',
+      //   element: (
+      //     <PageLoader pageName="Animated ASCII Dragons">
+      //       <AsciiAnimatedPage />
+      //     </PageLoader>
+      //   ),
+      // },
+      // {
+      //   path: 'dragons/sprite-2d',
+      //   element: (
+      //     <PageLoader pageName="2D Sprite Dragons">
+      //       <Sprite2DPage />
+      //     </PageLoader>
+      //   ),
+      // },
+      // {
+      //   path: 'dragons/webgl-3d',
+      //   element: (
+      //     <WebGL3DPageLoader 
+      //       pageName="3D WebGL Dragons"
+      //       modelPath="/models/seiron.glb"
+      //       fallbackModelPath="/models/dragon_head.glb"
+      //     >
+      //       <WebGL3DPage modelPath="/models/seiron.glb" />
+      //     </WebGL3DPageLoader>
+      //   ),
+      // },
       {
         path: 'verification/react-error-310',
         element: (
