@@ -82,25 +82,25 @@ function mockVoiceSynthesis(text: string): string {
   
   // Convert ArrayBuffer to base64
   const bytes = new Uint8Array(buffer);
+  
+  // In Node.js environment (Vercel Functions), use Buffer
+  if (typeof globalThis.Buffer !== 'undefined') {
+    return globalThis.Buffer.from(bytes).toString('base64');
+  }
+  
+  // Browser fallback (shouldn't be reached in Vercel Functions)
   let binary = '';
   for (let i = 0; i < bytes.byteLength; i++) {
     binary += String.fromCharCode(bytes[i]);
   }
-  
-  if (typeof btoa === 'function') {
-    return btoa(binary);
-  } else if (typeof globalThis.Buffer !== 'undefined') {
-    return globalThis.Buffer.from(bytes).toString('base64');
-  } else {
-    // Fallback: manual base64 encoding
-    return btoa(unescape(encodeURIComponent(binary)));
-  }
+  return btoa(binary);
 }
 
 function setCorsHeaders(res: VercelResponse, origin: string | undefined) {
   const allowedOrigins = [
     'http://localhost:3000',
     'https://seiron.vercel.app',
+    'https://seiron-git-main-angleitos-projects.vercel.app',
     process.env.FRONTEND_URL
   ].filter(Boolean);
   
@@ -228,10 +228,8 @@ export default async function handler(
     }
     
     const audioBuffer = await elevenLabsResponse.arrayBuffer();
-    // Use browser-compatible buffer conversion
-    const base64Audio = typeof globalThis.Buffer !== 'undefined'
-      ? globalThis.Buffer.from(audioBuffer).toString('base64')
-      : btoa(String.fromCharCode(...new Uint8Array(audioBuffer)));
+    // Convert to base64 using Buffer (Node.js/Vercel Functions environment)
+    const base64Audio = globalThis.Buffer.from(audioBuffer).toString('base64');
     
     const response: VoiceResponse = {
       success: true,
