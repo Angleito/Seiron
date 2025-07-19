@@ -7,6 +7,8 @@ import { SeironImage } from '@/components/SeironImage'
 import { GameDialogueBox } from './GameDialogueBox'
 import { characterConfig } from '@/utils/character-config'
 import { useChatStream } from './useChatStream'
+import { useSecureElevenLabsTTS } from '@/hooks/voice/useSecureElevenLabsTTS'
+import { useSpeechRecognition } from '@/hooks/voice/useSpeechRecognition'
 import type { StreamMessage } from '@/lib/vercel-chat-service'
 import '@/styles/game-dialogue.css'
 
@@ -35,9 +37,9 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   
   // Voice integration state
-  const [voiceEnabled, setVoiceEnabled] = useState(false)
+  const [voiceEnabled, setVoiceEnabled] = useState(true) // Enable voice by default
   const [isVoiceListening, setIsVoiceListening] = useState(false)
-  const [ttsEnabled, setTTSEnabled] = useState(false)
+  const [ttsEnabled, setTTSEnabled] = useState(true) // Enable TTS by default
   const [interimTranscript] = useState('')
   
   // Generate or get session ID
@@ -65,6 +67,19 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
       if (message.type === 'agent' || message.type === 'system') {
         onNewMessage?.(convertedMessage)
       }
+    }
+  })
+  
+  // Initialize voice hooks
+  const speechRecognition = useSpeechRecognition()
+  const tts = useSecureElevenLabsTTS({
+    voiceId: import.meta.env.VITE_ELEVENLABS_VOICE_ID || 'default',
+    modelId: 'eleven_monolingual_v1',
+    voiceSettings: {
+      stability: 0.75,
+      similarityBoost: 0.75,
+      style: 0.5,
+      useSpeakerBoost: true
     }
   })
   
@@ -97,6 +112,33 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
       textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'
     }
   }, [input])
+  
+  // Speak assistant messages when TTS is enabled
+  useEffect(() => {
+    if (!ttsEnabled || !voiceEnabled || messages.length === 0) return
+    
+    // Get the latest message
+    const latestMessage = messages[messages.length - 1]
+    
+    // Only speak assistant messages that are not loading
+    if (latestMessage.role === 'assistant' && !latestMessage.isLoading) {
+      // Skip the welcome message (it has a specific ID)
+      if (latestMessage.id === 'welcome') return
+      
+      // Speak the message
+      tts.speak(latestMessage.content)
+    }
+  }, [messages, ttsEnabled, voiceEnabled, tts])
+  
+  // Handle speech recognition results
+  useEffect(() => {
+    if (speechRecognition.transcript && !speechRecognition.isListening) {
+      // Send the transcript as a message
+      handleSubmit(undefined, speechRecognition.transcript)
+      // Clear the transcript
+      speechRecognition.clearTranscript()
+    }
+  }, [speechRecognition.transcript, speechRecognition.isListening, speechRecognition, handleSubmit])
 
   const handleSubmit = useCallback(async (e?: React.FormEvent, content?: string) => {
     e?.preventDefault()
@@ -187,26 +229,26 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
               />
               
               {/* Voice transcript overlay */}
-              {isVoiceListening && interimTranscript && (
+              {speechRecognition.isListening && (speechRecognition.transcript || speechRecognition.interimTranscript) && (
                 <div className="absolute top-3 left-4 right-16 text-red-400/70 text-sm pointer-events-none">
-                  🎤 {interimTranscript}
+                  🎤 {speechRecognition.transcript || speechRecognition.interimTranscript}
                 </div>
               )}
               
               {/* Dragon Power Indicator */}
               <div className="absolute bottom-3 right-3 flex items-center gap-2">
-                {isVoiceListening && (
+                {speechRecognition.isListening && (
                   <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
                 )}
                 <Sparkles className={cn(
                   "w-4 h-4 animate-pulse",
-                  isVoiceListening ? "text-red-400" : "text-orange-400"
+                  speechRecognition.isListening ? "text-red-400" : "text-orange-400"
                 )} />
                 <span className={cn(
                   "text-size-4",
-                  isVoiceListening ? "text-red-400" : "text-orange-400"
+                  speechRecognition.isListening ? "text-red-400" : "text-orange-400"
                 )}>
-                  {isVoiceListening ? "VOICE" : "9000"}
+                  {speechRecognition.isListening ? "VOICE" : "9000"}
                 </span>
               </div>
             </div>
@@ -216,20 +258,36 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
               <div className="flex gap-1">
                 <button
                   type="button"
-                  onClick={() => setIsVoiceListening(!isVoiceListening)}
+                  onClick={async () => {
+                    if (speechRecognition.isListening) {
+                      await speechRecognition.stopListening()()
+                      setIsVoiceListening(false)
+                    } else {
+                      const result = await speechRecognition.startListening()()
+                      if (result._tag === 'Right') {
+                        setIsVoiceListening(true)
+                      }
+                    }
+                  }}
                   className={cn(
                     "p-3 rounded-xl transition-all duration-200 text-sm",
-                    isVoiceListening
+                    speechRecognition.isListening
                       ? "bg-red-500/20 text-red-400 border border-red-500/50"
                       : "bg-gray-800/50 text-gray-400 hover:text-gray-300"
                   )}
                 >
-                  {isVoiceListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                  {speechRecognition.isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                 </button>
                 
                 <button
                   type="button"
-                  onClick={() => setTTSEnabled(!ttsEnabled)}
+                  onClick={() => {
+                    setTTSEnabled(!ttsEnabled)
+                    // Stop any current speech if disabling TTS
+                    if (ttsEnabled && tts.isSpeaking) {
+                      tts.stop()
+                    }
+                  }}
                   className={cn(
                     "p-3 rounded-xl transition-all duration-200 text-sm",
                     ttsEnabled
