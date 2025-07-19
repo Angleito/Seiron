@@ -212,8 +212,8 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
           })
           // Remove from spoken set on error so it can be retried
           spokenMessagesRef.current.delete(latestMessage.id)
-          // Show error to user
-          alert(`TTS Error: ${result.left.message}`)
+          // Log error but don't show alert - just let chat continue working
+          console.warn('TTS unavailable:', result.left.message)
         } else {
           console.log('TTS Success: Message spoken')
         }
@@ -364,6 +364,7 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
                       ? "bg-orange-500/20 text-orange-400 border border-orange-500/50"
                       : "bg-gray-800/50 text-gray-400 hover:text-gray-300"
                   )}
+                  title={ttsEnabled ? "Text-to-Speech enabled (requires ElevenLabs API key)" : "Enable Text-to-Speech (requires ElevenLabs API key)"}
                 >
                   {ttsEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
                 </button>
