@@ -1,6 +1,6 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import DragonHead3D from '@/components/effects/DragonHead3D'
+import DragonHead3D from '../components/effects/DragonHead3D'
 
 // Lazy load the lightning effect components
 const StormLightningEffect = lazy(() => import('@/components/effects/StormLightningEffect'))
