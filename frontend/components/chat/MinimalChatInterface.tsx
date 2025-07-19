@@ -5,6 +5,7 @@ import { Send, Loader2, Sparkles, Wifi, WifiOff, AlertCircle, Mic, MicOff, Volum
 import { cn } from '@/lib/utils'
 import { SeironImage } from '@/components/SeironImage'
 import { GameDialogueBox } from './GameDialogueBox'
+import { VoiceTranscriptPreview } from './VoiceTranscriptPreview'
 import { characterConfig } from '@/utils/character-config'
 import { useChatStream } from './useChatStream'
 import { useSecureElevenLabsTTS } from '@/hooks/voice/useSecureElevenLabsTTS'
@@ -18,6 +19,7 @@ interface Message {
   content: string
   timestamp: Date
   isLoading?: boolean
+  ttsStatus?: 'pending' | 'loading' | 'playing' | 'completed' | 'error'
 }
 
 interface MinimalChatInterfaceProps {
@@ -41,7 +43,7 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
   const [voiceEnabled, setVoiceEnabled] = useState(true) // Enable voice by default
   const [isVoiceListening, setIsVoiceListening] = useState(false)
   const [ttsEnabled, setTTSEnabled] = useState(true) // Enable TTS by default
-  const [interimTranscript] = useState('')
+  const [showTranscriptPreview, setShowTranscriptPreview] = useState(false)
   
   // Generate or get session ID
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`)
@@ -83,6 +85,22 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
       useSpeakerBoost: true
     }
   })
+  
+  // Track when TTS starts/stops speaking
+  useEffect(() => {
+    if (tts.isSpeaking) {
+      // Find which message is being spoken and update its status
+      const spokenIds = Array.from(spokenMessagesRef.current)
+      const lastSpokenId = spokenIds[spokenIds.length - 1]
+      if (lastSpokenId) {
+        setMessages(prev => prev.map(msg => 
+          msg.id === lastSpokenId && msg.ttsStatus === 'loading'
+            ? { ...msg, ttsStatus: 'playing' as const }
+            : msg
+        ))
+      }
+    }
+  }, [tts.isSpeaking])
   
   // Debug TTS initialization
   useEffect(() => {
@@ -192,6 +210,13 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
       // Mark message as being spoken
       spokenMessagesRef.current.add(latestMessage.id)
       
+      // Update message TTS status to loading
+      setMessages(prev => prev.map(msg => 
+        msg.id === latestMessage.id 
+          ? { ...msg, ttsStatus: 'loading' as const }
+          : msg
+      ))
+      
       // Speak the message
       console.log('TTS: Attempting to speak message')
       console.log('TTS state before speak:', {
@@ -212,26 +237,58 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
           })
           // Remove from spoken set on error so it can be retried
           spokenMessagesRef.current.delete(latestMessage.id)
+          // Update status to error
+          setMessages(prev => prev.map(msg => 
+            msg.id === latestMessage.id 
+              ? { ...msg, ttsStatus: 'error' as const }
+              : msg
+          ))
           // Log error but don't show alert - just let chat continue working
           console.warn('TTS unavailable:', result.left.message)
         } else {
           console.log('TTS Success: Message spoken')
+          // Update status to completed
+          setMessages(prev => prev.map(msg => 
+            msg.id === latestMessage.id 
+              ? { ...msg, ttsStatus: 'completed' as const }
+              : msg
+          ))
         }
       }).catch(err => {
         console.error('TTS speak promise error:', err)
+        setMessages(prev => prev.map(msg => 
+          msg.id === latestMessage.id 
+            ? { ...msg, ttsStatus: 'error' as const }
+            : msg
+        ))
       })
     }
   }, [messages, ttsEnabled, voiceEnabled, tts])
   
   // Handle speech recognition results
   useEffect(() => {
-    if (speechRecognition.transcript && !speechRecognition.isListening) {
-      // Send the transcript as a message
-      handleSubmit(undefined, speechRecognition.transcript)
-      // Clear the transcript
-      speechRecognition.clearTranscript()
+    // Show transcript preview when we have a transcript
+    if (speechRecognition.transcript || speechRecognition.interimTranscript) {
+      setShowTranscriptPreview(true)
+    } else {
+      setShowTranscriptPreview(false)
     }
-  }, [speechRecognition.transcript, speechRecognition.isListening, speechRecognition, handleSubmit])
+  }, [speechRecognition.transcript, speechRecognition.interimTranscript])
+
+  // Send the transcript when user confirms
+  const handleSendTranscript = useCallback(() => {
+    if (speechRecognition.transcript) {
+      handleSubmit(undefined, speechRecognition.transcript)
+      speechRecognition.clearTranscript()
+      setShowTranscriptPreview(false)
+    }
+  }, [speechRecognition, handleSubmit])
+
+  // Cancel the transcript
+  const handleCancelTranscript = useCallback(() => {
+    speechRecognition.clearTranscript()
+    setShowTranscriptPreview(false)
+  }, [speechRecognition])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -281,7 +338,19 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
 
       {/* Input Area */}
       <div className="border-t border-gray-800 bg-gray-900/50 backdrop-blur-sm">
-        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto px-4 py-4">
+        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto px-4 py-4 relative">
+          {/* Voice Transcript Preview */}
+          {showTranscriptPreview && (
+            <VoiceTranscriptPreview
+              isListening={speechRecognition.isListening}
+              transcript={speechRecognition.transcript}
+              interimTranscript={speechRecognition.interimTranscript}
+              confidence={speechRecognition.confidence}
+              onSend={handleSendTranscript}
+              onCancel={handleCancelTranscript}
+            />
+          )}
+          
           <div className="relative flex items-end gap-2">
             <div className="flex-1 relative">
               <textarea
@@ -298,12 +367,6 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
                 disabled={isLoading}
               />
               
-              {/* Voice transcript overlay */}
-              {speechRecognition.isListening && (speechRecognition.transcript || speechRecognition.interimTranscript) && (
-                <div className="absolute top-3 left-4 right-16 text-red-400/70 text-sm pointer-events-none">
-                  🎤 {speechRecognition.transcript || speechRecognition.interimTranscript}
-                </div>
-              )}
               
               {/* Dragon Power Indicator */}
               <div className="absolute bottom-3 right-3 flex items-center gap-2">
