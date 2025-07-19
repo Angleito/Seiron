@@ -1,7 +1,7 @@
 'use client'
 
 import React, { Component, ErrorInfo, ReactNode } from 'react'
-import { logger } from '@lib/logger'
+import { logger } from '@/lib/logger'
 import { errorRecoveryUtils } from '../../utils/errorRecovery'
 
 interface Props {

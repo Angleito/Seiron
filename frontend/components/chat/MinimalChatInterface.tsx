@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react'
 import { Send, Loader2, Sparkles, Wifi, WifiOff, AlertCircle, Mic, MicOff, Volume2, VolumeX } from 'lucide-react'
-import { cn } from '@lib/utils'
-import { SeironImage } from '@components/SeironImage'
+import { cn } from '@/lib/utils'
+import { SeironImage } from '@/components/SeironImage'
 import { GameDialogueBox } from './GameDialogueBox'
 import { characterConfig } from '@/utils/character-config'
 import { useChatStream } from './useChatStream'

@@ -1,7 +1,7 @@
 import React from 'react'
 import { DragonBallErrorBoundary } from './DragonBallErrorBoundary'
-import { DragonRenderer } from '@components/dragon/DragonRenderer'
-import { DragonBallLoadingStates } from '@components/chat/parts/DragonBallLoadingStates'
+import { DragonRenderer } from '@/components/dragon/DragonRenderer'
+import { DragonBallLoadingStates } from '@/components/chat/parts/DragonBallLoadingStates'
 
 interface ChatErrorBoundaryProps {
   children: React.ReactNode

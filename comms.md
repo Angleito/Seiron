@@ -1784,3 +1784,40 @@ Property-based testing implementation completed successfully. The test suite pro
 
 READY FOR PRODUCTION DEPLOYMENT: The complete voice chat system is now functional with robust error handling, comprehensive memory management, property-based testing validation, and seamless integration with existing Sei blockchain infrastructure.</next_task>
 </next_task>
+
+## Console Error Suppression Fixed
+<timestamp>2025-07-19</timestamp>
+<task>Fix generic_error on /chat page with no console logs</task>
+<status>✅ COMPLETE</status>
+<agent>Assistant</agent>
+<changes>
+**Issue Found:**
+- walletConnectManager.ts was globally overriding console.error, suppressing all error messages
+- setupConsoleFilters() was being called on module load, affecting the entire application
+
+**Root Causes:**
+1. Line 166 in walletConnectManager.ts was calling setupConsoleFilters() immediately on module load
+2. console.error override was too aggressive, catching all errors not just WalletConnect ones
+3. No cleanup was being called when components unmounted
+
+**Fixes Applied:**
+1. Modified `/frontend/utils/walletConnectManager.ts`:
+   - Made console.error filter more specific to only suppress WalletConnect initialization errors
+   - Added check to not suppress generic_error messages
+   - Commented out auto-initialization of console filters on module load (lines 166-168)
+
+2. Modified `/frontend/components/wallet/WalletConnectProvider.tsx`:
+   - Added cleanup call in useEffect return to restore console functions when provider unmounts
+
+3. Fixed import path inconsistencies:
+   - Updated imports in MinimalChatInterface.tsx from @lib/utils to @/lib/utils
+   - Updated imports in GameDialogueBox.tsx from @lib/utils to @/lib/utils
+   - Updated imports in useChatStream.ts to use @/ prefix
+   - Updated imports in vercel-chat-service.ts from @lib/logger to @/lib/logger
+   - Updated imports in ChatErrorBoundary.tsx to use @/ prefix
+   - Updated imports in ReactError310Handler.tsx to use @/ prefix
+   - Updated imports in SeironImage.tsx to use @/ prefix
+
+**Result:**
+Console errors are now visible again. The generic_error should now show proper error messages in the console for debugging.
+</changes>

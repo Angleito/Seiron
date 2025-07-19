@@ -12,7 +12,7 @@ import {
 import * as E from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
 import { AgentMessage, AgentType, UserIntentType } from '../types/agent'
-import { logger, safeDebug, safeInfo, safeWarn, safeError } from '@lib/logger'
+import { logger, safeDebug, safeInfo, safeWarn, safeError } from '@/lib/logger'
 
 // Enhanced message types for Vercel streaming
 export interface StreamMessage extends AgentMessage {

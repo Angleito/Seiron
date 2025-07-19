@@ -2,8 +2,8 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { Subscription } from 'rxjs'
 import * as E from 'fp-ts/Either'
 import { VercelChatService, StreamMessage, TypingIndicator, ConnectionStatus } from '../../lib/vercel-chat-service'
-import { AdapterAction } from '@lib/orchestrator-client'
-import { logger, safeDebug, safeInfo, safeWarn, safeError } from '@lib/logger'
+import { AdapterAction } from '@/lib/orchestrator-client'
+import { logger, safeDebug, safeInfo, safeWarn, safeError } from '@/lib/logger'
 
 export interface UseChatStreamOptions {
   apiEndpoint?: string

@@ -61,6 +61,11 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
     
     return () => {
       mounted = false
+      // Cleanup console filters when provider unmounts
+      const manager = getWalletConnectManager()
+      if (manager && typeof manager.cleanup === 'function') {
+        manager.cleanup()
+      }
     }
   }, [])
   

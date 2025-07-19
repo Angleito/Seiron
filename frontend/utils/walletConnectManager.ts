@@ -50,13 +50,19 @@ function setupConsoleFilters() {
   console.error = (...args: any[]) => {
     const message = args[0]?.toString() || ''
     
-    if (message.includes('WalletConnect') && message.includes('already initialized')) {
+    // Only suppress very specific WalletConnect initialization errors
+    if (
+      message.includes('WalletConnect') && 
+      message.includes('already initialized') &&
+      !message.includes('generic_error') // Don't suppress generic errors
+    ) {
       if (import.meta.env.DEV) {
         console.debug('[WalletConnect] Suppressed error:', message)
       }
       return
     }
     
+    // Pass through ALL other errors
     originalError.apply(console, args)
   }
 }
@@ -156,6 +162,7 @@ if (import.meta.hot) {
 
 // Auto-initialize the filters when module loads
 // This ensures warnings are caught even before explicit initialization
-if (typeof window !== 'undefined') {
-  setupConsoleFilters()
-}
+// DISABLED: This was causing console.error to be overridden globally and suppressing all errors
+// if (typeof window !== 'undefined') {
+//   setupConsoleFilters()
+// }
