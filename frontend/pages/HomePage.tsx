@@ -1,7 +1,6 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 // Lazy load the effect components
-const DragonHead3D = lazy(() => import('../components/effects/DragonHead3D'))
 const StormLightningEffect = lazy(() => import('../components/effects/StormLightningEffect'))
 const DragonSummoningLightning = lazy(() => import('../components/effects/DragonSummoningLightning'))
 const VideoPlayer = lazy(() => import('../components/effects/VideoPlayer'))
@@ -46,7 +45,6 @@ export default function HomePage() {
   const [powerLevel, setPowerLevel] = useState(0)
   const [isSummoning, setIsSummoning] = useState(false)
   const [summoningPhase, setSummoningPhase] = useState<SummoningPhase>('idle')
-  const [dragonModelLoaded, setDragonModelLoaded] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -80,7 +78,6 @@ export default function HomePage() {
     if (isSummoning) return // Prevent multiple summons
     
     setIsSummoning(true)
-    setDragonModelLoaded(false) // Reset model loaded state
     setSummoningPhase('darkening')
     
     // Animation sequence with proper timing
@@ -117,10 +114,6 @@ export default function HomePage() {
     navigate('/chat')
   }
 
-  const handleDragonModelLoad = () => {
-    console.log('🐉 Dragon model loaded successfully!')
-    setDragonModelLoaded(true)
-  }
 
   const handleEnterChat = () => {
     navigate('/chat')
@@ -193,31 +186,6 @@ export default function HomePage() {
             </Suspense>
           )}
           
-          {/* Dragon Head 3D Model */}
-          {summoningPhase === 'arrival' && (
-            <>
-              <Suspense fallback={
-                <div style={{ 
-                  color: 'white', 
-                  textAlign: 'center',
-                  position: 'fixed',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  zIndex: 10000
-                }}>
-                  Loading Dragon Model...
-                </div>
-              }>
-                <DragonHead3D 
-                  intensity={summoningPhase === 'arrival' ? 1 : 0}
-                  enableEyeTracking={summoningPhase === 'arrival'}
-                  lightningActive={summoningPhase === 'arrival'}
-                  onLoad={handleDragonModelLoad}
-                />
-              </Suspense>
-            </>
-          )}
           
         </div>
       )}
@@ -226,21 +194,23 @@ export default function HomePage() {
       {isSummoning && summoningPhase === 'arrival' && (
         <div style={{
           position: 'fixed',
-          bottom: '80px',
+          top: '50%',
           left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 10000, // Higher than summoning overlay
-          // Ensure button is always visible on smaller viewports
-          maxWidth: '90vw',
+          transform: 'translate(-50%, -50%)',
+          zIndex: 10002, // Higher than video overlay
           textAlign: 'center'
         }}>
           <button
             onClick={handleEnterChat}
-            className="dbz-button-primary text-xl px-8 py-4 animate-pulse"
+            className="dbz-button-primary animate-pulse"
             style={{
-              // Make button responsive
-              fontSize: 'clamp(1rem, 2vw, 1.25rem)',
-              padding: 'clamp(0.75rem, 2vw, 1rem) clamp(1.5rem, 4vw, 2rem)'
+              fontSize: 'clamp(2rem, 5vw, 4rem)',
+              padding: 'clamp(1.5rem, 3vw, 2.5rem) clamp(3rem, 6vw, 5rem)',
+              textTransform: 'uppercase',
+              fontWeight: 'bold',
+              letterSpacing: '0.1em',
+              boxShadow: '0 0 50px rgba(255, 215, 0, 0.8), 0 0 100px rgba(255, 215, 0, 0.4)',
+              animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite, glow 2s ease-in-out infinite alternate'
             }}
           >
             🐉 ENTER CHAT
