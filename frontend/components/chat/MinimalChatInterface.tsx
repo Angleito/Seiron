@@ -78,10 +78,10 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
   const speechRecognition = useSpeechRecognition()
   const tts = useSecureElevenLabsTTS({
     voiceId: import.meta.env.VITE_ELEVENLABS_VOICE_ID || 'default',
-    modelId: 'eleven_turbo_v2_5', // Use turbo model for faster response
+    modelId: 'eleven_turbo_v2_5', // Use turbo model for fastest response
     voiceSettings: {
-      stability: 0.5, // Lower for faster, more natural speech
-      similarityBoost: 0.8, // Maintain voice character
+      stability: 0.75, // Balanced stability as requested
+      similarityBoost: 1.0, // Maximum similarity for consistency
       style: 0.0, // Neutral style for speed
       useSpeakerBoost: true
     }
@@ -126,14 +126,22 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
       timestamp: new Date(),
       ttsStatus: ttsStatusMap['welcome']
     },
-    ...streamMessages.map(msg => ({
-      id: msg.id,
-      role: msg.type === 'user' ? 'user' as const : 'assistant' as const,
-      content: msg.content,
-      timestamp: msg.timestamp,
-      isLoading: msg.status === 'pending' || msg.status === 'sending',
-      ttsStatus: ttsStatusMap[msg.id]
-    }))
+    ...streamMessages.map(msg => {
+      const ttsStatus = ttsStatusMap[msg.id]
+      // Hide assistant text until TTS is ready (playing or completed)
+      const shouldHideText = msg.type === 'assistant' && 
+                           ttsEnabled && 
+                           (!ttsStatus || ttsStatus === 'loading' || ttsStatus === 'pending')
+      
+      return {
+        id: msg.id,
+        role: msg.type === 'user' ? 'user' as const : 'assistant' as const,
+        content: shouldHideText ? 'Loading voice...' : msg.content,
+        timestamp: msg.timestamp,
+        isLoading: msg.status === 'pending' || msg.status === 'sending',
+        ttsStatus: ttsStatusMap[msg.id]
+      }
+    })
   ]
 
   // Auto-scroll to bottom
@@ -212,7 +220,7 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
       // Mark message as being spoken
       spokenMessagesRef.current.add(latestMessage.id)
       
-      // Update message TTS status to loading
+      // Update message TTS status to loading immediately
       setTtsStatusMap(prev => ({
         ...prev,
         [latestMessage.id]: 'loading'
@@ -258,7 +266,7 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
             setTimeout(() => {
               console.log('Re-enabling voice input after TTS completion')
               speechRecognition.startListening()
-            }, 500) // Small delay to avoid cutting off the end of speech
+            }, 200) // Minimal delay for natural conversation flow
           }
         }
       }).catch(err => {

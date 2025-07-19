@@ -266,13 +266,15 @@ export default async function handler(
       },
       body: JSON.stringify({
         text, // Use cleaned text
-        model_id: modelId || 'eleven_turbo_v2_5', // Use turbo model for faster response
+        model_id: modelId || 'eleven_turbo_v2_5', // Use turbo model for fastest response
         voice_settings: voiceSettings || {
-          stability: 0.5, // Lower for more natural variation
-          similarity_boost: 0.8, // Higher to maintain voice character
+          stability: 0.75, // Balanced stability as requested
+          similarity_boost: 1.0, // Maximum similarity for consistency
           style: 0.0, // Neutral style for speed
-          use_speaker_boost: false
-        }
+          use_speaker_boost: true
+        },
+        optimize_streaming_latency: 4, // Maximum optimization for lowest latency
+        output_format: 'mp3_22050_32' // Lower quality for faster streaming
       })
     });
     
