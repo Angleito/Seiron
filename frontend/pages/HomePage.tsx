@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 const DragonHead3D = lazy(() => import('../components/effects/DragonHead3D'))
 const StormLightningEffect = lazy(() => import('../components/effects/StormLightningEffect'))
 const DragonSummoningLightning = lazy(() => import('../components/effects/DragonSummoningLightning'))
+const VideoPlayer = lazy(() => import('../components/effects/VideoPlayer'))
 
 
 // Enhanced DBZ Feature Card Component
@@ -39,7 +40,7 @@ const FeatureCard = ({
   </div>
 )
 
-type SummoningPhase = 'idle' | 'darkening' | 'storm' | 'lightning' | 'arrival'
+type SummoningPhase = 'idle' | 'darkening' | 'storm' | 'lightning' | 'video' | 'arrival'
 
 export default function HomePage() {
   const [powerLevel, setPowerLevel] = useState(0)
@@ -91,11 +92,9 @@ export default function HomePage() {
     }, 2000))
     
     // Phase 3: Lightning (2000ms-7000ms) - Extended to 5 seconds
-    timeouts.push(setTimeout(() => {
-      setSummoningPhase('arrival')
-    }, 7000))
+    // Lightning will transition to video phase via onLightningComplete callback
     
-    // Phase 4: Final arrival and dragon head spawn (7000ms) - no auto navigation
+    // Phase 4: Final arrival and dragon head spawn - no auto navigation
     
     // Cleanup function in case component unmounts
     return () => {
@@ -122,6 +121,10 @@ export default function HomePage() {
     navigate('/chat')
   }
 
+  const handleVideoComplete = () => {
+    setSummoningPhase('arrival')
+  }
+
   return (
     <>
       {/* Dragon Summoning Overlay */}
@@ -134,10 +137,10 @@ export default function HomePage() {
           <div className="lightning-container">
             <Suspense fallback={null}>
               <DragonSummoningLightning
-                isActive={summoningPhase === 'lightning' || summoningPhase === 'arrival'}
+                isActive={summoningPhase === 'lightning'}
                 onLightningComplete={() => {
                   if (summoningPhase === 'lightning') {
-                    setSummoningPhase('arrival')
+                    setSummoningPhase('video')
                   }
                 }}
               />
@@ -153,6 +156,29 @@ export default function HomePage() {
           
           {/* Screen Flash Overlay */}
           <div className="screen-flash"></div>
+          
+          {/* Video Player */}
+          {summoningPhase === 'video' && (
+            <Suspense fallback={
+              <div style={{ 
+                color: 'white', 
+                textAlign: 'center',
+                position: 'fixed',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 10000
+              }}>
+                Loading Video...
+              </div>
+            }>
+              <VideoPlayer
+                src="/videos/dragon-transition.mp4"
+                onVideoComplete={handleVideoComplete}
+                className="summoning-video"
+              />
+            </Suspense>
+          )}
           
           {/* Dragon Head 3D Model */}
           {summoningPhase === 'arrival' && (

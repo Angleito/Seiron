@@ -1821,3 +1821,15 @@ READY FOR PRODUCTION DEPLOYMENT: The complete voice chat system is now functiona
 **Result:**
 Console errors are now visible again. The generic_error should now show proper error messages in the console for debugging.
 </changes>
+
+## Recent Updates
+
+### Video Integration After Lightning Sequence (Completed)
+- Created `VideoPlayer` component in `frontend/components/effects/VideoPlayer.tsx`
+- Added `video` phase to the summoning sequence in HomePage
+- Integrated video playback between lightning and dragon arrival phases
+- Added CSS styles for video overlay and transitions in `storm-animations.css`
+- Created `frontend/public/videos/` directory for video assets
+- Video file should be named `dragon-transition.mp4` and placed in the videos directory
+
+The video will now automatically play after the lightning sequence completes and before the dragon arrives.

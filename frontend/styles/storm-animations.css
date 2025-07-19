@@ -1227,3 +1227,91 @@
   opacity: 1;
   transform: scale(1);
 }
+
+/* ========================================
+   Video Player Styles
+   ======================================== */
+
+/* Video Player Container */
+.video-player-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  background: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Video Element */
+.video-player-container .video-player {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.5s ease-in-out;
+}
+
+/* Loading State */
+.video-player-container .video-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+.video-player-container .loading-spinner {
+  width: 60px;
+  height: 60px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--storm-golden);
+  border-radius: 50%;
+  animation: storm-vortex-spin 1s linear infinite;
+}
+
+/* Error State */
+.video-player-error {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  background: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+}
+
+/* Summoning Video Specific Styles */
+.summoning-video {
+  animation: video-fade-in 0.5s ease-out forwards;
+}
+
+@keyframes video-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(1.1);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Ensure video phase has proper overlay styling */
+.summoning-overlay.summoning-video {
+  background: black;
+}
+
+.summoning-overlay.summoning-video .background-transition,
+.summoning-overlay.summoning-video .background-transition-overlay {
+  opacity: 0;
+  transition: opacity 0.5s ease-out;
+}
