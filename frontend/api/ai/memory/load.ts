@@ -118,7 +118,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.log('[Memory Load API] Attempting to load from Vercel KV...');
       // Skip KV for now - it might be causing the 500 error
       // TODO: Re-enable when KV is properly configured
-      kvError = new Error('KV disabled for debugging');
+      // kvError = new Error('KV disabled for debugging');
       console.warn('[Memory Load API] KV disabled, using mock data');
     } catch (error) {
       kvError = error;
