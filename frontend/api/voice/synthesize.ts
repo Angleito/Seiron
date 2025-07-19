@@ -131,6 +131,28 @@ function setCorsHeaders(res: VercelResponse, origin: string | undefined) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
 }
 
+// Clean text for TTS - remove markdown and formatting
+function cleanTextForTTS(text: string): string {
+  return text
+    // Remove asterisks (bold/italic)
+    .replace(/\*+/g, '')
+    // Remove underscores (italic)
+    .replace(/_+/g, '')
+    // Remove backticks (code)
+    .replace(/`+/g, '')
+    // Remove hashtags (headers)
+    .replace(/#+\s?/g, '')
+    // Remove brackets and parentheses content that are often asides
+    .replace(/\[.*?\]/g, '')
+    .replace(/\(.*?\)/g, '')
+    // Remove URLs
+    .replace(/https?:\/\/[^\s]+/g, '')
+    // Remove excessive newlines
+    .replace(/\n{3,}/g, '\n\n')
+    // Remove leading/trailing whitespace
+    .trim()
+}
+
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
@@ -170,7 +192,7 @@ export default async function handler(
       headers: req.headers
     });
     
-    const { text, voiceId, modelId, voiceSettings, outputFormat } = req.body as VoiceRequest;
+    let { text, voiceId, modelId, voiceSettings, outputFormat } = req.body as VoiceRequest;
     
     // Validate input
     if (!text || typeof text !== 'string') {
@@ -181,6 +203,10 @@ export default async function handler(
       });
       return;
     }
+    
+    // Clean text for TTS
+    text = cleanTextForTTS(text);
+    console.log('Cleaned text for TTS:', text)
     
     if (text.length > 5000) {
       res.status(400).json({
@@ -239,7 +265,7 @@ export default async function handler(
         'Accept': 'audio/mpeg'
       },
       body: JSON.stringify({
-        text: cleanedText, // Use cleaned text
+        text, // Use cleaned text
         model_id: modelId || 'eleven_turbo_v2_5', // Use turbo model for faster response
         voice_settings: voiceSettings || {
           stability: 0.5, // Lower for more natural variation

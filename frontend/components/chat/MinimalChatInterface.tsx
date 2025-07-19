@@ -78,11 +78,11 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
   const speechRecognition = useSpeechRecognition()
   const tts = useSecureElevenLabsTTS({
     voiceId: import.meta.env.VITE_ELEVENLABS_VOICE_ID || 'default',
-    modelId: 'eleven_monolingual_v1',
+    modelId: 'eleven_turbo_v2_5', // Use turbo model for faster response
     voiceSettings: {
-      stability: 0.75,
-      similarityBoost: 0.75,
-      style: 0.5,
+      stability: 0.5, // Lower for faster, more natural speech
+      similarityBoost: 0.8, // Maintain voice character
+      style: 0.0, // Neutral style for speed
       useSpeakerBoost: true
     }
   })
@@ -252,6 +252,14 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
             ...prev,
             [latestMessage.id]: 'completed'
           }))
+          
+          // Automatically enable voice listening after TTS completes
+          if (voiceEnabled && !speechRecognition.isListening) {
+            setTimeout(() => {
+              console.log('Re-enabling voice input after TTS completion')
+              speechRecognition.startListening()
+            }, 500) // Small delay to avoid cutting off the end of speech
+          }
         }
       }).catch(err => {
         console.error('TTS speak promise error:', err)
@@ -394,6 +402,11 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
                       await speechRecognition.stopListening()()
                       setIsVoiceListening(false)
                     } else {
+                      // Stop TTS if it's speaking when user wants to talk
+                      if (tts.isSpeaking) {
+                        console.log('Stopping TTS to allow user input')
+                        tts.stop()
+                      }
                       const result = await speechRecognition.startListening()()
                       if (result._tag === 'Right') {
                         setIsVoiceListening(true)
