@@ -321,12 +321,13 @@ export const useVoiceChat = (config: VoiceChatConfig = {}) => {
     let timeoutId: NodeJS.Timeout | undefined
     
     // When TTS stops speaking and we have voice enabled, re-enable listening
-    if (!isSpeaking && voiceEnabled && hasAudioPermission && !isListening && !error) {
+    if (!isSpeaking && voiceEnabled && hasAudioPermission && !isListening && !error && wasListeningBeforeTTSRef.current) {
       // Add a small delay to prevent interrupting any trailing audio
       timeoutId = setTimeout(() => {
         logger.info('Auto re-enabling voice listening after TTS completed')
+        wasListeningBeforeTTSRef.current = false // Reset the flag
         startListening()
-      }, 500) // 500ms delay to ensure audio has fully stopped
+      }, 800) // 800ms delay to ensure audio has fully stopped and user is ready
     }
     
     return () => {
@@ -559,6 +560,14 @@ export const useVoiceChat = (config: VoiceChatConfig = {}) => {
       
       // Speak response if auto-speak is enabled and speaker is on
       if (mergedConfig.chatSettings.autoSpeak && speakerEnabled && !isSpeaking) {
+        // Track if we were listening before starting TTS
+        wasListeningBeforeTTSRef.current = isListening
+        
+        // Stop listening while speaking to prevent feedback
+        if (isListening) {
+          await stopListening()
+        }
+        
         const speakResult = await tts.speak(aiResponse)()
         
         if (speakResult._tag === 'Left') {
