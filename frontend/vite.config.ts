@@ -40,19 +40,21 @@ export default defineConfig(({ mode }) => {
         '@config': path.resolve(__dirname, './config'),
         '@features': path.resolve(__dirname, './features'),
         '@pages': path.resolve(__dirname, './pages'),
+        // Explicit buffer alias for better compatibility
+        buffer: 'buffer',
       },
       dedupe: ['react', 'react-dom'],
       // Ensure proper resolution of ESM modules
       conditions: ['import', 'module', 'browser', 'default'],
     },
     server: {
+      host: true,             // listen on 0.0.0.0 for LAN access
       port: 3000,
-      host: '0.0.0.0',
-      // Enable HMR with WebSocket configuration for network access
+      strictPort: true,
       hmr: {
-        port: 3001,
         protocol: 'ws',
-        host: '192.168.8.196',
+        clientPort: 3000,     // always point the browser to this port
+        // leave host undefined so Vite uses window.location.hostname
       },
       // Handle SPA routing - always serve index.html for any route
       middlewareMode: false,
@@ -90,6 +92,7 @@ export default defineConfig(({ mode }) => {
         },
         force: true,
         include: [
+          'buffer',
           'react',
           'react-dom',
           '@privy-io/react-auth',
