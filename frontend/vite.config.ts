@@ -66,6 +66,26 @@ export default defineConfig(({ mode }) => {
         'Expires': '0',
       },
     },
+    optimizeDeps: {
+      esbuildOptions: {
+        target: 'esnext',
+      },
+      force: isDevelopment, // Force rebuild in development to prevent cache issues
+      include: [
+        'buffer',
+        'react',
+        'react-dom',
+        '@privy-io/react-auth',
+        '@tanstack/react-query',
+        'wagmi',
+        'viem',
+        '@walletconnect/modal',
+        '@web3modal/wagmi'
+      ],
+      exclude: [
+        // Exclude problematic dependencies that cause chunk loading issues
+      ]
+    },
     build: {
       target: 'esnext',
       sourcemap: !isProduction,
@@ -89,26 +109,14 @@ export default defineConfig(({ mode }) => {
             // Animation and UI libraries  
             'ui-vendor': ['framer-motion'],
             // React and core libraries
-            'react-vendor': ['react', 'react-dom', 'react-router-dom']
+            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+            // Voice components - separate chunk to prevent conflicts
+            'voice-components': [
+              './hooks/voice/useSpeechRecognition',
+              './hooks/voice/useSecureElevenLabsTTS'
+            ]
           }
         }
-      },
-      optimizeDeps: {
-        esbuildOptions: {
-          target: 'esnext',
-        },
-        force: true,
-        include: [
-          'buffer',
-          'react',
-          'react-dom',
-          '@privy-io/react-auth',
-          '@tanstack/react-query',
-          'wagmi',
-          'viem',
-          '@walletconnect/modal',
-          '@web3modal/wagmi'
-        ]
       }
     },
     define: {

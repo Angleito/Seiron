@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
+    "dev:clean": "rm -rf node_modules/.vite && vite",
     "dev:debug": "NODE_ENV=development vite --mode development",
     "build": "NODE_ENV=production vite build --mode production",
     "build:debug": "tsc --noEmit --noUnusedLocals false --noUnusedParameters false && NODE_ENV=development vite build --mode development",
