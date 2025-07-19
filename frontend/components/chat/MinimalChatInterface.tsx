@@ -117,20 +117,22 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
     })
   }, [ttsEnabled, voiceEnabled, tts.isSpeaking, tts.isLoading, tts.error])
   
-  // Convert StreamMessage[] to Message[] for display
+  // Convert StreamMessage[] to Message[] for display with TTS status
   const messages: Message[] = [
     {
       id: 'welcome',
       role: 'assistant',
       content: "Greetings, mortal! I am Seiron, the Dragon of Financial Wisdom. I possess legendary powers to grant your wildest investment wishes. What treasures do you seek today?",
-      timestamp: new Date()
+      timestamp: new Date(),
+      ttsStatus: ttsStatusMap['welcome']
     },
     ...streamMessages.map(msg => ({
       id: msg.id,
       role: msg.type === 'user' ? 'user' as const : 'assistant' as const,
       content: msg.content,
       timestamp: msg.timestamp,
-      isLoading: msg.status === 'pending' || msg.status === 'sending'
+      isLoading: msg.status === 'pending' || msg.status === 'sending',
+      ttsStatus: ttsStatusMap[msg.id]
     }))
   ]
 
