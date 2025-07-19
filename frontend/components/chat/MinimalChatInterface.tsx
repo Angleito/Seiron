@@ -113,6 +113,29 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
     }
   }, [input])
   
+  const handleSubmit = useCallback(async (e?: React.FormEvent, content?: string) => {
+    e?.preventDefault()
+    const messageContent = content || input.trim()
+    if (!messageContent || isLoading) return
+
+    // Create user message for callback
+    const userMessage: Message = {
+      id: `user_${Date.now()}`,
+      role: 'user',
+      content: messageContent,
+      timestamp: new Date()
+    }
+    
+    // Clear input if not using external content
+    if (!content) setInput('')
+    
+    // Notify parent of user message
+    onUserMessage?.(userMessage)
+
+    // Send message through stream
+    sendStreamMessage(messageContent)
+  }, [input, isLoading, onUserMessage, sendStreamMessage])
+
   // Speak assistant messages when TTS is enabled
   useEffect(() => {
     if (!ttsEnabled || !voiceEnabled || messages.length === 0) return
@@ -139,29 +162,6 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
       speechRecognition.clearTranscript()
     }
   }, [speechRecognition.transcript, speechRecognition.isListening, speechRecognition, handleSubmit])
-
-  const handleSubmit = useCallback(async (e?: React.FormEvent, content?: string) => {
-    e?.preventDefault()
-    const messageContent = content || input.trim()
-    if (!messageContent || isLoading) return
-
-    // Create user message for callback
-    const userMessage: Message = {
-      id: `user_${Date.now()}`,
-      role: 'user',
-      content: messageContent,
-      timestamp: new Date()
-    }
-    
-    // Clear input if not using external content
-    if (!content) setInput('')
-    
-    // Notify parent of user message
-    onUserMessage?.(userMessage)
-
-    // Send message through stream
-    sendStreamMessage(messageContent)
-  }, [input, isLoading, onNewMessage, onUserMessage, sendStreamMessage])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
