@@ -86,39 +86,38 @@ const FEATURES: FeatureCard[] = [
 ]
 
 // Helper function to generate symmetrical star positions like DBZ Dragon Balls
-// Using precise mathematical positioning based on circle geometry
+// Using more balanced positioning with better visual spacing
 const getStarPositions = (starCount: number): Array<{x: number, y: number}> => {
-  // All positions are adjusted to account for the star character's visual center
   const positions = {
     4: [
-      { x: 37, y: 37 }, // Top-left - adjusted for visual balance
-      { x: 63, y: 37 }, // Top-right
-      { x: 37, y: 63 }, // Bottom-left  
-      { x: 63, y: 63 }  // Bottom-right
+      { x: 40, y: 40 }, // Top-left - moved further inward
+      { x: 60, y: 40 }, // Top-right - more balanced spacing
+      { x: 40, y: 60 }, // Bottom-left - symmetric with top
+      { x: 60, y: 60 }  // Bottom-right - perfect square formation
     ],
     5: [
-      { x: 37, y: 37 }, // Top-left
-      { x: 63, y: 37 }, // Top-right
+      { x: 38, y: 38 }, // Top-left 
+      { x: 62, y: 38 }, // Top-right
       { x: 50, y: 50 }, // Perfect center
-      { x: 37, y: 63 }, // Bottom-left
-      { x: 63, y: 63 }  // Bottom-right
+      { x: 38, y: 62 }, // Bottom-left
+      { x: 62, y: 62 }  // Bottom-right
     ],
     6: [
-      { x: 35, y: 35 }, // Top-left
-      { x: 50, y: 30 }, // Top-center (raised slightly)
-      { x: 65, y: 35 }, // Top-right
-      { x: 35, y: 65 }, // Bottom-left
-      { x: 50, y: 70 }, // Bottom-center (lowered slightly)
-      { x: 65, y: 65 }  // Bottom-right
+      { x: 38, y: 35 }, // Top-left
+      { x: 50, y: 32 }, // Top-center - closer to edge
+      { x: 62, y: 35 }, // Top-right
+      { x: 38, y: 65 }, // Bottom-left - mirror of top
+      { x: 50, y: 68 }, // Bottom-center - mirror of top center
+      { x: 62, y: 65 }  // Bottom-right - mirror of top right
     ],
     7: [
-      { x: 32, y: 32 }, // Top-left
-      { x: 50, y: 27 }, // Top-center 
-      { x: 68, y: 32 }, // Top-right
-      { x: 27, y: 50 }, // Middle-left
+      { x: 35, y: 35 }, // Top-left
+      { x: 50, y: 30 }, // Top-center - more dramatic positioning
+      { x: 65, y: 35 }, // Top-right
+      { x: 30, y: 50 }, // Middle-left - closer to edge
       { x: 50, y: 50 }, // Absolute center
-      { x: 73, y: 50 }, // Middle-right
-      { x: 50, y: 73 }  // Bottom-center
+      { x: 70, y: 50 }, // Middle-right - closer to edge
+      { x: 50, y: 70 }  // Bottom-center - more dramatic
     ]
   }
   
@@ -207,8 +206,8 @@ const DragonBallOrb: React.FC<{
                 left: `${position.x}%`,
                 top: `${position.y}%`,
                 transform: 'translate(-50%, -50%)', // Perfect centering
-                width: '28px', // Slightly larger container for better balance
-                height: '28px'
+                width: '24px', // Proportional to smaller star size
+                height: '24px'
               }}
               animate={{
                 scale: isActive ? [1, 1.2, 1] : 1,
@@ -221,14 +220,14 @@ const DragonBallOrb: React.FC<{
               }}
             >
               <div
-                className="text-3xl drop-shadow-lg flex items-center justify-center w-full h-full"
+                className="text-2xl drop-shadow-lg flex items-center justify-center w-full h-full"
                 style={{ 
                   color: feature.color.star,
-                  filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.5))',
-                  lineHeight: '0.8', // Tighter line height for better centering
+                  filter: 'drop-shadow(0 0 6px rgba(0,0,0,0.8))',
+                  lineHeight: '1', // Reset line height for better consistency
                   textAlign: 'center',
-                  fontFamily: 'monospace', // More consistent star rendering
-                  transform: 'translateY(-1px)' // Micro-adjustment for visual centering
+                  fontFamily: 'serif', // Use serif for better star character rendering
+                  fontWeight: 'bold'
                 }}
               >
                 ★
