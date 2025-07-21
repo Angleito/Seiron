@@ -9,52 +9,54 @@ const SEI_CHAIN_ID = process.env.SEI_CHAIN_ID || 'pacific-1';
 
 class SeiBlockchainMCPServer extends BaseMCPServer {
   constructor() {
+    const tools = [
+      {
+        name: 'getWalletBalance',
+        description: 'Get wallet balance for a SEI address',
+        inputSchema: z.object({
+          address: z.string().describe('SEI wallet address'),
+          denom: z.string().optional().describe('Token denomination (default: usei)')
+        }),
+        handler: async (args: { address: string; denom?: string }) => this.getWalletBalance(args)
+      },
+      {
+        name: 'getTransactionHistory',
+        description: 'Get transaction history for a SEI address',
+        inputSchema: z.object({
+          address: z.string().describe('SEI wallet address'),
+          limit: z.number().optional().describe('Number of transactions to retrieve (default: 10)')
+        }),
+        handler: async (args: { address: string; limit?: number }) => this.getTransactionHistory(args)
+      },
+      {
+        name: 'getChainInfo',
+        description: 'Get SEI chain information',
+        inputSchema: z.object({}),
+        handler: async () => this.getChainInfo()
+      },
+      {
+        name: 'getBlockInfo',
+        description: 'Get block information by height',
+        inputSchema: z.object({
+          height: z.number().optional().describe('Block height (default: latest)')
+        }),
+        handler: async (args: { height?: number }) => this.getBlockInfo(args)
+      },
+      {
+        name: 'getValidators',
+        description: 'Get list of SEI validators',
+        inputSchema: z.object({
+          status: z.string().optional().describe('Validator status filter')
+        }),
+        handler: async (args: { status?: string }) => this.getValidators(args)
+      }
+    ];
+
     super({
       name: 'sei-blockchain-mcp',
       version: '1.0.0',
       description: 'SEI Blockchain MCP Server - Simplified HTTP version',
-      tools: [
-        {
-          name: 'getWalletBalance',
-          description: 'Get wallet balance for a SEI address',
-          inputSchema: z.object({
-            address: z.string().describe('SEI wallet address'),
-            denom: z.string().optional().describe('Token denomination (default: usei)')
-          }),
-          handler: this.getWalletBalance.bind(this)
-        },
-        {
-          name: 'getTransactionHistory',
-          description: 'Get transaction history for a SEI address',
-          inputSchema: z.object({
-            address: z.string().describe('SEI wallet address'),
-            limit: z.number().optional().describe('Number of transactions to retrieve (default: 10)')
-          }),
-          handler: this.getTransactionHistory.bind(this)
-        },
-        {
-          name: 'getChainInfo',
-          description: 'Get SEI chain information',
-          inputSchema: z.object({}),
-          handler: this.getChainInfo.bind(this)
-        },
-        {
-          name: 'getBlockInfo',
-          description: 'Get block information by height',
-          inputSchema: z.object({
-            height: z.number().optional().describe('Block height (default: latest)')
-          }),
-          handler: this.getBlockInfo.bind(this)
-        },
-        {
-          name: 'getValidators',
-          description: 'Get list of SEI validators',
-          inputSchema: z.object({
-            status: z.string().optional().describe('Validator status filter')
-          }),
-          handler: this.getValidators.bind(this)
-        }
-      ]
+      tools
     });
   }
 
