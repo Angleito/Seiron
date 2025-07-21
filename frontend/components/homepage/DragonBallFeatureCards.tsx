@@ -86,38 +86,39 @@ const FEATURES: FeatureCard[] = [
 ]
 
 // Helper function to generate symmetrical star positions like DBZ Dragon Balls
-// Using mathematically precise positioning for perfect symmetry
+// Using precise mathematical positioning based on circle geometry
 const getStarPositions = (starCount: number): Array<{x: number, y: number}> => {
+  // All positions are adjusted to account for the star character's visual center
   const positions = {
     4: [
-      { x: 35, y: 35 }, // Top-left (more balanced)
-      { x: 65, y: 35 }, // Top-right
-      { x: 35, y: 65 }, // Bottom-left
-      { x: 65, y: 65 }  // Bottom-right
+      { x: 37, y: 37 }, // Top-left - adjusted for visual balance
+      { x: 63, y: 37 }, // Top-right
+      { x: 37, y: 63 }, // Bottom-left  
+      { x: 63, y: 63 }  // Bottom-right
     ],
     5: [
-      { x: 35, y: 35 }, // Top-left
-      { x: 65, y: 35 }, // Top-right
+      { x: 37, y: 37 }, // Top-left
+      { x: 63, y: 37 }, // Top-right
       { x: 50, y: 50 }, // Perfect center
-      { x: 35, y: 65 }, // Bottom-left
-      { x: 65, y: 65 }  // Bottom-right
+      { x: 37, y: 63 }, // Bottom-left
+      { x: 63, y: 63 }  // Bottom-right
     ],
     6: [
-      { x: 33, y: 33 }, // Top-left
-      { x: 50, y: 28 }, // Top-center (perfectly centered)
-      { x: 67, y: 33 }, // Top-right
-      { x: 33, y: 67 }, // Bottom-left
-      { x: 50, y: 72 }, // Bottom-center (perfectly centered)
-      { x: 67, y: 67 }  // Bottom-right
+      { x: 35, y: 35 }, // Top-left
+      { x: 50, y: 30 }, // Top-center (raised slightly)
+      { x: 65, y: 35 }, // Top-right
+      { x: 35, y: 65 }, // Bottom-left
+      { x: 50, y: 70 }, // Bottom-center (lowered slightly)
+      { x: 65, y: 65 }  // Bottom-right
     ],
     7: [
-      { x: 30, y: 30 }, // Top-left
-      { x: 50, y: 25 }, // Top-center (perfect center)
-      { x: 70, y: 30 }, // Top-right
-      { x: 25, y: 50 }, // Middle-left (perfect center)
+      { x: 32, y: 32 }, // Top-left
+      { x: 50, y: 27 }, // Top-center 
+      { x: 68, y: 32 }, // Top-right
+      { x: 27, y: 50 }, // Middle-left
       { x: 50, y: 50 }, // Absolute center
-      { x: 75, y: 50 }, // Middle-right (perfect center)
-      { x: 50, y: 75 }  // Bottom-center (perfect center)
+      { x: 73, y: 50 }, // Middle-right
+      { x: 50, y: 73 }  // Bottom-center
     ]
   }
   
@@ -206,8 +207,8 @@ const DragonBallOrb: React.FC<{
                 left: `${position.x}%`,
                 top: `${position.y}%`,
                 transform: 'translate(-50%, -50%)', // Perfect centering
-                width: '24px', // Fixed size container
-                height: '24px'
+                width: '28px', // Slightly larger container for better balance
+                height: '28px'
               }}
               animate={{
                 scale: isActive ? [1, 1.2, 1] : 1,
@@ -224,8 +225,10 @@ const DragonBallOrb: React.FC<{
                 style={{ 
                   color: feature.color.star,
                   filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.5))',
-                  lineHeight: '1', // Prevent text baseline issues
-                  textAlign: 'center'
+                  lineHeight: '0.8', // Tighter line height for better centering
+                  textAlign: 'center',
+                  fontFamily: 'monospace', // More consistent star rendering
+                  transform: 'translateY(-1px)' // Micro-adjustment for visual centering
                 }}
               >
                 ★
