@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Start the compiled server
-const serverPath = join(__dirname, '..', 'dist', 'sei-blockchain', 'server.js');
+const serverPath = join(__dirname, 'dist', 'server.js');
 
 console.log('Starting SEI Blockchain MCP Server...');
 console.log('Server path:', serverPath);

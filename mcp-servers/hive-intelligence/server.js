@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Start the compiled server
-const serverPath = join(__dirname, '..', 'dist', 'hive-intelligence', 'server-v2.js');
+const serverPath = join(__dirname, 'dist', 'server-v2.js');
 
 console.log('Starting Hive Intelligence MCP Server...');
 console.log('Server path:', serverPath);
