@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "build": "tsc --outDir dist ../base-server.ts ../enhanced-base-server.ts ./server.ts",
+    "build": "tsc --outDir dist base-server.ts enhanced-base-server.ts server.ts",
     "postinstall": "npm run build"
   },
   "dependencies": {
