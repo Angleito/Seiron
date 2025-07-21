@@ -16,10 +16,14 @@ Production-ready Model Context Protocol (MCP) servers for the Seiron platform. T
 
 ### 1. Configure Environment
 
-Copy the `.env.example` file and configure your API keys:
+Create a `.env` file with your API keys (NEVER commit this file):
 
 ```bash
+# Copy the example file
 cp ../backend/.env.example ../.env
+
+# Edit .env and add your actual API keys
+# WARNING: .env is in .gitignore - NEVER commit it!
 ```
 
 Required environment variables:

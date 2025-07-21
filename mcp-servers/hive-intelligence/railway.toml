@@ -1,0 +1,8 @@
+[build]
+builder = "nixpacks"
+buildCommand = "cd .. && npm install && npm run build"
+
+[deploy]
+startCommand = "cd .. && npm run start:hive"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

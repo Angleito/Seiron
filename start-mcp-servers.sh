@@ -8,14 +8,27 @@ echo "🚀 Starting MCP Servers for Seiron..."
 
 # Check if .env file exists
 if [ ! -f .env ]; then
-    echo "⚠️  .env file not found. Creating from .env.example..."
-    cp backend/.env.example .env
-    echo "📝 Please edit .env file with your API keys and configuration"
+    echo "⚠️  .env file not found. Please create one with your API keys."
+    echo ""
+    echo "📝 Steps to create .env file:"
+    echo "   1. cp backend/.env.example .env"
+    echo "   2. Edit .env and add your API keys"
+    echo ""
     echo "   Required keys:"
-    echo "   - HIVE_INTELLIGENCE_API_KEY"
+    echo "   - HIVE_INTELLIGENCE_API_KEY (get from Hive Intelligence)"
     echo "   - SEI_WALLET_MNEMONIC (optional, for write operations)"
     echo "   - PORTFOLIO_API_KEY"
     echo "   - COINGECKO_API_KEY"
+    echo ""
+    echo "⚠️  NEVER commit .env file to git! It's in .gitignore for security."
+    exit 1
+fi
+
+# Check if HIVE_INTELLIGENCE_API_KEY is set
+source .env
+if [ -z "$HIVE_INTELLIGENCE_API_KEY" ] || [ "$HIVE_INTELLIGENCE_API_KEY" = "your_hive_intelligence_api_key_here" ]; then
+    echo "⚠️  HIVE_INTELLIGENCE_API_KEY not configured in .env file"
+    echo "   Please add your Hive Intelligence API key to .env"
     exit 1
 fi
 

@@ -11,7 +11,8 @@ RUN npm ci --only=production
 
 # Copy source files
 COPY base-server.ts ./
-COPY hive-intelligence/server.ts ./hive-intelligence/
+COPY enhanced-base-server.ts ./
+COPY hive-intelligence/server-v2.ts ./hive-intelligence/
 
 # Build TypeScript
 RUN npm install -g typescript
@@ -25,4 +26,4 @@ ENV MCP_LOG_LEVEL=info
 EXPOSE 8765
 
 # Run the server
-CMD ["node", "dist/hive-intelligence/server.js"]
+CMD ["node", "dist/hive-intelligence/server-v2.js"]

@@ -1,0 +1,13 @@
+{
+  "name": "portfolio-manager-mcp",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "build": "cd .. && npm install && npm run build",
+    "postinstall": "npm run build"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

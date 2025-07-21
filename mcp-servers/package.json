@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "dev:hive": "tsx watch mcp-servers/hive-intelligence/server.ts",
+    "dev:hive": "tsx watch hive-intelligence/server-v2.ts",
     "dev:sei": "tsx watch mcp-servers/sei-blockchain/server.ts", 
     "dev:portfolio": "tsx watch mcp-servers/portfolio-manager/server.ts",
-    "start:hive": "node dist/hive-intelligence/server.js",
+    "start:hive": "node dist/hive-intelligence/server-v2.js",
     "start:sei": "node dist/sei-blockchain/server.js",
     "start:portfolio": "node dist/portfolio-manager/server.js"
   },

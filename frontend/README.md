@@ -29,6 +29,36 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Hackathon Deployment
+
+### Quick Deploy (Production)
+
+```bash
+# One-command deployment
+./scripts/hackathon-deploy.sh
+```
+
+### Required Environment Variables
+
+Set these in Vercel Dashboard → Settings → Environment Variables:
+
+```bash
+# MCP Servers
+MCP_HIVE_URL=https://your-hive-server.com
+MCP_SEI_URL=https://your-sei-server.com
+MCP_PORTFOLIO_URL=https://your-portfolio-server.com
+HIVE_INTELLIGENCE_API_KEY=your_key
+SEI_API_KEY=your_key
+PORTFOLIO_API_KEY=your_key
+
+# Other Services
+OPENAI_API_KEY=sk-your_key
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your_key
+```
+
+See `HACKATHON_MCP_SETUP.md` for detailed setup guide.
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
