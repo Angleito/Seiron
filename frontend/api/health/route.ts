@@ -26,9 +26,7 @@ export async function GET(request: NextRequest) {
           api: {
             routes: [
               '/api/health',
-              '/api/chat/sessions',
-              '/api/chat/messages/{sessionId}',
-              '/api/ai/memory/load',
+              '/api/consolidated',
             ]
           },
           features: {
