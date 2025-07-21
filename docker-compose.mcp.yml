@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+  # Redis for caching
+  redis-mcp:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis-mcp-data:/data
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Hive Intelligence MCP Server
+  hive-intelligence-mcp:
+    build:
+      context: ./mcp-servers
+      dockerfile: Dockerfile.hive
+    container_name: hive-intelligence-mcp
+    environment:
+      - HIVE_INTELLIGENCE_API_KEY=${HIVE_INTELLIGENCE_API_KEY}
+      - HIVE_INTELLIGENCE_BASE_URL=${HIVE_INTELLIGENCE_BASE_URL:-https://api.hiveintelligence.xyz/v1}
+      - HIVE_CACHE_TTL=${HIVE_CACHE_TTL:-300}
+      - MCP_LOG_LEVEL=${MCP_LOG_LEVEL:-info}
+    ports:
+      - "8765:8765"
+    networks:
+      - mcp-network
+    volumes:
+      - ./mcp-servers/logs/hive:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # SEI Blockchain MCP Server
+  sei-blockchain-mcp:
+    build:
+      context: ./mcp-servers
+      dockerfile: Dockerfile.sei
+    container_name: sei-blockchain-mcp
+    environment:
+      - SEI_RPC_URL=${SEI_RPC_URL:-https://rpc.sei-apis.com}
+      - SEI_REST_URL=${SEI_REST_URL:-https://rest.sei-apis.com}
+      - SEI_CHAIN_ID=${SEI_CHAIN_ID:-pacific-1}
+      - SEI_WALLET_MNEMONIC=${SEI_WALLET_MNEMONIC}
+      - MCP_LOG_LEVEL=${MCP_LOG_LEVEL:-info}
+    ports:
+      - "8766:8766"
+    networks:
+      - mcp-network
+    volumes:
+      - ./mcp-servers/logs/sei:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Portfolio Manager MCP Server
+  portfolio-manager-mcp:
+    build:
+      context: ./mcp-servers
+      dockerfile: Dockerfile.portfolio
+    container_name: portfolio-manager-mcp
+    environment:
+      - PORTFOLIO_API_URL=${PORTFOLIO_API_URL:-http://backend:8000/api}
+      - PORTFOLIO_API_KEY=${PORTFOLIO_API_KEY}
+      - COINGECKO_API_KEY=${COINGECKO_API_KEY}
+      - REDIS_URL=redis://redis-mcp:6379
+      - MCP_LOG_LEVEL=${MCP_LOG_LEVEL:-info}
+    ports:
+      - "8767:8767"
+    networks:
+      - mcp-network
+      - seiron-network
+    volumes:
+      - ./mcp-servers/logs/portfolio:/app/logs
+    depends_on:
+      - redis-mcp
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MCP Gateway (optional - for HTTP/WebSocket access)
+  mcp-gateway:
+    image: nginx:alpine
+    container_name: mcp-gateway
+    ports:
+      - "8760:80"
+      - "8761:443"
+    volumes:
+      - ./mcp-servers/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./mcp-servers/nginx/certs:/etc/nginx/certs:ro
+    networks:
+      - mcp-network
+    depends_on:
+      - hive-intelligence-mcp
+      - sei-blockchain-mcp
+      - portfolio-manager-mcp
+    restart: unless-stopped
+
+networks:
+  mcp-network:
+    driver: bridge
+  seiron-network:
+    external: true
+    name: seiron_default
+
+volumes:
+  redis-mcp-data:

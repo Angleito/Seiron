@@ -7,7 +7,7 @@ import { StormBackground } from '../effects/StormBackground'
 import { LightningEffect } from '../effects/LightningEffect'
 import { PowerLevelCounter } from './PowerLevelCounter'
 import { DragonRenderer } from '../dragon/DragonRenderer'
-import { cn } from '@/lib/utils'
+import { cn } from '../../lib/utils'
 import { usePerformanceMonitor } from '../../hooks/usePerformanceMonitor'
 
 interface EnhancedHeroSectionProps {

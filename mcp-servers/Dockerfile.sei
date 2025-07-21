@@ -1,0 +1,28 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY tsconfig.json ./
+
+# Install dependencies
+RUN npm ci --only=production
+
+# Copy source files
+COPY base-server.ts ./
+COPY sei-blockchain/server.ts ./sei-blockchain/
+
+# Build TypeScript
+RUN npm install -g typescript
+RUN tsc
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV MCP_LOG_LEVEL=info
+
+# Expose stdio for MCP communication
+EXPOSE 8766
+
+# Run the server
+CMD ["node", "dist/sei-blockchain/server.js"]

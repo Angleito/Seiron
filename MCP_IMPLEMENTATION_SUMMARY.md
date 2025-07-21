@@ -102,15 +102,24 @@ cp .env.example .env
 # Edit .env and configure VITE_MCP_* variables
 ```
 
-### 2. **Deploy MCP Servers**
+### 2. **Deploy MCP Servers Locally with Docker**
 
-You need to deploy actual MCP servers for:
+To run MCP servers locally:
 
-1. **Hive Intelligence** - Market data and analytics
-2. **SEI Blockchain** - Blockchain interactions
-3. **Portfolio Manager** - Portfolio analysis
+```bash
+# Start all MCP servers
+./start-mcp-servers.sh
 
-Each server should implement the MCP protocol and expose the configured tools.
+# Stop all MCP servers
+./stop-mcp-servers.sh
+```
+
+This will deploy:
+1. **Hive Intelligence** - Port 8765 - Market data and analytics (connects to real Hive API)
+2. **SEI Blockchain** - Port 8766 - Blockchain interactions (connects to real SEI RPC)
+3. **Portfolio Manager** - Port 8767 - Portfolio analysis (connects to backend API)
+4. **MCP Gateway** - Port 8760 - Unified access point with routing
+5. **Redis** - Port 6380 - Caching layer for performance
 
 ### 3. **Configure Endpoints**
 

@@ -1,0 +1,29 @@
+{
+  "name": "seiron-mcp-servers",
+  "version": "1.0.0",
+  "description": "MCP servers for Seiron platform",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev:hive": "tsx watch mcp-servers/hive-intelligence/server.ts",
+    "dev:sei": "tsx watch mcp-servers/sei-blockchain/server.ts", 
+    "dev:portfolio": "tsx watch mcp-servers/portfolio-manager/server.ts",
+    "start:hive": "node dist/hive-intelligence/server.js",
+    "start:sei": "node dist/sei-blockchain/server.js",
+    "start:portfolio": "node dist/portfolio-manager/server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.6.1",
+    "@cosmjs/stargate": "^0.32.0",
+    "@cosmjs/proto-signing": "^0.32.0",
+    "@cosmjs/amino": "^0.32.0",
+    "axios": "^1.7.0",
+    "ioredis": "^5.3.2",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "tsx": "^4.6.2",
+    "typescript": "^5.3.3"
+  }
+}

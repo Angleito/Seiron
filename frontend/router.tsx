@@ -12,7 +12,7 @@ import {
 } from '@components/ui/FeatureLoadingStates'
 
 // Lazy load pages for code splitting - using explicit relative paths from frontend root
-const HomePage = lazy(() => import('./pages/HomePage.tsx'))
+const HomePage = lazy(() => import('./pages/HomePage-simple.tsx'))
 const AgentTestPage = lazy(() => import('./pages/AgentTestPage.tsx'))
 const ChatPage = lazy(() => import('./pages/chat.tsx'))
 const AboutPage = lazy(() => import('./pages/about.tsx'))
