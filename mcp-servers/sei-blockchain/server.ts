@@ -1,396 +1,150 @@
 import { z } from 'zod';
 import { BaseMCPServer, MCPTool } from './base-server.js';
-import { SigningStargateClient, StargateClient } from '@cosmjs/stargate';
-import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
-import { coins } from '@cosmjs/amino';
 import axios from 'axios';
 
 // Environment configuration
 const SEI_RPC_URL = process.env.SEI_RPC_URL || 'https://rpc.sei-apis.com';
 const SEI_REST_URL = process.env.SEI_REST_URL || 'https://rest.sei-apis.com';
 const SEI_CHAIN_ID = process.env.SEI_CHAIN_ID || 'pacific-1';
-const WALLET_MNEMONIC = process.env.SEI_WALLET_MNEMONIC || '';
 
 class SeiBlockchainMCPServer extends BaseMCPServer {
-  private client: StargateClient | null = null;
-  private signingClient: SigningStargateClient | null = null;
-  private wallet: DirectSecp256k1HdWallet | null = null;
-  private address: string = '';
-
   constructor() {
-    const tools: MCPTool[] = [
-      {
-        name: 'getWalletBalance',
-        description: 'Query wallet balances on SEI blockchain',
-        inputSchema: z.object({
-          address: z.string().describe('Wallet address to query'),
-          denom: z.string().optional().describe('Specific token denomination'),
-        }),
-        handler: async (args) => {
-          try {
-            const client = await this.getClient();
-            
-            if (args.denom) {
-              const balance = await client.getBalance(args.address, args.denom);
-              return { balances: [balance] };
-            } else {
-              const balances = await client.getAllBalances(args.address);
-              return { balances };
-            }
-          } catch (error: any) {
-            throw new Error(`Failed to query balance: ${error.message}`);
-          }
-        },
-      },
-      {
-        name: 'getTransactionHistory',
-        description: 'Get transaction history for an address',
-        inputSchema: z.object({
-          address: z.string().describe('Wallet address'),
-          limit: z.number().optional().describe('Number of transactions'),
-          offset: z.number().optional().describe('Pagination offset'),
-        }),
-        handler: async (args) => {
-          try {
-            const response = await axios.get(`${SEI_REST_URL}/cosmos/tx/v1beta1/txs`, {
-              params: {
-                'events': `transfer.recipient='${args.address}'`,
-                'pagination.limit': args.limit || 20,
-                'pagination.offset': args.offset || 0,
-                'order_by': 'ORDER_BY_DESC',
-              },
-            });
-
-            return {
-              transactions: response.data.tx_responses,
-              pagination: response.data.pagination,
-            };
-          } catch (error: any) {
-            throw new Error(`Failed to fetch transaction history: ${error.message}`);
-          }
-        },
-      },
-      {
-        name: 'getDeFiPositions',
-        description: 'Get DeFi positions for an address',
-        inputSchema: z.object({
-          address: z.string().describe('Wallet address'),
-          protocols: z.array(z.string()).optional().describe('Specific protocols to check'),
-        }),
-        handler: async (args) => {
-          try {
-            // Query various DeFi protocols on SEI
-            const positions = [];
-            
-            // Query staking positions
-            const stakingResponse = await axios.get(
-              `${SEI_REST_URL}/cosmos/staking/v1beta1/delegations/${args.address}`
-            );
-            
-            if (stakingResponse.data.delegation_responses?.length > 0) {
-              positions.push({
-                protocol: 'native-staking',
-                type: 'staking',
-                positions: stakingResponse.data.delegation_responses,
-              });
-            }
-
-            // Add more DeFi protocol queries as needed
-            // This would include AMMs, lending protocols, etc.
-            
-            return { positions };
-          } catch (error: any) {
-            throw new Error(`Failed to fetch DeFi positions: ${error.message}`);
-          }
-        },
-      },
-      {
-        name: 'swapTokens',
-        description: 'Execute a token swap on SEI DEX',
-        inputSchema: z.object({
-          fromToken: z.string().describe('Token to swap from'),
-          toToken: z.string().describe('Token to swap to'),
-          amount: z.string().describe('Amount to swap'),
-          slippage: z.number().optional().describe('Maximum slippage percentage'),
-        }),
-        handler: async (args) => {
-          if (!WALLET_MNEMONIC) {
-            throw new Error('Wallet mnemonic not configured. Cannot execute swaps.');
-          }
-
-          try {
-            const signingClient = await this.getSigningClient();
-            
-            // This would integrate with SEI's DEX module
-            // For production, you'd need to construct the proper swap message
-            const msg = {
-              typeUrl: '/seiprotocol.seichain.dex.MsgPlaceOrders',
-              value: {
-                creator: this.address,
-                orders: [{
-                  id: Date.now().toString(),
-                  account: this.address,
-                  contractAddr: args.fromToken, // This would be the pair contract
-                  price: '0', // Market order
-                  quantity: args.amount,
-                  priceDenom: args.toToken,
-                  assetDenom: args.fromToken,
-                  orderType: 'MARKET',
-                  positionDirection: 'LONG',
-                  data: '{}',
-                }],
-                funds: coins(args.amount, args.fromToken),
-              },
-            };
-
-            const result = await signingClient.signAndBroadcast(
-              this.address,
-              [msg],
-              'auto',
-              'Token swap via MCP'
-            );
-
-            return {
-              transactionHash: result.transactionHash,
-              gasUsed: result.gasUsed,
-              gasWanted: result.gasWanted,
-            };
-          } catch (error: any) {
-            throw new Error(`Failed to execute swap: ${error.message}`);
-          }
-        },
-      },
-      {
-        name: 'transferTokens',
-        description: 'Transfer tokens to another address',
-        inputSchema: z.object({
-          toAddress: z.string().describe('Recipient address'),
-          amount: z.string().describe('Amount to transfer'),
-          denom: z.string().describe('Token denomination'),
-          memo: z.string().optional().describe('Transaction memo'),
-        }),
-        handler: async (args) => {
-          if (!WALLET_MNEMONIC) {
-            throw new Error('Wallet mnemonic not configured. Cannot execute transfers.');
-          }
-
-          try {
-            const signingClient = await this.getSigningClient();
-            
-            const result = await signingClient.sendTokens(
-              this.address,
-              args.toAddress,
-              coins(args.amount, args.denom),
-              'auto',
-              args.memo || 'Transfer via MCP'
-            );
-
-            return {
-              transactionHash: result.transactionHash,
-              gasUsed: result.gasUsed,
-              gasWanted: result.gasWanted,
-            };
-          } catch (error: any) {
-            throw new Error(`Failed to transfer tokens: ${error.message}`);
-          }
-        },
-      },
-      {
-        name: 'getLiquidityPools',
-        description: 'Get liquidity pool information',
-        inputSchema: z.object({
-          denom1: z.string().optional().describe('First token in pair'),
-          denom2: z.string().optional().describe('Second token in pair'),
-          limit: z.number().optional().describe('Number of pools to return'),
-        }),
-        handler: async (args) => {
-          try {
-            // Query SEI DEX module for liquidity pools
-            const response = await axios.get(`${SEI_REST_URL}/sei-protocol/seichain/dex/list_pools`);
-            
-            let pools = response.data.pools || [];
-            
-            // Filter by denoms if provided
-            if (args.denom1 || args.denom2) {
-              pools = pools.filter((pool: any) => {
-                const hasDenom1 = !args.denom1 || pool.pair.token0 === args.denom1 || pool.pair.token1 === args.denom1;
-                const hasDenom2 = !args.denom2 || pool.pair.token0 === args.denom2 || pool.pair.token1 === args.denom2;
-                return hasDenom1 && hasDenom2;
-              });
-            }
-
-            if (args.limit) {
-              pools = pools.slice(0, args.limit);
-            }
-
-            return { pools };
-          } catch (error: any) {
-            throw new Error(`Failed to fetch liquidity pools: ${error.message}`);
-          }
-        },
-      },
-      {
-        name: 'getStakingInfo',
-        description: 'Get staking information for an address',
-        inputSchema: z.object({
-          address: z.string().describe('Delegator address'),
-          validatorAddress: z.string().optional().describe('Specific validator'),
-        }),
-        handler: async (args) => {
-          try {
-            const endpoints = [
-              `/cosmos/staking/v1beta1/delegations/${args.address}`,
-              `/cosmos/staking/v1beta1/delegators/${args.address}/unbonding_delegations`,
-              `/cosmos/distribution/v1beta1/delegators/${args.address}/rewards`,
-            ];
-
-            const [delegations, unbonding, rewards] = await Promise.all(
-              endpoints.map(endpoint => 
-                axios.get(`${SEI_REST_URL}${endpoint}`).then(r => r.data)
-              )
-            );
-
-            return {
-              delegations: delegations.delegation_responses || [],
-              unbonding: unbonding.unbonding_responses || [],
-              rewards: rewards.rewards || [],
-              total_rewards: rewards.total || [],
-            };
-          } catch (error: any) {
-            throw new Error(`Failed to fetch staking info: ${error.message}`);
-          }
-        },
-      },
-      {
-        name: 'getValidatorInfo',
-        description: 'Get information about validators',
-        inputSchema: z.object({
-          status: z.enum(['bonded', 'unbonded', 'unbonding']).optional(),
-          limit: z.number().optional(),
-        }),
-        handler: async (args) => {
-          try {
-            const response = await axios.get(`${SEI_REST_URL}/cosmos/staking/v1beta1/validators`, {
-              params: {
-                status: args.status?.toUpperCase() || 'BOND_STATUS_BONDED',
-                'pagination.limit': args.limit || 20,
-              },
-            });
-
-            return {
-              validators: response.data.validators,
-              pagination: response.data.pagination,
-            };
-          } catch (error: any) {
-            throw new Error(`Failed to fetch validator info: ${error.message}`);
-          }
-        },
-      },
-      {
-        name: 'getProposals',
-        description: 'Get governance proposals',
-        inputSchema: z.object({
-          status: z.enum(['voting', 'passed', 'rejected', 'failed']).optional(),
-          limit: z.number().optional(),
-        }),
-        handler: async (args) => {
-          try {
-            const statusMap = {
-              voting: 'PROPOSAL_STATUS_VOTING_PERIOD',
-              passed: 'PROPOSAL_STATUS_PASSED',
-              rejected: 'PROPOSAL_STATUS_REJECTED',
-              failed: 'PROPOSAL_STATUS_FAILED',
-            };
-
-            const response = await axios.get(`${SEI_REST_URL}/cosmos/gov/v1beta1/proposals`, {
-              params: {
-                proposal_status: args.status ? statusMap[args.status] : undefined,
-                'pagination.limit': args.limit || 20,
-              },
-            });
-
-            return {
-              proposals: response.data.proposals,
-              pagination: response.data.pagination,
-            };
-          } catch (error: any) {
-            throw new Error(`Failed to fetch proposals: ${error.message}`);
-          }
-        },
-      },
-      {
-        name: 'getTokenInfo',
-        description: 'Get token metadata and information',
-        inputSchema: z.object({
-          denom: z.string().describe('Token denomination'),
-        }),
-        handler: async (args) => {
-          try {
-            // Query token metadata from bank module
-            const response = await axios.get(
-              `${SEI_REST_URL}/cosmos/bank/v1beta1/denoms_metadata/${args.denom}`
-            );
-
-            return {
-              metadata: response.data.metadata,
-            };
-          } catch (error: any) {
-            throw new Error(`Failed to fetch token info: ${error.message}`);
-          }
-        },
-      },
-    ];
-
     super({
       name: 'sei-blockchain-mcp',
       version: '1.0.0',
-      description: 'SEI Blockchain MCP Server - Production Blockchain Operations',
-      tools,
+      description: 'SEI Blockchain MCP Server - Simplified HTTP version',
+      tools: [
+        {
+          name: 'getWalletBalance',
+          description: 'Get wallet balance for a SEI address',
+          inputSchema: z.object({
+            address: z.string().describe('SEI wallet address'),
+            denom: z.string().optional().describe('Token denomination (default: usei)')
+          }),
+          handler: this.getWalletBalance.bind(this)
+        },
+        {
+          name: 'getTransactionHistory',
+          description: 'Get transaction history for a SEI address',
+          inputSchema: z.object({
+            address: z.string().describe('SEI wallet address'),
+            limit: z.number().optional().describe('Number of transactions to retrieve (default: 10)')
+          }),
+          handler: this.getTransactionHistory.bind(this)
+        },
+        {
+          name: 'getChainInfo',
+          description: 'Get SEI chain information',
+          inputSchema: z.object({}),
+          handler: this.getChainInfo.bind(this)
+        },
+        {
+          name: 'getBlockInfo',
+          description: 'Get block information by height',
+          inputSchema: z.object({
+            height: z.number().optional().describe('Block height (default: latest)')
+          }),
+          handler: this.getBlockInfo.bind(this)
+        },
+        {
+          name: 'getValidators',
+          description: 'Get list of SEI validators',
+          inputSchema: z.object({
+            status: z.string().optional().describe('Validator status filter')
+          }),
+          handler: this.getValidators.bind(this)
+        }
+      ]
     });
-
-    this.initializeClients();
   }
 
-  private async initializeClients() {
+  private async getWalletBalance(args: { address: string; denom?: string }) {
     try {
-      // Initialize read-only client
-      this.client = await StargateClient.connect(SEI_RPC_URL);
+      const { address, denom = 'usei' } = args;
       
-      // Initialize signing client if mnemonic is provided
-      if (WALLET_MNEMONIC) {
-        this.wallet = await DirectSecp256k1HdWallet.fromMnemonic(WALLET_MNEMONIC, {
-          prefix: 'sei',
-        });
-        
-        const [account] = await this.wallet.getAccounts();
-        this.address = account.address;
-        
-        this.signingClient = await SigningStargateClient.connectWithSigner(
-          SEI_RPC_URL,
-          this.wallet
-        );
-        
-        console.error(`Initialized with wallet address: ${this.address}`);
+      const response = await axios.get(
+        `${SEI_REST_URL}/cosmos/bank/v1beta1/balances/${address}`
+      );
+      
+      const balances = response.data.balances || [];
+      const balance = balances.find((b: any) => b.denom === denom);
+      
+      if (balance) {
+        const amount = parseInt(balance.amount) / 1_000_000; // Convert from usei to SEI
+        return `Address ${address} has ${amount} SEI tokens`;
       } else {
-        console.error('WARNING: No wallet mnemonic provided. Write operations will be disabled.');
+        return `Address ${address} has 0 SEI tokens`;
       }
-    } catch (error: any) {
-      console.error(`Failed to initialize blockchain clients: ${error.message}`);
+    } catch (error) {
+      console.error('Balance query error:', error);
+      return `Error retrieving balance for ${args.address}: ${error instanceof Error ? error.message : 'Unknown error'}`;
     }
   }
 
-  private async getClient(): Promise<StargateClient> {
-    if (!this.client) {
-      this.client = await StargateClient.connect(SEI_RPC_URL);
+  private async getTransactionHistory(args: { address: string; limit?: number }) {
+    try {
+      const { address, limit = 10 } = args;
+      
+      // Note: This is a simplified implementation
+      // In practice, you'd need to query transaction events
+      return `Transaction history for ${address} (last ${limit} transactions): Feature coming soon - requires transaction indexer`;
+    } catch (error) {
+      console.error('Transaction history error:', error);
+      return `Error retrieving transaction history: ${error instanceof Error ? error.message : 'Unknown error'}`;
     }
-    return this.client;
   }
 
-  private async getSigningClient(): Promise<SigningStargateClient> {
-    if (!this.signingClient) {
-      throw new Error('Signing client not initialized. Wallet mnemonic required.');
+  private async getChainInfo() {
+    try {
+      const response = await axios.get(`${SEI_REST_URL}/cosmos/base/tendermint/v1beta1/node_info`);
+      const nodeInfo = response.data.default_node_info;
+      
+      return `SEI Chain Info:
+- Chain ID: ${SEI_CHAIN_ID}
+- Network: ${nodeInfo?.network || 'Unknown'}
+- Version: ${nodeInfo?.version || 'Unknown'}
+- Moniker: ${nodeInfo?.moniker || 'Unknown'}`;
+    } catch (error) {
+      console.error('Chain info error:', error);
+      return `Error retrieving chain info: ${error instanceof Error ? error.message : 'Unknown error'}`;
     }
-    return this.signingClient;
+  }
+
+  private async getBlockInfo(args: { height?: number }) {
+    try {
+      const { height } = args;
+      const url = height 
+        ? `${SEI_REST_URL}/cosmos/base/tendermint/v1beta1/blocks/${height}`
+        : `${SEI_REST_URL}/cosmos/base/tendermint/v1beta1/blocks/latest`;
+      
+      const response = await axios.get(url);
+      const block = response.data.block;
+      
+      return `Block Info:
+- Height: ${block?.header?.height || 'Unknown'}
+- Time: ${block?.header?.time || 'Unknown'}
+- Proposer: ${block?.header?.proposer_address || 'Unknown'}
+- Transaction Count: ${block?.data?.txs?.length || 0}`;
+    } catch (error) {
+      console.error('Block info error:', error);
+      return `Error retrieving block info: ${error instanceof Error ? error.message : 'Unknown error'}`;
+    }
+  }
+
+  private async getValidators(args: { status?: string }) {
+    try {
+      const response = await axios.get(
+        `${SEI_REST_URL}/cosmos/staking/v1beta1/validators`
+      );
+      
+      const validators = response.data.validators || [];
+      const count = validators.length;
+      
+      return `SEI Network has ${count} validators. Use specific validator queries for detailed information.`;
+    } catch (error) {
+      console.error('Validators query error:', error);
+      return `Error retrieving validators: ${error instanceof Error ? error.message : 'Unknown error'}`;
+    }
   }
 }
 

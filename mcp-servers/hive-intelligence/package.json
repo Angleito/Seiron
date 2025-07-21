@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "build": "tsc --outDir dist base-server.ts enhanced-base-server.ts server-v2.ts",
+    "start": "node dist/server-v2.js",
+    "build": "tsc",
     "postinstall": "npm run build"
   },
   "dependencies": {

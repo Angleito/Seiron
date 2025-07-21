@@ -3,18 +3,14 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "build": "tsc --outDir dist base-server.ts enhanced-base-server.ts server.ts",
+    "start": "node dist/server.js",
+    "build": "tsc",
     "postinstall": "npm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^0.6.1",
-    "@cosmjs/stargate": "^0.32.0",
-    "@cosmjs/proto-signing": "^0.32.0",
-    "@cosmjs/amino": "^0.32.0",
     "axios": "^1.7.0",
     "zod": "^3.22.4",
-    "protobufjs": "^7.2.4"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
