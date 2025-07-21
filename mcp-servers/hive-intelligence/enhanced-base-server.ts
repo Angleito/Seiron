@@ -138,7 +138,7 @@ export abstract class EnhancedBaseMCPServer {
       const required: string[] = [];
       
       for (const [key, value] of Object.entries(shape)) {
-        if (!value.isOptional()) {
+        if (value instanceof z.ZodType && !(value as any).isOptional()) {
           required.push(key);
         }
       }

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { BaseMCPServer, MCPTool } from '../base-server.js';
+import { BaseMCPServer, MCPTool } from './base-server.js';
 import axios from 'axios';
 import { createHash } from 'crypto';
 

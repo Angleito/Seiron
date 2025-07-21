@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { BaseMCPServer, MCPTool } from '../base-server.js';
+import { BaseMCPServer, MCPTool } from './base-server.js';
 import { SigningStargateClient, StargateClient } from '@cosmjs/stargate';
 import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
 import { coins } from '@cosmjs/amino';
