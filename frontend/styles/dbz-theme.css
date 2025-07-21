@@ -1,47 +1,50 @@
 /* ========================================
-   DRAGON BALL Z THEME & ANIMATIONS
-   Enhanced styling for Seiron DBZ experience
+   OPTIMIZED DBZ THEME
+   Performance-focused Dragon Ball Z styling
    ======================================== */
 
-/* DBZ Color Palette */
+/* Consolidated DBZ Color System */
 :root {
-  /* Primary DBZ Colors */
-  --dbz-energy-blue: #00bfff;
-  --dbz-energy-yellow: #ffd700;
-  --dbz-energy-orange: #ff4500;
-  --dbz-energy-purple: #9932cc;
-  --dbz-saiyan-gold: #ffa500;
-  --dbz-power-red: #ff0000;
-  --dbz-ki-white: #ffffff;
-  --dbz-aura-cyan: #00ffff;
+  /* Core DBZ Colors - aligned with design tokens */
+  --dbz-saiyan-gold: var(--color-saiyan-gold);
+  --dbz-ki-blue: var(--color-ki-blue);
+  --dbz-power-orange: var(--color-power-orange);
+  --dbz-power-purple: var(--color-power-purple);
+  --dbz-lightning-white: var(--color-lightning-white);
   
-  /* Background gradients */
-  --dbz-space-gradient: linear-gradient(135deg, #000428 0%, #004e92 100%);
-  --dbz-power-gradient: linear-gradient(45deg, #ff6b35 0%, #f7931e 50%, #ffd700 100%);
-  --dbz-saiyan-gradient: linear-gradient(45deg, #ffd700 0%, #ffb347 50%, #ff8c00 100%);
-  --dbz-energy-gradient: radial-gradient(circle, rgba(0,191,255,0.3) 0%, rgba(0,191,255,0.1) 50%, transparent 100%);
+  /* Optimized gradients - fewer stops for better performance */
+  --dbz-space-gradient: linear-gradient(135deg, var(--color-bg-primary) 0%, #004e92 100%);
+  --dbz-power-gradient: linear-gradient(45deg, var(--dbz-power-orange) 0%, var(--dbz-saiyan-gold) 100%);
+  --dbz-saiyan-gradient: linear-gradient(45deg, var(--dbz-saiyan-gold) 0%, #ff8c00 100%);
   
-  /* Shadow effects */
-  --dbz-glow-blue: 0 0 20px var(--dbz-energy-blue), 0 0 40px var(--dbz-energy-blue), 0 0 60px var(--dbz-energy-blue);
-  --dbz-glow-gold: 0 0 20px var(--dbz-saiyan-gold), 0 0 40px var(--dbz-saiyan-gold), 0 0 60px var(--dbz-saiyan-gold);
-  --dbz-glow-white: 0 0 15px var(--dbz-ki-white), 0 0 30px var(--dbz-ki-white), 0 0 45px var(--dbz-ki-white);
+  /* Optimized glow effects - using design token system */
+  --dbz-glow-saiyan: var(--glow-saiyan);
+  --dbz-glow-ki: var(--glow-ki);
+  --dbz-glow-power: var(--glow-power);
+  
+  /* Animation performance variables */
+  --dbz-animation-fast: var(--animation-duration-fast);
+  --dbz-animation-normal: var(--animation-duration-normal);
+  --dbz-animation-slow: var(--animation-duration-slow);
+  --dbz-animation-epic: var(--animation-duration-epic);
 }
 
 /* ========================================
-   POWER-UP ANIMATIONS
+   OPTIMIZED POWER-UP ANIMATIONS
+   GPU-accelerated with proper performance
    ======================================== */
 
 @keyframes dbz-power-up {
   0% {
-    transform: scale(1);
+    transform: scale3d(1, 1, 1);
     box-shadow: 0 0 0 rgba(255, 215, 0, 0);
   }
   50% {
-    transform: scale(1.05);
-    box-shadow: var(--dbz-glow-gold);
+    transform: scale3d(1.05, 1.05, 1);
+    box-shadow: var(--dbz-glow-saiyan);
   }
   100% {
-    transform: scale(1);
+    transform: scale3d(1, 1, 1);
     box-shadow: 0 0 0 rgba(255, 215, 0, 0);
   }
 }
@@ -49,34 +52,26 @@
 @keyframes dbz-energy-pulse {
   0%, 100% {
     opacity: 0.6;
-    transform: scale(1);
+    transform: scale3d(1, 1, 1);
   }
   50% {
     opacity: 1;
-    transform: scale(1.1);
+    transform: scale3d(1.1, 1.1, 1);
   }
 }
 
 @keyframes dbz-ki-charge {
   0% {
-    background: var(--dbz-energy-blue);
-    box-shadow: 0 0 10px var(--dbz-energy-blue);
-  }
-  25% {
-    background: var(--dbz-energy-yellow);
-    box-shadow: 0 0 15px var(--dbz-energy-yellow);
+    background: var(--dbz-ki-blue);
+    box-shadow: var(--dbz-glow-ki);
   }
   50% {
-    background: var(--dbz-energy-orange);
-    box-shadow: 0 0 20px var(--dbz-energy-orange);
-  }
-  75% {
-    background: var(--dbz-power-red);
-    box-shadow: 0 0 25px var(--dbz-power-red);
+    background: var(--dbz-power-orange);
+    box-shadow: var(--dbz-glow-power);
   }
   100% {
-    background: var(--dbz-energy-blue);
-    box-shadow: 0 0 10px var(--dbz-energy-blue);
+    background: var(--dbz-ki-blue);
+    box-shadow: var(--dbz-glow-ki);
   }
 }
 
@@ -172,16 +167,23 @@
 
 .dbz-button-primary {
   background: var(--dbz-saiyan-gradient);
-  color: #000;
-  font-weight: 900;
+  color: var(--color-text-inverse);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 0.05em;
   border: none;
-  border-radius: 8px;
-  padding: 12px 24px;
-  transition: all 0.3s ease;
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-6);
+  transition: all var(--transition-base);
   position: relative;
   overflow: hidden;
+  cursor: pointer;
+  
+  /* Performance optimizations */
+  will-change: transform, box-shadow;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .dbz-button-primary::before {
@@ -196,9 +198,17 @@
 }
 
 .dbz-button-primary:hover {
-  transform: scale(1.05);
-  animation: dbz-power-up 0.6s ease-in-out;
-  box-shadow: var(--dbz-glow-gold);
+  transform: scale3d(1.05, 1.05, 1);
+  box-shadow: var(--dbz-glow-saiyan);
+}
+
+.dbz-button-primary:active {
+  transform: scale3d(0.98, 0.98, 1);
+}
+
+.dbz-button-primary:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
 }
 
 .dbz-button-primary:hover::before {
@@ -207,21 +217,36 @@
 
 .dbz-button-secondary {
   background: transparent;
-  color: var(--dbz-energy-blue);
-  border: 2px solid var(--dbz-energy-blue);
-  font-weight: 700;
+  color: var(--dbz-ki-blue);
+  border: 2px solid var(--dbz-ki-blue);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
   text-transform: uppercase;
-  letter-spacing: 1px;
-  border-radius: 8px;
-  padding: 12px 24px;
-  transition: all 0.3s ease;
+  letter-spacing: 0.05em;
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-6);
+  transition: all var(--transition-base);
+  cursor: pointer;
+  
+  /* Performance optimizations */
+  will-change: transform, background-color, color;
+  transform: translateZ(0);
 }
 
 .dbz-button-secondary:hover {
-  background: var(--dbz-energy-blue);
-  color: #000;
-  box-shadow: var(--dbz-glow-blue);
-  transform: scale(1.05);
+  background: var(--dbz-ki-blue);
+  color: var(--color-text-inverse);
+  box-shadow: var(--dbz-glow-ki);
+  transform: scale3d(1.05, 1.05, 1);
+}
+
+.dbz-button-secondary:active {
+  transform: scale3d(0.98, 0.98, 1);
+}
+
+.dbz-button-secondary:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
 }
 
 /* ========================================
@@ -418,17 +443,99 @@
   }
 }
 
+/* ========================================
+   ACCESSIBILITY & PERFORMANCE
+   ======================================== */
+
+/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .dbz-power-level::before,
   .dbz-energy-orb,
   .dbz-ki-blast,
   .dbz-aura.active {
-    animation: none;
+    animation: none !important;
   }
   
   .dbz-button-primary:hover,
+  .dbz-button-secondary:hover,
   .dbz-feature-card:hover {
+    transform: none !important;
+    animation: none !important;
+  }
+  
+  /* Keep essential focus indicators */
+  .dbz-button-primary:focus-visible,
+  .dbz-button-secondary:focus-visible {
+    outline: 3px solid var(--color-border-focus);
+    outline-offset: 2px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .dbz-button-primary,
+  .dbz-button-secondary {
+    border: 2px solid currentColor;
+  }
+  
+  .dbz-glow-saiyan,
+  .dbz-glow-ki,
+  .dbz-glow-power {
+    box-shadow: none;
+  }
+  
+  .dbz-power-level::before,
+  .dbz-aura.active {
+    display: none;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .dbz-button-primary,
+  .dbz-button-secondary {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .dbz-button-primary:hover,
+  .dbz-button-secondary:hover {
     transform: none;
+    box-shadow: none;
+  }
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 640px) {
+  .dbz-button-primary,
+  .dbz-button-secondary {
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-xs);
+  }
+  
+  .dbz-feature-card {
+    padding: var(--space-4);
+  }
+  
+  .dbz-power-number {
+    font-size: var(--font-size-2xl);
+  }
+}
+
+/* Print styles */
+@media print {
+  .dbz-button-primary,
+  .dbz-button-secondary {
+    background: white !important;
+    color: black !important;
+    border: 2px solid black !important;
+    box-shadow: none !important;
+  }
+  
+  .dbz-power-level::before,
+  .dbz-aura.active,
+  .dbz-energy-orb {
+    display: none !important;
   }
 }
 

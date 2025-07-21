@@ -7,8 +7,8 @@ import { withErrorRecovery } from './ErrorHandlingService';
 import { performance } from 'perf_hooks';
 import type {
   HiveIntelligenceAdapter,
-  SeiAgentKitAdapter,
-  SeiMCPAdapter
+  SeiAgentKitAdapter
+  // SeiMCPAdapter // WebSocket-based MCP deprecated
 } from './SeiIntegrationService';
 
 // Types will be defined locally for now
@@ -59,7 +59,7 @@ export class AIService {
   private logger = createServiceLogger('AIService');
   private hiveAdapter?: HiveIntelligenceAdapter;
   private sakAdapter?: SeiAgentKitAdapter;
-  private mcpAdapter?: SeiMCPAdapter;
+  // private mcpAdapter?: SeiMCPAdapter; // WebSocket-based MCP deprecated
 
   constructor() {
     this.openai = new OpenAI({
@@ -1066,17 +1066,17 @@ Keep the analysis concise and actionable.`;
   public initializeAdapters(
     hiveAdapter?: HiveIntelligenceAdapter,
     sakAdapter?: SeiAgentKitAdapter,
-    mcpAdapter?: SeiMCPAdapter
+    mcpAdapter?: any // SeiMCPAdapter - WebSocket-based MCP deprecated
   ): void {
     if (hiveAdapter) this.hiveAdapter = hiveAdapter;
     if (sakAdapter) this.sakAdapter = sakAdapter;
-    if (mcpAdapter) this.mcpAdapter = mcpAdapter;
+    // if (mcpAdapter) this.mcpAdapter = mcpAdapter; // WebSocket-based MCP deprecated
     
     this.logger.info('Adapters initialized', {
       hiveAdapter: !!hiveAdapter,
       sakAdapter: !!sakAdapter,
-      mcpAdapter: !!mcpAdapter,
-      mcpConnected: mcpAdapter?.isConnected(),
+      // mcpAdapter: !!mcpAdapter, // WebSocket-based MCP deprecated
+      // mcpConnected: mcpAdapter?.isConnected(), // WebSocket-based MCP deprecated
       timestamp: new Date().toISOString()
     });
   }

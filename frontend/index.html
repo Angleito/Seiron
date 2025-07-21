@@ -4,7 +4,34 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Unleash the legendary dragon's power to fulfill your wildest investment dreams in the Sei ecosystem" />
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Granting your wildest Sei investing wishes. Master the art of DeFi with legendary powers and transform into the ultimate portfolio warrior with Seiron." />
+    <meta name="keywords" content="Sei Network, DeFi, Portfolio Management, Cryptocurrency, Blockchain, Dragon Ball Z, Saiyan, Investment, Trading, Wallet" />
+    <meta name="author" content="Seiron Team" />
+    <meta name="robots" content="index, follow" />
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Seiron - Granting your wildest Sei Investing Wishes" />
+    <meta property="og:description" content="Master the art of DeFi with legendary powers. Transform into the ultimate portfolio warrior with Seiron's voice-powered AI platform." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://seiron.vercel.app" />
+    <meta property="og:image" content="https://seiron.vercel.app/images/seiron.webp" />
+    <meta property="og:image:alt" content="Seiron - Legendary DeFi Portfolio Warrior" />
+    <meta property="og:site_name" content="Seiron" />
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Seiron - Granting your wildest Sei Investing Wishes" />
+    <meta name="twitter:description" content="Master the art of DeFi with legendary powers. Transform into the ultimate portfolio warrior." />
+    <meta name="twitter:image" content="https://seiron.vercel.app/images/seiron.webp" />
+    <meta name="twitter:image:alt" content="Seiron - Legendary DeFi Portfolio Warrior" />
+    
+    <!-- Additional SEO Meta Tags -->
+    <meta name="theme-color" content="#fbbf24" />
+    <meta name="application-name" content="Seiron" />
+    <meta name="format-detection" content="telephone=no" />
+    <link rel="canonical" href="https://seiron.vercel.app" />
     
     <!-- CSP removed from HTML - using vercel.json headers only for consistency -->
     
@@ -14,9 +41,43 @@
     <meta name="x-frame-options" content="DENY">
     <meta name="x-xss-protection" content="1; mode=block">
     
-    <title>Seiron - Granting your wildest Sei Investing Wishes</title>
+    <title>Seiron - Granting your wildest Sei Investing Wishes | Master DeFi with Legendary Powers</title>
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Seiron",
+      "description": "Granting your wildest Sei investing wishes. Master the art of DeFi with legendary powers and transform into the ultimate portfolio warrior.",
+      "url": "https://seiron.vercel.app",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Web Browser",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "Voice-powered DeFi interface",
+        "Real-time portfolio management",
+        "Multi-agent AI system",
+        "Sei Network integration",
+        "Dragon Ball Z themed experience"
+      ],
+      "screenshot": "https://seiron.vercel.app/images/seiron.webp",
+      "author": {
+        "@type": "Organization",
+        "name": "Seiron Team"
+      }
+    }
+    </script>
   </head>
   <body>
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/fonts/GeistVF.woff" as="font" type="font/woff" crossorigin>
+    <link rel="preload" href="/images/seiron.webp" as="image">
+    
     <div id="root"></div>
     <script>
       // Polyfill for Buffer

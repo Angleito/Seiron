@@ -3,6 +3,7 @@ export { useElevenLabsTTS } from './useElevenLabsTTS'
 export { useSecureElevenLabsTTS } from './useSecureElevenLabsTTS'
 export { useSpeechRecognition } from './useSpeechRecognition'
 export { useSeiVoiceIntegration } from './useSeiVoiceIntegration'
+export { default as useVoiceHomepageIntegration } from './useVoiceHomepageIntegration'
 
 // Dragon Control Hooks - Advanced dragon state management
 export { useDragon3D } from './useDragon3D'
@@ -33,6 +34,13 @@ export type {
   SeiVoiceConfig,
   EnhancedVoiceResponse
 } from './useSeiVoiceIntegration'
+
+// Voice Homepage Integration Types
+export type {
+  VoiceHomepageConfig,
+  VoiceHomepageState,
+  VoiceHomepageActions
+} from './useVoiceHomepageIntegration'
 
 // Dragon Control Hook Types
 export type {

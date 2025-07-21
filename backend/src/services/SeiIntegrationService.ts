@@ -3,6 +3,8 @@ import * as TE from 'fp-ts/TaskEither';
 import * as E from 'fp-ts/Either';
 import * as O from 'fp-ts/Option';
 import { EventEmitter } from 'events';
+import { MCPClientFactory, getMCPConnectionManager } from '../lib/mcp/client';
+import { MCPError, MCPErrorCode } from '../lib/mcp/types';
 // Adapter types - properly defined with TaskEither return types
 export interface HiveIntelligenceAdapter {
   search: (query: string, metadata?: HiveQueryMetadata) => TE.TaskEither<Error, HiveResponse>;
@@ -21,14 +23,10 @@ export interface SeiAgentKitAdapter {
   on: (event: string, callback: (data: any) => void) => void;
 }
 
-export interface SeiMCPAdapter {
-  getBlockchainState: () => TE.TaskEither<Error, BlockchainState>;
-  getWalletBalance: (address: string) => TE.TaskEither<Error, WalletBalance>;
-  subscribeToEvents: (types: string[], filters?: any) => TE.TaskEither<Error, void>;
-  connectToMCP: () => Promise<void>;
-  disconnectFromMCP: () => void;
-  isConnected: () => boolean;
-  on: (event: string, callback: (data: any) => void) => void;
+export interface MCPClients {
+  hiveIntelligence?: MCPClientFactory;
+  seiBlockchain?: MCPClientFactory;
+  portfolioManager?: MCPClientFactory;
 }
 
 export interface HiveResponse {
@@ -279,7 +277,7 @@ export class SeiIntegrationService extends EventEmitter {
   private config: SeiIntegrationConfig;
   private hiveAdapter?: HiveIntelligenceAdapter;
   private sakAdapter?: SeiAgentKitAdapter;
-  private mcpAdapter?: SeiMCPAdapter;
+  private mcpClients: MCPClients = {};
   private integrationCache: Map<string, { data: any; expiresAt: number }> = new Map();
   private operationSequence: number = 0;
 
@@ -301,7 +299,7 @@ export class SeiIntegrationService extends EventEmitter {
       TE.Do,
       TE.bind('hive', () => this.initializeHiveAdapter()),
       TE.bind('sak', () => this.initializeSAKAdapter()),
-      TE.bind('mcp', () => this.initializeMCPAdapter()),
+      TE.bind('mcp', () => this.initializeMCPClients()),
       TE.map(() => {
         this.emit('integration:initialized', {
           adapters: this.getEnabledAdapters(),
@@ -318,7 +316,7 @@ export class SeiIntegrationService extends EventEmitter {
       TE.Do,
       TE.bind('hive', () => this.cleanupHiveAdapter()),
       TE.bind('sak', () => this.cleanupSAKAdapter()),
-      TE.bind('mcp', () => this.cleanupMCPAdapter()),
+      TE.bind('mcp', () => this.cleanupMCPClients()),
       TE.map(() => {
         this.integrationCache.clear();
         this.emit('integration:cleanup', { timestamp: new Date() });
@@ -358,7 +356,7 @@ export class SeiIntegrationService extends EventEmitter {
           : TE.right(undefined)
       ),
       TE.bind('mcpResults', () => 
-        options.includeMCP !== false && this.mcpAdapter
+        options.includeMCP !== false && this.mcpClients.seiBlockchain
           ? this.getMCPData(walletAddress)
           : TE.right(undefined)
       ),
@@ -423,7 +421,7 @@ export class SeiIntegrationService extends EventEmitter {
           : TE.right(undefined)
       ),
       TE.bind('mcpData', () => 
-        options.includeMCPRealtime !== false && this.mcpAdapter
+        options.includeMCPRealtime !== false && this.mcpClients.seiBlockchain
           ? this.getMCPRealTimeData(walletAddress)
           : TE.right(undefined)
       ),
@@ -547,48 +545,107 @@ export class SeiIntegrationService extends EventEmitter {
   };
 
   /**
-   * Get MCP blockchain state
+   * Get blockchain state via MCP
    */
   public getMCPBlockchainState = (): TE.TaskEither<IntegrationError, BlockchainState> => {
-    if (!this.mcpAdapter) {
-      return TE.left(this.createIntegrationError('ADAPTER_NOT_AVAILABLE', 'MCP adapter not initialized', 'mcp'));
+    if (!this.mcpClients.seiBlockchain) {
+      return TE.left(this.createIntegrationError('ADAPTER_NOT_AVAILABLE', 'SEI Blockchain MCP client not initialized', 'mcp'));
     }
 
     return pipe(
-      this.mcpAdapter.getBlockchainState(),
-      TE.mapLeft(error => this.createIntegrationError('MCP_BLOCKCHAIN_FAILED', this.getErrorMessage(error), 'mcp', error))
+      TE.tryCatch(
+        async () => {
+          const result = await this.mcpClients.seiBlockchain!.callTool(
+            'sei-blockchain', 
+            'getValidatorInfo',
+            {}
+          );
+          
+          return {
+            blockNumber: result.content?.network?.height || 0,
+            networkStatus: result.content?.network?.status || 'unknown',
+            gasPrice: result.content?.network?.gasPrice || null
+          } as BlockchainState;
+        },
+        error => this.createIntegrationError('MCP_BLOCKCHAIN_FAILED', this.getErrorMessage(error), 'mcp', error)
+      )
     );
   };
 
   /**
-   * Get MCP wallet balance
+   * Get wallet balance via MCP
    */
   public getMCPWalletBalance = (walletAddress: string): TE.TaskEither<IntegrationError, WalletBalance> => {
-    if (!this.mcpAdapter) {
-      return TE.left(this.createIntegrationError('ADAPTER_NOT_AVAILABLE', 'MCP adapter not initialized', 'mcp'));
+    if (!this.mcpClients.seiBlockchain) {
+      return TE.left(this.createIntegrationError('ADAPTER_NOT_AVAILABLE', 'SEI Blockchain MCP client not initialized', 'mcp'));
     }
 
     return pipe(
-      this.mcpAdapter.getWalletBalance(walletAddress),
-      TE.mapLeft(error => this.createIntegrationError('MCP_BALANCE_FAILED', this.getErrorMessage(error), 'mcp', error))
+      TE.tryCatch(
+        async () => {
+          const result = await this.mcpClients.seiBlockchain!.callTool(
+            'sei-blockchain',
+            'getWalletBalance',
+            { address: walletAddress }
+          );
+          
+          const balances = result.content?.balances || [];
+          const totalValueUSD = balances.reduce((sum: number, b: any) => sum + (b.value_usd || 0), 0);
+          
+          return {
+            address: walletAddress,
+            balances,
+            totalValueUSD
+          } as WalletBalance;
+        },
+        error => this.createIntegrationError('MCP_BALANCE_FAILED', this.getErrorMessage(error), 'mcp', error)
+      )
     );
   };
 
   /**
-   * Subscribe to MCP events
+   * Get market data via MCP
    */
-  public subscribeMCPEvents = (
-    eventTypes: string[],
-    filters?: Record<string, any>,
-    walletAddress?: string
-  ): TE.TaskEither<IntegrationError, void> => {
-    if (!this.mcpAdapter) {
-      return TE.left(this.createIntegrationError('ADAPTER_NOT_AVAILABLE', 'MCP adapter not initialized', 'mcp'));
+  public getMarketData = (query: string): TE.TaskEither<IntegrationError, any> => {
+    if (!this.mcpClients.hiveIntelligence) {
+      return TE.left(this.createIntegrationError('ADAPTER_NOT_AVAILABLE', 'Hive Intelligence MCP client not initialized', 'mcp'));
     }
 
     return pipe(
-      this.mcpAdapter.subscribeToEvents(eventTypes, filters),
-      TE.mapLeft(error => this.createIntegrationError('MCP_SUBSCRIBE_FAILED', this.getErrorMessage(error), 'mcp', error))
+      TE.tryCatch(
+        async () => {
+          const result = await this.mcpClients.hiveIntelligence!.callTool(
+            'hive-intelligence',
+            'getMarketData',
+            { symbols: ['SEI-USD'], period: '24h' }
+          );
+          return result.content;
+        },
+        error => this.createIntegrationError('MCP_MARKET_DATA_FAILED', this.getErrorMessage(error), 'mcp', error)
+      )
+    );
+  };
+
+  /**
+   * Get portfolio data via MCP
+   */
+  public getPortfolioData = (walletAddress: string): TE.TaskEither<IntegrationError, any> => {
+    if (!this.mcpClients.portfolioManager) {
+      return TE.left(this.createIntegrationError('ADAPTER_NOT_AVAILABLE', 'Portfolio Manager MCP client not initialized', 'mcp'));
+    }
+
+    return pipe(
+      TE.tryCatch(
+        async () => {
+          const result = await this.mcpClients.portfolioManager!.callTool(
+            'portfolio-manager',
+            'analyzePortfolioComposition',
+            { walletAddress, includeDeFi: true }
+          );
+          return result.content;
+        },
+        error => this.createIntegrationError('MCP_PORTFOLIO_FAILED', this.getErrorMessage(error), 'mcp', error)
+      )
     );
   };
 
@@ -630,7 +687,6 @@ export class SeiIntegrationService extends EventEmitter {
   public registerAdapters = (adapters: {
     hive?: HiveIntelligenceAdapter;
     sak?: SeiAgentKitAdapter;
-    mcp?: SeiMCPAdapter;
   }): void => {
     if (adapters.hive && this.config.hive.enabled) {
       this.hiveAdapter = adapters.hive;
@@ -642,10 +698,17 @@ export class SeiIntegrationService extends EventEmitter {
       this.setupSAKEventHandlers();
     }
 
-    if (adapters.mcp && this.config.mcp.enabled) {
-      this.mcpAdapter = adapters.mcp;
-      this.setupMCPEventHandlers();
-    }
+  };
+
+  /**
+   * Register MCP clients
+   */
+  public registerMCPClients = (clients: MCPClients): void => {
+    this.mcpClients = clients;
+    this.emit('integration:mcp:registered', {
+      clients: Object.keys(clients),
+      timestamp: new Date()
+    });
 
     this.emit('integration:adapters:registered', {
       registered: Object.keys(adapters),
@@ -686,18 +749,34 @@ export class SeiIntegrationService extends EventEmitter {
   };
 
   /**
-   * Initialize MCP adapter
+   * Initialize MCP clients
    */
-  private initializeMCPAdapter = (): TE.TaskEither<IntegrationError, void> => {
-    if (!this.config.mcp.enabled || !this.mcpAdapter) {
+  private initializeMCPClients = (): TE.TaskEither<IntegrationError, void> => {
+    if (!this.config.mcp.enabled) {
       return TE.right(undefined);
     }
 
     return TE.tryCatch(
       async () => {
-        await this.mcpAdapter!.connectToMCP();
+        const manager = getMCPConnectionManager();
+        
+        // Initialize each configured MCP server
+        const servers = [];
+        if (this.config.hive.enabled) servers.push('hive-intelligence');
+        if (this.config.sak.enabled) servers.push('sei-blockchain');
+        if (this.config.mcp.enabled) servers.push('portfolio-manager');
+        
+        await manager.initializeAll();
+        
+        // Store factory references
+        const factory = manager.getFactory();
+        this.mcpClients = {
+          hiveIntelligence: this.config.hive.enabled ? factory : undefined,
+          seiBlockchain: this.config.sak.enabled ? factory : undefined,
+          portfolioManager: this.config.mcp.enabled ? factory : undefined
+        };
       },
-      error => this.createIntegrationError('MCP_INIT_FAILED', `Failed to initialize MCP: ${error}`, 'mcp')
+      error => this.createIntegrationError('MCP_INIT_FAILED', `Failed to initialize MCP clients: ${error}`, 'mcp')
     );
   };
 
@@ -710,11 +789,15 @@ export class SeiIntegrationService extends EventEmitter {
   private cleanupSAKAdapter = (): TE.TaskEither<IntegrationError, void> =>
     this.sakAdapter ? TE.right(undefined) : TE.right(undefined);
 
-  private cleanupMCPAdapter = (): TE.TaskEither<IntegrationError, void> => {
-    if (this.mcpAdapter) {
-      this.mcpAdapter.disconnectFromMCP();
-    }
-    return TE.right(undefined);
+  private cleanupMCPClients = (): TE.TaskEither<IntegrationError, void> => {
+    return TE.tryCatch(
+      async () => {
+        const manager = getMCPConnectionManager();
+        await manager.shutdown();
+        this.mcpClients = {};
+      },
+      error => this.createIntegrationError('MCP_CLEANUP_FAILED', `Failed to cleanup MCP clients: ${error}`, 'mcp')
+    );
   };
 
   /**
@@ -872,11 +955,8 @@ export class SeiIntegrationService extends EventEmitter {
   }
 
   private setupMCPEventHandlers(): void {
-    if (!this.mcpAdapter) return;
-    
-    this.mcpAdapter.on('mcp:disconnected', (data) => {
-      this.emit('mcp:connection:lost', data);
-    });
+    // MCP event handlers will be set up during client initialization
+    // The MCP SDK handles connection events internally
   }
 
   // Helper methods for individual adapter operations
@@ -961,14 +1041,18 @@ export class SeiIntegrationService extends EventEmitter {
   }
 
   private async getMCPStatus(): Promise<any> {
-    if (!this.mcpAdapter) {
-      return { connected: false, subscriptions: [], error: 'Adapter not initialized' };
-    }
-
+    const connected = Object.keys(this.mcpClients).length > 0;
+    const servers = [];
+    
+    if (this.mcpClients.hiveIntelligence) servers.push('hive-intelligence');
+    if (this.mcpClients.seiBlockchain) servers.push('sei-blockchain');
+    if (this.mcpClients.portfolioManager) servers.push('portfolio-manager');
+    
     return {
-      connected: this.mcpAdapter.isConnected(),
-      subscriptions: [], // TODO: Get actual subscriptions
-      lastBlockNumber: undefined // TODO: Get last block number
+      connected,
+      servers,
+      subscriptions: [], // MCP uses request/response, not subscriptions
+      lastBlockNumber: undefined // Can be fetched via getMCPBlockchainState if needed
     };
   }
 

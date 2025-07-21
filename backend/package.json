@@ -34,6 +34,7 @@
     "@cosmjs/cosmwasm-stargate": "^0.32.0",
     "@cosmjs/proto-signing": "^0.32.0",
     "@cosmjs/stargate": "^0.32.0",
+    "@modelcontextprotocol/sdk": "^0.6.1",
     "@supabase/supabase-js": "^2.39.0",
     "@types/uuid": "^10.0.0",
     "axios": "^1.10.0",

@@ -11,8 +11,8 @@ import { createServiceLogger } from './LoggingService';
 import type { 
   BlockchainState, 
   WalletBalance, 
-  TransactionResponse,
-  SeiMCPAdapter
+  TransactionResponse
+  // SeiMCPAdapter // WebSocket-based MCP deprecated
 } from './SeiIntegrationService';
 
 /**

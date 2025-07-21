@@ -6,7 +6,7 @@ import * as N from 'fp-ts/number';
 import { EventEmitter } from 'events';
 import { createServiceLogger } from './LoggingService';
 import { createServiceErrorHandler, withErrorRecovery } from './ErrorHandlingService';
-import type { SeiIntegrationService, HiveIntelligenceAdapter, SeiAgentKitAdapter, SeiMCPAdapter } from './SeiIntegrationService';
+import type { SeiIntegrationService, HiveIntelligenceAdapter, SeiAgentKitAdapter } from './SeiIntegrationService'; // SeiMCPAdapter removed - WebSocket-based MCP deprecated
 
 // Adapter types - will be properly defined later
 export interface HiveAnalyticsResult {

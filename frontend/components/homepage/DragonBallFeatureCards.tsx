@@ -140,10 +140,25 @@ const DragonBallOrb: React.FC<{
   return (
     <motion.div
       ref={orbRef}
-      className="relative group cursor-pointer"
+      role="button"
+      tabIndex={0}
+      aria-label={`Activate ${feature.title}: ${feature.subtitle}`}
+      aria-describedby={`dragon-ball-${feature.id}-description`}
+      aria-pressed={isActive}
+      className="relative group cursor-pointer focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:ring-offset-2 focus:ring-offset-slate-900 rounded-full"
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
+      onTouchStart={onHover}
+      onTouchEnd={() => setTimeout(onLeave, 2000)}
+      onFocus={onHover}
+      onBlur={onLeave}
       onClick={handleClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          handleClick()
+        }
+      }}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
     >
@@ -436,8 +451,8 @@ export const DragonBallFeatureCards: React.FC<DragonBallFeatureCardsProps> = ({
       >
         <div className="inline-flex items-center space-x-2 px-6 py-3 rounded-full bg-gradient-to-r from-slate-800/80 to-slate-900/80 backdrop-blur-sm border border-yellow-400/30">
           <Activity className="w-5 h-5 text-yellow-400" />
-          <span className="text-yellow-400 font-semibold">
-            {activeCard ? `${FEATURES.find(f => f.id === activeCard)?.starCount}-Star Dragon Ball: ${FEATURES.find(f => f.id === activeCard)?.title} Activated!` : 'Hover to Activate Dragon Balls (4-7 Stars)'}
+          <span className="text-yellow-400 font-semibold text-xs sm:text-sm">
+            {activeCard ? `${FEATURES.find(f => f.id === activeCard)?.starCount}-Star: ${FEATURES.find(f => f.id === activeCard)?.title} Activated!` : 'Touch/Hover to Activate Dragon Balls'}
           </span>
           <Zap className="w-5 h-5 text-yellow-400" />
         </div>

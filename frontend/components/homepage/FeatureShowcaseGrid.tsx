@@ -27,7 +27,9 @@ interface FeatureCard {
   powerLevel: number
   tier: string
   benefits: string[]
+  detailedFeatures?: string[]
   cta: string
+  demoAvailable?: boolean
   color: {
     primary: string
     secondary: string
@@ -52,11 +54,18 @@ const FEATURE_CARDS: FeatureCard[] = [
     powerLevel: 9000,
     tier: 'Elite Warrior',
     benefits: [
-      'Sub-second transaction finality',
-      'Parallel execution advantage',
-      'MEV protection shield',
-      'Gas optimization mastery'
+      'Sub-second finality',
+      'Parallel execution',
+      'MEV protection',
+      'Gas optimization'
     ],
+    detailedFeatures: [
+      'Twin-turbo consensus mechanism',
+      'Optimistic parallelization engine',
+      'Smart contract pre-compilation',
+      'Built-in front-running protection'
+    ],
+    demoAvailable: true,
     cta: 'Enter the Battlefield',
     color: {
       primary: 'text-blue-400',
@@ -74,11 +83,18 @@ const FEATURE_CARDS: FeatureCard[] = [
     powerLevel: 15000,
     tier: 'Super Saiyan',
     benefits: [
-      'Real-time portfolio analysis',
-      'AI-powered rebalancing',
-      'Risk assessment radar',
-      'Profit optimization engine'
+      'Real-time analysis',
+      'AI rebalancing',
+      'Risk assessment',
+      'Profit optimization'
     ],
+    detailedFeatures: [
+      'Machine learning position sizing',
+      'Sentiment analysis integration',
+      'Dynamic risk management',
+      'Cross-chain portfolio tracking'
+    ],
+    demoAvailable: true,
     cta: 'Unlock Power',
     color: {
       primary: 'text-yellow-400',
@@ -97,10 +113,17 @@ const FEATURE_CARDS: FeatureCard[] = [
     tier: 'Fusion Master',
     benefits: [
       'Cross-protocol yield farming',
-      'Automated strategy execution',
-      'Liquidity pool optimization',
-      'Compound interest mastery'
+      'Automated execution',
+      'Liquidity optimization',
+      'Compound interest'
     ],
+    detailedFeatures: [
+      'Multi-protocol yield aggregation',
+      'Impermanent loss protection',
+      'Auto-compounding strategies',
+      'Flash loan arbitrage'
+    ],
+    demoAvailable: true,
     cta: 'Learn Fusion',
     color: {
       primary: 'text-green-400',
@@ -112,7 +135,7 @@ const FEATURE_CARDS: FeatureCard[] = [
   {
     id: 'power-rankings',
     title: 'Power Level Rankings',
-    subtitle: 'Ascend the Warrior Hierarchy',
+    subtitle: 'Power Level Rankings',
     description: 'Climb the leaderboards and unlock exclusive rewards. Prove your trading prowess and earn legendary status among DeFi warriors.',
     icon: Trophy,
     powerLevel: 50000,
@@ -120,9 +143,16 @@ const FEATURE_CARDS: FeatureCard[] = [
     benefits: [
       'Competitive leaderboards',
       'Achievement unlocks',
-      'Exclusive tier rewards',
+      'Exclusive rewards',
       'Community recognition'
     ],
+    detailedFeatures: [
+      'Global performance tracking',
+      'Skill-based matchmaking',
+      'Seasonal tournaments',
+      'Elite tier exclusive features'
+    ],
+    demoAvailable: false,
     cta: 'Check Rankings',
     color: {
       primary: 'text-purple-400',
@@ -139,7 +169,10 @@ const PowerLevelIndicator: React.FC<{ powerLevel: number; tier: string; color: F
   color 
 }) => {
   const formatPowerLevel = (level: number) => {
-    if (level >= 1000) return `${(level / 1000).toFixed(1)}K`
+    if (level >= 1000) {
+      const kValue = level / 1000
+      return kValue % 1 === 0 ? `${kValue}.0K` : `${kValue.toFixed(1)}K`
+    }
     return level.toString()
   }
 
@@ -168,6 +201,8 @@ const FeatureCardComponent: React.FC<{
   animated: boolean;
 }> = ({ feature, index, showPowerLevels, animated }) => {
   const [isHovered, setIsHovered] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [showDemo, setShowDemo] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, { once: true, margin: "-100px" })
   
@@ -202,6 +237,10 @@ const FeatureCardComponent: React.FC<{
   return (
     <motion.div
       ref={ref}
+      role="article"
+      tabIndex={0}
+      aria-label={`${feature.title}: ${feature.subtitle}`}
+      aria-describedby={`feature-${feature.id}-description`}
       variants={animated ? cardVariants : undefined}
       initial={animated ? "hidden" : undefined}
       animate={animated && isInView ? "visible" : undefined}
@@ -209,11 +248,24 @@ const FeatureCardComponent: React.FC<{
       whileHover={animated ? { scale: 1.02, y: -8 } : undefined}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
+      onTouchStart={() => setIsHovered(true)}
+      onTouchEnd={() => setTimeout(() => setIsHovered(false), 2000)}
+      onFocus={() => setIsHovered(true)}
+      onBlur={() => setIsHovered(false)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          setIsExpanded(!isExpanded)
+        }
+      }}
       className={cn(
-        "relative group p-6 rounded-xl border-2 border-slate-700/50",
+        "relative group p-4 sm:p-6 rounded-xl border-2 border-slate-700/50",
         "bg-gradient-to-br from-slate-900/80 to-slate-800/80",
         "backdrop-blur-sm transition-all duration-300",
         "storm-hover-glow cursor-pointer",
+        "touch-manipulation select-none",
+        "min-h-[320px] sm:min-h-[380px]",
+        "focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:ring-offset-2 focus:ring-offset-slate-900",
         feature.color.accent,
         isHovered && feature.color.glow
       )}
@@ -246,20 +298,52 @@ const FeatureCardComponent: React.FC<{
         />
       )}
 
-      {/* Icon with Animation */}
+      {/* Icon with Enhanced Animation */}
       <motion.div
         className={cn(
           "flex items-center justify-center w-12 h-12 rounded-lg mb-4",
           "bg-gradient-to-br from-slate-800 to-slate-900",
+          "relative overflow-hidden",
           feature.color.accent
         )}
         animate={{
-          rotate: isHovered ? [0, 5, -5, 0] : 0,
-          scale: isHovered ? 1.1 : 1
+          rotate: isHovered ? [0, 8, -8, 0] : 0,
+          scale: isHovered ? 1.15 : 1,
+          boxShadow: isHovered 
+            ? `0 0 20px ${feature.color.glow.replace('bg-', '').replace('/20', '')}40` 
+            : "0 0 0px transparent"
         }}
-        transition={{ duration: 0.5 }}
+        transition={{ 
+          duration: 0.6,
+          ease: [0.4, 0, 0.2, 1]
+        }}
       >
-        <IconComponent className={cn("w-6 h-6", feature.color.primary)} />
+        {/* Icon Glow Background */}
+        {isHovered && (
+          <motion.div
+            className={cn(
+              "absolute inset-0 rounded-lg",
+              feature.color.glow
+            )}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 0.3, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.3 }}
+          />
+        )}
+        
+        <motion.div
+          animate={{
+            rotate: isHovered ? 360 : 0
+          }}
+          transition={{
+            duration: isHovered ? 2 : 0,
+            ease: "linear",
+            repeat: isHovered ? Infinity : 0
+          }}
+        >
+          <IconComponent className={cn("w-6 h-6 relative z-10", feature.color.primary)} />
+        </motion.div>
       </motion.div>
 
       {/* Content */}
@@ -273,7 +357,10 @@ const FeatureCardComponent: React.FC<{
           </p>
         </div>
 
-        <p className="text-gray-300 text-sm leading-relaxed">
+        <p 
+          id={`feature-${feature.id}-description`}
+          className="text-gray-300 text-sm leading-relaxed"
+        >
           {feature.description}
         </p>
 
@@ -296,13 +383,72 @@ const FeatureCardComponent: React.FC<{
           ))}
         </ul>
 
+        {/* Progressive Disclosure */}
+        {feature.detailedFeatures && !isExpanded && (
+          <motion.button
+            onClick={() => setIsExpanded(true)}
+            className="text-xs text-gray-400 hover:text-gray-300 mt-2 flex items-center space-x-1"
+            whileHover={{ scale: 1.02 }}
+          >
+            <span>Show advanced features</span>
+            <ArrowRight className="w-3 h-3" />
+          </motion.button>
+        )}
+
+        {/* Detailed Features */}
+        {isExpanded && feature.detailedFeatures && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="mt-3 space-y-2"
+          >
+            <div className="border-t border-gray-600 pt-3">
+              <h4 className="text-xs font-semibold text-gray-300 mb-2">Advanced Features:</h4>
+              <ul className="space-y-1">
+                {feature.detailedFeatures.map((feature, idx) => (
+                  <li key={idx} className="flex items-center space-x-2 text-xs text-gray-400">
+                    <Target className="w-2 h-2 text-blue-400" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <button
+              onClick={() => setIsExpanded(false)}
+              className="text-xs text-gray-400 hover:text-gray-300 flex items-center space-x-1"
+            >
+              <span>Show less</span>
+            </button>
+          </motion.div>
+        )}
+
+        {/* Demo Button */}
+        {feature.demoAvailable && (
+          <motion.button
+            onClick={() => setShowDemo(true)}
+            className={cn(
+              "w-full mt-3 px-3 py-2 rounded-lg font-medium text-xs",
+              "bg-gradient-to-r from-slate-700 to-slate-800",
+              "border border-gray-600 hover:border-gray-500",
+              "text-gray-300 hover:text-white",
+              "transition-all duration-300"
+            )}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            Try Interactive Demo
+          </motion.button>
+        )}
+
         {/* CTA Button */}
         <motion.button
+          aria-label={`${feature.cta} for ${feature.title}`}
           className={cn(
             "w-full mt-4 px-4 py-3 rounded-lg font-semibold text-sm",
             "bg-gradient-to-r from-slate-800 to-slate-900",
             "border-2 transition-all duration-300",
             "flex items-center justify-center space-x-2 group/btn",
+            "focus:outline-none focus:ring-2 focus:ring-blue-400/50",
             feature.color.accent,
             feature.color.primary
           )}
@@ -310,34 +456,53 @@ const FeatureCardComponent: React.FC<{
           whileTap={{ scale: 0.98 }}
         >
           <span>{feature.cta}</span>
-          <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
+          <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" aria-hidden="true" />
         </motion.button>
       </div>
 
       {/* Power-up Effect */}
       {isHovered && showPowerLevels && (
-        <div className="absolute inset-0 pointer-events-none">
-          {[...Array(6)].map((_, i) => (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {/* Energy Particles */}
+          {[...Array(8)].map((_, i) => (
             <motion.div
-              key={i}
+              key={`particle-${i}`}
               className={cn("absolute w-1 h-1 rounded-full", feature.color.primary.replace('text-', 'bg-'))}
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
               }}
               animate={{
-                y: [-10, -30, -10],
+                y: [-10, -40, -10],
                 opacity: [0, 1, 0],
-                scale: [0, 1, 0]
+                scale: [0, 1.5, 0],
+                rotate: [0, 360, 720]
               }}
               transition={{
-                duration: 1.5,
+                duration: 2,
                 repeat: Infinity,
-                delay: i * 0.2,
-                ease: "easeInOut"
+                delay: i * 0.15,
+                ease: [0.4, 0, 0.2, 1]
               }}
             />
           ))}
+          
+          {/* Power Aura Ring */}
+          <motion.div
+            className={cn(
+              "absolute inset-2 rounded-xl border-2 opacity-30",
+              feature.color.accent
+            )}
+            animate={{
+              scale: [1, 1.05, 1],
+              opacity: [0.2, 0.5, 0.2]
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
         </div>
       )}
     </motion.div>
@@ -366,6 +531,8 @@ export const FeatureShowcaseGrid: React.FC<FeatureShowcaseGridProps> = ({
   return (
     <motion.section
       ref={ref}
+      aria-labelledby="feature-showcase-title"
+      role="region"
       variants={animated ? containerVariants : undefined}
       initial={animated ? "hidden" : undefined}
       animate={animated && isInView ? "visible" : undefined}
@@ -390,21 +557,24 @@ export const FeatureShowcaseGrid: React.FC<FeatureShowcaseGridProps> = ({
           <Shield className="w-6 h-6 text-yellow-400" />
         </div>
         
-        <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-4">
+        <h2 
+          id="feature-showcase-title"
+          className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4"
+        >
           <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-yellow-400 bg-clip-text text-transparent">
             Power Up
           </span>{' '}
-          Your DeFi Arsenal
+          <span className="block sm:inline">Your DeFi Arsenal</span>
         </h2>
         
-        <p className="text-gray-300 text-lg max-w-3xl mx-auto leading-relaxed">
+        <p className="text-gray-300 text-base sm:text-lg max-w-3xl mx-auto leading-relaxed px-4 sm:px-0">
           Master the ultimate DeFi techniques and unlock legendary status in the Sei ecosystem. 
           Each feature grants unique abilities to dominate the battlefield.
         </p>
       </motion.div>
 
       {/* Features Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6 lg:gap-8 max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-7xl mx-auto px-4 sm:px-0">
         {FEATURE_CARDS.map((feature, index) => (
           <FeatureCardComponent
             key={feature.id}
@@ -424,10 +594,10 @@ export const FeatureShowcaseGrid: React.FC<FeatureShowcaseGridProps> = ({
           animate={animated && isInView ? { opacity: 1, y: 0 } : undefined}
           transition={animated ? { duration: 0.6, delay: 1 } : undefined}
         >
-          <div className="inline-flex items-center space-x-4 px-6 py-3 rounded-full bg-gradient-to-r from-slate-900/80 to-slate-800/80 border border-yellow-400/30">
+          <div className="inline-flex items-center space-x-2 sm:space-x-4 px-4 sm:px-6 py-3 rounded-full bg-gradient-to-r from-slate-900/80 to-slate-800/80 border border-yellow-400/30">
             <BarChart3 className="w-5 h-5 text-yellow-400" />
             <span className="text-yellow-400 font-semibold">
-              Total Power Available: 99K+
+              Total Power Available: 99.0K+
             </span>
             <Coins className="w-5 h-5 text-yellow-400" />
           </div>

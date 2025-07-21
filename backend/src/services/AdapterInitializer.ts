@@ -3,10 +3,16 @@ import * as TE from 'fp-ts/TaskEither';
 import * as E from 'fp-ts/Either';
 import { HiveIntelligenceAdapter } from '../adapters/HiveIntelligenceAdapter';
 import { SeiAgentKitAdapter } from '../adapters/SeiAgentKitAdapter';
-import { SeiMCPAdapter } from '../adapters/SeiMCPAdapter';
 import { SeiIntegrationService } from './SeiIntegrationService';
 import { AIService } from './AIService';
 import logger from '../utils/logger';
+
+// MCP Client imports
+import { MCPClientFactory, MCPConnectionManager, initializeMCPConnectionManager } from '../lib/mcp/client';
+import { HiveIntelligenceMCPConfig } from '../config/mcp/hive-intelligence';
+import { seiBlockchainMCPConfig } from '../config/mcp/sei-blockchain';
+import { portfolioManagerConfig } from '../config/mcp/portfolio-manager';
+import { createMCPWrapperAdapters, UnifiedMCPAdapter } from '../adapters/MCPWrapperAdapters';
 
 /**
  * AdapterInitializer - Handles initialization of real AI adapters
@@ -19,7 +25,8 @@ import logger from '../utils/logger';
 export class AdapterInitializer {
   private hiveAdapter?: HiveIntelligenceAdapter;
   private sakAdapter?: SeiAgentKitAdapter;
-  private mcpAdapter?: SeiMCPAdapter;
+  private mcpConnectionManager?: MCPConnectionManager;
+  private mcpClients: Map<string, any> = new Map();
 
   constructor(private config: {
     hive: {
@@ -59,7 +66,7 @@ export class AdapterInitializer {
   public initializeAdapters = (): TE.TaskEither<Error, {
     hive?: HiveIntelligenceAdapter;
     sak?: SeiAgentKitAdapter;
-    mcp?: SeiMCPAdapter;
+    mcpClients?: Map<string, any>;
   }> => {
     logger.info('Initializing AI adapters', {
       hiveEnabled: this.config.hive.enabled,
@@ -71,21 +78,22 @@ export class AdapterInitializer {
       TE.Do,
       TE.bind('hive', () => this.initializeHiveAdapter()),
       TE.bind('sak', () => this.initializeSAKAdapter()),
-      TE.bind('mcp', () => this.initializeMCPAdapter()),
+      TE.bind('mcp', () => this.initializeMCPClients()),
       TE.map(({ hive, sak, mcp }) => {
         const adapters: {
           hive?: HiveIntelligenceAdapter;
           sak?: SeiAgentKitAdapter;
-          mcp?: SeiMCPAdapter;
+          mcpClients?: Map<string, any>;
         } = {};
         if (hive) adapters.hive = hive;
         if (sak) adapters.sak = sak;
-        if (mcp) adapters.mcp = mcp;
+        if (mcp) adapters.mcpClients = mcp;
 
         logger.info('AI adapters initialized successfully', {
           hiveInitialized: !!hive,
           sakInitialized: !!sak,
-          mcpInitialized: !!mcp
+          mcpInitialized: !!mcp && mcp.size > 0,
+          mcpServersConnected: mcp ? Array.from(mcp.keys()) : []
         });
 
         return adapters;
@@ -103,18 +111,36 @@ export class AdapterInitializer {
     return pipe(
       this.initializeAdapters(),
       TE.chain(adapters => {
-        // Register with SeiIntegrationService
-        seiIntegrationService.registerAdapters(adapters);
+        // Create MCP wrapper adapters for backward compatibility
+        const mcpWrappers = this.createMCPWrapperAdapters(adapters.mcpClients);
+        
+        // Register traditional adapters with SeiIntegrationService
+        seiIntegrationService.registerAdapters({
+          hive: adapters.hive || mcpWrappers.hive,
+          sak: adapters.sak || mcpWrappers.sak
+        });
+        
+        // Register MCP clients separately if available
+        if (adapters.mcpClients && this.mcpConnectionManager) {
+          const factory = this.mcpConnectionManager.getFactory();
+          seiIntegrationService.registerMCPClients({
+            hiveIntelligence: factory,
+            seiBlockchain: factory,
+            portfolioManager: factory
+          });
+        }
 
         // Register with AIService - cast to any to avoid interface mismatch
         aiService.initializeAdapters(
-          adapters.hive as any,
-          adapters.sak as any,
-          adapters.mcp as any
+          adapters.hive || mcpWrappers.hive as any,
+          adapters.sak || mcpWrappers.sak as any,
+          this.createMCPWrapper(adapters.mcpClients) as any
         );
 
         logger.info('Adapters registered with services', {
-          registeredCount: Object.keys(adapters).length
+          registeredCount: Object.keys(adapters).length,
+          mcpServersRegistered: adapters.mcpClients ? adapters.mcpClients.size : 0,
+          mcpWrappersCreated: Object.keys(mcpWrappers).length
         });
 
         return TE.right(undefined);
@@ -193,36 +219,167 @@ export class AdapterInitializer {
     );
   };
 
+  // /**
+  //  * Initialize Sei MCP Adapter
+  //  */
+  // private initializeMCPAdapter = (): TE.TaskEither<Error, SeiMCPAdapter | undefined> => {
+  //   if (!this.config.mcp.enabled) {
+  //     logger.info('Sei MCP adapter disabled');
+  //     return TE.right(undefined);
+  //   }
+  //
+  //   return TE.tryCatch(
+  //     async () => {
+  //       this.mcpAdapter = new SeiMCPAdapter({
+  //         endpoint: this.config.mcp.endpoint,
+  //         port: this.config.mcp.port,
+  //         secure: this.config.mcp.secure,
+  //         apiKey: this.config.mcp.apiKey,
+  //         network: this.config.mcp.network,
+  //         connectionTimeout: this.config.mcp.connectionTimeout,
+  //         heartbeatInterval: this.config.mcp.heartbeatInterval,
+  //         maxReconnectAttempts: this.config.mcp.maxReconnectAttempts
+  //       });
+  //
+  //       // Connect to MCP server
+  //       await this.mcpAdapter.connectToMCP();
+  //
+  //       logger.info('Sei MCP adapter initialized and connected');
+  //       return this.mcpAdapter;
+  //     },
+  //     error => new Error(`Failed to initialize MCP adapter: ${error}`)
+  //   );
+  // };
+
   /**
-   * Initialize Sei MCP Adapter
+   * Initialize MCP Clients
    */
-  private initializeMCPAdapter = (): TE.TaskEither<Error, SeiMCPAdapter | undefined> => {
+  private initializeMCPClients = (): TE.TaskEither<Error, Map<string, any> | undefined> => {
     if (!this.config.mcp.enabled) {
-      logger.info('Sei MCP adapter disabled');
+      logger.info('MCP adapters disabled');
       return TE.right(undefined);
     }
 
     return TE.tryCatch(
       async () => {
-        this.mcpAdapter = new SeiMCPAdapter({
-          endpoint: this.config.mcp.endpoint,
-          port: this.config.mcp.port,
-          secure: this.config.mcp.secure,
-          apiKey: this.config.mcp.apiKey,
-          network: this.config.mcp.network,
-          connectionTimeout: this.config.mcp.connectionTimeout,
-          heartbeatInterval: this.config.mcp.heartbeatInterval,
-          maxReconnectAttempts: this.config.mcp.maxReconnectAttempts
+        // Configure MCP servers
+        const mcpConfig = {
+          servers: [
+            {
+              name: 'hive-intelligence',
+              type: 'websocket' as const,
+              url: `${this.config.mcp.secure ? 'wss' : 'ws'}://${this.config.mcp.endpoint}:${this.config.mcp.port}/hive`,
+              apiKey: this.config.mcp.apiKey,
+              metadata: HiveIntelligenceMCPConfig
+            },
+            {
+              name: 'sei-blockchain',
+              type: 'websocket' as const,
+              url: `${this.config.mcp.secure ? 'wss' : 'ws'}://${this.config.mcp.endpoint}:${this.config.mcp.port}/sei`,
+              apiKey: this.config.mcp.apiKey,
+              metadata: seiBlockchainMCPConfig
+            },
+            {
+              name: 'portfolio-manager',
+              type: 'websocket' as const,
+              url: `${this.config.mcp.secure ? 'wss' : 'ws'}://${this.config.mcp.endpoint}:${this.config.mcp.port}/portfolio`,
+              apiKey: this.config.mcp.apiKey,
+              metadata: portfolioManagerConfig
+            }
+          ],
+          retryAttempts: this.config.mcp.maxReconnectAttempts,
+          retryDelay: 1000,
+          timeout: this.config.mcp.connectionTimeout
+        };
+
+        // Initialize connection manager
+        this.mcpConnectionManager = initializeMCPConnectionManager(mcpConfig);
+        
+        // Initialize all servers
+        await this.mcpConnectionManager.initializeAll();
+        
+        // Get connected clients
+        const factory = this.mcpConnectionManager.getFactory();
+        this.mcpClients = factory.getClients();
+        
+        logger.info('MCP clients initialized', {
+          connectedServers: Array.from(this.mcpClients.keys())
         });
-
-        // Connect to MCP server
-        await this.mcpAdapter.connectToMCP();
-
-        logger.info('Sei MCP adapter initialized and connected');
-        return this.mcpAdapter;
+        
+        return this.mcpClients;
       },
-      error => new Error(`Failed to initialize MCP adapter: ${error}`)
+      error => new Error(`Failed to initialize MCP clients: ${error}`)
     );
+  };
+
+  /**
+   * Create MCP wrapper adapters for backward compatibility
+   */
+  private createMCPWrapperAdapters(mcpClients?: Map<string, any>): any {
+    if (!mcpClients || !this.mcpConnectionManager) return {};
+
+    const factory = this.mcpConnectionManager.getFactory();
+    return createMCPWrapperAdapters(mcpClients, factory);
+  }
+
+  /**
+   * Create a unified MCP wrapper for AIService
+   */
+  private createMCPWrapper(mcpClients?: Map<string, any>): any {
+    if (!mcpClients || !this.mcpConnectionManager) return null;
+
+    const factory = this.mcpConnectionManager.getFactory();
+    const unifiedAdapter = new UnifiedMCPAdapter(factory);
+    
+    return {
+      // Provide methods expected by AIService
+      getBlockchainState: () => unifiedAdapter.getBlockchainState(),
+      getWalletBalance: (address: string) => unifiedAdapter.getWalletBalance(address),
+      subscribeToEvents: (types: string[], filters?: any) => unifiedAdapter.subscribeToEvents(types, filters),
+      isConnected: () => unifiedAdapter.isConnected(),
+      on: (event: string, callback: (data: any) => void) => unifiedAdapter.on(event, callback)
+    };
+  }
+
+  /**
+   * Get current adapters and MCP clients
+   */
+  public getAdapters = (): {
+    hive?: HiveIntelligenceAdapter;
+    sak?: SeiAgentKitAdapter;
+    mcpClients?: Map<string, any>;
+    mcpConnectionManager?: MCPConnectionManager;
+  } => {
+    const mcpWrappers = this.createMCPWrapperAdapters(this.mcpClients);
+    
+    return {
+      hive: this.hiveAdapter || mcpWrappers.hive,
+      sak: this.sakAdapter || mcpWrappers.sak,
+      mcpClients: this.mcpClients,
+      mcpConnectionManager: this.mcpConnectionManager
+    };
+  };
+
+  /**
+   * Check if MCP clients are connected
+   */
+  public isMCPConnected = (): boolean => {
+    return this.mcpClients.size > 0;
+  };
+
+  /**
+   * Get MCP connection status
+   */
+  public getMCPStatus = (): {
+    connected: boolean;
+    servers: string[];
+    clientCount: number;
+  } => {
+    return {
+      connected: this.mcpClients.size > 0,
+      servers: Array.from(this.mcpClients.keys()),
+      clientCount: this.mcpClients.size
+    };
   };
 
   /**
@@ -231,8 +388,9 @@ export class AdapterInitializer {
   public cleanup = (): TE.TaskEither<Error, void> => {
     return TE.tryCatch(
       async () => {
-        if (this.mcpAdapter) {
-          this.mcpAdapter.disconnectFromMCP();
+        // Shutdown MCP connections
+        if (this.mcpConnectionManager) {
+          await this.mcpConnectionManager.shutdown();
         }
 
         logger.info('Adapters cleaned up');

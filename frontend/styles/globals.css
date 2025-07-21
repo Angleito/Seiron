@@ -1,9 +1,10 @@
-/* Import design tokens first */
+/* Import optimized design system */
 @import './design-tokens.css';
+@import './dbz-theme.css';
+@import './optimized-animations.css';
 @import './storm-animations.css';
 @import './button-click-fix.css';
 @import './anime-message-bubble.css';
-@import './dbz-theme.css';
 
 @font-face {
   font-family: 'Geist Sans';
@@ -24,57 +25,79 @@
 @tailwind utilities;
 
 /* ========================================
-   SIMPLIFIED THEME PROPERTIES
+   OPTIMIZED GLOBAL PROPERTIES
    ======================================== */
 
 :root {
-  /* Animation Timings */
-  --animation-slow: 8s;
-  --animation-medium: 4s;
-  --animation-fast: 2s;
+  /* Performance-focused content visibility */
+  --content-auto: auto;
+  --content-hidden: hidden;
   
-  /* Limited accent usage (10% max) */
-  --accent-glow: 0 0 20px rgba(220, 38, 38, 0.3);
-  --accent-glow-hover: 0 0 30px rgba(220, 38, 38, 0.5);
+  /* Scroll behavior */
+  scroll-behavior: smooth;
+}
+
+/* Optimize scroll behavior for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    scroll-behavior: auto;
+  }
 }
 
 @layer base {
   html {
     height: 100%;
-  }
-  body {
-    min-height: 100%;
-    background-color: var(--color-neutral-950);
-    color: var(--color-foreground);
-    font-family: 'Geist Sans', system-ui, sans-serif;
-    font-size: var(--font-size-3);
-    font-weight: var(--font-weight-normal);
-    line-height: var(--line-height-normal);
+    /* Improve text rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
   
-  /* Typography resets for consistency */
+  body {
+    min-height: 100%;
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    font-family: 'Geist Sans', system-ui, sans-serif;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-normal);
+    line-height: var(--line-height-normal);
+    
+    /* Performance optimizations */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+  
+  /* Optimized typography hierarchy */
   h1, h2, h3, h4, h5, h6 {
     font-weight: var(--font-weight-semibold);
     line-height: var(--line-height-tight);
+    color: var(--color-text-primary);
   }
   
-  h1 { font-size: var(--font-size-1); }
-  h2 { font-size: var(--font-size-2); }
-  h3 { font-size: var(--font-size-2); }
-  h4 { font-size: var(--font-size-3); }
-  h5 { font-size: var(--font-size-3); }
-  h6 { font-size: var(--font-size-4); }
+  h1 { font-size: var(--font-size-3xl); }
+  h2 { font-size: var(--font-size-2xl); }
+  h3 { font-size: var(--font-size-xl); }
+  h4 { font-size: var(--font-size-lg); }
+  h5 { font-size: var(--font-size-base); }
+  h6 { font-size: var(--font-size-sm); }
   
-  /* Standard spacing for paragraphs */
+  /* Improved paragraph spacing */
   p {
-    margin-top: var(--space-4);
-    margin-bottom: var(--space-4);
+    margin-block: var(--space-4);
+    color: var(--color-text-secondary);
   }
   
-  /* Remove default margins */
-  * {
+  /* Reset with modern CSS */
+  *, *::before, *::after {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
+  }
+  
+  /* Improved focus styles */
+  :focus-visible {
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: 2px;
   }
 }
 
@@ -84,139 +107,160 @@
   }
   
   /* ========================================
-     SIMPLIFIED UTILITY CLASSES
+     OPTIMIZED UTILITY CLASSES
      ======================================== */
   
-  /* Minimal accent glow (use sparingly - 10% rule) */
-  .accent-glow {
-    box-shadow: var(--accent-glow);
-    transition: box-shadow var(--transition-base);
-  }
+  /* Shadow utilities using design tokens */
+  .shadow-none { box-shadow: var(--shadow-none); }
+  .shadow-sm { box-shadow: var(--shadow-sm); }
+  .shadow-md { box-shadow: var(--shadow-md); }
+  .shadow-lg { box-shadow: var(--shadow-lg); }
+  .shadow-xl { box-shadow: var(--shadow-xl); }
+  .shadow-2xl { box-shadow: var(--shadow-2xl); }
   
-  .accent-glow:hover {
-    box-shadow: var(--accent-glow-hover);
-  }
-  
-  /* Standard shadow utilities */
-  .shadow-subtle {
-    box-shadow: var(--shadow-sm);
-  }
-  
-  .shadow-default {
-    box-shadow: var(--shadow-md);
-  }
-  
-  .shadow-prominent {
-    box-shadow: var(--shadow-lg);
-  }
-  
-  /* GPU Acceleration for animations */
+  /* Performance utilities */
   .gpu-accelerated {
-    will-change: transform, opacity;
     transform: translateZ(0);
     backface-visibility: hidden;
     -webkit-font-smoothing: antialiased;
   }
+  
+  .will-change-transform { will-change: transform; }
+  .will-change-opacity { will-change: opacity; }
+  .will-change-auto { will-change: auto; }
+  
+  /* Layout containment */
+  .contain-layout { contain: layout; }
+  .contain-paint { contain: paint; }
+  .contain-size { contain: size; }
+  .contain-strict { contain: strict; }
+  
+  /* Content visibility optimization */
+  .content-auto { content-visibility: auto; }
+  .content-hidden { content-visibility: hidden; }
+  
+  /* Smooth transitions */
+  .transition-fast { transition: all var(--transition-fast); }
+  .transition-base { transition: all var(--transition-base); }
+  .transition-slow { transition: all var(--transition-slow); }
 }
 
 /* ========================================
-   ESSENTIAL ANIMATIONS ONLY
+   ESSENTIAL ANIMATIONS - GPU OPTIMIZED
    ======================================== */
 
-/* Simple pulse for hover states */
+/* Optimized pulse animation */
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
+    transform: scale3d(1, 1, 1);
   }
   50% {
     opacity: 0.8;
+    transform: scale3d(1.05, 1.05, 1);
   }
 }
 
-/* Subtle float for dragon elements */
+/* Optimized float animation */
 @keyframes float {
   0%, 100% {
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
   50% {
-    transform: translateY(-8px);
+    transform: translate3d(0, -8px, 0);
   }
 }
 
-/* Loading spinner */
+/* Optimized spin animation */
 @keyframes spin {
   from {
-    transform: rotate(0deg);
+    transform: rotate3d(0, 0, 1, 0deg);
   }
   to {
-    transform: rotate(360deg);
+    transform: rotate3d(0, 0, 1, 360deg);
   }
 }
 
-/* Fade in for page transitions */
+/* Optimized fade-in animation */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translate3d(0, 10px, 0);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Slide-in animation for modals */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0) scale3d(0.95, 0.95, 1);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
   }
 }
 
 /* ========================================
-   ANIMATION UTILITY CLASSES
+   OPTIMIZED ANIMATION UTILITIES
    ======================================== */
 
 .animate-pulse {
-  animation: pulse 2s ease-in-out infinite;
+  animation: pulse var(--animation-duration-slow) var(--ease-in-out) infinite;
+  will-change: transform, opacity;
 }
 
 .animate-float {
-  animation: float 6s ease-in-out infinite;
+  animation: float var(--animation-duration-epic) var(--ease-in-out) infinite;
+  will-change: transform;
 }
 
 .animate-spin {
-  animation: spin 1s linear infinite;
+  animation: spin var(--animation-duration-normal) linear infinite;
+  will-change: transform;
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.5s ease-out;
+  animation: fadeIn var(--animation-duration-normal) var(--ease-out);
+  will-change: transform, opacity;
 }
 
-/* Dragon-specific animations (simplified) */
+.animate-slide-in {
+  animation: slideIn var(--animation-duration-normal) var(--ease-out);
+  will-change: transform, opacity;
+}
+
+/* Dragon-specific animations */
 .dragon-idle {
-  animation: float 8s ease-in-out infinite;
+  animation: float var(--animation-duration-epic) var(--ease-in-out) infinite;
+  will-change: transform;
 }
 
 .dragon-active {
-  animation: pulse 1s ease-in-out infinite;
+  animation: pulse var(--animation-duration-normal) var(--ease-in-out) infinite;
+  will-change: transform, opacity;
 }
 
-/* Loading states */
+/* Optimized loading spinner */
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid var(--color-neutral-800);
-  border-top-color: var(--color-accent-primary);
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--color-saiyan-gold);
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: spin var(--animation-duration-normal) linear infinite;
+  will-change: transform;
 }
 
 /* ========================================
-   RESPONSIVE UTILITIES
+   COMPREHENSIVE RESPONSIVE DESIGN
    ======================================== */
 
-/* Mobile-first responsive */
-@media (max-width: 640px) {
-  :root {
-    --font-size-1: 1.125rem;  /* 18px on mobile */
-    --font-size-2: 0.875rem;  /* 14px on mobile */
-  }
-}
-
-/* Reduced motion support */
+/* Optimized reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -224,47 +268,146 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .animate-pulse,
+  .animate-float,
+  .animate-spin,
+  .dragon-idle,
+  .dragon-active {
+    animation: none !important;
   }
 }
 
-/* Dark mode is default, but support light mode */
-@media (prefers-color-scheme: light) {
+/* High contrast mode adjustments */
+@media (prefers-contrast: high) {
   :root {
-    --color-background: var(--color-neutral-50);
-    --color-foreground: var(--color-neutral-900);
-    --color-foreground-muted: var(--color-neutral-600);
-    --color-border: var(--color-neutral-200);
-    --color-border-muted: var(--color-neutral-300);
+    --color-bg-primary: #000000;
+    --color-text-primary: #ffffff;
+    --color-border: #ffffff;
+    --color-border-focus: #ffff00;
+  }
+  
+  .glow-saiyan,
+  .glow-ki,
+  .glow-power {
+    box-shadow: none;
+    border: 2px solid currentColor;
   }
 }
 
-/* Canvas visibility fixes */
+/* Battery optimization */
+@media (prefers-reduced-data: reduce) {
+  .animate-pulse,
+  .animate-float,
+  .animate-spin {
+    animation-play-state: paused;
+  }
+}
+
+/* Mobile optimization */
+@media (max-width: 640px) {
+  .loading-spinner {
+    width: 32px;
+    height: 32px;
+    border-width: 2px;
+  }
+  
+  .animate-float {
+    animation-duration: calc(var(--animation-duration-epic) * 0.7);
+  }
+}
+
+/* ========================================
+   CANVAS & 3D OPTIMIZATIONS
+   ======================================== */
+
 canvas {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
+  /* Optimize canvas performance */
+  image-rendering: optimizeSpeed;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: optimize-contrast;
 }
 
-/* Ensure Three.js containers are visible */
+/* Three.js container optimization */
 div[data-testid="dragon-renderer"],
 div[class*="dragon"] {
   min-width: 100px;
   min-height: 100px;
+  contain: layout style paint;
 }
 
-/* Debug: Make all canvases have a visible border */
-canvas {
-  border: 1px solid rgba(255, 255, 0, 0.5) !important;
-}
+/* ========================================
+   PRINT STYLES
+   ======================================== */
 
-/* Print styles */
 @media print {
   body {
-    background: white;
-    color: black;
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+    line-height: 1.4;
   }
   
-  .no-print {
+  .animate-pulse,
+  .animate-float,
+  .animate-spin,
+  .dragon-idle,
+  .dragon-active,
+  .loading-spinner {
+    animation: none !important;
+  }
+  
+  .glow-saiyan,
+  .glow-ki,
+  .glow-power {
+    box-shadow: none !important;
+    border: 1px solid currentColor;
+  }
+  
+  .no-print,
+  canvas,
+  video,
+  .loading-spinner {
     display: none !important;
+  }
+  
+  /* Optimize for print */
+  h1 { font-size: 18pt; }
+  h2 { font-size: 16pt; }
+  h3 { font-size: 14pt; }
+  
+  /* Print-friendly colors */
+  .text-saiyan,
+  .text-ki,
+  .text-power {
+    color: black !important;
+  }
+}
+
+/* ========================================
+   PERFORMANCE MONITORING
+   ======================================== */
+
+/* Visibility API integration for performance */
+.pause-when-hidden {
+  animation-play-state: running;
+}
+
+@media (display-mode: fullscreen) {
+  .pause-when-hidden {
+    animation-play-state: running;
+  }
+}
+
+/* Container queries support */
+@supports (container-type: inline-size) {
+  .responsive-container {
+    container-type: inline-size;
   }
 }
