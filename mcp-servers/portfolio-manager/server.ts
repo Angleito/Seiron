@@ -7,7 +7,7 @@ import { createHash } from 'crypto';
 const PORTFOLIO_API_URL = process.env.PORTFOLIO_API_URL || 'http://localhost:8000/api';
 const PORTFOLIO_API_KEY = process.env.PORTFOLIO_API_KEY || '';
 const COINGECKO_API_KEY = process.env.COINGECKO_API_KEY || '';
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+const REDIS_URL = process.env.REDIS_URL || process.env.REDIS_PRIVATE_URL || 'redis://localhost:6379';
 
 // Redis client for caching
 import Redis from 'ioredis';
