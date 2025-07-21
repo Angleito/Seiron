@@ -85,39 +85,39 @@ const FEATURES: FeatureCard[] = [
   }
 ]
 
-// Helper function to generate symmetrical star positions like DBZ Dragon Balls
-// Using more balanced positioning with better visual spacing
+// Helper function to generate dice-style star positions for DBZ Dragon Balls
+// Stars spread out like dice dots for maximum visual clarity and symmetry
 const getStarPositions = (starCount: number): Array<{x: number, y: number}> => {
   const positions = {
-    4: [
-      { x: 40, y: 40 }, // Top-left - moved further inward
-      { x: 60, y: 40 }, // Top-right - more balanced spacing
-      { x: 40, y: 60 }, // Bottom-left - symmetric with top
-      { x: 60, y: 60 }  // Bottom-right - perfect square formation
+    4: [ // Like dice "4" - corners spread wide
+      { x: 25, y: 25 }, // Top-left corner
+      { x: 75, y: 25 }, // Top-right corner
+      { x: 25, y: 75 }, // Bottom-left corner
+      { x: 75, y: 75 }  // Bottom-right corner
     ],
-    5: [
-      { x: 38, y: 38 }, // Top-left 
-      { x: 62, y: 38 }, // Top-right
+    5: [ // Like dice "5" - corners plus center
+      { x: 25, y: 25 }, // Top-left corner
+      { x: 75, y: 25 }, // Top-right corner
       { x: 50, y: 50 }, // Perfect center
-      { x: 38, y: 62 }, // Bottom-left
-      { x: 62, y: 62 }  // Bottom-right
+      { x: 25, y: 75 }, // Bottom-left corner
+      { x: 75, y: 75 }  // Bottom-right corner
     ],
-    6: [
-      { x: 38, y: 35 }, // Top-left
-      { x: 50, y: 32 }, // Top-center - closer to edge
-      { x: 62, y: 35 }, // Top-right
-      { x: 38, y: 65 }, // Bottom-left - mirror of top
-      { x: 50, y: 68 }, // Bottom-center - mirror of top center
-      { x: 62, y: 65 }  // Bottom-right - mirror of top right
+    6: [ // Like dice "6" - two columns of three
+      { x: 30, y: 25 }, // Left column top
+      { x: 30, y: 50 }, // Left column middle
+      { x: 30, y: 75 }, // Left column bottom
+      { x: 70, y: 25 }, // Right column top
+      { x: 70, y: 50 }, // Right column middle
+      { x: 70, y: 75 }  // Right column bottom
     ],
-    7: [
-      { x: 35, y: 35 }, // Top-left
-      { x: 50, y: 30 }, // Top-center - more dramatic positioning
-      { x: 65, y: 35 }, // Top-right
-      { x: 30, y: 50 }, // Middle-left - closer to edge
-      { x: 50, y: 50 }, // Absolute center
-      { x: 70, y: 50 }, // Middle-right - closer to edge
-      { x: 50, y: 70 }  // Bottom-center - more dramatic
+    7: [ // Custom 7-star pattern - cross formation spread wide
+      { x: 25, y: 25 }, // Top-left
+      { x: 50, y: 20 }, // Top-center (closer to edge)
+      { x: 75, y: 25 }, // Top-right
+      { x: 20, y: 50 }, // Middle-left (very close to edge)
+      { x: 50, y: 50 }, // Center
+      { x: 80, y: 50 }, // Middle-right (very close to edge)
+      { x: 50, y: 80 }  // Bottom-center (closer to edge)
     ]
   }
   
@@ -206,8 +206,8 @@ const DragonBallOrb: React.FC<{
                 left: `${position.x}%`,
                 top: `${position.y}%`,
                 transform: 'translate(-50%, -50%)', // Perfect centering
-                width: '24px', // Proportional to smaller star size
-                height: '24px'
+                width: '32px', // Larger for more prominent dice-style stars
+                height: '32px'
               }}
               animate={{
                 scale: isActive ? [1, 1.2, 1] : 1,
@@ -220,14 +220,15 @@ const DragonBallOrb: React.FC<{
               }}
             >
               <div
-                className="text-2xl drop-shadow-lg flex items-center justify-center w-full h-full"
+                className="text-3xl drop-shadow-lg flex items-center justify-center w-full h-full"
                 style={{ 
                   color: feature.color.star,
-                  filter: 'drop-shadow(0 0 6px rgba(0,0,0,0.8))',
-                  lineHeight: '1', // Reset line height for better consistency
+                  filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.9)) drop-shadow(0 0 4px rgba(255,255,255,0.3))',
+                  lineHeight: '1',
                   textAlign: 'center',
-                  fontFamily: 'serif', // Use serif for better star character rendering
-                  fontWeight: 'bold'
+                  fontFamily: 'serif',
+                  fontWeight: 'bold',
+                  textShadow: '0 0 10px currentColor' // Add glow effect
                 }}
               >
                 ★
