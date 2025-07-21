@@ -9,7 +9,7 @@ const PORTFOLIO_API_KEY = process.env.PORTFOLIO_API_KEY || '';
 const COINGECKO_API_KEY = process.env.COINGECKO_API_KEY || '';
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 
-// Redis client for caching (optional)
+// Redis client for caching
 import Redis from 'ioredis';
 
 class PortfolioManagerMCPServer extends BaseMCPServer {
@@ -24,18 +24,16 @@ class PortfolioManagerMCPServer extends BaseMCPServer {
   });
 
   constructor() {
-    // Only initialize Redis if URL is provided and not localhost
+    // Initialize Redis with proper error handling
     let redis: Redis | undefined;
-    if (REDIS_URL && !REDIS_URL.includes('localhost')) {
-      try {
-        redis = new Redis(REDIS_URL);
-        console.log('Redis connected for caching');
-      } catch (error) {
-        console.warn('Redis connection failed, running without cache:', error);
-        redis = undefined;
-      }
-    } else {
-      console.log('Running without Redis cache (hackathon mode)');
+    try {
+      redis = new Redis(REDIS_URL);
+      redis.on('connect', () => console.log('Redis connected successfully'));
+      redis.on('error', (err) => console.warn('Redis error:', err.message));
+      console.log('Redis client initialized');
+    } catch (error) {
+      console.warn('Redis initialization failed, running without cache:', error);
+      redis = undefined;
     }
     
     const tools: MCPTool[] = [
