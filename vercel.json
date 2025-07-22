@@ -1,21 +1,32 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend && npm run build",
-  "outputDirectory": "frontend/dist",
+  "framework": "nextjs",
+  "buildCommand": "next build",
+  "outputDirectory": ".next",
   "installCommand": "npm install",
   "functions": {
     "api/**/*.ts": {
-      "runtime": "nodejs20.x"
+      "runtime": "nodejs20.x",
+      "memory": 1024,
+      "maxDuration": 30
+    },
+    "app/api/**/*.ts": {
+      "runtime": "nodejs20.x",
+      "memory": 1024,
+      "maxDuration": 30
     }
   },
   "rewrites": [
     {
-      "source": "/models/:path*",
-      "destination": "/models/:path*"
-    },
+      "source": "/api/backend/:path*",
+      "destination": "/api/:path*"
+    }
+  ],
+  "redirects": [
     {
-      "source": "/((?!api|assets|images|models|fonts|favicon.ico|seiron.png|test.html|debug-config.html|debug-models.html|test-static.txt|test-model-loading.html).*)",
-      "destination": "/index.html"
+      "source": "/frontend/:path*",
+      "destination": "/:path*",
+      "permanent": true
     }
   ],
   "trailingSlash": false,
@@ -24,8 +35,36 @@
       "source": "/(.*)",
       "headers": [
         {
+          "key": "X-DNS-Prefetch-Control",
+          "value": "on"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains; preload"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), browsing-topics=()"
+        },
+        {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; connect-src 'self' blob: data: https: wss: ws: http:; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; media-src 'self' blob: data:; worker-src 'self' blob: data:; child-src 'self' blob: data:; frame-src 'self' https:; manifest-src 'self';"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com blob: data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://api.elevenlabs.io wss://*.supabase.co https://*.vercel.app https://*.sei-apis.com wss://*.sei-apis.com; media-src 'self' blob: data:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
         }
       ]
     },
@@ -34,7 +73,7 @@
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "*"
+          "value": "$VERCEL_URL"
         },
         {
           "key": "Access-Control-Allow-Methods",
@@ -42,25 +81,37 @@
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization, X-Requested-With, X-User-Id"
+          "value": "Content-Type, Authorization, X-Requested-With, X-User-Id, X-API-Key"
+        },
+        {
+          "key": "Access-Control-Max-Age",
+          "value": "86400"
         }
       ]
     },
     {
-      "source": "/models/(.*)",
+      "source": "/_next/static/(.*)",
       "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        },
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
         }
       ]
+    },
+    {
+      "source": "/favicon.ico",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
     }
   ],
+  "regions": ["iad1"],
+  "cleanUrls": true,
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "NEXT_TELEMETRY_DISABLED": "1"
   }
 }
