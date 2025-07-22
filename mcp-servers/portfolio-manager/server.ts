@@ -33,10 +33,10 @@ class PortfolioManagerMCPServer extends BaseMCPServer {
         lazyConnect: true,
         connectTimeout: 10000,
         commandTimeout: 5000,
-        retryDelayOnFailover: 100,
         enableReadyCheck: false,
-        maxLoadingTimeout: 5000,
         family: 4, // Force IPv4
+        retryDelayOnClusterDown: 300,
+        retryDelayOnClusterFailover: 100,
       });
       
       redis.on('connect', () => console.log('Redis connected successfully'));
