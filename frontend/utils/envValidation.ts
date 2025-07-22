@@ -20,13 +20,13 @@ export function validateRequiredEnvVars(): void {
   ]
   
   const missingVars = requiredVars.filter(varName => {
-    const value = import.meta.env[varName]
+    const value = process.env[`NEXT_PUBLIC_${varName}`] || process.env[varName]
     return !value || value.trim() === '' || value === 'your_privy_app_id_here'
   })
   
   if (missingVars.length > 0) {
     logger.warn('Missing required environment variables:', missingVars)
-    if (import.meta.env.PROD) {
+    if (process.env.NODE_ENV === 'production') {
       logger.error('Production deployment missing required environment variables')
     }
   }
@@ -55,7 +55,7 @@ export function validateOptionalEnvVars(): void {
   ]
   
   optionalVars.forEach(({ name, description, fallback }) => {
-    const value = import.meta.env[name]
+    const value = process.env[name]
     if (!value || value.trim() === '' || value.includes('your_') || value.includes('_here')) {
       logger.info(`ℹ️ ${name} not configured - ${fallback}`)
     } else {
@@ -68,7 +68,7 @@ export function validateOptionalEnvVars(): void {
  * Check if WalletConnect is properly configured
  */
 export function isWalletConnectConfigured(): boolean {
-  const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID
+  const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || process.env.VITE_WALLETCONNECT_PROJECT_ID
   return !!(projectId && projectId.trim() !== '' && !projectId.includes('your_'))
 }
 
@@ -76,9 +76,9 @@ export function isWalletConnectConfigured(): boolean {
  * Check if voice features are properly configured
  */
 export function isVoiceConfigured(): boolean {
-  const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY
-  const voiceId = import.meta.env.VITE_ELEVENLABS_VOICE_ID
-  const enabled = import.meta.env.VITE_VOICE_ENABLED
+  const apiKey = process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY || process.env.VITE_ELEVENLABS_API_KEY
+  const voiceId = process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID || process.env.VITE_ELEVENLABS_VOICE_ID
+  const enabled = process.env.NEXT_PUBLIC_VOICE_ENABLED || process.env.VITE_VOICE_ENABLED
   
   return !!(
     enabled === 'true' &&
@@ -91,7 +91,7 @@ export function isVoiceConfigured(): boolean {
  * Check if Privy authentication is properly configured
  */
 export function isPrivyConfigured(): boolean {
-  const appId = import.meta.env.VITE_PRIVY_APP_ID
+  const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID || process.env.VITE_PRIVY_APP_ID
   return !!(appId && appId.trim() !== '' && !appId.includes('your_'))
 }
 
@@ -100,9 +100,9 @@ export function isPrivyConfigured(): boolean {
  */
 export function getEnvironmentStatus() {
   return {
-    mode: import.meta.env.MODE,
-    dev: import.meta.env.DEV,
-    prod: import.meta.env.PROD,
+    mode: process.env.NODE_ENV || 'development',
+    dev: process.env.NODE_ENV === 'development',
+    prod: process.env.NODE_ENV === 'production',
     privy: isPrivyConfigured(),
     walletConnect: isWalletConnectConfigured(),
     voice: isVoiceConfigured(),
@@ -123,7 +123,7 @@ export function initializeEnvironmentValidation(): void {
   validateOptionalEnvVars()
   
   // Log configuration warnings for production
-  if (import.meta.env.PROD) {
+  if (process.env.NODE_ENV === 'production') {
     if (!status.privy) {
       logger.error('❌ Privy authentication not configured in production')
     }
@@ -157,7 +157,8 @@ export function initializeEnvironmentValidation(): void {
  * Safely get environment variable with fallback
  */
 export function safeGetEnv(key: string, fallback: string = ''): string {
-  const value = import.meta.env[key]
+  // Try both NEXT_PUBLIC_ prefixed and original key
+  const value = process.env[`NEXT_PUBLIC_${key}`] || process.env[key]
   if (!value || value.trim() === '' || value.includes('your_') || value.includes('_here')) {
     return fallback
   }

@@ -12,7 +12,7 @@ const VoiceInterfaceExample: React.FC = () => {
 
   // ElevenLabs configuration - now using backend proxy
   const elevenLabsConfig: ElevenLabsConfig = {
-    voiceId: import.meta.env.VITE_ELEVENLABS_VOICE_ID || '',
+    voiceId: process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID || '',
     modelId: 'eleven_monolingual_v1',
     voiceSettings: {
       stability: 0.5,

@@ -84,7 +84,7 @@ export const ErrorHandlingExample = () => {
                 <div className="p-4 bg-gray-900/50 rounded-lg border border-gray-700">
                   <VoiceInterface 
                     elevenLabsConfig={{
-                      voiceId: import.meta.env.VITE_ELEVENLABS_VOICE_ID || 'default-voice',
+                      voiceId: process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID || 'default-voice',
                       modelId: 'eleven_monolingual_v1',
                       voiceSettings: {
                         stability: 0.75,

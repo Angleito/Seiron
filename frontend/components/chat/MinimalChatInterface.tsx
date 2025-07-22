@@ -77,7 +77,7 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
   // Initialize voice hooks
   const speechRecognition = useSpeechRecognition()
   const tts = useSecureElevenLabsTTS({
-    voiceId: import.meta.env.VITE_ELEVENLABS_VOICE_ID || 'default',
+    voiceId: process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID || 'default',
     modelId: 'eleven_turbo_v2_5', // Use turbo model for fastest response
     voiceSettings: {
       stability: 0.75, // Balanced stability as requested
@@ -105,8 +105,8 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
   // Debug TTS initialization
   useEffect(() => {
     console.log('TTS Configuration:', {
-      voiceId: import.meta.env.VITE_ELEVENLABS_VOICE_ID || 'default',
-      hasVoiceId: !!import.meta.env.VITE_ELEVENLABS_VOICE_ID,
+      voiceId: process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID || 'default',
+      hasVoiceId: !!process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID,
       ttsEnabled,
       voiceEnabled,
       ttsHook: {
@@ -232,7 +232,7 @@ export const MinimalChatInterface = forwardRef<MinimalChatInterfaceRef, MinimalC
         isSpeaking: tts.isSpeaking,
         isLoading: tts.isLoading,
         error: tts.error,
-        voiceId: import.meta.env.VITE_ELEVENLABS_VOICE_ID
+        voiceId: process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID
       })
       
       tts.speak(latestMessage.content)().then(result => {

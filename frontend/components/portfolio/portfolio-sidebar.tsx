@@ -93,8 +93,8 @@ function PortfolioSidebarInternal() {
   // Initialize real-time connections
   useEffect(() => {
     const orchestrator = getOrchestrator({
-      apiEndpoint: import.meta.env.VITE_ORCHESTRATOR_API || '',
-      wsEndpoint: import.meta.env.VITE_ORCHESTRATOR_WS || '',
+      apiEndpoint: process.env.NEXT_PUBLIC_ORCHESTRATOR_API || '',
+      wsEndpoint: process.env.NEXT_PUBLIC_ORCHESTRATOR_WS || '',
     })
 
     // Subscribe to real-time balance updates

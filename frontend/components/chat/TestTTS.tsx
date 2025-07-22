@@ -12,7 +12,7 @@ export default function TestTTS() {
         },
         body: JSON.stringify({
           text: 'Hello, this is a test message',
-          voiceId: import.meta.env.VITE_ELEVENLABS_VOICE_ID || 'test'
+          voiceId: process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID || 'test'
         })
       })
       

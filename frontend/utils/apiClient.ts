@@ -35,7 +35,7 @@ export class ApiClient {
     this.config = { ...DEFAULT_CONFIG, ...config };
     
     // Get backend URL from environment variable (client-side)
-    this.backendUrl = import.meta.env.NEXT_PUBLIC_BACKEND_URL || null;
+    this.backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || null;
     
     // Proxy URL uses current domain (for Vercel API routes)
     this.proxyUrl = '';

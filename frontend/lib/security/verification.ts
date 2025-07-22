@@ -403,7 +403,7 @@ export const runSecurityVerification = async (): Promise<{
 // Export for development use
 // ============================================================================
 
-if (typeof window !== 'undefined' && import.meta.env.DEV) {
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
   // Make verification function available in development console
   (window as any).runSecurityVerification = runSecurityVerification
   console.log('Security verification available: window.runSecurityVerification()')

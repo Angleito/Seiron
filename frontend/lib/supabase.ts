@@ -2,18 +2,18 @@ import { createClient, SupabaseClient, Session, User } from '@supabase/supabase-
 import { logger } from './logger'
 
 // Supabase configuration
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 // Validation
 if (!supabaseUrl) {
-  const error = 'VITE_SUPABASE_URL is not defined in environment variables'
+  const error = 'NEXT_PUBLIC_SUPABASE_URL is not defined in environment variables'
   logger.error('Supabase configuration error:', { error })
   throw new Error(error)
 }
 
 if (!supabaseAnonKey) {
-  const error = 'VITE_SUPABASE_ANON_KEY is not defined in environment variables'
+  const error = 'NEXT_PUBLIC_SUPABASE_ANON_KEY is not defined in environment variables'
   logger.error('Supabase configuration error:', { error })
   throw new Error(error)
 }

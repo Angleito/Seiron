@@ -325,14 +325,14 @@ export const seiBlockchainMCPServer = {
   getEndpoint: (network: SeiNetwork = 'mainnet') => {
     const endpoints = {
       mainnet: {
-        rpc: import.meta.env.VITE_SEI_RPC_MAINNET || 'https://rpc.sei-apis.com',
-        rest: import.meta.env.VITE_SEI_REST_MAINNET || 'https://rest.sei-apis.com',
-        ws: import.meta.env.VITE_SEI_WS_MAINNET || 'wss://ws.sei-apis.com'
+        rpc: process.env.NEXT_PUBLIC_SEI_RPC_MAINNET || 'https://rpc.sei-apis.com',
+        rest: process.env.NEXT_PUBLIC_SEI_REST_MAINNET || 'https://rest.sei-apis.com',
+        ws: process.env.NEXT_PUBLIC_SEI_WS_MAINNET || 'wss://ws.sei-apis.com'
       },
       testnet: {
-        rpc: import.meta.env.VITE_SEI_RPC_TESTNET || 'https://rpc-testnet.sei-apis.com',
-        rest: import.meta.env.VITE_SEI_REST_TESTNET || 'https://rest-testnet.sei-apis.com',
-        ws: import.meta.env.VITE_SEI_WS_TESTNET || 'wss://ws-testnet.sei-apis.com'
+        rpc: process.env.NEXT_PUBLIC_SEI_RPC_TESTNET || 'https://rpc-testnet.sei-apis.com',
+        rest: process.env.NEXT_PUBLIC_SEI_REST_TESTNET || 'https://rest-testnet.sei-apis.com',
+        ws: process.env.NEXT_PUBLIC_SEI_WS_TESTNET || 'wss://ws-testnet.sei-apis.com'
       },
       devnet: {
         rpc: 'http://localhost:26657',
@@ -345,7 +345,7 @@ export const seiBlockchainMCPServer = {
   },
 
   // API key configuration
-  apiKey: import.meta.env.VITE_SEI_API_KEY,
+  apiKey: process.env.NEXT_PUBLIC_SEI_API_KEY,
 
   // Available capabilities
   capabilities: [

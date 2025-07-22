@@ -18,10 +18,10 @@ import './styles/globals.css'
 
 // Debug logging for app initialization
 console.log('🚀 Seiron App Initializing...')
-console.log('Environment:', import.meta.env.MODE)
-console.log('Base URL:', import.meta.env.BASE_URL)
-console.log('Dev mode:', import.meta.env.DEV)
-console.log('Prod mode:', import.meta.env.PROD)
+console.log('Environment:', process.env.NODE_ENV)
+console.log('Base URL:', process.env.NEXT_PUBLIC_BASE_URL || '/')
+console.log('Dev mode:', process.env.NODE_ENV === 'development')
+console.log('Prod mode:', process.env.NODE_ENV === 'production')
 
 // Initialize environment validation
 initializeEnvironmentValidation()
@@ -83,7 +83,7 @@ async function renderApp() {
   
   console.log('🔍 App configuration check:')
   console.log('- Has Privy config:', hasPrivyConfig)
-  console.log('- Production mode:', import.meta.env.PROD)
+  console.log('- Production mode:', process.env.NODE_ENV === 'production')
   console.log('- Will use authentication:', useFullAuth)
 
   if (useFullAuth) {
@@ -123,12 +123,7 @@ async function renderApp() {
   }
 
   // Set up cleanup for development hot reload
-  if (import.meta.hot) {
-    import.meta.hot.dispose(() => {
-      console.log('🧹 Hot reload cleanup...')
-      cleanup()
-    })
-  }
+  // Note: Next.js uses different hot reload mechanism
   
   console.log('✅ App render complete')
 }

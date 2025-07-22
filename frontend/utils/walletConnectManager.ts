@@ -36,7 +36,7 @@ function setupConsoleFilters() {
       message.includes('WalletConnect')
     ) {
       // Log to debug instead of warn in development
-      if (import.meta.env.DEV) {
+      if (process.env.NODE_ENV === 'development') {
         console.debug('[WalletConnect] Suppressed warning:', message)
       }
       return
@@ -56,7 +56,7 @@ function setupConsoleFilters() {
       message.includes('already initialized') &&
       !message.includes('generic_error') // Don't suppress generic errors
     ) {
-      if (import.meta.env.DEV) {
+      if (process.env.NODE_ENV === 'development') {
         console.debug('[WalletConnect] Suppressed error:', message)
       }
       return
@@ -149,16 +149,8 @@ export class WalletConnectManager {
 // Export singleton instance getter
 export const getWalletConnectManager = () => WalletConnectManager.getInstance()
 
-// Setup HMR cleanup if available
-if (import.meta.hot) {
-  import.meta.hot.dispose(() => {
-    const manager = WalletConnectManager.getInstance()
-    manager.cleanup()
-    isWalletConnectInitialized = false
-    initializationPromise = null
-    consoleFiltersSetup = false
-  })
-}
+// Note: Next.js doesn't use import.meta.hot, HMR is handled differently
+// Cleanup will be handled by Next.js module replacement
 
 // Auto-initialize the filters when module loads
 // This ensures warnings are caught even before explicit initialization

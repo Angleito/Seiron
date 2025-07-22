@@ -38,12 +38,12 @@ const clientId = envConfig.privyClientId
 console.log('🔐 Privy Configuration Status:');
 console.log('- App ID present:', !!appId);
 console.log('- App ID length:', appId?.length || 0);
-console.log('- Environment:', import.meta.env.MODE);
+console.log('- Environment:', process.env.NODE_ENV);
 console.log('- Client ID present:', !!clientId);
 console.log('- Configuration valid:', envConfig.isValid.privy);
 
 // Warn if missing in production
-if (import.meta.env.PROD && !envConfig.isValid.privy) {
+if (process.env.NODE_ENV === 'production' && !envConfig.isValid.privy) {
   console.warn('⚠️ Privy not properly configured in production environment');
 }
 

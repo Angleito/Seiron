@@ -66,7 +66,7 @@ export const getWagmiConfig = () => {
 // Safe config accessors
 export const safePrivyConfig = {
   get appId() {
-    return privyConfig?.appId || import.meta.env.VITE_PRIVY_APP_ID || ''
+    return privyConfig?.appId || process.env.NEXT_PUBLIC_PRIVY_APP_ID || ''
   },
   get config() {
     return privyConfig?.config || {
