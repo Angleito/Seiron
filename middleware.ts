@@ -19,9 +19,14 @@ const ratelimit = new Ratelimit({
 });
 
 // Define protected routes
-const protectedRoutes = ['/dashboard', '/portfolio', '/settings', '/api/portfolio'];
+const protectedRoutes = ['/dashboard', '/portfolio', '/settings', '/api/portfolio', '/api/ai/chat'];
 const authRoutes = ['/login', '/signup'];
-const publicApiRoutes = ['/api/health', '/api/auth/session'];
+const publicApiRoutes = ['/api/health', '/api/auth/session', '/api/chat'];
+const rateLimitedRoutes = {
+  '/api/chat': { requests: 30, window: '1 m' }, // 30 requests per minute for public chat
+  '/api/ai/chat': { requests: 60, window: '1 m' }, // 60 requests per minute for authenticated chat
+  '/api': { requests: 100, window: '1 m' }, // 100 requests per minute for other API routes
+};
 
 // CSRF token name
 const CSRF_TOKEN_NAME = 'csrf-token';
@@ -37,6 +42,15 @@ const securityHeaders = {
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
 };
 
+// API-specific security headers
+const apiSecurityHeaders = {
+  ...securityHeaders,
+  'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none';",
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+  'Pragma': 'no-cache',
+  'Expires': '0',
+};
+
 export async function middleware(request: NextRequest) {
   const { pathname, origin } = request.nextUrl;
   const ip = request.ip ?? request.headers.get('x-forwarded-for') ?? 'unknown';
@@ -44,16 +58,36 @@ export async function middleware(request: NextRequest) {
   // Initialize response
   let response = NextResponse.next();
   
-  // Apply security headers
-  Object.entries(securityHeaders).forEach(([key, value]) => {
+  // Apply security headers (use API-specific headers for API routes)
+  const headers = pathname.startsWith('/api/') ? apiSecurityHeaders : securityHeaders;
+  Object.entries(headers).forEach(([key, value]) => {
     response.headers.set(key, value);
   });
   
   // Rate limiting for API routes
   if (pathname.startsWith('/api/')) {
     try {
-      const { success, limit, reset, remaining } = await ratelimit.limit(
-        `api_${ip}`
+      // Determine rate limit based on route
+      let rateLimitConfig = rateLimitedRoutes['/api']; // Default rate limit
+      
+      // Check for specific route rate limits
+      for (const [route, config] of Object.entries(rateLimitedRoutes)) {
+        if (pathname.startsWith(route) && route !== '/api') {
+          rateLimitConfig = config;
+          break;
+        }
+      }
+      
+      // Create route-specific rate limiter
+      const routeRatelimit = new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(rateLimitConfig.requests, rateLimitConfig.window),
+        analytics: true,
+        prefix: `@upstash/ratelimit:${pathname}`,
+      });
+      
+      const { success, limit, reset, remaining } = await routeRatelimit.limit(
+        `${pathname}:${ip}`
       );
       
       // Add rate limit headers
@@ -161,12 +195,27 @@ export async function middleware(request: NextRequest) {
     });
   }
   
-  // Add CORS headers for API routes (only for allowed origins in production)
+  // Add CORS headers for API routes
   if (pathname.startsWith('/api/')) {
     const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [origin];
     const requestOrigin = request.headers.get('origin');
     
-    if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
+    // Public API routes like /api/chat should have more permissive CORS
+    const isPublicApiRoute = publicApiRoutes.some(route => pathname.startsWith(route));
+    
+    if (isPublicApiRoute) {
+      // Public routes allow all origins in development, specific origins in production
+      const corsOrigin = process.env.NODE_ENV === 'development' 
+        ? '*' 
+        : (requestOrigin && allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0]);
+      
+      response.headers.set('Access-Control-Allow-Origin', corsOrigin);
+      response.headers.set('Access-Control-Allow-Credentials', 'true');
+      response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      response.headers.set('Access-Control-Max-Age', '86400');
+    } else if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
+      // Protected routes only allow specific origins
       response.headers.set('Access-Control-Allow-Origin', requestOrigin);
       response.headers.set('Access-Control-Allow-Credentials', 'true');
       response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');

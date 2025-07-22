@@ -8,7 +8,8 @@
     "api/**/*.ts": {
       "runtime": "nodejs20.x",
       "memory": 1024,
-      "maxDuration": 30
+      "maxDuration": 30,
+      "includeFiles": "api/**"
     },
     "app/api/**/*.ts": {
       "runtime": "nodejs20.x",
@@ -17,6 +18,14 @@
     }
   },
   "rewrites": [
+    {
+      "source": "/api/chat/:path*",
+      "destination": "/api/chat/:path*"
+    },
+    {
+      "source": "/api/voice/:path*",
+      "destination": "/api/voice/:path*"
+    },
     {
       "source": "/api/backend/:path*",
       "destination": "/api/:path*"
@@ -73,7 +82,7 @@
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "$VERCEL_URL"
+          "value": "*"
         },
         {
           "key": "Access-Control-Allow-Methods",
@@ -82,6 +91,10 @@
         {
           "key": "Access-Control-Allow-Headers",
           "value": "Content-Type, Authorization, X-Requested-With, X-User-Id, X-API-Key"
+        },
+        {
+          "key": "Access-Control-Allow-Credentials",
+          "value": "true"
         },
         {
           "key": "Access-Control-Max-Age",

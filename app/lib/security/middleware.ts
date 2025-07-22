@@ -7,6 +7,13 @@ import {
   validateCSRFToken,
   RateLimitType
 } from './index';
+import { Redis } from '@upstash/redis';
+
+// Initialize Redis for logging
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
 
 export interface ApiHandlerOptions {
   requireAuth?: boolean;
@@ -83,11 +90,37 @@ export function createApiHandler<T = any>(
         context.body = validation.data;
       }
       
+      // Log the request
+      await logApiRequest({
+        path: req.url,
+        method: req.method,
+        authenticated: !!context.session,
+        timestamp: new Date().toISOString(),
+      });
+      
       // Execute the handler
-      return await wrappedHandler(req, context);
+      const response = await wrappedHandler(req, context);
+      
+      // Log the response status
+      await logApiResponse({
+        path: req.url,
+        method: req.method,
+        status: response.status,
+        timestamp: new Date().toISOString(),
+      });
+      
+      return response;
       
     } catch (error) {
       console.error('API handler error:', error);
+      
+      // Log the error
+      await logApiError({
+        path: req.url,
+        method: req.method,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString(),
+      });
       
       // Don't expose internal errors in production
       const message = process.env.NODE_ENV === 'production' 
@@ -180,4 +213,57 @@ export function createWebhookHandler(
       );
     }
   };
+}
+
+// Logging functions
+async function logApiRequest(data: {
+  path: string;
+  method: string;
+  authenticated: boolean;
+  timestamp: string;
+}) {
+  try {
+    const key = `api:request:${data.timestamp}:${Math.random()}`;
+    await redis.setex(key, 7 * 24 * 60 * 60, JSON.stringify(data));
+  } catch (error) {
+    console.error('Failed to log API request:', error);
+  }
+}
+
+async function logApiResponse(data: {
+  path: string;
+  method: string;
+  status: number;
+  timestamp: string;
+}) {
+  try {
+    const key = `api:response:${data.timestamp}:${Math.random()}`;
+    await redis.setex(key, 7 * 24 * 60 * 60, JSON.stringify(data));
+    
+    // Track response status metrics
+    const metricsKey = `api:metrics:status:${new Date().toISOString().split('T')[0]}`;
+    await redis.hincrby(metricsKey, data.status.toString(), 1);
+    await redis.expire(metricsKey, 30 * 24 * 60 * 60);
+  } catch (error) {
+    console.error('Failed to log API response:', error);
+  }
+}
+
+async function logApiError(data: {
+  path: string;
+  method: string;
+  error: string;
+  timestamp: string;
+}) {
+  try {
+    const key = `api:error:${data.timestamp}:${Math.random()}`;
+    await redis.setex(key, 30 * 24 * 60 * 60, JSON.stringify(data));
+    
+    // Track error metrics
+    const metricsKey = `api:metrics:errors:${new Date().toISOString().split('T')[0]}`;
+    await redis.hincrby(metricsKey, data.path, 1);
+    await redis.expire(metricsKey, 30 * 24 * 60 * 60);
+  } catch (error) {
+    console.error('Failed to log API error:', error);
+  }
 }

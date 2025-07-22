@@ -29,18 +29,70 @@ export async function processChat(message: string, sessionId: string, walletAddr
       throw new Error('Message and session ID are required for processing')
     }
 
-    // Use unified API client to call backend
-    const data = await apiClient.post<ChatResponse>('/api/chat/orchestrate', {
+    // Use new unified chat endpoint with automatic fallback
+    const data = await apiClient.post<ChatResponse>('/api/chat', {
       message,
       sessionId,
       walletAddress,
+      metadata: {
+        timestamp: new Date().toISOString(),
+        source: 'web'
+      }
     })
 
     return data
 
   } catch (error) {
     console.error('Chat API error:', error)
+    
+    // Provide more detailed error message
+    if (error instanceof Error) {
+      if (error.message.includes('404')) {
+        throw new Error('Chat service is not available. Please try again later.')
+      } else if (error.message.includes('timeout')) {
+        throw new Error('Request timed out. Please check your connection and try again.')
+      }
+    }
+    
     throw new Error('Failed to process chat message. Please try again.')
+  }
+}
+
+export async function processChatStream(
+  message: string, 
+  sessionId: string, 
+  walletAddress?: string,
+  onMessage?: (event: MessageEvent) => void,
+  onError?: (error: Error) => void
+): Promise<EventSource> {
+  try {
+    if (!message || !sessionId) {
+      throw new Error('Message and session ID are required for streaming')
+    }
+
+    // Use streaming endpoint
+    return await apiClient.stream(
+      `/api/chat?stream=true`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          message,
+          sessionId,
+          walletAddress,
+          stream: true,
+          metadata: {
+            timestamp: new Date().toISOString(),
+            source: 'web'
+          }
+        })
+      },
+      onMessage,
+      onError
+    )
+
+  } catch (error) {
+    console.error('Chat stream API error:', error)
+    throw new Error('Failed to start chat stream. Please try again.')
   }
 }
 

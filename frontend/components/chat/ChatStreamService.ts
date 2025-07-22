@@ -505,12 +505,18 @@ export class ChatStreamService {
         })
         
         try {
-          const apiEndpoint = '/api/chat/orchestrate'
+          // Use new unified chat endpoint with fallback
+          const apiEndpoint = '/api/chat'
           const requestBody = {
             message: message.content,
             sessionId: this.config.sessionId,
             walletAddress: message.metadata?.walletAddress,
-            metadata: message.metadata
+            metadata: {
+              ...message.metadata,
+              serviceId: this.serviceId,
+              messageId: message.id,
+              timestamp: new Date().toISOString()
+            }
           }
           
           // Log request initiation
@@ -789,6 +795,157 @@ export class ChatStreamService {
     )
   }
   
+  // ============================================================================
+  // Streaming Methods
+  // ============================================================================
+  
+  public async sendStreamingMessage(
+    content: string, 
+    metadata?: Record<string, any>
+  ): Promise<Observable<E.Either<Error, any>>> {
+    const message: StreamMessage = {
+      id: Date.now().toString(),
+      type: 'user',
+      content,
+      timestamp: new Date(),
+      status: 'pending',
+      metadata
+    }
+    
+    // Add to message stream immediately
+    this.messageSubject$.next(message)
+    
+    return new Observable(observer => {
+      const streamEndpoint = '/api/chat?stream=true'
+      const requestBody = {
+        message: content,
+        sessionId: this.config.sessionId,
+        walletAddress: metadata?.walletAddress,
+        stream: true,
+        metadata: {
+          ...metadata,
+          messageId: message.id,
+          timestamp: new Date().toISOString()
+        }
+      }
+      
+      logger.debug('Starting streaming chat', {
+        serviceId: this.serviceId,
+        sessionId: this.config.sessionId,
+        messageId: message.id,
+        endpoint: streamEndpoint
+      })
+      
+      fetch(streamEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Service-ID': this.serviceId,
+          'X-Session-ID': this.config.sessionId
+        },
+        body: JSON.stringify(requestBody)
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Stream failed: ${response.status}`)
+        }
+        
+        const reader = response.body?.getReader()
+        const decoder = new TextDecoder()
+        
+        if (!reader) {
+          throw new Error('No response body')
+        }
+        
+        const processStream = async () => {
+          let buffer = ''
+          
+          while (true) {
+            const { done, value } = await reader.read()
+            
+            if (done) {
+              logger.debug('Stream completed', {
+                serviceId: this.serviceId,
+                messageId: message.id
+              })
+              observer.next(E.right({ type: 'complete' }))
+              observer.complete()
+              break
+            }
+            
+            buffer += decoder.decode(value, { stream: true })
+            const lines = buffer.split('\n')
+            buffer = lines.pop() || ''
+            
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const data = JSON.parse(line.slice(6))
+                  
+                  // Handle different event types
+                  if (data.type === 'response') {
+                    const responseMessage: StreamMessage = {
+                      id: (Date.now() + 1).toString(),
+                      type: 'agent',
+                      agentType: data.agentType || 'assistant',
+                      content: data.content,
+                      timestamp: new Date(data.timestamp),
+                      status: 'delivered',
+                      metadata: data.metadata
+                    }
+                    
+                    this.messageSubject$.next(responseMessage)
+                    observer.next(E.right(data))
+                  } else {
+                    observer.next(E.right(data))
+                  }
+                } catch (parseError) {
+                  logger.warn('Failed to parse stream data', {
+                    serviceId: this.serviceId,
+                    messageId: message.id,
+                    line,
+                    error: parseError
+                  })
+                }
+              }
+            }
+          }
+        }
+        
+        processStream().catch(error => {
+          logger.error('Stream processing error', {
+            serviceId: this.serviceId,
+            messageId: message.id,
+            error
+          })
+          observer.next(E.left(error))
+          observer.complete()
+        })
+      })
+      .catch(error => {
+        logger.error('Failed to start stream', {
+          serviceId: this.serviceId,
+          messageId: message.id,
+          error
+        })
+        
+        // Update message status to failed
+        this.messageSubject$.next({
+          ...message,
+          status: 'failed',
+          metadata: { 
+            ...message.metadata, 
+            error: true,
+            errorMessage: error.message
+          }
+        })
+        
+        observer.next(E.left(error))
+        observer.complete()
+      })
+    })
+  }
+
   // ============================================================================
   // Lifecycle Methods
   // ============================================================================
