@@ -1,9 +1,9 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend && npm run build",
+  "buildCommand": "cd frontend && npm run build && cd ../api && npm install",
   "outputDirectory": "frontend/dist",
-  "installCommand": "cd frontend && npm install",
-  "framework": "vite",
+  "installCommand": "cd frontend && npm install && cd ../api && npm install",
+  "framework": null,
   "functions": {
     "api/**/*.ts": {
       "maxDuration": 30,
