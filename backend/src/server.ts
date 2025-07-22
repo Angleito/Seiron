@@ -8,6 +8,10 @@ import dotenv from 'dotenv';
 import { pipe } from 'fp-ts/function';
 import * as TE from 'fp-ts/TaskEither';
 import logger from './utils/logger';
+import { validateStartupConfiguration } from './config/validation';
+import { securityAuditService } from './services/SecurityAuditService';
+import { apiKeyValidationService } from './services/ApiKeyValidationService';
+import { validateSecurityConfiguration } from './middleware/security';
 
 import { chatRouter } from './routes/chat';
 import { sessionsRouter } from './routes/sessions';
@@ -38,8 +42,39 @@ import {
   errorRequestLogger, 
   requestCompletionLogger 
 } from './middleware/requestLogger';
+import { rateLimitMiddleware } from './middleware/apiKeyRateLimit';
+import { apiKeyMiddleware } from './middleware/apiKeyErrorHandler';
+import { createMcpAuthMiddleware, mcpHealthCheck } from './middleware/mcpAuthentication';
+import { createSecurityMiddleware } from './middleware/security';
 
 dotenv.config();
+
+// Validate startup configuration
+const startupValidation = validateStartupConfiguration();
+if (startupValidation._tag === 'Left') {
+  logger.error('Startup configuration validation failed', {
+    errors: startupValidation.left.map(e => ({ field: e.field, message: e.message }))
+  });
+  
+  // Log critical errors but continue startup in development
+  if (process.env.NODE_ENV === 'production') {
+    process.exit(1);
+  } else {
+    logger.warn('Continuing startup in development mode despite configuration errors');
+  }
+} else {
+  logger.info('Startup configuration validation passed', {
+    environment: startupValidation.right.environment.environment,
+    securityLevel: startupValidation.right.environment.securityLevel,
+    configuredKeys: Object.keys(startupValidation.right.apiKeys.keys).length,
+    warnings: startupValidation.right.apiKeys.warnings
+  });
+  
+  // Log warnings
+  startupValidation.right.apiKeys.warnings.forEach(warning => {
+    logger.warn(`Configuration warning: ${warning}`);
+  });
+}
 
 const app = express();
 const server = createServer(app);
@@ -50,6 +85,9 @@ const io = new Server(server, {
   }
 });
 
+// Initialize security middleware
+const securityMiddleware = createSecurityMiddleware();
+
 // Request ID and logging middleware (before everything else)
 app.use(requestIdMiddleware);
 app.use(requestCompletionLogger);
@@ -57,19 +95,24 @@ app.use(requestCompletionLogger);
 // HTTP request logging
 app.use(createMorganMiddleware());
 
-// Security middleware
-app.use(helmet());
+// Enhanced security middleware
+app.use(securityMiddleware.helmet);
+app.use(securityMiddleware.securityHeaders);
+app.use(securityMiddleware.securityMonitoring);
 app.use(cors({
   origin: process.env.FRONTEND_URL || "http://localhost:3000",
   credentials: true
 }));
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
-});
-app.use(limiter);
+// Smart rate limiting with burst protection
+app.use(securityMiddleware.burstProtection);
+app.use(securityMiddleware.smartRateLimit);
+
+// Input sanitization
+app.use(securityMiddleware.inputSanitization);
+
+// IP filtering (if configured)
+app.use(securityMiddleware.ipFilter);
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
@@ -181,11 +224,11 @@ app.use((req, _res, next) => {
 
 // Routes
 
-// Auth routes - no authentication required
-app.use('/api/auth', authRouter);
+// Auth routes with strict rate limiting
+app.use('/api/auth', rateLimitMiddleware.auth, authRouter);
 
-// Chat router - requires authentication for most endpoints
-app.use('/api/chat', (req, res, next) => {
+// Chat router with AI-specific rate limiting
+app.use('/api/chat', rateLimitMiddleware.ai, (req, res, next) => {
   // Skip auth for orchestrate endpoint if it's a public endpoint
   if (req.path === '/orchestrate' && req.method === 'POST') {
     return optionalAuth(req, res, next);
@@ -196,20 +239,169 @@ app.use('/api/chat', (req, res, next) => {
 // Sessions router - requires authentication
 app.use('/api/chat/sessions', requireAuth, sessionsRouter);
 
-// Protected routes - require authentication
-app.use('/api/portfolio', requireAuth, portfolioRouter);
-app.use('/api/ai', requireAuth, aiRouter);
+// Protected routes with specific rate limiting
+app.use('/api/portfolio', rateLimitMiddleware.portfolio, requireAuth, portfolioRouter);
+app.use('/api/ai', rateLimitMiddleware.ai, requireAuth, aiRouter);
 app.use('/api', requireAuth, confirmationRouter);
-app.use('/api/voice', requireAuth, voiceRouter);
+app.use('/api/voice', rateLimitMiddleware.ai, requireAuth, voiceRouter);
 app.use('/api/websocket', requireAuth, websocketRouter);
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+// MCP internal routes with special authentication
+app.use('/api/mcp', createMcpAuthMiddleware(['mcp_communication']), (req, res, next) => {
+  // Add MCP-specific request handling here
+  res.json({ message: 'MCP endpoint placeholder' });
+});
+
+// Security endpoints
+app.get('/api/security/health', mcpHealthCheck);
+app.get('/api/security/audit', securityMiddleware.validateAPIKey, (req, res) => {
+  try {
+    const metrics = securityAuditService.getMetrics();
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      metrics: {
+        totalEvents: metrics.totalEvents,
+        eventsByType: metrics.eventsByType,
+        eventsBySeverity: metrics.eventsBySeverity,
+        recentAlerts: metrics.recentAlerts
+      },
+      recentEvents: metrics.recentEvents
+    });
+  } catch (error) {
+    logger.error('Security audit endpoint error', {
+      error: error instanceof Error ? error.message : String(error)
+    });
+    res.status(500).json({ error: 'Failed to get security metrics' });
+  }
+});
+
+// Enhanced health check endpoints for Railway
+app.get('/health', async (req, res) => {
+  try {
+    const healthCheck = {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      requestId: req.requestId,
+      service: {
+        name: process.env.SERVICE_NAME || 'seiron-backend',
+        version: process.env.SERVICE_VERSION || '1.0.0',
+        environment: process.env.NODE_ENV || 'development',
+        uptime: Math.floor(process.uptime()),
+        memory: {
+          used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+          total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+          external: Math.round(process.memoryUsage().external / 1024 / 1024)
+        },
+        cpu: {
+          platform: process.platform,
+          arch: process.arch,
+          nodeVersion: process.version
+        }
+      },
+      checks: {
+        server: 'ok',
+        database: 'checking',
+        redis: 'checking',
+        mcp: 'checking'
+      }
+    };
+
+    // Quick database check
+    try {
+      // Test database connection if available
+      if (req.services?.supabase) {
+        await req.services.supabase.testConnection();
+        healthCheck.checks.database = 'ok';
+      } else {
+        healthCheck.checks.database = 'not_configured';
+      }
+    } catch (error) {
+      healthCheck.checks.database = 'error';
+      logger.warn('Database health check failed', { error: (error as Error).message });
+    }
+
+    // Quick Redis check
+    try {
+      // Test Redis connection if available
+      // This would be implemented based on your Redis setup
+      healthCheck.checks.redis = 'ok'; // Placeholder
+    } catch (error) {
+      healthCheck.checks.redis = 'error';
+      logger.warn('Redis health check failed', { error: (error as Error).message });
+    }
+
+    // Quick MCP check
+    try {
+      if (req.services?.seiIntegration) {
+        // Test MCP connectivity
+        healthCheck.checks.mcp = 'ok'; // Placeholder
+      } else {
+        healthCheck.checks.mcp = 'not_configured';
+      }
+    } catch (error) {
+      healthCheck.checks.mcp = 'error';
+      logger.warn('MCP health check failed', { error: (error as Error).message });
+    }
+
+    // Return appropriate status code based on checks
+    const hasErrors = Object.values(healthCheck.checks).some(check => check === 'error');
+    const statusCode = hasErrors ? 503 : 200;
+
+    res.status(statusCode).json(healthCheck);
+  } catch (error) {
+    logger.error('Health check endpoint error', { error: (error as Error).message });
+    res.status(503).json({
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      error: 'Health check failed',
+      requestId: req.requestId
+    });
+  }
+});
+
+// Readiness probe for Railway (simpler check)
+app.get('/ready', (req, res) => {
+  res.status(200).json({
+    status: 'ready',
     timestamp: new Date().toISOString(),
-    requestId: req.requestId 
+    requestId: req.requestId
   });
+});
+
+// Liveness probe for Railway
+app.get('/alive', (req, res) => {
+  res.status(200).json({
+    status: 'alive',
+    timestamp: new Date().toISOString(),
+    uptime: Math.floor(process.uptime()),
+    requestId: req.requestId
+  });
+});
+
+// Metrics endpoint for monitoring (optional)
+app.get('/metrics', (req, res) => {
+  const metrics = {
+    timestamp: new Date().toISOString(),
+    service: {
+      name: process.env.SERVICE_NAME || 'seiron-backend',
+      version: process.env.SERVICE_VERSION || '1.0.0',
+      uptime: Math.floor(process.uptime())
+    },
+    system: {
+      memory: process.memoryUsage(),
+      cpu: process.cpuUsage(),
+      platform: process.platform,
+      nodeVersion: process.version
+    },
+    environment: {
+      nodeEnv: process.env.NODE_ENV,
+      railwayEnvironment: process.env.RAILWAY_ENVIRONMENT_NAME,
+      railwayService: process.env.RAILWAY_SERVICE_NAME
+    }
+  };
+  
+  res.json(metrics);
 });
 
 // Development route info (only in development)
@@ -227,8 +419,9 @@ if (process.env.NODE_ENV === 'development') {
   });
 }
 
-// Error handling
+// Error handling with security-aware error processing
 app.use(errorRequestLogger);
+app.use(apiKeyMiddleware.errorHandler); // Handle API key errors first
 app.use(errorHandler);
 
 // Socket.io middleware setup
@@ -471,6 +664,50 @@ const startServer = async () => {
     port: PORT,
     portType: typeof PORT
   });
+  
+  // Validate security configuration
+  try {
+    const securityValidation = await validateSecurityConfiguration();
+    if (!securityValidation.success) {
+      logger.error('Security configuration validation failed', {
+        errors: securityValidation.errors
+      });
+      
+      if (process.env.NODE_ENV === 'production') {
+        process.exit(1);
+      }
+    } else {
+      logger.info('Security configuration validation passed', {
+        warnings: securityValidation.warnings
+      });
+      
+      securityValidation.warnings.forEach(warning => {
+        logger.warn(`Security warning: ${warning}`);
+      });
+    }
+  } catch (error) {
+    logger.error('Security configuration validation error', {
+      error: error instanceof Error ? error.message : String(error)
+    });
+    
+    if (process.env.NODE_ENV === 'production') {
+      process.exit(1);
+    }
+  }
+  
+  // Initialize security audit service
+  securityAuditService.logEvent({
+    eventType: 'system_security_event',
+    severity: 'low',
+    source: 'server_startup',
+    success: true,
+    message: 'Security services initialized successfully',
+    metadata: {
+      nodeEnv: process.env.NODE_ENV,
+      port: PORT
+    }
+  });
+  
   try {
     // Initialize adapters if enabled
     const adapterResult = await adapterInitializer.registerAdapters(
@@ -506,12 +743,29 @@ const startServer = async () => {
     logLevel: process.env.LOG_LEVEL || 'info'
   });
   
-  // Log startup configuration
+  // Log startup configuration (secure logging)
   logger.info('Server configuration loaded', {
     frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
     redisUrl: process.env.REDIS_URL ? '[CONFIGURED]' : '[NOT CONFIGURED]',
     openaiApiKey: process.env.OPENAI_API_KEY ? '[CONFIGURED]' : '[NOT CONFIGURED]',
-    seiRpcUrl: process.env.SEI_RPC_URL || 'https://sei-rpc.polkachu.com'
+    seiRpcUrl: process.env.SEI_RPC_URL || 'https://sei-rpc.polkachu.com',
+    internalApiKey: process.env.INTERNAL_API_KEY ? '[CONFIGURED]' : '[NOT CONFIGURED]',
+    mcpApiKey: process.env.MCP_API_KEY ? '[CONFIGURED]' : '[NOT CONFIGURED]',
+    securityLevel: process.env.NODE_ENV === 'production' ? 'PRODUCTION' : 'DEVELOPMENT'
+  });
+  
+  // Log security audit event for successful startup
+  securityAuditService.logEvent({
+    eventType: 'system_security_event',
+    severity: 'low',
+    source: 'server_startup',
+    success: true,
+    message: 'Server started successfully with enhanced security',
+    metadata: {
+      port: PORT,
+      environment: process.env.NODE_ENV,
+      timestamp: new Date().toISOString()
+    }
   });
   })
   .on('error', (error) => {

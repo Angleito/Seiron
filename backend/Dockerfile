@@ -1,17 +1,25 @@
-# Multi-stage Docker build for optimal production images
-# Based on Node.js 20 Alpine for minimal size and security
+# Multi-stage Docker build for Railway deployment
+# Optimized for production with enhanced security and performance
 
 # ============================================
 # Base stage - Common dependencies
 # ============================================
 FROM node:20-alpine AS base
 
+# Set build arguments for Railway
+ARG RAILWAY_PROJECT_NAME
+ARG RAILWAY_ENVIRONMENT
+ARG RAILWAY_SERVICE_NAME
+
 # Install security updates and required system packages
 RUN apk update && apk upgrade && \
     apk add --no-cache \
     dumb-init \
     curl \
-    && rm -rf /var/cache/apk/*
+    ca-certificates \
+    tzdata \
+    && rm -rf /var/cache/apk/* \
+    && rm -rf /tmp/*
 
 # Create app user for security (non-root)
 RUN addgroup -g 1001 -S nodejs && \
@@ -20,17 +28,25 @@ RUN addgroup -g 1001 -S nodejs && \
 # Set working directory
 WORKDIR /app
 
+# Set optimal Node.js production flags
+ENV NODE_ENV=production \
+    NODE_OPTIONS="--max-old-space-size=1024 --enable-source-maps" \
+    NPM_CONFIG_UPDATE_NOTIFIER=false \
+    NPM_CONFIG_FUND=false \
+    NPM_CONFIG_AUDIT=false
+
 # Copy package files for dependency installation
 COPY package*.json ./
 
 # ============================================
-# Dependencies stage - Install all dependencies
+# Dependencies stage - Production dependencies
 # ============================================
 FROM base AS deps
 
-# Install all dependencies (including devDependencies for build)
+# Install only production dependencies with optimization
 RUN npm ci --only=production --no-audit --no-fund && \
-    npm cache clean --force
+    npm cache clean --force && \
+    rm -rf ~/.npm
 
 # ============================================
 # Build stage - Compile TypeScript
@@ -43,22 +59,36 @@ COPY --chown=backend:nodejs . .
 # Install all dependencies including dev dependencies
 RUN npm ci --no-audit --no-fund
 
-# Build the application
+# Build the application with Railway-specific optimizations
 RUN npm run build && \
     npm prune --production && \
-    npm cache clean --force
+    npm cache clean --force && \
+    rm -rf ~/.npm
+
+# Remove development files to reduce image size
+RUN rm -rf src __tests__ tests docs coverage *.md \
+    jest.config.js tsconfig.json
 
 # ============================================
-# Production stage - Final optimized image
+# Production stage - Railway optimized image
 # ============================================
 FROM node:20-alpine AS production
+
+# Railway service labels
+LABEL org.opencontainers.image.title="Seiron Backend API"
+LABEL org.opencontainers.image.description="AI-powered DeFi portfolio management backend"
+LABEL org.opencontainers.image.vendor="Seiron Team"
+LABEL railway.service="backend"
 
 # Install security updates and minimal runtime dependencies
 RUN apk update && apk upgrade && \
     apk add --no-cache \
     dumb-init \
     curl \
-    && rm -rf /var/cache/apk/*
+    ca-certificates \
+    tzdata \
+    && rm -rf /var/cache/apk/* \
+    && rm -rf /tmp/*
 
 # Create app user
 RUN addgroup -g 1001 -S nodejs && \
@@ -67,6 +97,12 @@ RUN addgroup -g 1001 -S nodejs && \
 # Set working directory
 WORKDIR /app
 
+# Set production environment variables
+ENV NODE_ENV=production \
+    NODE_OPTIONS="--max-old-space-size=512 --enable-source-maps" \
+    NPM_CONFIG_UPDATE_NOTIFIER=false \
+    PORT=3000
+
 # Copy production dependencies
 COPY --from=deps --chown=backend:nodejs /app/node_modules ./node_modules
 
@@ -74,23 +110,25 @@ COPY --from=deps --chown=backend:nodejs /app/node_modules ./node_modules
 COPY --from=build --chown=backend:nodejs /app/dist ./dist
 COPY --from=build --chown=backend:nodejs /app/package*.json ./
 
-# Create logs directory
-RUN mkdir -p logs && chown -R backend:nodejs logs
+# Create necessary directories
+RUN mkdir -p logs tmp && \
+    chown -R backend:nodejs logs tmp && \
+    chmod 755 logs tmp
 
 # Switch to non-root user
 USER backend
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+# Enhanced health check for Railway
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:${PORT:-3000}/health || exit 1
 
-# Expose port
-EXPOSE 3000
+# Expose the port that Railway expects
+EXPOSE $PORT
 
-# Use dumb-init to handle signals properly
+# Use dumb-init to handle signals properly for Railway
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start the application
+# Start the application with Railway-optimized settings
 CMD ["node", "dist/server.js"]
 
 # ============================================

@@ -1,14 +1,56 @@
+# Railway configuration for Seiron Backend API
+# Comprehensive production deployment settings
+
 [build]
 builder = "dockerfile"
 dockerfilePath = "backend/Dockerfile"
+buildCommand = "npm run build:railway"
 
 [deploy]
 startCommand = "node dist/server.js"
 healthcheckPath = "/health"
-healthcheckTimeout = 300
+healthcheckTimeout = 30
+healthcheckInterval = 10
+numReplicas = 1
 restartPolicyType = "on-failure"
 restartPolicyMaxRetries = 3
 
+# Resource limits for optimal Railway performance
+[deploy.resources]
+memoryLimit = "1Gi"
+cpuLimit = "1000m"
+
+# Environment variables with Railway-specific defaults
 [env]
 NODE_ENV = "production"
-PORT = "3000"
+PORT = "${{ RAILWAY_PORT }}"
+LOG_LEVEL = "info"
+NODE_OPTIONS = "--max-old-space-size=512 --enable-source-maps"
+
+# Health check and monitoring
+HEALTH_CHECK_ENABLED = "true"
+METRICS_ENABLED = "true"
+LOGGING_ENABLED = "true"
+
+# Railway-specific networking
+RAILWAY_STATIC_URL = "${{ RAILWAY_STATIC_URL }}"
+RAILWAY_PUBLIC_DOMAIN = "${{ RAILWAY_PUBLIC_DOMAIN }}"
+
+# Security settings for production
+HELMET_ENABLED = "true"
+RATE_LIMIT_ENABLED = "true"
+CORS_ENABLED = "true"
+
+# Service configuration
+SERVICE_NAME = "seiron-backend"
+SERVICE_VERSION = "1.0.0"
+
+# Build optimizations
+NPM_CONFIG_UPDATE_NOTIFIER = "false"
+NPM_CONFIG_FUND = "false"
+NPM_CONFIG_AUDIT = "false"
+
+[experimental]
+# Enable Railway's new networking features
+incrementalBuild = true
+buildCache = true

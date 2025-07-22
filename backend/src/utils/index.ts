@@ -7,6 +7,7 @@ export { default as logger, loggerStream } from './logger';
 export { CacheService, cacheService } from './cache';
 export * from './validators';
 export * from './constants';
+export { MCPHttpClient, getMCPHttpClient, mcpTools } from './mcp-http-client';
 
 // Re-export common functional programming utilities
 export { pipe } from 'fp-ts/function';

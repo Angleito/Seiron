@@ -21,8 +21,7 @@ export async function GET(request: NextRequest) {
 
     // Check environment variables
     const requiredEnvVars = [
-      'OPENAI_API_KEY',
-      'ANTHROPIC_API_KEY',
+      'NEXT_PUBLIC_BACKEND_URL',
       'UPSTASH_REDIS_REST_URL',
       'UPSTASH_REDIS_REST_TOKEN',
       'SUPABASE_URL',

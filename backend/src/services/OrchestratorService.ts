@@ -5,6 +5,10 @@ import * as O from 'fp-ts/Option';
 import { EventEmitter } from 'events';
 import { performance } from 'perf_hooks';
 import { createServiceLogger } from './LoggingService';
+import axios, { AxiosInstance } from 'axios';
+import OpenAI from 'openai';
+import { getMCPHttpClient, mcpTools } from '../utils/mcp-http-client';
+import { getConfig } from '../config';
 // import type { Orchestrator } from '../../../src/orchestrator/core';
 import type { SeiIntegrationService } from './SeiIntegrationService';
 import type { PortfolioAnalyticsService } from './PortfolioAnalyticsService';
@@ -22,6 +26,48 @@ import type { SocketService } from './SocketService';
 // ============================================================================
 // Enhanced Orchestrator Types
 // ============================================================================
+
+export interface MCPServerEndpoint {
+  name: string;
+  url: string;
+  apiKey?: string;
+  timeout?: number;
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp?: Date;
+}
+
+export interface ChatContext {
+  walletAddress?: string;
+  sessionId: string;
+  messages: ChatMessage[];
+  metadata?: Record<string, any>;
+}
+
+export interface ChatOrchestrationRequest {
+  message: string;
+  context: ChatContext;
+  intent?: string;
+  requiresBlockchainData?: boolean;
+}
+
+export interface ChatOrchestrationResponse {
+  response: string;
+  data?: any;
+  actions?: Array<{
+    type: string;
+    params: any;
+  }>;
+  metadata: {
+    mcpServersUsed: string[];
+    processingTime: number;
+    intent?: string;
+    confidence?: number;
+  };
+}
 
 export interface BackendOrchestratorConfig {
   core: {
@@ -55,6 +101,17 @@ export interface BackendOrchestratorConfig {
       secure: boolean;
       apiKey?: string;
     };
+  };
+  mcpServers: {
+    hiveIntelligence: MCPServerEndpoint;
+    seiBlockchain: MCPServerEndpoint;
+    portfolioManager: MCPServerEndpoint;
+  };
+  openai: {
+    apiKey: string;
+    model: string;
+    temperature?: number;
+    maxTokens?: number;
   };
   realTime: {
     enabled: boolean;
@@ -236,6 +293,12 @@ export class OrchestratorService extends EventEmitter {
   private socketService: SocketService;
   private logger = createServiceLogger('OrchestratorService');
   
+  // OpenAI integration
+  private openai: OpenAI;
+  
+  // MCP HTTP clients
+  private mcpClients: Map<string, AxiosInstance> = new Map();
+  
   // Task management
   private taskPipelines: Map<string, TaskPipeline> = new Map();
   private taskQueue: Array<{ intent: EnhancedUserIntent; priority: number }> = [];
@@ -264,6 +327,14 @@ export class OrchestratorService extends EventEmitter {
     this.socketService = socketService;
     this.config = config || this.getDefaultConfig();
     
+    // Initialize OpenAI client
+    this.openai = new OpenAI({
+      apiKey: this.config.openai.apiKey,
+    });
+    
+    // Initialize MCP HTTP clients
+    this.initializeMCPClients();
+    
     this.stats = this.initializeStats();
     this.setupOrchestratorEventHandlers();
     this.startTaskProcessor();
@@ -276,6 +347,11 @@ export class OrchestratorService extends EventEmitter {
         sak: this.config.adapters.sak.enabled,
         mcp: this.config.adapters.mcp.enabled
       },
+      mcpServers: {
+        hiveIntelligence: this.config.mcpServers.hiveIntelligence.url,
+        seiBlockchain: this.config.mcpServers.seiBlockchain.url,
+        portfolioManager: this.config.mcpServers.portfolioManager.url
+      },
       realTimeEnabled: this.config.realTime.enabled,
       analyticsEnabled: this.config.analytics.enabled,
       timestamp: new Date().toISOString()
@@ -285,6 +361,61 @@ export class OrchestratorService extends EventEmitter {
   // ============================================================================
   // Public API Methods
   // ============================================================================
+
+  /**
+   * Orchestrate chat message with MCP servers and OpenAI
+   */
+  public orchestrateChatMessage = (
+    request: ChatOrchestrationRequest
+  ): TE.TaskEither<OrchestrationError, ChatOrchestrationResponse> => {
+    const startTime = performance.now();
+    
+    this.logger.info('Orchestrating chat message', {
+      sessionId: request.context.sessionId,
+      walletAddress: request.context.walletAddress,
+      messageLength: request.message.length,
+      hasIntent: !!request.intent,
+      requiresBlockchainData: request.requiresBlockchainData,
+      timestamp: new Date().toISOString()
+    });
+    
+    return pipe(
+      // Step 1: Analyze intent and gather context from MCP servers
+      this.gatherMCPContext(request),
+      TE.chain(mcpContext => 
+        // Step 2: Generate response using OpenAI with MCP context
+        this.generateAIResponse(request, mcpContext)
+      ),
+      TE.map(result => {
+        const processingTime = performance.now() - startTime;
+        
+        this.logger.info('Chat orchestration completed', {
+          sessionId: request.context.sessionId,
+          processingTime: Math.round(processingTime),
+          mcpServersUsed: result.metadata.mcpServersUsed,
+          hasActions: !!result.actions && result.actions.length > 0
+        });
+        
+        return {
+          ...result,
+          metadata: {
+            ...result.metadata,
+            processingTime
+          }
+        };
+      }),
+      TE.mapLeft(error => {
+        const processingTime = performance.now() - startTime;
+        this.logger.error('Chat orchestration failed', {
+          sessionId: request.context.sessionId,
+          processingTime: Math.round(processingTime),
+          error: error.message,
+          errorCode: error.code
+        });
+        return error;
+      })
+    );
+  };
 
   /**
    * Process enhanced user intent with full orchestration
@@ -483,6 +614,395 @@ export class OrchestratorService extends EventEmitter {
   // ============================================================================
   // Private Implementation Methods
   // ============================================================================
+
+  /**
+   * Initialize MCP HTTP clients
+   */
+  private initializeMCPClients(): void {
+    try {
+      // Initialize the shared MCP HTTP client
+      const mcpClient = getMCPHttpClient();
+      
+      this.logger.info('MCP HTTP clients initialized successfully', {
+        servers: {
+          hiveIntelligence: this.config.mcpServers.hiveIntelligence.url,
+          seiBlockchain: this.config.mcpServers.seiBlockchain.url,
+          portfolioManager: this.config.mcpServers.portfolioManager.url
+        }
+      });
+      
+      // Keep legacy clients for backward compatibility during migration
+      const { hiveIntelligence, seiBlockchain, portfolioManager } = this.config.mcpServers;
+      
+      // Create fallback Hive Intelligence client
+      this.mcpClients.set('hive', axios.create({
+        baseURL: hiveIntelligence.url,
+        timeout: hiveIntelligence.timeout || 30000,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(hiveIntelligence.apiKey && { 'Authorization': `Bearer ${hiveIntelligence.apiKey}` })
+        }
+      }));
+      
+      // Create fallback SEI Blockchain client
+      this.mcpClients.set('sei', axios.create({
+        baseURL: seiBlockchain.url,
+        timeout: seiBlockchain.timeout || 30000,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(seiBlockchain.apiKey && { 'Authorization': `Bearer ${seiBlockchain.apiKey}` })
+        }
+    }));
+    
+    // Create fallback Portfolio Manager client
+    this.mcpClients.set('portfolio', axios.create({
+      baseURL: portfolioManager.url,
+      timeout: portfolioManager.timeout || 30000,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(portfolioManager.apiKey && { 'Authorization': `Bearer ${portfolioManager.apiKey}` })
+      }
+    }));
+    
+    this.logger.info('Legacy MCP HTTP clients initialized as fallbacks', {
+      servers: ['hive', 'sei', 'portfolio']
+    });
+    } catch (error) {
+      this.logger.error('Failed to initialize MCP HTTP clients', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Health check all MCP servers
+   */
+  public async checkMCPServersHealth(): Promise<Record<string, boolean>> {
+    const mcpClient = getMCPHttpClient();
+    return mcpClient.healthCheckAll();
+  }
+
+  /**
+   * Call MCP tool with proper error handling
+   */
+  public async callMCPTool(serverType: 'hiveIntelligence' | 'seiBlockchain' | 'portfolioManager', toolName: string, params: any): Promise<any> {
+    const mcpClient = getMCPHttpClient();
+    
+    try {
+      return await mcpClient.callTool(serverType, toolName, params);
+    } catch (error) {
+      this.logger.error(`MCP tool call failed: ${serverType}.${toolName}`, { params, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Gather context from MCP servers
+   */
+  private gatherMCPContext = (
+    request: ChatOrchestrationRequest
+  ): TE.TaskEither<OrchestrationError, any> => {
+    return TE.tryCatch(
+      async () => {
+        const mcpContext: any = {
+          timestamp: new Date().toISOString(),
+          serversUsed: []
+        };
+        
+        // Determine which MCP servers to query based on intent
+        const queries: Promise<void>[] = [];
+        
+        // Always get market intelligence
+        queries.push(
+          this.queryMCPServer('hive', 'getMarketInsights', {
+            query: request.message,
+            walletAddress: request.context.walletAddress
+          }).then(data => {
+            mcpContext.marketInsights = data;
+            mcpContext.serversUsed.push('hive-intelligence');
+          }).catch(err => {
+            this.logger.warn('Failed to get market insights', { error: err.message });
+          })
+        );
+        
+        // Get blockchain data if wallet address is provided
+        if (request.context.walletAddress || request.requiresBlockchainData) {
+          queries.push(
+            this.queryMCPServer('sei', 'getWalletData', {
+              address: request.context.walletAddress,
+              includeBalance: true,
+              includeDeFi: true
+            }).then(data => {
+              mcpContext.walletData = data;
+              mcpContext.serversUsed.push('sei-blockchain');
+            }).catch(err => {
+              this.logger.warn('Failed to get wallet data', { error: err.message });
+            })
+          );
+          
+          // Get portfolio analysis
+          queries.push(
+            this.queryMCPServer('portfolio', 'analyzePortfolio', {
+              walletAddress: request.context.walletAddress,
+              includePredictions: true
+            }).then(data => {
+              mcpContext.portfolioAnalysis = data;
+              mcpContext.serversUsed.push('portfolio-manager');
+            }).catch(err => {
+              this.logger.warn('Failed to get portfolio analysis', { error: err.message });
+            })
+          );
+        }
+        
+        // Execute all queries in parallel
+        await Promise.all(queries);
+        
+        this.logger.debug('MCP context gathered', {
+          serversUsed: mcpContext.serversUsed,
+          hasMarketInsights: !!mcpContext.marketInsights,
+          hasWalletData: !!mcpContext.walletData,
+          hasPortfolioAnalysis: !!mcpContext.portfolioAnalysis
+        });
+        
+        return mcpContext;
+      },
+      error => this.createOrchestrationError(
+        'MCP_CONTEXT_FAILED',
+        `Failed to gather MCP context: ${error}`,
+        'orchestrator'
+      )
+    );
+  };
+
+  /**
+   * Query a specific MCP server
+   */
+  private async queryMCPServer(
+    serverName: string,
+    method: string,
+    params: any
+  ): Promise<any> {
+    const client = this.mcpClients.get(serverName);
+    if (!client) {
+      throw new Error(`MCP client not found: ${serverName}`);
+    }
+    
+    try {
+      const response = await client.post('/call', {
+        method,
+        params,
+        id: `${Date.now()}-${Math.random()}`
+      });
+      
+      if (response.data.error) {
+        throw new Error(response.data.error.message);
+      }
+      
+      return response.data.result;
+    } catch (error: any) {
+      this.logger.error('MCP server query failed', {
+        serverName,
+        method,
+        error: error.message
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Generate AI response using OpenAI with MCP context
+   */
+  private generateAIResponse = (
+    request: ChatOrchestrationRequest,
+    mcpContext: any
+  ): TE.TaskEither<OrchestrationError, ChatOrchestrationResponse> => {
+    return TE.tryCatch(
+      async () => {
+        // Build system prompt with MCP context
+        const systemPrompt = this.buildSystemPrompt(mcpContext);
+        
+        // Prepare messages for OpenAI
+        const messages: OpenAI.ChatCompletionMessageParam[] = [
+          { role: 'system', content: systemPrompt },
+          ...request.context.messages.map(msg => ({
+            role: msg.role as 'user' | 'assistant',
+            content: msg.content
+          })),
+          { role: 'user', content: request.message }
+        ];
+        
+        // Call OpenAI API
+        const completion = await this.openai.chat.completions.create({
+          model: this.config.openai.model,
+          messages,
+          temperature: this.config.openai.temperature || 0.7,
+          max_tokens: this.config.openai.maxTokens || 1000,
+          tools: this.getAvailableTools(),
+          tool_choice: 'auto'
+        });
+        
+        const response = completion.choices[0].message;
+        
+        // Extract actions if any tools were called
+        const actions: any[] = [];
+        if (response.tool_calls) {
+          for (const toolCall of response.tool_calls) {
+            actions.push({
+              type: toolCall.function.name,
+              params: JSON.parse(toolCall.function.arguments)
+            });
+          }
+        }
+        
+        // Prepare response
+        const result: ChatOrchestrationResponse = {
+          response: response.content || '',
+          data: mcpContext,
+          actions: actions.length > 0 ? actions : undefined,
+          metadata: {
+            mcpServersUsed: mcpContext.serversUsed || [],
+            processingTime: 0, // Will be set by caller
+            intent: this.detectIntent(request.message),
+            confidence: 0.95 // TODO: Implement proper confidence scoring
+          }
+        };
+        
+        return result;
+      },
+      error => this.createOrchestrationError(
+        'AI_RESPONSE_FAILED',
+        `Failed to generate AI response: ${error}`,
+        'orchestrator'
+      )
+    );
+  };
+
+  /**
+   * Build system prompt with MCP context
+   */
+  private buildSystemPrompt(mcpContext: any): string {
+    let prompt = `You are Seiron, an AI-powered DeFi portfolio management assistant for the Sei Network. 
+You have access to real-time market data, blockchain information, and portfolio analytics.
+
+Current Context:
+- Timestamp: ${mcpContext.timestamp}
+`;
+
+    if (mcpContext.marketInsights) {
+      prompt += `
+Market Insights:
+${JSON.stringify(mcpContext.marketInsights, null, 2)}
+`;
+    }
+
+    if (mcpContext.walletData) {
+      prompt += `
+Wallet Data:
+${JSON.stringify(mcpContext.walletData, null, 2)}
+`;
+    }
+
+    if (mcpContext.portfolioAnalysis) {
+      prompt += `
+Portfolio Analysis:
+${JSON.stringify(mcpContext.portfolioAnalysis, null, 2)}
+`;
+    }
+
+    prompt += `
+Please provide helpful, accurate, and actionable responses based on this real-time data.
+When discussing financial matters, always include appropriate disclaimers.
+If you need to perform actions like token swaps or portfolio rebalancing, suggest them clearly.`;
+
+    return prompt;
+  }
+
+  /**
+   * Get available tools for OpenAI function calling
+   */
+  private getAvailableTools(): OpenAI.ChatCompletionTool[] {
+    return [
+      {
+        type: 'function',
+        function: {
+          name: 'execute_token_swap',
+          description: 'Execute a token swap on the Sei Network',
+          parameters: {
+            type: 'object',
+            properties: {
+              fromToken: { type: 'string', description: 'Token to swap from' },
+              toToken: { type: 'string', description: 'Token to swap to' },
+              amount: { type: 'string', description: 'Amount to swap' },
+              slippage: { type: 'number', description: 'Slippage tolerance (0-1)' }
+            },
+            required: ['fromToken', 'toToken', 'amount']
+          }
+        }
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'rebalance_portfolio',
+          description: 'Propose portfolio rebalancing',
+          parameters: {
+            type: 'object',
+            properties: {
+              targetAllocation: { 
+                type: 'object', 
+                description: 'Target allocation percentages by asset'
+              },
+              riskTolerance: { 
+                type: 'string', 
+                enum: ['low', 'medium', 'high'],
+                description: 'Risk tolerance level'
+              }
+            },
+            required: ['targetAllocation']
+          }
+        }
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'analyze_defi_opportunity',
+          description: 'Analyze a DeFi opportunity',
+          parameters: {
+            type: 'object',
+            properties: {
+              protocol: { type: 'string', description: 'DeFi protocol name' },
+              type: { 
+                type: 'string', 
+                enum: ['lending', 'liquidity', 'staking'],
+                description: 'Type of opportunity'
+              },
+              amount: { type: 'string', description: 'Amount to invest' }
+            },
+            required: ['protocol', 'type']
+          }
+        }
+      }
+    ];
+  }
+
+  /**
+   * Detect intent from user message
+   */
+  private detectIntent(message: string): string {
+    const lowerMessage = message.toLowerCase();
+    
+    if (lowerMessage.includes('swap') || lowerMessage.includes('trade') || lowerMessage.includes('exchange')) {
+      return 'trading';
+    } else if (lowerMessage.includes('portfolio') || lowerMessage.includes('balance') || lowerMessage.includes('holdings')) {
+      return 'portfolio';
+    } else if (lowerMessage.includes('lend') || lowerMessage.includes('borrow') || lowerMessage.includes('apy')) {
+      return 'lending';
+    } else if (lowerMessage.includes('liquidity') || lowerMessage.includes('pool') || lowerMessage.includes('lp')) {
+      return 'liquidity';
+    } else if (lowerMessage.includes('risk') || lowerMessage.includes('safe') || lowerMessage.includes('analysis')) {
+      return 'analysis';
+    } else {
+      return 'general';
+    }
+  }
 
   /**
    * Validate enhanced user intent
@@ -1575,6 +2095,8 @@ export class OrchestratorService extends EventEmitter {
   }
 
   private getDefaultConfig(): BackendOrchestratorConfig {
+    const appConfig = getConfig();
+    
     return {
       core: {
         maxConcurrentTasks: 10,
@@ -1585,16 +2107,16 @@ export class OrchestratorService extends EventEmitter {
       adapters: {
         hive: {
           enabled: true,
-          baseUrl: 'https://api.hive.intelligence',
-          apiKey: process.env.HIVE_API_KEY || '',
+          baseUrl: appConfig.ai.hiveIntelligence.baseUrl,
+          apiKey: appConfig.ai.hiveIntelligence.apiKey,
           rateLimitConfig: {
-            maxRequests: 100,
+            maxRequests: appConfig.ai.hiveIntelligence.maxRequestsPerMinute,
             windowMs: 60000
           }
         },
         sak: {
           enabled: true,
-          seiRpcUrl: 'https://rpc.sei.io',
+          seiRpcUrl: appConfig.blockchain.sei.rpcUrl,
           seiEvmRpcUrl: 'https://evm-rpc.sei.io',
           chainId: 'pacific-1',
           network: 'mainnet',
@@ -1607,6 +2129,32 @@ export class OrchestratorService extends EventEmitter {
           secure: false,
           apiKey: process.env.MCP_API_KEY
         }
+      },
+      mcpServers: {
+        hiveIntelligence: {
+          name: 'hive-intelligence',
+          url: appConfig.mcp.servers.hiveIntelligence.url,
+          apiKey: appConfig.mcp.servers.hiveIntelligence.apiKey,
+          timeout: appConfig.mcp.servers.hiveIntelligence.timeout
+        },
+        seiBlockchain: {
+          name: 'sei-blockchain',
+          url: appConfig.mcp.servers.seiBlockchain.url,
+          apiKey: appConfig.mcp.servers.seiBlockchain.apiKey,
+          timeout: appConfig.mcp.servers.seiBlockchain.timeout
+        },
+        portfolioManager: {
+          name: 'portfolio-manager',
+          url: appConfig.mcp.servers.portfolioManager.url,
+          apiKey: appConfig.mcp.servers.portfolioManager.apiKey,
+          timeout: appConfig.mcp.servers.portfolioManager.timeout
+        }
+      },
+      openai: {
+        apiKey: appConfig.ai.openai.apiKey,
+        model: appConfig.ai.openai.model,
+        temperature: 0.7,
+        maxTokens: 1000
       },
       realTime: {
         enabled: true,

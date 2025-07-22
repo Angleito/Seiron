@@ -169,6 +169,298 @@ export const combineValidations = <T>(
 };
 
 /**
+ * API Key Configuration
+ */
+export interface ApiKeyRequirement {
+  envVar: string;
+  name: string;
+  required: boolean;
+  validator?: (value: string) => Either<ConfigError, string>;
+  minLength?: number;
+  pattern?: RegExp;
+}
+
+/**
+ * Validates API key format and strength
+ */
+export const validateApiKeyFormat = (field: string, value: string, minLength: number = 32): Either<ConfigError, string> => {
+  if (value.length < minLength) {
+    return left(createError(field, `${field} must be at least ${minLength} characters long`, value.length));
+  }
+  
+  // Check for common weak patterns
+  if (/^(test|dev|demo|sample)/i.test(value)) {
+    return left(createError(field, `${field} appears to be a test/development key and should not be used in production`));
+  }
+  
+  // Check for sufficient entropy (basic check)
+  const uniqueChars = new Set(value.toLowerCase()).size;
+  if (uniqueChars < 10) {
+    return left(createError(field, `${field} appears to have insufficient entropy`));
+  }
+  
+  return right(value);
+};
+
+/**
+ * Validates that all required API keys are present and properly formatted
+ */
+export const validateRequiredKeys = (): Either<ConfigError[], {
+  valid: boolean;
+  warnings: string[];
+  keys: Record<string, boolean>;
+}> => {
+  const keyRequirements: ApiKeyRequirement[] = [
+    {
+      envVar: 'OPENAI_API_KEY',
+      name: 'OpenAI API',
+      required: true,
+      validator: (value) => validateApiKeyFormat('OPENAI_API_KEY', value, 40),
+      pattern: /^sk-[a-zA-Z0-9]{48,}$/
+    },
+    {
+      envVar: 'SUPABASE_URL',
+      name: 'Supabase URL',
+      required: true,
+      validator: (value) => pipe(
+        validateString('SUPABASE_URL', value),
+        chain((v) => validateUrl('SUPABASE_URL', v))
+      )
+    },
+    {
+      envVar: 'SUPABASE_ANON_KEY',
+      name: 'Supabase Anonymous Key',
+      required: true,
+      validator: (value) => validateApiKeyFormat('SUPABASE_ANON_KEY', value, 100),
+      minLength: 100
+    },
+    {
+      envVar: 'SUPABASE_SERVICE_ROLE_KEY',
+      name: 'Supabase Service Role Key',
+      required: process.env.NODE_ENV === 'production',
+      validator: (value) => validateApiKeyFormat('SUPABASE_SERVICE_ROLE_KEY', value, 100),
+      minLength: 100
+    },
+    {
+      envVar: 'MCP_API_KEY',
+      name: 'MCP Server API Key',
+      required: false,
+      validator: (value) => validateApiKeyFormat('MCP_API_KEY', value)
+    },
+    {
+      envVar: 'HIVE_API_KEY',
+      name: 'Hive Intelligence API Key',
+      required: false,
+      validator: (value) => validateApiKeyFormat('HIVE_API_KEY', value)
+    },
+    {
+      envVar: 'INTERNAL_API_KEY',
+      name: 'Internal Service API Key',
+      required: process.env.NODE_ENV === 'production',
+      validator: (value) => validateApiKeyFormat('INTERNAL_API_KEY', value)
+    },
+    {
+      envVar: 'JWT_SECRET',
+      name: 'JWT Secret',
+      required: true,
+      validator: (value) => validateApiKeyFormat('JWT_SECRET', value, 32)
+    },
+    {
+      envVar: 'REDIS_URL',
+      name: 'Redis Connection URL',
+      required: process.env.NODE_ENV === 'production',
+      validator: (value) => {
+        try {
+          const url = new URL(value);
+          if (!['redis:', 'rediss:'].includes(url.protocol)) {
+            return left(createError('REDIS_URL', 'REDIS_URL must use redis:// or rediss:// protocol'));
+          }
+          return right(value);
+        } catch {
+          return left(createError('REDIS_URL', 'REDIS_URL must be a valid Redis connection string'));
+        }
+      }
+    }
+  ];
+
+  const errors: ConfigError[] = [];
+  const warnings: string[] = [];
+  const keyStatus: Record<string, boolean> = {};
+
+  for (const requirement of keyRequirements) {
+    const value = process.env[requirement.envVar];
+    keyStatus[requirement.envVar] = !!value;
+
+    if (!value) {
+      if (requirement.required) {
+        errors.push(createError(
+          requirement.envVar,
+          `Missing required environment variable: ${requirement.envVar} (${requirement.name})`
+        ));
+      } else {
+        warnings.push(`Optional environment variable not configured: ${requirement.envVar} (${requirement.name})`);
+      }
+      continue;
+    }
+
+    // Validate format if validator is provided
+    if (requirement.validator) {
+      const validationResult = requirement.validator(value);
+      if (E.isLeft(validationResult)) {
+        errors.push(validationResult.left);
+      }
+    }
+
+    // Validate pattern if provided
+    if (requirement.pattern && !requirement.pattern.test(value)) {
+      errors.push(createError(
+        requirement.envVar,
+        `${requirement.envVar} does not match expected format`
+      ));
+    }
+
+    // Check minimum length
+    if (requirement.minLength && value.length < requirement.minLength) {
+      errors.push(createError(
+        requirement.envVar,
+        `${requirement.envVar} must be at least ${requirement.minLength} characters long`,
+        value.length
+      ));
+    }
+  }
+
+  if (errors.length > 0) {
+    return left(errors);
+  }
+
+  return right({
+    valid: true,
+    warnings,
+    keys: keyStatus
+  });
+};
+
+/**
+ * Validates network endpoints
+ */
+export const validateNetworkEndpoints = (): Either<ConfigError[], void> => {
+  const endpoints = [
+    {
+      envVar: 'SEI_RPC_URL',
+      name: 'Sei RPC URL',
+      defaultValue: 'https://sei-rpc.polkachu.com'
+    },
+    {
+      envVar: 'SEI_EVM_RPC_URL',
+      name: 'Sei EVM RPC URL',
+      defaultValue: 'https://evm-rpc.sei-apis.com'
+    },
+    {
+      envVar: 'FRONTEND_URL',
+      name: 'Frontend URL',
+      defaultValue: process.env.NODE_ENV === 'production' ? null : 'http://localhost:3000'
+    }
+  ];
+
+  const errors: ConfigError[] = [];
+
+  for (const endpoint of endpoints) {
+    const value = process.env[endpoint.envVar] || endpoint.defaultValue;
+    
+    if (!value) {
+      if (process.env.NODE_ENV === 'production') {
+        errors.push(createError(endpoint.envVar, `${endpoint.name} is required in production`));
+      }
+      continue;
+    }
+
+    const urlValidation = validateUrl(endpoint.envVar, value);
+    if (E.isLeft(urlValidation)) {
+      errors.push(urlValidation.left);
+    }
+  }
+
+  if (errors.length > 0) {
+    return left(errors);
+  }
+
+  return right(void 0);
+};
+
+/**
+ * Validates environment-specific configuration
+ */
+export const validateEnvironmentConfig = (): Either<ConfigError[], {
+  environment: Environment;
+  isProduction: boolean;
+  securityLevel: 'development' | 'staging' | 'production';
+}> => {
+  const envValidation = validateEnvironment('NODE_ENV');
+  
+  if (E.isLeft(envValidation)) {
+    return left([envValidation.left]);
+  }
+
+  const environment = envValidation.right;
+  const isProduction = environment === 'production';
+  
+  let securityLevel: 'development' | 'staging' | 'production';
+  switch (environment) {
+    case 'production':
+      securityLevel = 'production';
+      break;
+    case 'staging':
+      securityLevel = 'staging';
+      break;
+    default:
+      securityLevel = 'development';
+  }
+
+  return right({
+    environment,
+    isProduction,
+    securityLevel
+  });
+};
+
+/**
+ * Comprehensive startup validation
+ */
+export const validateStartupConfiguration = (): Either<ConfigError[], {
+  environment: {
+    environment: Environment;
+    isProduction: boolean;
+    securityLevel: 'development' | 'staging' | 'production';
+  };
+  apiKeys: {
+    valid: boolean;
+    warnings: string[];
+    keys: Record<string, boolean>;
+  };
+  networkEndpoints: boolean;
+}> => {
+  const validations = [
+    validateEnvironmentConfig(),
+    validateRequiredKeys(),
+    validateNetworkEndpoints().map(() => true) as Either<ConfigError[], boolean>
+  ] as const;
+
+  const combined = combineValidations(validations);
+  
+  if (E.isLeft(combined)) {
+    return left(combined.left as ConfigError[]);
+  }
+
+  const [environment, apiKeys, networkEndpoints] = combined.right;
+
+  return right({
+    environment,
+    apiKeys,
+    networkEndpoints
+  });
+};
+
+/**
  * Validates a configuration object and returns Either result
  */
 export const validateConfig = <T>(

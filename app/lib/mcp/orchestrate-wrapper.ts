@@ -3,14 +3,10 @@
  * Provides compatibility layer for existing orchestrate.ts to use the new MCP client
  */
 
-import { handleMCPRequests } from './index';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import OpenAI from 'openai';
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Backend URL from environment variable
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
 
 // CORS headers
 export const corsHeaders = {
@@ -55,50 +51,45 @@ export async function handleChatOrchestration(
       return;
     }
 
-    // Use the new MCP client to handle requests
-    const mcpResponse = await handleMCPRequests({
-      message,
-      walletAddress,
-      sessionId
-    });
+    // Forward request to secure backend
+    const backendUrl = `${BACKEND_URL}/api/chat/orchestrate-v2`;
     
-    // Prepare messages for OpenAI with MCP context
-    const systemMessage = {
-      role: 'system' as const,
-      content: `You are Seiron, a powerful dragon AI assistant specializing in DeFi, portfolio management, and blockchain technology on the Sei Network. 
-      You speak with wisdom and authority, occasionally making dragon-themed references.
-      You are helpful, knowledgeable, and focused on providing valuable insights about cryptocurrency and DeFi.
-      ${walletAddress ? `The user's wallet address is: ${walletAddress}` : ''}
-      ${mcpResponse.context ? `\n\nCurrent context: ${mcpResponse.context}` : ''}`
-    };
-
-    const conversationMessages = [
-      systemMessage,
-      ...messages,
-      { role: 'user' as const, content: message }
-    ];
-
-    // Call OpenAI API
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: conversationMessages,
-      temperature: 0.7,
-      max_tokens: 500,
+    const backendResponse = await fetch(backendUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message,
+        sessionId: sessionId || `session_${Date.now()}`,
+        walletAddress,
+        messages,
+        requiresBlockchainData: true
+      }),
     });
 
-    const response = completion.choices[0]?.message?.content || 'I apologize, but I could not generate a response.';
+    if (!backendResponse.ok) {
+      const errorData = await backendResponse.json().catch(() => ({}));
+      throw new Error(errorData.error || `Backend request failed: ${backendResponse.status}`);
+    }
+
+    const backendData = await backendResponse.json();
+    
+    if (!backendData.success) {
+      throw new Error(backendData.error || 'Backend processing failed');
+    }
 
     // Return response in the expected format
     res.status(200).json({
       success: true,
       data: {
-        response,
+        response: backendData.data.message,
         sessionId: sessionId || `session_${Date.now()}`,
         timestamp: new Date().toISOString(),
         model: 'gpt-4o-mini',
-        usage: completion.usage || {},
-        mcpData: mcpResponse.data,
-        toolsUsed: mcpResponse.tools
+        usage: {},
+        mcpData: backendData.data.metadata || {},
+        toolsUsed: backendData.data.actions || []
       }
     });
 

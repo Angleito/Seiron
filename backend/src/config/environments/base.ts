@@ -6,6 +6,7 @@ import {
   DatabaseConfig,
   BlockchainConfig,
   AIConfig,
+  MCPConfig,
   SecurityConfig,
   LoggingConfig,
   ConfigResult
@@ -206,6 +207,94 @@ const validateAIConfig = (): Either<readonly import('../types').ConfigError[], A
 };
 
 /**
+ * Validates MCP configuration
+ */
+const validateMCPConfig = (): Either<readonly import('../types').ConfigError[], MCPConfig> => {
+  const validations = [
+    validateEnvWithDefault('MCP_ENABLED', true, (value) => right(value === 'true')),
+    // Hive Intelligence MCP
+    validateEnvWithDefault('MCP_HIVE_URL', 'https://seiron-hive-intelligence.up.railway.app', (value) => 
+      validateUrl('MCP_HIVE_URL', value)
+    ),
+    validateEnvWithDefault('MCP_HIVE_API_KEY', '', (value) => right(value)),
+    validateEnvWithDefault('MCP_HIVE_TIMEOUT', 30000, (value) => validateNumber('MCP_HIVE_TIMEOUT', value)),
+    validateEnvWithDefault('MCP_HIVE_RETRY_ATTEMPTS', 3, (value) => validateNumber('MCP_HIVE_RETRY_ATTEMPTS', value)),
+    validateEnvWithDefault('MCP_HIVE_RETRY_DELAY', 1000, (value) => validateNumber('MCP_HIVE_RETRY_DELAY', value)),
+    // SEI Blockchain MCP
+    validateEnvWithDefault('MCP_SEI_URL', 'https://seiron-sei-blockchain.up.railway.app', (value) => 
+      validateUrl('MCP_SEI_URL', value)
+    ),
+    validateEnvWithDefault('MCP_SEI_API_KEY', '', (value) => right(value)),
+    validateEnvWithDefault('MCP_SEI_TIMEOUT', 30000, (value) => validateNumber('MCP_SEI_TIMEOUT', value)),
+    validateEnvWithDefault('MCP_SEI_RETRY_ATTEMPTS', 3, (value) => validateNumber('MCP_SEI_RETRY_ATTEMPTS', value)),
+    validateEnvWithDefault('MCP_SEI_RETRY_DELAY', 1000, (value) => validateNumber('MCP_SEI_RETRY_DELAY', value)),
+    // Portfolio Manager MCP
+    validateEnvWithDefault('MCP_PORTFOLIO_URL', 'https://seiron-portfolio-manager.up.railway.app', (value) => 
+      validateUrl('MCP_PORTFOLIO_URL', value)
+    ),
+    validateEnvWithDefault('MCP_PORTFOLIO_API_KEY', '', (value) => right(value)),
+    validateEnvWithDefault('MCP_PORTFOLIO_TIMEOUT', 30000, (value) => validateNumber('MCP_PORTFOLIO_TIMEOUT', value)),
+    validateEnvWithDefault('MCP_PORTFOLIO_RETRY_ATTEMPTS', 3, (value) => validateNumber('MCP_PORTFOLIO_RETRY_ATTEMPTS', value)),
+    validateEnvWithDefault('MCP_PORTFOLIO_RETRY_DELAY', 1000, (value) => validateNumber('MCP_PORTFOLIO_RETRY_DELAY', value)),
+    // HTTP configuration
+    validateEnvWithDefault('MCP_DEFAULT_TIMEOUT', 30000, (value) => validateNumber('MCP_DEFAULT_TIMEOUT', value)),
+    validateEnvWithDefault('MCP_DEFAULT_RETRY_ATTEMPTS', 3, (value) => validateNumber('MCP_DEFAULT_RETRY_ATTEMPTS', value)),
+    validateEnvWithDefault('MCP_DEFAULT_RETRY_DELAY', 1000, (value) => validateNumber('MCP_DEFAULT_RETRY_DELAY', value)),
+    validateEnvWithDefault('MCP_POOL_MAX_CONNECTIONS', 10, (value) => validateNumber('MCP_POOL_MAX_CONNECTIONS', value))
+  ];
+
+  return pipe(
+    combineValidations(validations),
+    (result) => {
+      if (result._tag === 'Left') {
+        return result;
+      }
+      const [
+        enabled,
+        hiveUrl, hiveApiKey, hiveTimeout, hiveRetryAttempts, hiveRetryDelay,
+        seiUrl, seiApiKey, seiTimeout, seiRetryAttempts, seiRetryDelay,
+        portfolioUrl, portfolioApiKey, portfolioTimeout, portfolioRetryAttempts, portfolioRetryDelay,
+        defaultTimeout, maxRetries, retryDelay, maxSockets
+      ] = result.right;
+      
+      return right({
+        enabled,
+        servers: {
+          hiveIntelligence: {
+            url: hiveUrl,
+            apiKey: hiveApiKey || undefined,
+            timeout: hiveTimeout,
+            retryAttempts: hiveRetryAttempts,
+            retryDelay: hiveRetryDelay
+          },
+          seiBlockchain: {
+            url: seiUrl,
+            apiKey: seiApiKey || undefined,
+            timeout: seiTimeout,
+            retryAttempts: seiRetryAttempts,
+            retryDelay: seiRetryDelay
+          },
+          portfolioManager: {
+            url: portfolioUrl,
+            apiKey: portfolioApiKey || undefined,
+            timeout: portfolioTimeout,
+            retryAttempts: portfolioRetryAttempts,
+            retryDelay: portfolioRetryDelay
+          }
+        },
+        http: {
+          defaultTimeout,
+          maxRetries,
+          retryDelay,
+          keepAlive: true,
+          maxSockets
+        }
+      });
+    }
+  );
+};
+
+/**
  * Validates security configuration
  */
 const validateSecurityConfig = (): Either<readonly import('../types').ConfigError[], SecurityConfig> => {
@@ -285,6 +374,7 @@ export const validateBaseConfig = (): ConfigResult<AppConfig> => {
       validateDatabaseConfig(),
       validateBlockchainConfig(),
       validateAIConfig(),
+      validateMCPConfig(),
       validateSecurityConfig(),
       validateLoggingConfig()
     ];
@@ -295,12 +385,13 @@ export const validateBaseConfig = (): ConfigResult<AppConfig> => {
         if (result._tag === 'Left') {
           return result;
         }
-        const [server, database, blockchain, ai, security, logging] = result.right;
+        const [server, database, blockchain, ai, mcp, security, logging] = result.right;
         return right({
           server,
           database,
           blockchain,
           ai,
+          mcp,
           security,
           logging
         });

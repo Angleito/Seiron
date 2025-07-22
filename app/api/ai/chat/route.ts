@@ -1,19 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createApiHandler } from '@/app/lib/security/middleware';
-import { OpenAI } from 'openai';
-import Anthropic from '@anthropic-ai/sdk';
-import { handleMCPRequests } from '@/app/lib/mcp';
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize AI clients (server-side only)
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-});
+// Backend URL from environment variable
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
 
 // Initialize Supabase for usage logging
 const supabase = createClient(
@@ -58,34 +49,10 @@ export const POST = createApiHandler(
         includeMCP = true,
       } = body!;
       
-      // Get MCP context if requested
-      let mcpContext = null;
-      if (includeMCP && messages.length > 0) {
-        const lastUserMessage = messages.filter(m => m.role === 'user').pop();
-        if (lastUserMessage) {
-          mcpContext = await handleMCPRequests({
-            message: lastUserMessage.content,
-            walletAddress: walletAddress || session?.walletAddress,
-            sessionId
-          });
-        }
-      }
-      
-      // Enhance system message with MCP context
-      let enhancedMessages = [...messages];
-      if (mcpContext?.context) {
-        const systemMessageIndex = enhancedMessages.findIndex(m => m.role === 'system');
-        if (systemMessageIndex >= 0) {
-          enhancedMessages[systemMessageIndex] = {
-            ...enhancedMessages[systemMessageIndex],
-            content: `${enhancedMessages[systemMessageIndex].content}\n\nAdditional context: ${mcpContext.context}`
-          };
-        } else {
-          enhancedMessages.unshift({
-            role: 'system',
-            content: `You are Seiron, a powerful dragon AI assistant. Current context: ${mcpContext.context}`
-          });
-        }
+      // Get the last user message for backend processing
+      const lastUserMessage = messages.filter(m => m.role === 'user').pop();
+      if (!lastUserMessage) {
+        throw new Error('No user message found');
       }
       
       // Log AI usage for billing/monitoring
@@ -95,10 +62,46 @@ export const POST = createApiHandler(
         messageCount: messages.length,
         timestamp: new Date().toISOString(),
         sessionId,
-        mcpUsed: !!mcpContext,
+        mcpUsed: includeMCP,
       });
       
-      // Route to appropriate AI provider
+      // Forward request to secure backend
+      const backendUrl = `${BACKEND_URL}/api/chat/orchestrate-v2`;
+      
+      const backendResponse = await fetch(backendUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Forward any authentication headers if needed
+          ...(req.headers.get('authorization') && {
+            'authorization': req.headers.get('authorization')!
+          }),
+        },
+        body: JSON.stringify({
+          message: lastUserMessage.content,
+          sessionId,
+          walletAddress: walletAddress || session?.walletAddress,
+          messages: messages.map(msg => ({
+            role: msg.role,
+            content: msg.content,
+            timestamp: new Date().toISOString()
+          })),
+          requiresBlockchainData: includeMCP
+        }),
+      });
+
+      if (!backendResponse.ok) {
+        const errorData = await backendResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || `Backend request failed: ${backendResponse.status}`);
+      }
+
+      const backendData = await backendResponse.json();
+      
+      if (!backendData.success) {
+        throw new Error(backendData.error || 'Backend processing failed');
+      }
+      
+      // Handle different response formats based on requested model
       if (model.startsWith('claude')) {
         // Map model names to Anthropic model IDs
         const anthropicModel = {
@@ -107,174 +110,65 @@ export const POST = createApiHandler(
           'claude-3-haiku': 'claude-3-haiku-20240307'
         }[model] || 'claude-3-5-sonnet-20241022';
         
-        // Extract system message for Claude
-        const systemMessage = enhancedMessages.find(m => m.role === 'system');
-        const conversationMessages = enhancedMessages.filter(m => m.role !== 'system');
+        // Use backend response data
+        const content = backendData.data.message;
         
-        const response = await anthropic.messages.create({
+        // Log assistant response
+        await logMessage(session!.userId, sessionId, 'assistant', content, {
           model: anthropicModel,
-          messages: conversationMessages.map(msg => ({
-            role: msg.role === 'user' ? 'user' : 'assistant',
-            content: msg.content,
-          })),
-          system: systemMessage?.content,
-          max_tokens: maxTokens,
-          temperature,
-          stream,
+          backendProcessed: true
         });
         
         if (stream) {
-          // Handle streaming response
-          const encoder = new TextEncoder();
-          const readableStream = new ReadableStream({
-            async start(controller) {
-              try {
-                let fullContent = '';
-                for await (const chunk of response) {
-                  if (chunk.type === 'content_block_delta') {
-                    const text = chunk.delta.text || '';
-                    fullContent += text;
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
-                      text,
-                      type: 'content'
-                    })}\n\n`));
-                  }
-                }
-                
-                // Send completion with metadata
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
-                  type: 'done',
-                  model: anthropicModel,
-                  usage: response.usage,
-                  mcpData: mcpContext?.data,
-                  toolsUsed: mcpContext?.tools
-                })}\n\n`));
-                controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-                
-                // Log completion
-                await logMessage(session!.userId, sessionId, 'assistant', fullContent, {
-                  model: anthropicModel,
-                  usage: response.usage
-                });
-                
-                controller.close();
-              } catch (error) {
-                console.error('Streaming error:', error);
-                controller.error(error);
-              }
-            },
-          });
-          
-          return new NextResponse(readableStream, {
-            headers: {
-              ...securityHeaders,
-              'Content-Type': 'text/event-stream',
-              'Cache-Control': 'no-cache',
-              'Connection': 'keep-alive',
-            },
-          });
+          // Handle streaming response - not supported via backend proxy yet
+          return NextResponse.json(
+            { error: 'Streaming not supported for Claude models via backend proxy' },
+            { status: 501, headers: securityHeaders }
+          );
         } else {
           // Non-streaming response
-          const content = response.content[0].text;
-          
-          // Log assistant response
-          await logMessage(session!.userId, sessionId, 'assistant', content, {
-            model: anthropicModel,
-            usage: response.usage
-          });
-          
           return NextResponse.json({
             content,
             model: anthropicModel,
             usage: {
-              promptTokens: response.usage?.input_tokens,
-              completionTokens: response.usage?.output_tokens,
-              totalTokens: (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0),
+              promptTokens: 0,
+              completionTokens: 0,
+              totalTokens: 0,
             },
-            mcpData: mcpContext?.data,
-            toolsUsed: mcpContext?.tools,
+            mcpData: backendData.data.metadata || {},
+            toolsUsed: backendData.data.actions || [],
           }, { headers: securityHeaders });
         }
       } else {
-        // Use OpenAI
+        // Use OpenAI (processed by backend)
         const openaiModel = model === 'gpt-4o' ? 'gpt-4o' : model;
         
-        const response = await openai.chat.completions.create({
+        const content = backendData.data.message;
+        
+        // Log assistant response
+        await logMessage(session!.userId, sessionId, 'assistant', content || '', {
           model: openaiModel,
-          messages: enhancedMessages,
-          temperature,
-          max_tokens: maxTokens,
-          stream,
+          backendProcessed: true
         });
         
         if (stream) {
-          // Handle streaming response
-          const encoder = new TextEncoder();
-          const readableStream = new ReadableStream({
-            async start(controller) {
-              try {
-                let fullContent = '';
-                for await (const chunk of response) {
-                  const text = chunk.choices[0]?.delta?.content || '';
-                  if (text) {
-                    fullContent += text;
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
-                      text,
-                      type: 'content'
-                    })}\n\n`));
-                  }
-                }
-                
-                // Send completion with metadata
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
-                  type: 'done',
-                  model: openaiModel,
-                  mcpData: mcpContext?.data,
-                  toolsUsed: mcpContext?.tools
-                })}\n\n`));
-                controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-                
-                // Log completion
-                await logMessage(session!.userId, sessionId, 'assistant', fullContent, {
-                  model: openaiModel
-                });
-                
-                controller.close();
-              } catch (error) {
-                console.error('Streaming error:', error);
-                controller.error(error);
-              }
-            },
-          });
-          
-          return new NextResponse(readableStream, {
-            headers: {
-              ...securityHeaders,
-              'Content-Type': 'text/event-stream',
-              'Cache-Control': 'no-cache',
-              'Connection': 'keep-alive',
-            },
-          });
+          // Handle streaming response - not supported via backend proxy yet
+          return NextResponse.json(
+            { error: 'Streaming not supported for OpenAI models via backend proxy' },
+            { status: 501, headers: securityHeaders }
+          );
         } else {
           // Non-streaming response
-          const content = response.choices[0].message.content;
-          
-          // Log assistant response
-          await logMessage(session!.userId, sessionId, 'assistant', content || '', {
-            model: openaiModel,
-            usage: response.usage
-          });
-          
           return NextResponse.json({
             content,
             model: openaiModel,
             usage: {
-              promptTokens: response.usage?.prompt_tokens,
-              completionTokens: response.usage?.completion_tokens,
-              totalTokens: response.usage?.total_tokens,
+              promptTokens: 0,
+              completionTokens: 0,
+              totalTokens: 0,
             },
-            mcpData: mcpContext?.data,
-            toolsUsed: mcpContext?.tools,
+            mcpData: backendData.data.metadata || {},
+            toolsUsed: backendData.data.actions || [],
           }, { headers: securityHeaders });
         }
       }

@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { OpenAI } from 'openai';
-import { handleMCPRequests } from '@/app/lib/mcp';
 import { createPublicApiHandler } from '@/app/lib/security/middleware';
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+// Backend URL from environment variable
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
 
 // Request validation schema
 const chatRequestSchema = z.object({
@@ -51,64 +47,54 @@ export const POST = createPublicApiHandler(
         maxTokens,
       } = body!;
 
-      // Use MCP client to gather context
-      const mcpResponse = await handleMCPRequests({
-        message,
-        walletAddress,
-        sessionId
-      });
+      // Forward request to secure backend
+      const backendUrl = stream 
+        ? `${BACKEND_URL}/api/chat/message` 
+        : `${BACKEND_URL}/api/chat/orchestrate-v2`;
       
-      // Prepare messages for OpenAI with MCP context
-      const systemMessage = {
-        role: 'system' as const,
-        content: `You are Seiron, a powerful dragon AI assistant specializing in DeFi, portfolio management, and blockchain technology on the Sei Network. 
-        You speak with wisdom and authority, occasionally making dragon-themed references.
-        You are helpful, knowledgeable, and focused on providing valuable insights about cryptocurrency and DeFi.
-        ${walletAddress ? `The user's wallet address is: ${walletAddress}` : ''}
-        ${mcpResponse.context ? `\n\nCurrent context: ${mcpResponse.context}` : ''}`
-      };
+      const backendResponse = await fetch(backendUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Forward any authentication headers if needed
+          ...(req.headers.get('authorization') && {
+            'authorization': req.headers.get('authorization')!
+          }),
+        },
+        body: JSON.stringify({
+          message,
+          sessionId,
+          walletAddress,
+          messages,
+          stream,
+          temperature,
+          maxTokens,
+          requiresBlockchainData: true
+        }),
+      });
 
-      const conversationMessages = [
-        systemMessage,
-        ...messages,
-        { role: 'user' as const, content: message }
-      ];
+      if (!backendResponse.ok) {
+        const errorData = await backendResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || `Backend request failed: ${backendResponse.status}`);
+      }
 
       if (stream) {
-        // Handle streaming response
+        // Handle streaming response by forwarding the stream from backend
         const encoder = new TextEncoder();
-        const streamResponse = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: conversationMessages,
-          temperature,
-          max_tokens: maxTokens,
-          stream: true,
-        });
+        const reader = backendResponse.body?.getReader();
+        
+        if (!reader) {
+          throw new Error('No response stream available');
+        }
 
         const readableStream = new ReadableStream({
           async start(controller) {
             try {
-              for await (const chunk of streamResponse) {
-                const content = chunk.choices[0]?.delta?.content || '';
-                if (content) {
-                  const data = JSON.stringify({ 
-                    content,
-                    type: 'content'
-                  });
-                  controller.enqueue(encoder.encode(`data: ${data}\n\n`));
-                }
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                controller.enqueue(value);
               }
-              
-              // Send completion event
-              const completionData = JSON.stringify({
-                type: 'done',
-                sessionId,
-                timestamp: new Date().toISOString(),
-                mcpData: mcpResponse.data,
-                toolsUsed: mcpResponse.tools
-              });
-              controller.enqueue(encoder.encode(`data: ${completionData}\n\n`));
-              controller.enqueue(encoder.encode('data: [DONE]\n\n'));
               controller.close();
             } catch (error) {
               console.error('Streaming error:', error);
@@ -128,24 +114,23 @@ export const POST = createPublicApiHandler(
         });
       } else {
         // Non-streaming response
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: conversationMessages,
-          temperature,
-          max_tokens: maxTokens,
-        });
-
-        const response = completion.choices[0]?.message?.content || 'I apologize, but I could not generate a response.';
+        const backendData = await backendResponse.json();
+        
+        if (!backendData.success) {
+          throw new Error(backendData.error || 'Backend processing failed');
+        }
 
         return NextResponse.json(
           { 
-            message: response,
+            message: backendData.data.message || backendData.data.response,
             timestamp: new Date().toISOString(),
             model: 'gpt-4o-mini',
-            tokens: completion.usage?.total_tokens,
+            tokens: backendData.data.usage?.total_tokens || 0,
             sessionId,
-            mcpData: mcpResponse.data,
-            toolsUsed: mcpResponse.tools
+            mcpData: backendData.data.metadata || {},
+            toolsUsed: backendData.data.actions || [],
+            metadata: backendData.data.metadata,
+            actions: backendData.data.actions
           },
           { 
             headers: {

@@ -194,6 +194,10 @@ function getCookie(name: string): string | null {
 // Export singleton instance
 export const api = new ApiClient('/api');
 
+// Backend API client for direct backend communication
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+export const backendApi = new ApiClient(BACKEND_URL);
+
 // Export class for custom instances
 export { ApiClient };
 
@@ -220,6 +224,14 @@ export const portfolioApi = {
 export const aiApi = {
   chat: (messages: any[], options?: any) =>
     api.post('/ai/chat', { messages, ...options }),
+    
+  orchestrate: (params: {
+    message: string;
+    sessionId?: string;
+    walletAddress?: string;
+    messages?: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>;
+  }) =>
+    api.post('/chat/orchestrate', params, { skipCSRF: true }),
 };
 
 export const voiceApi = {
@@ -239,4 +251,56 @@ export const voiceApi = {
   
   getVoices: () =>
     api.get<{ voices: any[] }>('/voice/synthesize'),
+};
+
+// Secure backend API methods - bypassing frontend API routes
+export const secureBackendApi = {
+  chat: {
+    orchestrate: (params: {
+      message: string;
+      sessionId: string;
+      walletAddress?: string;
+      messages?: Array<{ role: 'user' | 'assistant' | 'system'; content: string; timestamp?: string }>;
+      requiresBlockchainData?: boolean;
+    }) =>
+      backendApi.post<{
+        success: boolean;
+        data: {
+          message: string;
+          actions: any[];
+          metadata: any;
+          persistence?: any;
+        };
+      }>('/api/chat/orchestrate-v2', params, { skipCSRF: true }),
+    
+    message: (params: {
+      message: string;
+      walletAddress: string;
+    }) =>
+      backendApi.post<{
+        success: boolean;
+        data: any;
+      }>('/api/chat/message', params, { skipCSRF: true }),
+    
+    history: (walletAddress: string, page = 1, pageSize = 50) =>
+      backendApi.get<{
+        success: boolean;
+        data: any[];
+        pagination: any;
+      }>(`/api/chat/history?walletAddress=${encodeURIComponent(walletAddress)}&page=${page}&pageSize=${pageSize}`, { skipCSRF: true }),
+  },
+  
+  portfolio: {
+    get: (walletAddress: string) =>
+      backendApi.get<{
+        success: boolean;
+        data: any;
+      }>(`/api/portfolio?walletAddress=${encodeURIComponent(walletAddress)}`, { skipCSRF: true }),
+  },
+  
+  health: () =>
+    backendApi.get<{
+      status: string;
+      timestamp: string;
+    }>('/health', { skipCSRF: true }),
 };

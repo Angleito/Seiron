@@ -3,7 +3,7 @@ import { body, validationResult } from 'express-validator';
 import { pipe } from 'fp-ts/function';
 import * as TE from 'fp-ts/TaskEither';
 import * as E from 'fp-ts/Either';
-import { EnhancedUserIntent, OrchestrationResult } from '../services/OrchestratorService';
+import { EnhancedUserIntent, OrchestrationResult, ChatMessage, ChatContext, ChatOrchestrationRequest } from '../services/OrchestratorService';
 import { MessageRecord } from '../services/SupabaseService';
 import { createServiceLogger } from '../services/LoggingService';
 import { performance } from 'perf_hooks';
@@ -1270,6 +1270,247 @@ router.get('/real-time-status', async (req, res) => {
 
   res.json({ success: true, data: result.right });
 
+});
+
+/**
+ * POST /api/chat/orchestrate-v2
+ * Process chat message through MCP servers with OpenAI orchestration
+ * This is the new secure endpoint that integrates with Railway-deployed MCP servers
+ */
+router.post('/orchestrate-v2', [
+  body('message').notEmpty().withMessage('Message is required'),
+  body('sessionId').notEmpty().withMessage('Session ID is required'),
+  body('walletAddress').optional().isEthereumAddress().withMessage('Valid wallet address required if provided'),
+  body('messages').optional().isArray().withMessage('Messages must be an array'),
+  body('requiresBlockchainData').optional().isBoolean().withMessage('requiresBlockchainData must be boolean')
+], async (req, res) => {
+  const startTime = performance.now();
+  const requestId = `orch-v2-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  
+  logger.info('Received orchestrate-v2 request', {
+    requestId,
+    sessionId: req.body.sessionId,
+    walletAddress: req.body.walletAddress,
+    messageLength: req.body.message?.length || 0,
+    hasMessages: !!req.body.messages,
+    requiresBlockchainData: req.body.requiresBlockchainData,
+    timestamp: new Date().toISOString()
+  });
+  
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    logger.warn('Orchestrate-v2 validation failed', {
+      requestId,
+      errors: errors.array(),
+      sessionId: req.body.sessionId
+    });
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { message, sessionId, walletAddress, messages = [], requiresBlockchainData = false } = req.body;
+
+  try {
+    // Build chat context
+    const chatMessages: ChatMessage[] = messages.map((msg: any) => ({
+      role: msg.role || 'user',
+      content: msg.content,
+      timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date()
+    }));
+    
+    const context: ChatContext = {
+      walletAddress,
+      sessionId,
+      messages: chatMessages,
+      metadata: {
+        requestId,
+        source: 'api',
+        userAgent: req.get('User-Agent')
+      }
+    };
+    
+    // Create orchestration request
+    const orchestrationRequest: ChatOrchestrationRequest = {
+      message,
+      context,
+      requiresBlockchainData
+    };
+    
+    // Process through orchestrator with MCP servers and OpenAI
+    const orchestratorStartTime = performance.now();
+    const result = await req.services.orchestrator.orchestrateChatMessage(orchestrationRequest)();
+    const orchestratorDuration = performance.now() - orchestratorStartTime;
+    
+    if (result._tag === 'Left') {
+      logger.error('Orchestrator-v2 processing failed', {
+        requestId,
+        sessionId,
+        error: result.left.message,
+        errorCode: result.left.code,
+        errorComponent: result.left.component,
+        orchestratorDuration: Math.round(orchestratorDuration),
+        totalDuration: Math.round(performance.now() - startTime)
+      });
+      
+      return res.status(500).json({
+        success: false,
+        error: result.left.message,
+        errorCode: result.left.code,
+        message: 'Failed to process your request. Please try again.'
+      });
+    }
+    
+    const orchestrationResult = result.right;
+    
+    // Save user message if wallet address is provided
+    let userMessageResult: E.Either<Error, any> | null = null;
+    if (walletAddress) {
+      const userMessageStart = performance.now();
+      userMessageResult = await saveChatMessage(
+        req.services.supabase,
+        walletAddress,
+        'user',
+        message,
+        {
+          session_id: sessionId,
+          orchestrator_v2: true,
+          mcp_servers_used: orchestrationResult.metadata.mcpServersUsed,
+          intent: orchestrationResult.metadata.intent
+        }
+      );
+      
+      if (userMessageResult._tag === 'Left') {
+        logger.warn('Failed to save user message in orchestrate-v2', {
+          requestId,
+          sessionId,
+          walletAddress,
+          error: userMessageResult.left.message
+        });
+      } else {
+        logger.debug('User message saved in orchestrate-v2', {
+          requestId,
+          sessionId,
+          walletAddress,
+          messageId: userMessageResult.right.id,
+          duration: Math.round(performance.now() - userMessageStart)
+        });
+      }
+    }
+    
+    // Save AI response if wallet address is provided
+    let aiMessageResult: E.Either<Error, any> | null = null;
+    if (walletAddress) {
+      const aiMessageStart = performance.now();
+      const cryptoContext = {
+        mcp_context: orchestrationResult.data,
+        actions: orchestrationResult.actions,
+        metadata: orchestrationResult.metadata,
+        session_context: {
+          session_id: sessionId,
+          wallet_address: walletAddress,
+          timestamp: new Date().toISOString()
+        }
+      };
+      
+      aiMessageResult = await saveChatMessage(
+        req.services.supabase,
+        walletAddress,
+        'assistant',
+        orchestrationResult.response,
+        cryptoContext
+      );
+      
+      if (aiMessageResult._tag === 'Left') {
+        logger.warn('Failed to save AI response in orchestrate-v2', {
+          requestId,
+          sessionId,
+          walletAddress,
+          error: aiMessageResult.left.message
+        });
+      } else {
+        logger.debug('AI response saved in orchestrate-v2', {
+          requestId,
+          sessionId,
+          walletAddress,
+          messageId: aiMessageResult.right.id,
+          duration: Math.round(performance.now() - aiMessageStart)
+        });
+      }
+    }
+    
+    const totalDuration = performance.now() - startTime;
+    
+    logger.info('Orchestration-v2 completed successfully', {
+      requestId,
+      sessionId,
+      walletAddress,
+      mcpServersUsed: orchestrationResult.metadata.mcpServersUsed,
+      hasActions: !!orchestrationResult.actions && orchestrationResult.actions.length > 0,
+      intent: orchestrationResult.metadata.intent,
+      confidence: orchestrationResult.metadata.confidence,
+      orchestratorDuration: Math.round(orchestratorDuration),
+      totalDuration: Math.round(totalDuration),
+      responseLength: orchestrationResult.response.length,
+      userMessageSaved: userMessageResult ? userMessageResult._tag === 'Right' : null,
+      aiMessageSaved: aiMessageResult ? aiMessageResult._tag === 'Right' : null
+    });
+    
+    // Send real-time update via Socket.io if wallet address is provided
+    if (walletAddress) {
+      try {
+        await req.services.socket.sendChatResponse(walletAddress, {
+          type: 'orchestrated_response',
+          data: orchestrationResult,
+          timestamp: new Date().toISOString()
+        })();
+        logger.debug('Socket.io update sent for orchestrate-v2', {
+          requestId,
+          walletAddress
+        });
+      } catch (socketError) {
+        logger.warn('Socket.io update failed for orchestrate-v2', {
+          requestId,
+          walletAddress,
+          error: socketError instanceof Error ? socketError.message : String(socketError)
+        });
+      }
+    }
+    
+    const response = {
+      success: true,
+      data: {
+        message: orchestrationResult.response,
+        actions: orchestrationResult.actions,
+        metadata: orchestrationResult.metadata,
+        ...(walletAddress && {
+          persistence: {
+            user_message_saved: userMessageResult ? userMessageResult._tag === 'Right' : null,
+            ai_response_saved: aiMessageResult ? aiMessageResult._tag === 'Right' : null,
+            user_message_id: userMessageResult && userMessageResult._tag === 'Right' ? userMessageResult.right.id : null,
+            ai_response_id: aiMessageResult && aiMessageResult._tag === 'Right' ? aiMessageResult.right.id : null
+          }
+        })
+      }
+    };
+    
+    res.json(response);
+    
+  } catch (error: any) {
+    const duration = performance.now() - startTime;
+    logger.error('Chat orchestrate-v2 API error', {
+      requestId,
+      sessionId,
+      walletAddress,
+      duration: Math.round(duration),
+      error: error.message,
+      stack: error.stack
+    });
+    
+    return res.status(500).json({ 
+      success: false,
+      error: 'Failed to process message',
+      message: 'An unexpected error occurred. Please try again.',
+    });
+  }
 });
 
 export { router as chatRouter };

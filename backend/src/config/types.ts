@@ -80,6 +80,36 @@ export interface AIConfig {
 }
 
 /**
+ * MCP server configuration interface
+ */
+export interface MCPServerEndpoint {
+  readonly url: string;
+  readonly apiKey?: string;
+  readonly timeout: number;
+  readonly retryAttempts: number;
+  readonly retryDelay: number;
+}
+
+/**
+ * MCP configuration interface
+ */
+export interface MCPConfig {
+  readonly enabled: boolean;
+  readonly servers: {
+    readonly hiveIntelligence: MCPServerEndpoint;
+    readonly seiBlockchain: MCPServerEndpoint;
+    readonly portfolioManager: MCPServerEndpoint;
+  };
+  readonly http: {
+    readonly defaultTimeout: number;
+    readonly maxRetries: number;
+    readonly retryDelay: number;
+    readonly keepAlive: boolean;
+    readonly maxSockets: number;
+  };
+}
+
+/**
  * Security configuration interface
  */
 export interface SecurityConfig {
@@ -116,6 +146,7 @@ export interface AppConfig {
   readonly database: DatabaseConfig;
   readonly blockchain: BlockchainConfig;
   readonly ai: AIConfig;
+  readonly mcp: MCPConfig;
   readonly security: SecurityConfig;
   readonly logging: LoggingConfig;
 }
