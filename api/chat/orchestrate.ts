@@ -24,15 +24,20 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
+  // Set CORS headers for all responses
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    res.setHeader(key, value)
+  })
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    res.status(200).setHeaders(corsHeaders).end()
+    res.status(200).end()
     return
   }
 
   // Only allow POST
   if (req.method !== 'POST') {
-    res.status(405).setHeaders(corsHeaders).json({ 
+    res.status(405).json({ 
       error: 'Method not allowed' 
     })
     return
@@ -42,7 +47,7 @@ export default async function handler(
     const { message, sessionId, walletAddress, messages = [] } = req.body
 
     if (!message) {
-      res.status(400).setHeaders(corsHeaders).json({ 
+      res.status(400).json({ 
         error: 'Message is required' 
       })
       return
@@ -78,7 +83,7 @@ export default async function handler(
     const response = completion.choices[0]?.message?.content || 'I apologize, but I could not generate a response.'
 
     // Return response in the expected format
-    res.status(200).setHeaders(corsHeaders).json({
+    res.status(200).json({
       success: true,
       data: {
         response,
@@ -92,7 +97,7 @@ export default async function handler(
   } catch (error) {
     console.error('Chat orchestration error:', error)
     
-    res.status(500).setHeaders(corsHeaders).json({
+    res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Internal server error'
     })

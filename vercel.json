@@ -5,7 +5,7 @@
   "installCommand": "cd frontend && npm install",
   "framework": "vite",
   "functions": {
-    "frontend/api/**/*.ts": {
+    "api/**/*.ts": {
       "maxDuration": 30,
       "runtime": "nodejs20.x"
     }

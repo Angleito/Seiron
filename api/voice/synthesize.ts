@@ -170,9 +170,14 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
+  // Set CORS headers for all responses
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    res.setHeader(key, value)
+  })
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    res.status(200).setHeaders(corsHeaders).end()
+    res.status(200).end()
     return
   }
   
@@ -183,7 +188,7 @@ export default async function handler(
       error: 'Method not allowed',
       code: 'METHOD_NOT_ALLOWED'
     }
-    res.status(405).setHeaders(corsHeaders).json(errorResponse)
+    res.status(405).json(errorResponse)
     return
   }
   
@@ -200,7 +205,7 @@ export default async function handler(
         error: 'Rate limit exceeded. Please try again later.',
         code: 'RATE_LIMIT_EXCEEDED'
       }
-      res.status(429).setHeaders(corsHeaders).json(errorResponse)
+      res.status(429).json(errorResponse)
       return
     }
     
@@ -213,7 +218,7 @@ export default async function handler(
         error: 'Text is required',
         code: 'MISSING_TEXT'
       }
-      res.status(400).setHeaders(corsHeaders).json(errorResponse)
+      res.status(400).json(errorResponse)
       return
     }
     
@@ -223,7 +228,7 @@ export default async function handler(
         error: 'Voice ID is required',
         code: 'MISSING_VOICE_ID'
       }
-      res.status(400).setHeaders(corsHeaders).json(errorResponse)
+      res.status(400).json(errorResponse)
       return
     }
     
@@ -235,7 +240,7 @@ export default async function handler(
         error: textValidationError,
         code: 'INVALID_TEXT'
       }
-      res.status(400).setHeaders(corsHeaders).json(errorResponse)
+      res.status(400).json(errorResponse)
       return
     }
     
@@ -264,7 +269,7 @@ export default async function handler(
       }
     }
     
-    res.status(200).setHeaders(corsHeaders).json(successResponse)
+    res.status(200).json(successResponse)
     
   } catch (error) {
     console.error('Voice synthesis error:', error)
@@ -293,6 +298,6 @@ export default async function handler(
       code: errorCode
     }
     
-    res.status(500).setHeaders(corsHeaders).json(errorResponse)
+    res.status(500).json(errorResponse)
   }
 }
