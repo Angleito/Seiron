@@ -7,7 +7,7 @@ import { createHash } from 'crypto';
 const PORTFOLIO_API_URL = process.env.PORTFOLIO_API_URL || 'http://localhost:8000/api';
 const PORTFOLIO_API_KEY = process.env.PORTFOLIO_API_KEY || '';
 const COINGECKO_API_KEY = process.env.COINGECKO_API_KEY || '';
-const REDIS_URL = process.env.REDIS_URL || process.env.REDIS_PRIVATE_URL || 'redis://localhost:6379';
+const REDIS_URL = process.env.REDIS_URL || process.env.REDIS_PUBLIC_URL || process.env.REDIS_PRIVATE_URL || 'redis://localhost:6379';
 
 // Redis client for caching
 import Redis from 'ioredis';
@@ -24,13 +24,27 @@ class PortfolioManagerMCPServer extends BaseMCPServer {
   });
 
   constructor() {
-    // Initialize Redis with proper error handling
+    // Initialize Redis with proper error handling for Railway
     let redis: Redis | undefined;
     try {
-      redis = new Redis(REDIS_URL);
+      // Use Railway Redis connection string with proper options
+      redis = new Redis(REDIS_URL, {
+        maxRetriesPerRequest: 3,
+        lazyConnect: true,
+        connectTimeout: 10000,
+        commandTimeout: 5000,
+        retryDelayOnFailover: 100,
+        enableReadyCheck: false,
+        maxLoadingTimeout: 5000,
+        family: 4, // Force IPv4
+      });
+      
       redis.on('connect', () => console.log('Redis connected successfully'));
       redis.on('error', (err) => console.warn('Redis error:', err.message));
-      console.log('Redis client initialized');
+      redis.on('ready', () => console.log('Redis ready for commands'));
+      redis.on('reconnecting', () => console.log('Redis reconnecting...'));
+      
+      console.log('Redis client initialized with URL:', REDIS_URL.replace(/\/\/.*@/, '//***:***@'));
     } catch (error) {
       console.warn('Redis initialization failed, running without cache:', error);
       redis = undefined;

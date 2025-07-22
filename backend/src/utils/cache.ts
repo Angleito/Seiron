@@ -8,14 +8,32 @@ export class CacheService {
   private defaultTTL: number = 3600; // 1 hour
 
   constructor() {
-    this.redis = new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT || '6379'),
-      password: process.env.REDIS_PASSWORD || undefined,
-      db: parseInt(process.env.REDIS_DB || '0'),
-      maxRetriesPerRequest: 3,
-      lazyConnect: true,
-    });
+    // Railway Redis connection - use REDIS_URL if available, otherwise fallback to individual env vars
+    const redisUrl = process.env.REDIS_URL || process.env.REDIS_PRIVATE_URL;
+    
+    if (redisUrl) {
+      // Use Redis URL for Railway deployment
+      this.redis = new Redis(redisUrl, {
+        maxRetriesPerRequest: 3,
+        lazyConnect: true,
+        connectTimeout: 10000,
+        commandTimeout: 5000,
+        retryDelayOnFailover: 100,
+        maxRetriesPerRequest: 3,
+        enableReadyCheck: false,
+        maxLoadingTimeout: 5000
+      });
+    } else {
+      // Fallback to individual environment variables for local development
+      this.redis = new Redis({
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379'),
+        password: process.env.REDIS_PASSWORD || undefined,
+        db: parseInt(process.env.REDIS_DB || '0'),
+        maxRetriesPerRequest: 3,
+        lazyConnect: true,
+      });
+    }
 
     this.redis.on('connect', () => {
       logger.info('Redis connected successfully');
